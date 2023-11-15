@@ -18,28 +18,28 @@ public class UserController {
 
     private final UserService userService;
     //create
-    @PostMapping("")
+    @PostMapping("/add")
     public ResponseEntity<User> addUser(@RequestBody User user) {
         return userService.addUser(user);
     }
     //read
-    @GetMapping("")
+    @GetMapping("/get")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
-    @GetMapping("/{id_user}")
+    @GetMapping("/get/{id_user}")
     public User getSingleUser(@PathVariable long id_user){
         return userService.getSingleUser(id_user);
     }
     //update
-    @PutMapping("/{id_user}")
+    @PutMapping("/update/{id_user}")
     public User updateUser(@RequestBody User updatedUser, @PathVariable long id_user){
         return userService.updateUser(updatedUser, id_user);
     }
 
     //delete
-    @DeleteMapping("/{id_user}")
+    @DeleteMapping("/delete/{id_user}")
     public ResponseEntity<String> deleteUserById(@PathVariable long id_user) {
         try {
             userService.deleteUserById(id_user);
