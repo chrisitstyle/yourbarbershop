@@ -3,9 +3,11 @@ package pl.barbershopproject.barbershop.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import pl.barbershopproject.barbershop.model.Role;
 import pl.barbershopproject.barbershop.model.User;
 import pl.barbershopproject.barbershop.repository.UserRepository;
 
@@ -18,6 +20,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+
     //create
     public ResponseEntity<User> addUser(User user) {
         Optional<User> userFromDatabase = userRepository.findByEmail(user.getEmail());
@@ -29,15 +32,22 @@ public class UserService {
         User savedUser = userRepository.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
+
     //read
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
+
     public User getSingleUser(long id_user) {
-
-        return userRepository.findById(id_user).orElseThrow(NoSuchElementException::new);
-
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        long loggedUserId = user.getIdUser();
+        if (loggedUserId == id_user || user.getRole().equals(Role.ADMIN)) {
+            return userRepository.findById(id_user).orElseThrow(NoSuchElementException::new);
+        }else {
+            return null;
+        }
     }
+
     //update
     @Transactional
     public User updateUser(User updatedUser, long id_user) {
@@ -50,6 +60,7 @@ public class UserService {
                     return userRepository.save(user);
                 }).orElseThrow(NoSuchElementException::new);
     }
+
     //delete
     @Transactional
     public void deleteUserById(long id_user) {
