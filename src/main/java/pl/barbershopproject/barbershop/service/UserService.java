@@ -34,6 +34,7 @@ public class UserService {
         return userRepository.findAll();
     }
     public User getSingleUser(long id_user) {
+
         return userRepository.findById(id_user).orElseThrow(NoSuchElementException::new);
 
     }

@@ -3,6 +3,8 @@ package pl.barbershopproject.barbershop.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import pl.barbershopproject.barbershop.model.User;
@@ -28,11 +30,13 @@ public class UserController {
         List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
+
     @GetMapping("/get/{id_user}")
     public User getSingleUser(@PathVariable long id_user){
+
         return userService.getSingleUser(id_user);
     }
-    //update
+
     @PutMapping("/update/{id_user}")
     public User updateUser(@RequestBody User updatedUser, @PathVariable long id_user){
         return userService.updateUser(updatedUser, id_user);
