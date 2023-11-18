@@ -25,18 +25,35 @@ public class AuthService {
 
     public AuthResponse register(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole(Role.USER);
+        if (user.getRole() == null) {
+            user.setRole(Role.USER);
+        }
         userRepository.save(user);
         var token = jwtService.generateToken(user);
-        return AuthResponse.builder().token(token).build();
+
+        // Zwracanie id, roli i tokena użytkownika
+        return AuthResponse.builder()
+                .token(token)
+                .id(user.getIdUser())
+                .role(user.getRole())
+                .build();
     }
+
     public AuthResponse authenticate(AuthRequest request) {
         return authenticate(request.getEmail(), request.getPassword());
     }
+
     public AuthResponse authenticate(@NotNull String email, @NotNull String password) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email,password));
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
         var user = userRepository.findByEmail(email).orElseThrow();
         var token = jwtService.generateToken(user);
-        return AuthResponse.builder().token(token).build();
+
+        // Zwracanie id, roli i tokena użytkownika
+        return AuthResponse.builder()
+                .token(token)
+                .id(user.getIdUser())
+                .role(user.getRole())
+                .build();
     }
+
 }
