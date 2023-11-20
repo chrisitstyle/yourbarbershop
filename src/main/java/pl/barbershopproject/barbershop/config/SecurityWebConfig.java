@@ -27,6 +27,7 @@ public class SecurityWebConfig {
                         authorizeRequests
                                 .requestMatchers("/register", "/login").permitAll()
                                 .requestMatchers("/users/get").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers("/offers/get").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement ->

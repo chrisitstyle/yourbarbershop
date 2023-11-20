@@ -22,6 +22,7 @@ public class BarbershopApplication {
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/login").allowedOrigins(LOCALHOST);
 				registry.addMapping("/register").allowedOrigins(LOCALHOST);
+				registry.addMapping("/offers/get").allowedOrigins(LOCALHOST);
 			}
 		};
 	}
