@@ -11,6 +11,7 @@ import Contact from "./pages/Contact.jsx";
 import RegisterOrderWithoutAcc from "./pages/RegisterOrderWithoutAcc.jsx";
 import Footer from "./Footer.jsx";
 import { AuthProvider } from "./AuthContext";
+import Profile from "./pages/Profile.jsx";
 function App() {
   return (
     <AuthProvider>
@@ -24,6 +25,7 @@ function App() {
             <Route exact path="/gallery" element={<Gallery />}></Route>
             <Route exact path="/offer" element={<Offer />}></Route>
             <Route exact path="/contact" element={<Contact />}></Route>
+            <Route exact path="/profile/:id" element={<Profile />}></Route>
             <Route
               exact
               path="/registerorderwithoutaccount"

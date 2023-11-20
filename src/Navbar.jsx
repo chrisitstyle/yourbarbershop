@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 const Navbar = () => {
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -87,9 +87,12 @@ const Navbar = () => {
                         </button>
                       </li>
                       <li>
-                        <button className="dropdown-item custom-nav-link">
+                        <Link
+                          className="dropdown-item custom-nav-link"
+                          to={`/profile/${user.id}`}
+                        >
                           Twój profil
-                        </button>
+                        </Link>
                       </li>
                     </>
                   ) : (
