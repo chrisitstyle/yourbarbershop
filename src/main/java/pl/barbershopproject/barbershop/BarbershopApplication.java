@@ -23,6 +23,9 @@ public class BarbershopApplication {
 				registry.addMapping("/login").allowedOrigins(LOCALHOST);
 				registry.addMapping("/register").allowedOrigins(LOCALHOST);
 				registry.addMapping("/offers/get").allowedOrigins(LOCALHOST);
+				registry.addMapping("/users/**").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+						.allowedHeaders("*")
+						.allowCredentials(true);
 			}
 		};
 	}
