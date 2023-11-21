@@ -86,14 +86,25 @@ const Navbar = () => {
                           Wyloguj się
                         </button>
                       </li>
-                      <li>
-                        <Link
-                          className="dropdown-item custom-nav-link"
-                          to={`/profile/${user.id}`}
-                        >
-                          Twój profil
-                        </Link>
-                      </li>
+                      {user.role === "ADMIN" ? (
+                        <li>
+                          <Link
+                            className="dropdown-item custom-nav-link"
+                            to="/adminpanel"
+                          >
+                            Panel administratora
+                          </Link>
+                        </li>
+                      ) : (
+                        <li>
+                          <Link
+                            className="dropdown-item custom-nav-link"
+                            to={`/profile/${user.id}`}
+                          >
+                            Twój profil
+                          </Link>
+                        </li>
+                      )}
                     </>
                   ) : (
                     <>

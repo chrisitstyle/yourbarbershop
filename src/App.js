@@ -12,6 +12,7 @@ import RegisterOrderWithoutAcc from "./pages/RegisterOrderWithoutAcc.jsx";
 import Footer from "./Footer.jsx";
 import { AuthProvider } from "./AuthContext";
 import Profile from "./pages/Profile.jsx";
+import AdminPanel from "./adminpages/AdminPanel.jsx";
 function App() {
   return (
     <AuthProvider>
@@ -26,6 +27,7 @@ function App() {
             <Route exact path="/offer" element={<Offer />}></Route>
             <Route exact path="/contact" element={<Contact />}></Route>
             <Route exact path="/profile/:id" element={<Profile />}></Route>
+            <Route exact path="/adminpanel" element={<AdminPanel />}></Route>
             <Route
               exact
               path="/registerorderwithoutaccount"
