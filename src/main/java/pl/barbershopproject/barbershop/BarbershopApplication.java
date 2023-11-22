@@ -21,8 +21,14 @@ public class BarbershopApplication {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/login").allowedOrigins(LOCALHOST);
-				registry.addMapping("/register").allowedOrigins(LOCALHOST);
+				registry.addMapping("/register").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS");
 				registry.addMapping("/offers/get").allowedOrigins(LOCALHOST);
+				registry.addMapping("/offers/add").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+						.allowedHeaders("*")
+						.allowCredentials(true);
+				registry.addMapping("/offers/delete/**").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+						.allowedHeaders("*")
+						.allowCredentials(true);
 				registry.addMapping("/users/**").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
 						.allowedHeaders("*")
 						.allowCredentials(true);
