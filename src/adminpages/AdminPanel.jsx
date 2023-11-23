@@ -12,11 +12,12 @@ const AdminPanel = () => {
   const [users, setUsers] = useState([]);
   const [offers, setOffers] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
-  const [showAddOfferForm, setShowAddOfferForm] = useState(false);
-  const [showAddUserForm, setShowAddUserForm] = useState(false);
+
   const [activeButton, setActiveButton] = useState(null);
   const [showUserTable, setShowUserTable] = useState(false);
-
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const [showOfferTable, setShowOfferTable] = useState(false);
+  const [showAddOfferForm, setShowAddOfferForm] = useState(false);
   const loadOffers = useCallback(async () => {
     try {
       const result = await axios.get("http://localhost:8080/offers/get");
@@ -41,7 +42,7 @@ const AdminPanel = () => {
   }, [user]);
 
   useEffect(() => {
-    if (selectedTable === "offers") {
+    if (selectedTable === "offers" && offers) {
       loadOffers();
     } else if (selectedTable === "users" && user) {
       loadUsers();
@@ -74,6 +75,7 @@ const AdminPanel = () => {
       });
 
       loadOffers();
+      handleToggleTable("offers");
     } catch (error) {
       console.error("Error adding offer:", error);
     }
@@ -88,7 +90,7 @@ const AdminPanel = () => {
     try {
       await axios.post("http://localhost:8080/register", newUser);
       loadUsers();
-      handleToggleTable("users"); // Usuń tę linię, aby nie przełączać automatycznie na tabelę użytkowników po dodaniu użytkownika
+      handleToggleTable("users"); // switch to table user after added user
     } catch (error) {
       console.error("Error adding user:", error);
     }
@@ -96,17 +98,20 @@ const AdminPanel = () => {
 
   const handleToggleTable = (table) => {
     if (table === "users") {
-      // Jeżeli tabela ma być użytkowników, to sprawdź czy już nie jest widoczna
+      // check user table if is visible
       setSelectedTable((prev) => (prev === table ? null : table));
       setActiveButton(table);
       setShowAddUserForm(false);
-      setShowUserTable((prev) => !prev); // Jeżeli tabela użytkowników była widoczna, to ukryj ją, a jeżeli była ukryta, to pokaż
-    } else {
-      // Dla innych tabel przełączaj normalnie
+      setShowUserTable((prev) => !prev); // if user table was visible then hid, if not then show
+    } else if (table === "offers") {
       setSelectedTable((prev) => (prev === table ? null : table));
       setActiveButton(table);
-      setShowAddUserForm(false);
+
+      setShowAddOfferForm(false);
       setShowUserTable(false);
+      setShowAddUserForm(false);
+
+      setShowOfferTable((prev) => !prev);
     }
   };
 
@@ -127,17 +132,25 @@ const AdminPanel = () => {
           <div className="dropdown-menu" aria-labelledby="servicesDropdown">
             <button
               type="button"
-              className={`dropdown-item ${
-                activeButton === "offers" ? "active" : ""
-              }`}
-              onClick={() => handleToggleTable("offers")}
+              className={`dropdown-item`}
+              onClick={() => {
+                handleToggleTable("offers");
+                setShowOfferTable(true);
+                setShowAddOfferForm(false);
+                setShowUserTable(false);
+              }}
             >
               Pokaż usługi
             </button>
             <button
               type="button"
               className="dropdown-item"
-              onClick={() => setShowAddOfferForm(!showAddOfferForm)}
+              onClick={() => {
+                setShowAddOfferForm(true);
+                setShowOfferTable(false);
+                setShowUserTable(false);
+                setShowAddUserForm(false);
+              }}
             >
               Dodaj usługę
             </button>
@@ -162,6 +175,7 @@ const AdminPanel = () => {
               className={`dropdown-item`}
               onClick={() => {
                 handleToggleTable("users");
+                setShowOfferTable(false);
                 setShowAddOfferForm(false);
                 setShowUserTable(true);
               }}
@@ -172,8 +186,11 @@ const AdminPanel = () => {
               type="button"
               className="dropdown-item"
               onClick={() => {
-                setShowAddUserForm(true);
                 setShowUserTable(false);
+                setShowAddUserForm(true);
+
+                setShowOfferTable(false);
+                setShowAddOfferForm(false);
               }}
             >
               Dodaj użytkownika
@@ -182,11 +199,11 @@ const AdminPanel = () => {
         </div>
       </div>
 
-      {showAddOfferForm && selectedTable === "offers" && (
+      {showAddOfferForm && (
         <AddOffer data={offers} onAddOffer={handleAddOffer} />
       )}
       {showAddUserForm && <AddUser onSubmit={handleAddUser} />}
-      {selectedTable === "offers" && (
+      {showOfferTable && (
         <OffersTable data={offers} onDeleteOffer={handleDeleteOffer} />
       )}
       {showUserTable && <UsersTable data={users} />}
