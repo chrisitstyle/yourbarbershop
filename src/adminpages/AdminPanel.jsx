@@ -5,6 +5,7 @@ import AddOffer from "./AddOffer";
 import UsersTable from "./UsersTable";
 import AddUser from "./AddUser";
 import { useAuth } from "../AuthContext";
+import Button from "../components/Button";
 
 const AdminPanel = () => {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ const AdminPanel = () => {
   const [showAddOfferForm, setShowAddOfferForm] = useState(false);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
   const [activeButton, setActiveButton] = useState(null);
+  const [showUserTable, setShowUserTable] = useState(false);
 
   const loadOffers = useCallback(async () => {
     try {
@@ -77,18 +79,35 @@ const AdminPanel = () => {
     }
   };
 
+  const handleAddUserFormToggle = () => {
+    setShowAddUserForm(!showAddUserForm);
+    setShowUserTable(false);
+  };
+
   const handleAddUser = async (newUser) => {
     try {
       await axios.post("http://localhost:8080/register", newUser);
       loadUsers();
+      handleToggleTable("users"); // Usuń tę linię, aby nie przełączać automatycznie na tabelę użytkowników po dodaniu użytkownika
     } catch (error) {
       console.error("Error adding user:", error);
     }
   };
 
   const handleToggleTable = (table) => {
-    setSelectedTable((prev) => (prev === table ? null : table));
-    setActiveButton(table);
+    if (table === "users") {
+      // Jeżeli tabela ma być użytkowników, to sprawdź czy już nie jest widoczna
+      setSelectedTable((prev) => (prev === table ? null : table));
+      setActiveButton(table);
+      setShowAddUserForm(false);
+      setShowUserTable((prev) => !prev); // Jeżeli tabela użytkowników była widoczna, to ukryj ją, a jeżeli była ukryta, to pokaż
+    } else {
+      // Dla innych tabel przełączaj normalnie
+      setSelectedTable((prev) => (prev === table ? null : table));
+      setActiveButton(table);
+      setShowAddUserForm(false);
+      setShowUserTable(false);
+    }
   };
 
   return (
@@ -126,8 +145,8 @@ const AdminPanel = () => {
         </div>
 
         <div className="dropdown">
-          <button
-            className="btn btn-light dropdown-toggle"
+          {/* <button
+            className={`btn btn-light dropdown-toggle`}
             type="button"
             id="servicesDropdown"
             data-bs-toggle="dropdown"
@@ -135,21 +154,27 @@ const AdminPanel = () => {
             aria-expanded="false"
           >
             Użytkownicy
-          </button>
+          </button> */}
+          {<Button />}
           <div className="dropdown-menu" aria-labelledby="usersDropdown">
             <button
               type="button"
-              className={`dropdown-item ${
-                activeButton === "users" ? "active" : ""
-              }`}
-              onClick={() => handleToggleTable("users")}
+              className={`dropdown-item`}
+              onClick={() => {
+                handleToggleTable("users");
+                setShowAddOfferForm(false);
+                setShowUserTable(true);
+              }}
             >
               Pokaż użytkowników
             </button>
             <button
               type="button"
               className="dropdown-item"
-              onClick={() => setShowAddUserForm(!showAddUserForm)}
+              onClick={() => {
+                setShowAddUserForm(true);
+                setShowUserTable(false);
+              }}
             >
               Dodaj użytkownika
             </button>
@@ -160,13 +185,11 @@ const AdminPanel = () => {
       {showAddOfferForm && selectedTable === "offers" && (
         <AddOffer data={offers} onAddOffer={handleAddOffer} />
       )}
-      {showAddUserForm && selectedTable === "users" && (
-        <AddUser onSubmit={handleAddUser} />
-      )}
+      {showAddUserForm && <AddUser onSubmit={handleAddUser} />}
       {selectedTable === "offers" && (
         <OffersTable data={offers} onDeleteOffer={handleDeleteOffer} />
       )}
-      {selectedTable === "users" && <UsersTable data={users} />}
+      {showUserTable && <UsersTable data={users} />}
     </>
   );
 };
