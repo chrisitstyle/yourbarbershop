@@ -6,7 +6,7 @@ import UsersTable from "./UsersTable";
 import AddUser from "./AddUser";
 import { useAuth } from "../AuthContext";
 import Button from "../components/Button";
-import EditOffer from "./EditOffer";
+import OrdersTable from "./OrdersTable";
 const AdminPanel = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
@@ -17,6 +17,7 @@ const AdminPanel = () => {
   const [showUserTable, setShowUserTable] = useState(false);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
   const [showOfferTable, setShowOfferTable] = useState(false);
+  const [showOrderTable, setShowOrderTable] = useState(false);
   const [showAddOfferForm, setShowAddOfferForm] = useState(false);
   const loadOffers = useCallback(async () => {
     try {
@@ -123,6 +124,15 @@ const AdminPanel = () => {
       setShowAddUserForm(false);
 
       setShowOfferTable((prev) => !prev);
+    } else if (table == "orders") {
+      setSelectedTable((prev) => (prev === table ? null : table));
+      setActiveButton(table);
+
+      setShowAddOfferForm(false);
+      setShowUserTable(false);
+      setShowAddUserForm(false);
+
+      setShowOfferTable((prev) => !prev);
     }
   };
 
@@ -149,6 +159,7 @@ const AdminPanel = () => {
                 setShowOfferTable(true);
                 setShowAddOfferForm(false);
                 setShowUserTable(false);
+                setShowOrderTable(false);
               }}
             >
               Pokaż usługi
@@ -161,6 +172,7 @@ const AdminPanel = () => {
                 setShowOfferTable(false);
                 setShowUserTable(false);
                 setShowAddUserForm(false);
+                setShowOrderTable(false);
               }}
             >
               Dodaj usługę
@@ -202,9 +214,37 @@ const AdminPanel = () => {
 
                 setShowOfferTable(false);
                 setShowAddOfferForm(false);
+                setShowOrderTable(false);
               }}
             >
               Dodaj użytkownika
+            </button>
+          </div>
+        </div>
+        <div className="dropdown">
+          <button
+            className="btn btn-light dropdown-toggle"
+            type="button"
+            id="servicesDropdown"
+            data-bs-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            Usługi
+          </button>
+          <div className="dropdown-menu" aria-labelledby="servicesDropdown">
+            <button
+              type="button"
+              className={`dropdown-item`}
+              onClick={() => {
+                handleToggleTable("orders");
+                setShowOfferTable(false);
+                setShowAddOfferForm(false);
+                setShowUserTable(false);
+                setShowOrderTable(true);
+              }}
+            >
+              Pokaż zamówienia
             </button>
           </div>
         </div>
@@ -220,6 +260,7 @@ const AdminPanel = () => {
       {showUserTable && (
         <UsersTable data={users} onDeleteUser={handleDeleteUser} />
       )}
+      {showOrderTable && <OrdersTable />}
     </>
   );
 };
