@@ -1,6 +1,6 @@
 import React from "react";
 
-const UsersTable = ({ data }) => {
+const UsersTable = ({ data, onDeleteUser }) => {
   return (
     <>
       <div className="container">
@@ -31,7 +31,7 @@ const UsersTable = ({ data }) => {
                       </button>
                       <button
                         className="btn btn-danger mx-2"
-                        //  onClick={() => onDeleteOffer(offer.idOffer)}
+                        onClick={() => onDeleteUser(user.idUser)}
                       >
                         Usuń
                       </button>

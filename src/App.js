@@ -13,6 +13,7 @@ import Footer from "./Footer.jsx";
 import { AuthProvider } from "./AuthContext";
 import Profile from "./pages/Profile.jsx";
 import AdminPanel from "./adminpages/AdminPanel.jsx";
+import EditOffer from "./adminpages/EditOffer.jsx";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             <Route exact path="/contact" element={<Contact />}></Route>
             <Route exact path="/profile/:id" element={<Profile />}></Route>
             <Route exact path="/adminpanel" element={<AdminPanel />}></Route>
+            <Route path="/adminpanel/editoffer/:id" element={<EditOffer />} />
 
             <Route
               exact

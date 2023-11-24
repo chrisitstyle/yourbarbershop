@@ -1,6 +1,15 @@
 import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const OffersTable = ({ data, onDeleteOffer }) => {
+  const navigate = useNavigate();
+
+  const handleEditClick = (offer) => {
+    navigate(`/adminpanel/editoffer/${offer.idOffer}`, {
+      state: { offerData: offer },
+    });
+  };
+
   return (
     <>
       <div className="container">
@@ -22,7 +31,12 @@ const OffersTable = ({ data, onDeleteOffer }) => {
                     <td>{offer.kind}</td>
                     <td>{offer.cost} zł</td>
                     <td>
-                      <button type="button" className="btn btn-warning">
+                      <button
+                        className="btn btn-warning"
+                        onClick={() => {
+                          handleEditClick(offer);
+                        }}
+                      >
                         Edytuj
                       </button>
                       <button

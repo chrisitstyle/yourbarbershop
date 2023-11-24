@@ -6,13 +6,13 @@ import UsersTable from "./UsersTable";
 import AddUser from "./AddUser";
 import { useAuth } from "../AuthContext";
 import Button from "../components/Button";
-
+import EditOffer from "./EditOffer";
 const AdminPanel = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [offers, setOffers] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
-
+  const [showEditOffer, setShowEditOffer] = useState(false);
   const [activeButton, setActiveButton] = useState(null);
   const [showUserTable, setShowUserTable] = useState(false);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
@@ -26,28 +26,21 @@ const AdminPanel = () => {
       console.error("Error loading offers:", error);
     }
   }, []);
-
-  const loadUsers = useCallback(async () => {
+  const handleAddOffer = async (newOffer) => {
     try {
-      const result = await axios.get("http://localhost:8080/users/get", {
+      await axios.post("http://localhost:8080/offers/add", newOffer, {
         withCredentials: true,
         headers: {
           Authorization: `Bearer ${user.token}`,
         },
       });
-      setUsers(result.data);
-    } catch (error) {
-      console.error("Error loading users: ", error);
-    }
-  }, [user]);
 
-  useEffect(() => {
-    if (selectedTable === "offers" && offers) {
       loadOffers();
-    } else if (selectedTable === "users" && user) {
-      loadUsers();
+      handleToggleTable("offers");
+    } catch (error) {
+      console.error("Error adding offer:", error);
     }
-  }, [selectedTable, user, loadOffers, loadUsers]);
+  };
 
   const handleDeleteOffer = async (idOffer) => {
     try {
@@ -65,26 +58,19 @@ const AdminPanel = () => {
     }
   };
 
-  const handleAddOffer = async (newOffer) => {
+  const loadUsers = useCallback(async () => {
     try {
-      await axios.post("http://localhost:8080/offers/add", newOffer, {
+      const result = await axios.get("http://localhost:8080/users/get", {
         withCredentials: true,
         headers: {
           Authorization: `Bearer ${user.token}`,
         },
       });
-
-      loadOffers();
-      handleToggleTable("offers");
+      setUsers(result.data);
     } catch (error) {
-      console.error("Error adding offer:", error);
+      console.error("Error loading users: ", error);
     }
-  };
-
-  const handleAddUserFormToggle = () => {
-    setShowAddUserForm(!showAddUserForm);
-    setShowUserTable(false);
-  };
+  }, [user]);
 
   const handleAddUser = async (newUser) => {
     try {
@@ -94,6 +80,31 @@ const AdminPanel = () => {
     } catch (error) {
       console.error("Error adding user:", error);
     }
+  };
+  const handleDeleteUser = async (idUser) => {
+    try {
+      await axios.delete(`http://localhost:8080/users/delete/${idUser}`, {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+      setUsers((prevUsers) =>
+        prevUsers.filter((user) => user.idUser !== idUser)
+      );
+    } catch (error) {}
+  };
+  useEffect(() => {
+    if (selectedTable === "offers" && offers) {
+      loadOffers();
+    } else if (selectedTable === "users" && user) {
+      loadUsers();
+    }
+  }, [selectedTable, user, loadOffers, loadUsers]);
+
+  const handleAddUserFormToggle = () => {
+    setShowAddUserForm(!showAddUserForm);
+    setShowUserTable(false);
   };
 
   const handleToggleTable = (table) => {
@@ -206,7 +217,9 @@ const AdminPanel = () => {
       {showOfferTable && (
         <OffersTable data={offers} onDeleteOffer={handleDeleteOffer} />
       )}
-      {showUserTable && <UsersTable data={users} />}
+      {showUserTable && (
+        <UsersTable data={users} onDeleteUser={handleDeleteUser} />
+      )}
     </>
   );
 };
