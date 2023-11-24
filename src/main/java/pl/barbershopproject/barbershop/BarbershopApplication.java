@@ -29,6 +29,9 @@ public class BarbershopApplication {
 				registry.addMapping("/offers/update/**").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
 						.allowedHeaders("*")
 						.allowCredentials(true);
+				registry.addMapping("/users/update/**").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+						.allowedHeaders("*")
+						.allowCredentials(true);
 				registry.addMapping("/offers/delete/**").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
 						.allowedHeaders("*")
 						.allowCredentials(true);
