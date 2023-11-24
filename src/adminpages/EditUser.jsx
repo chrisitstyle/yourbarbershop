@@ -1,33 +1,77 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../AuthContext";
+import axios from "axios";
 
-const AddUser = ({ onSubmit }) => {
+const EditUser = () => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const userData = location.state?.userData;
+  const navigate = useNavigate();
+
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("");
-  const handleSubmit = (e) => {
+  const [selectedRole, setSelectedRole] = useState("");
+
+  useEffect(() => {
+    if (userData) {
+      setFirstName(userData.firstname);
+      setLastName(userData.lastname);
+      setEmail(userData.email);
+      setSelectedRole(userData.role);
+    }
+  }, [userData]);
+
+  const roles = ["USER", "ADMIN"];
+
+  useEffect(() => {
+    // Jeśli rola użytkownika jest w tablicy, ustaw ją jako domyślną
+    if (userData && roles.includes(userData.role)) {
+      setSelectedRole(userData.role);
+    } else if (roles.includes(user.role)) {
+      // Jeśli rola użytkownika nie jest dostępna, ustaw rolę zalogowanego użytkownika
+      setSelectedRole(user.role);
+    }
+  }, [user.role, userData]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newUser = {
-      firstname,
-      lastname,
-      email,
-      password,
-      role,
-    };
+    try {
+      const response = await axios.put(
+        `http://localhost:8080/users/update/${userData.idUser}`,
+        {
+          firstname,
+          lastname,
+          email,
+          role: selectedRole,
+        },
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
 
-    // using function as prop
-    onSubmit(newUser);
-    setFirstName("");
-    setLastName("");
-    setEmail("");
-    setPassword("");
+      if (response.status === 200) {
+        navigate("/adminpanel");
+      } else {
+        console.error(
+          "Błąd podczas aktualizacji użytkownika:",
+          response.statusText
+        );
+      }
+    } catch (error) {
+      console.error("Błąd podczas aktualizacji użytkownika:", error.message);
+    }
   };
 
   return (
     <>
       <div className="container mt-5">
+        <h2 className="text-center">Edycja użytkownika</h2>
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3 ">
             <form onSubmit={handleSubmit}>
@@ -70,19 +114,7 @@ const AddUser = ({ onSubmit }) => {
                   required
                 />
               </div>
-              <div className="mb-3">
-                <label htmlFor="inputpassword" className="form-label">
-                  Hasło
-                </label>
-                <input
-                  type="password"
-                  className="form-control"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+
               <div className="mb-3">
                 <label htmlFor="inputrole" className="form-label">
                   Rola
@@ -90,17 +122,20 @@ const AddUser = ({ onSubmit }) => {
                 <select
                   className="form-select"
                   id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
                   required
                 >
-                  <option value="ADMIN">Admin</option>
-                  <option value="USER">Użytkownik</option>
+                  {roles.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <button type="submit" className="btn btn-primary mx-auto d-block">
-                Dodaj użytkownika
+                Zapisz zmiany
               </button>
             </form>
           </div>
@@ -110,4 +145,4 @@ const AddUser = ({ onSubmit }) => {
   );
 };
 
-export default AddUser;
+export default EditUser;

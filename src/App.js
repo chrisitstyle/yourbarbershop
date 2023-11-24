@@ -14,6 +14,7 @@ import { AuthProvider } from "./AuthContext";
 import Profile from "./pages/Profile.jsx";
 import AdminPanel from "./adminpages/AdminPanel.jsx";
 import EditOffer from "./adminpages/EditOffer.jsx";
+import EditUser from "./adminpages/EditUser.jsx";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route exact path="/profile/:id" element={<Profile />}></Route>
             <Route exact path="/adminpanel" element={<AdminPanel />}></Route>
             <Route path="/adminpanel/editoffer/:id" element={<EditOffer />} />
+            <Route path="/adminpanel/edituser/:id" element={<EditUser />} />
 
             <Route
               exact

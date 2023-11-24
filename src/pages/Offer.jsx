@@ -20,15 +20,12 @@ const Offer = () => {
     }
   };
 
-  // Obliczenia potrzebne do paginacji
   const indexOfLastOffer = currentPage * offersPerPage;
   const indexOfFirstOffer = indexOfLastOffer - offersPerPage;
   const currentOffers = offers.slice(indexOfFirstOffer, indexOfLastOffer);
 
-  // Zmiana strony
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Warunek sprawdzający, czy istnieje więcej niż jedna strona
   const showPagination = offers.length > offersPerPage;
 
   return (
@@ -65,7 +62,6 @@ const Offer = () => {
       <p className="text-center lead">
         Nie zwlekaj, umów się na wizytę już dziś i poczuj się wyjątkowo!
       </p>
-      {/* Paginacja Bootstrapa z warunkiem */}
       {showPagination && (
         <ul className="pagination justify-content-center mt-4">
           {[...Array(Math.ceil(offers.length / offersPerPage))].map(
@@ -76,11 +72,7 @@ const Offer = () => {
                   index + 1 === currentPage ? "active" : ""
                 }`}
               >
-                <a
-                  href="#!"
-                  className="page-link"
-                  onClick={() => paginate(index + 1)}
-                >
+                <a className="page-link" onClick={() => paginate(index + 1)}>
                   {index + 1}
                 </a>
               </li>

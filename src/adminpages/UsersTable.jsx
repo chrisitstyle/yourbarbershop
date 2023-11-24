@@ -1,6 +1,12 @@
 import React from "react";
-
+import { Link, useNavigate } from "react-router-dom";
 const UsersTable = ({ data, onDeleteUser }) => {
+  const navigate = useNavigate();
+  const handleEditClick = (user) => {
+    navigate(`/adminpanel/edituser/${user.idUser}`, {
+      state: { userData: user },
+    });
+  };
   return (
     <>
       <div className="container">
@@ -26,7 +32,12 @@ const UsersTable = ({ data, onDeleteUser }) => {
                     <td>{user.email}</td>
                     <td>{user.role}</td>
                     <td>
-                      <button type="button" className="btn btn-warning">
+                      <button
+                        className="btn btn-warning"
+                        onClick={() => {
+                          handleEditClick(user);
+                        }}
+                      >
                         Edytuj
                       </button>
                       <button

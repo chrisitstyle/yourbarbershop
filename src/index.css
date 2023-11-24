@@ -15,5 +15,16 @@ code {
 .custom-navbar-ul {
   display: flex;
   width: 100%;
-  gap: 50px; /* Możesz dostosować wartość według własnych preferencji */
+  gap: 50px;
+}
+
+.site-footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  margin-top: auto;
+}
+
+.pagination {
+  margin-bottom: 70px;
 }
