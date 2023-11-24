@@ -1,7 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 const UsersTable = ({ data, onDeleteUser }) => {
   const navigate = useNavigate();
+  const usersPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentData = data.slice(indexOfFirstUser, indexOfLastUser);
+
+  const totalPages = Math.ceil(data.length / usersPerPage);
+  const handlePageClick = (page) => {
+    setCurrentPage(page);
+  };
+
   const handleEditClick = (user) => {
     navigate(`/adminpanel/edituser/${user.idUser}`, {
       state: { userData: user },
@@ -24,7 +35,7 @@ const UsersTable = ({ data, onDeleteUser }) => {
                 </tr>
               </thead>
               <tbody>
-                {data.map((user) => (
+                {currentData.map((user) => (
                   <tr key={user.idUser}>
                     <td>{user.idUser}</td>
                     <td>{user.firstname}</td>
@@ -51,6 +62,27 @@ const UsersTable = ({ data, onDeleteUser }) => {
                 ))}
               </tbody>
             </table>
+            {totalPages > 1 && (
+              <nav className="pagination justify-content-center">
+                <ul className="pagination">
+                  {[...Array(totalPages)].map((_, index) => (
+                    <li
+                      key={index + 1}
+                      className={`page-item ${
+                        index + 1 === currentPage ? "active" : ""
+                      }`}
+                    >
+                      <a
+                        className="page-link"
+                        onClick={() => handlePageClick(index + 1)}
+                      >
+                        {index + 1}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
           </div>
         </div>
       </div>
