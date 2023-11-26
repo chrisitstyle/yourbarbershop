@@ -18,7 +18,7 @@ public class Order {
     private long idOrder;
     @ManyToOne
     @JoinColumn(name = "id_user")
-    @JsonIgnoreProperties({"userOrders","email", "password","role"})
+    @JsonIgnoreProperties({"userOrders","enabled","authorities","accountNonLocked","credentialsNonExpired","accountNonExpired", "password","role"})
     private User user;
     @ManyToOne
     @JoinColumn(name = "id_offer")

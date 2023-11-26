@@ -38,6 +38,9 @@ public class BarbershopApplication {
 				registry.addMapping("/users/**").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
 						.allowedHeaders("*")
 						.allowCredentials(true);
+				registry.addMapping("/orders/**").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+						.allowedHeaders("*")
+						.allowCredentials(true);
 			}
 		};
 	}
