@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 const UsersTable = ({ data, onDeleteUser }) => {
   const navigate = useNavigate();
   const usersPerPage = 10;
@@ -20,10 +20,11 @@ const UsersTable = ({ data, onDeleteUser }) => {
   };
   return (
     <>
-      <div className="container">
+      <div className="container text-center">
         <div className="py-4 ">
+          <h2>Lista użytkowników</h2>
           <div>
-            <table className="table border shadow text-center">
+            <table className="table border shadow">
               <thead>
                 <tr>
                   <th scope="col">Identyfikator użytkownika</th>

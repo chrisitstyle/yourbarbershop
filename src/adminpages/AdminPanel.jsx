@@ -11,8 +11,8 @@ const AdminPanel = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [offers, setOffers] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
-  const [showEditOffer, setShowEditOffer] = useState(false);
   const [activeButton, setActiveButton] = useState(null);
   const [showUserTable, setShowUserTable] = useState(false);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
@@ -95,13 +95,46 @@ const AdminPanel = () => {
       );
     } catch (error) {}
   };
+
+  const loadOrders = useCallback(async () => {
+    try {
+      const result = await axios.get("http://localhost:8080/orders/get", {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+      setOrders(result.data);
+      console.log("Orders:", result.data); // Dodaj to polecenie, jeśli chcesz zobaczyć zamówienia w konsoli
+    } catch (error) {
+      console.error("Error loading orders:", error);
+    }
+  }, [user]);
+  const handleDeleteOrder = async (idOrder) => {
+    try {
+      await axios.delete(`http://localhost:8080/orders/delete/${idOrder}`, {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+      setOrders((prevOrders) =>
+        prevOrders.filter((order) => order.idOrder !== idOrder)
+      );
+    } catch (error) {
+      console.error("Error deleting order:", error);
+    }
+  };
+
   useEffect(() => {
     if (selectedTable === "offers" && offers) {
       loadOffers();
     } else if (selectedTable === "users" && user) {
       loadUsers();
+    } else if (selectedTable === "orders" && orders) {
+      loadOrders();
     }
-  }, [selectedTable, user, loadOffers, loadUsers]);
+  }, [selectedTable, user, loadOffers, loadUsers, loadOrders]);
 
   const handleAddUserFormToggle = () => {
     setShowAddUserForm(!showAddUserForm);
@@ -124,7 +157,7 @@ const AdminPanel = () => {
       setShowAddUserForm(false);
 
       setShowOfferTable((prev) => !prev);
-    } else if (table == "orders") {
+    } else if (table === "orders") {
       setSelectedTable((prev) => (prev === table ? null : table));
       setActiveButton(table);
 
@@ -201,6 +234,7 @@ const AdminPanel = () => {
                 setShowOfferTable(false);
                 setShowAddOfferForm(false);
                 setShowUserTable(true);
+                setShowOrderTable(false);
               }}
             >
               Pokaż użytkowników
@@ -230,7 +264,7 @@ const AdminPanel = () => {
             aria-haspopup="true"
             aria-expanded="false"
           >
-            Usługi
+            Zamówienia
           </button>
           <div className="dropdown-menu" aria-labelledby="servicesDropdown">
             <button
@@ -260,7 +294,9 @@ const AdminPanel = () => {
       {showUserTable && (
         <UsersTable data={users} onDeleteUser={handleDeleteUser} />
       )}
-      {showOrderTable && <OrdersTable />}
+      {showOrderTable && (
+        <OrdersTable data={orders} onDeleteOrder={handleDeleteOrder} />
+      )}
     </>
   );
 };
