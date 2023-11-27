@@ -2,12 +2,33 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../AuthContext";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import { format, subHours } from "date-fns";
 
 const Profile = () => {
   const { user } = useAuth();
   const { id } = useParams();
 
   const [userDetails, setUserDetails] = useState(null);
+
+  const visitsPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const indexOfLastVisit = currentPage * visitsPerPage;
+  const indexOfFirstVisit = indexOfLastVisit - visitsPerPage;
+  const currentData = userDetails?.userOrders?.slice(
+    indexOfFirstVisit,
+    indexOfLastVisit
+  );
+
+  const totalPages = Math.ceil(
+    (userDetails?.userOrders?.length || 0) / visitsPerPage
+  );
+  const handlePageClick = (page) => {
+    setCurrentPage(page);
+  };
+
+  const formatVisitDate = (date) => {
+    return format(subHours(new Date(date), 1), "yyyy-MM-dd'T'HH:mm:ss");
+  };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -17,7 +38,7 @@ const Profile = () => {
           {
             withCredentials: true,
             headers: {
-              Authorization: `Bearer ${user.token}`,
+              Authorization: `Bearer ${user?.token}`,
             },
           }
         );
@@ -27,13 +48,13 @@ const Profile = () => {
       }
     };
 
-    if (id && user.token) {
+    if (id && user?.token) {
       loadUser();
     }
-  }, [id, user.token]);
+  }, [id, user?.token]);
 
   if (!userDetails) {
-    return <div>Loading...</div>;
+    return <div>ładowanie...</div>;
   }
 
   return (
@@ -58,17 +79,42 @@ const Profile = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {userDetails.userOrders.map((order) => (
+                  {currentData.map((order) => (
                     <tr key={order.idOrder}>
                       <td>{order.idOrder}</td>
-                      <td>{order.offer.kind}</td>
-                      <td>{order.offer.cost} zł</td>
-                      <td>{order.orderDate}</td>
-                      <td>{order.visitDate}</td>
+                      <td>{order.offer ? order.offer.kind : "brak"}</td>
+                      <td>{order.offer ? order.offer.cost + " zł" : "brak"}</td>
+                      <td>{order.orderDate ? order.orderDate : "brak"}</td>
+                      <td>
+                        {order.visitDate
+                          ? formatVisitDate(order.visitDate)
+                          : "brak"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {totalPages > 1 && (
+                <nav className="pagination justify-content-center">
+                  <ul className="pagination">
+                    {[...Array(totalPages)].map((_, index) => (
+                      <li
+                        key={index + 1}
+                        className={`page-item ${
+                          index + 1 === currentPage ? "active" : ""
+                        }`}
+                      >
+                        <button
+                          className="page-link"
+                          onClick={() => handlePageClick(index + 1)}
+                        >
+                          {index + 1}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              )}
             </>
           )}
         </div>

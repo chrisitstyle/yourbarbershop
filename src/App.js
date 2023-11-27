@@ -15,6 +15,7 @@ import Profile from "./pages/Profile.jsx";
 import AdminPanel from "./adminpages/AdminPanel.jsx";
 import EditOffer from "./adminpages/EditOffer.jsx";
 import EditUser from "./adminpages/EditUser.jsx";
+import RegisterOrderLogged from "./pages/RegisterOrderLogged.jsx";
 
 function App() {
   return (
@@ -39,6 +40,11 @@ function App() {
               path="/registerorderwithoutaccount"
               element={<RegisterOrderWithoutAcc />}
             ></Route>
+            <Route
+              exact
+              path="/registerorderlogged"
+              element={<RegisterOrderLogged />}
+            />
           </Routes>
           <Footer />
         </Router>

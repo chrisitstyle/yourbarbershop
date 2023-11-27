@@ -61,7 +61,11 @@ const Navbar = () => {
               <Link
                 className="nav-link active custom-nav-link"
                 aria-current="page"
-                to="/registerorderwithoutaccount"
+                to={
+                  isLoggedIn
+                    ? "/registerorderlogged"
+                    : "/registerorderwithoutaccount"
+                }
               >
                 Umów wizytę
               </Link>

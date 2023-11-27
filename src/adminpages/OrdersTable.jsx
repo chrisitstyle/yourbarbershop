@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { format, subHours } from "date-fns";
 const OrdersTable = ({ data, onDeleteOrder }) => {
   // const navigate = useNavigate();
   const ordersPerPage = 10;
@@ -8,7 +8,9 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
   const handlePageClick = (page) => {
     setCurrentPage(page);
   };
-
+  const formatVisitDate = (date) => {
+    return format(subHours(new Date(date), 1), "yyyy-MM-dd'T'HH:mm:ss");
+  };
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentData = data.slice(indexOfFirstOrder, indexOfLastOrder);
@@ -38,13 +40,19 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
               {currentData.map((order) => (
                 <tr key={order.idOrder}>
                   <td>{order.idOrder}</td>
-                  <td>{order.user.firstname}</td>
-                  <td>{order.user.lastname}</td>
+                  <td>
+                    {order.user.firstname ? order.user.firstname : "brak"}
+                  </td>
+                  <td>{order.user.lastname ? order.user.lastname : "brak"}</td>
                   <td>{order.user.username}</td>
                   <td>{order.offer ? order.offer.kind : "brak"}</td>
                   <td>{order.offer ? order.offer.cost + " zł" : "brak"}</td>
                   <td>{order.orderDate ? order.orderDate : "brak"}</td>
-                  <td>{order.visitDate ? order.visitDate : "brak"}</td>
+                  <td>
+                    {order.visitDate
+                      ? formatVisitDate(order.visitDate)
+                      : "brak"}
+                  </td>
                   <td>
                     <button className="btn btn-warning">Edytuj</button>
                     <button
@@ -68,12 +76,12 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
                       index + 1 === currentPage ? "active" : ""
                     }`}
                   >
-                    <a
+                    <button
                       className="page-link"
                       onClick={() => handlePageClick(index + 1)}
                     >
                       {index + 1}
-                    </a>
+                    </button>
                   </li>
                 ))}
               </ul>
