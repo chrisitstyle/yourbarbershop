@@ -97,10 +97,10 @@ const Register = () => {
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn btn-primary mx-auto d-block">
                 Załóż konto
               </button>
-              <p className="mt-3">
+              <p className="mt-3 text-center">
                 Masz konto? <Link to="/login">Zaloguj się</Link>
               </p>
             </form>

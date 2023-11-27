@@ -35,7 +35,7 @@ const RegisterOrderWithoutAcc = () => {
 
   return (
     <>
-      <div className="container mt-5">
+      <div className="container mt-2">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
             <h4 className="text-center">Umów wizytę</h4>
@@ -115,7 +115,7 @@ const RegisterOrderWithoutAcc = () => {
               <button type="submit" className="btn btn-primary mx-auto d-block">
                 Umów wizytę!
               </button>
-              <p className="mt-3 text-center">
+              <p className="mt-2 text-center">
                 Nie masz konta? <Link to="/register">Zarejestruj się</Link>
               </p>
             </form>
