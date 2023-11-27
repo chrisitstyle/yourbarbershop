@@ -1,5 +1,6 @@
 package pl.barbershopproject.barbershop.model;
 
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -28,5 +29,6 @@ public class Order {
     private LocalDateTime orderDate;
 
     @Column (name = "visit_date")
+
     private LocalDateTime visitDate;
 }
