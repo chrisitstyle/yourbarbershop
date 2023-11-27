@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 
 const RegisterOrderWithoutAcc = () => {
@@ -6,6 +7,7 @@ const RegisterOrderWithoutAcc = () => {
   const [lastname, setLastName] = useState("");
   const [phonenumber, setPhoneNumber] = useState("");
   const [selectedOffer, setSelectedOffer] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
   const [offers, setOffers] = useState([]);
 
   useEffect(() => {
@@ -25,6 +27,7 @@ const RegisterOrderWithoutAcc = () => {
     e.preventDefault();
 
     console.log("Selected offer:", selectedOffer);
+    console.log("Selected date:", selectedDate);
     console.log("First name:", firstname);
     console.log("Last name:", lastname);
     console.log("PhoneNumber:", phonenumber);
@@ -35,6 +38,7 @@ const RegisterOrderWithoutAcc = () => {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
+            <h4 className="text-center">Umów wizytę</h4>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="inputfirstname" className="form-label">
@@ -94,9 +98,26 @@ const RegisterOrderWithoutAcc = () => {
                   ))}
                 </select>
               </div>
-              <button type="submit" className="btn btn-primary">
+              <div className="mb-3">
+                <label htmlFor="selectdate" className="form-label">
+                  Wybierz datę
+                </label>
+                <input
+                  type="date"
+                  className="form-control"
+                  id="selectdate"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  required
+                />
+              </div>
+              <button type="submit" className="btn btn-primary mx-auto d-block">
                 Umów wizytę!
               </button>
+              <p className="mt-3 text-center">
+                Nie masz konta? <Link to="/register">Zarejestruj się</Link>
+              </p>
             </form>
           </div>
         </div>

@@ -40,6 +40,7 @@ const Login = () => {
     <div className="container mt-5">
       <div className="row justify-content-center">
         <div className="col-md-4 border p-3 ">
+          <h4 className="text-center">Logowanie</h4>
           <form onSubmit={handleLogin}>
             <div className="mb-3">
               {loginError && (
@@ -91,7 +92,7 @@ const Login = () => {
                 Checkbox
               </label>
             </div>
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary mx-auto d-block">
               Zaloguj
             </button>
             <p className="mt-3">

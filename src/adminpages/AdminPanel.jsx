@@ -1,12 +1,14 @@
+// AdminPanel.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import * as api from "../api/api.js";
 import OffersTable from "./OffersTable";
 import AddOffer from "./AddOffer";
 import UsersTable from "./UsersTable";
 import AddUser from "./AddUser";
+import OrdersTable from "./OrdersTable";
 import { useAuth } from "../AuthContext";
 import Button from "../components/Button";
-import OrdersTable from "./OrdersTable";
+
 const AdminPanel = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
@@ -19,23 +21,19 @@ const AdminPanel = () => {
   const [showOfferTable, setShowOfferTable] = useState(false);
   const [showOrderTable, setShowOrderTable] = useState(false);
   const [showAddOfferForm, setShowAddOfferForm] = useState(false);
+
   const loadOffers = useCallback(async () => {
     try {
-      const result = await axios.get("http://localhost:8080/offers/get");
-      setOffers(result.data);
+      const offersData = await api.getOffers();
+      setOffers(offersData);
     } catch (error) {
       console.error("Error loading offers:", error);
     }
   }, []);
+
   const handleAddOffer = async (newOffer) => {
     try {
-      await axios.post("http://localhost:8080/offers/add", newOffer, {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      });
-
+      await api.addOffer(newOffer, user.token);
       loadOffers();
       handleToggleTable("offers");
     } catch (error) {
@@ -45,12 +43,7 @@ const AdminPanel = () => {
 
   const handleDeleteOffer = async (idOffer) => {
     try {
-      await axios.delete(`http://localhost:8080/offers/delete/${idOffer}`, {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      });
+      await api.deleteOffer(idOffer, user.token);
       setOffers((prevOffers) =>
         prevOffers.filter((offer) => offer.idOffer !== idOffer)
       );
@@ -61,13 +54,8 @@ const AdminPanel = () => {
 
   const loadUsers = useCallback(async () => {
     try {
-      const result = await axios.get("http://localhost:8080/users/get", {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      });
-      setUsers(result.data);
+      const usersData = await api.getUsers(user.token);
+      setUsers(usersData);
     } catch (error) {
       console.error("Error loading users: ", error);
     }
@@ -75,49 +63,38 @@ const AdminPanel = () => {
 
   const handleAddUser = async (newUser) => {
     try {
-      await axios.post("http://localhost:8080/register", newUser);
+      await api.addUser(newUser);
       loadUsers();
-      handleToggleTable("users"); // switch to table user after added user
+      handleToggleTable("users");
     } catch (error) {
       console.error("Error adding user:", error);
     }
   };
+
   const handleDeleteUser = async (idUser) => {
     try {
-      await axios.delete(`http://localhost:8080/users/delete/${idUser}`, {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      });
+      await api.deleteUser(idUser, user.token);
       setUsers((prevUsers) =>
         prevUsers.filter((user) => user.idUser !== idUser)
       );
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
   };
 
   const loadOrders = useCallback(async () => {
     try {
-      const result = await axios.get("http://localhost:8080/orders/get", {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      });
-      setOrders(result.data);
-      console.log("Orders:", result.data); // Dodaj to polecenie, jeśli chcesz zobaczyć zamówienia w konsoli
+      const ordersData = await api.getOrders(user.token);
+      setOrders(ordersData);
+      console.log("Orders:", ordersData);
     } catch (error) {
       console.error("Error loading orders:", error);
     }
   }, [user]);
+
   const handleDeleteOrder = async (idOrder) => {
     try {
-      await axios.delete(`http://localhost:8080/orders/delete/${idOrder}`, {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      });
+      await api.deleteOrder(idOrder, user.token);
       setOrders((prevOrders) =>
         prevOrders.filter((order) => order.idOrder !== idOrder)
       );
@@ -143,11 +120,10 @@ const AdminPanel = () => {
 
   const handleToggleTable = (table) => {
     if (table === "users") {
-      // check user table if is visible
       setSelectedTable((prev) => (prev === table ? null : table));
       setActiveButton(table);
       setShowAddUserForm(false);
-      setShowUserTable((prev) => !prev); // if user table was visible then hid, if not then show
+      setShowUserTable((prev) => !prev);
     } else if (table === "offers") {
       setSelectedTable((prev) => (prev === table ? null : table));
       setActiveButton(table);
@@ -214,16 +190,6 @@ const AdminPanel = () => {
         </div>
 
         <div className="dropdown">
-          {/* <button
-            className={`btn btn-light dropdown-toggle`}
-            type="button"
-            id="servicesDropdown"
-            data-bs-toggle="dropdown"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
-            Użytkownicy
-          </button> */}
           {<Button />}
           <div className="dropdown-menu" aria-labelledby="usersDropdown">
             <button
