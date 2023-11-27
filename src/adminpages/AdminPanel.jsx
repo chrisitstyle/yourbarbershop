@@ -86,7 +86,6 @@ const AdminPanel = () => {
     try {
       const ordersData = await api.getOrders(user.token);
       setOrders(ordersData);
-      console.log("Orders:", ordersData);
     } catch (error) {
       console.error("Error loading orders:", error);
     }

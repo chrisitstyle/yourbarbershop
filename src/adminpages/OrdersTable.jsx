@@ -1,16 +1,30 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { format, subHours } from "date-fns";
+
 const OrdersTable = ({ data, onDeleteOrder }) => {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const ordersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
   const handlePageClick = (page) => {
     setCurrentPage(page);
   };
-  const formatVisitDate = (date) => {
-    return format(subHours(new Date(date), 1), "yyyy-MM-dd'T'HH:mm:ss");
+
+  const handleEditClick = (order) => {
+    navigate(`/adminpanel/editorder/${order.idOrder}`, {
+      state: { orderData: order },
+    });
   };
+
+  const formatVisitDate = (date) => {
+    return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
+  };
+
+  const formatOrderDate = (date) => {
+    return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
+  };
+
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentData = data.slice(indexOfFirstOrder, indexOfLastOrder);
@@ -26,7 +40,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
             <thead>
               <tr>
                 <th scope="col">Identyfikator zamówienia</th>
-                <th scope="col">Imie</th>
+                <th scope="col">Imię</th>
                 <th scope="col">Nazwisko</th>
                 <th scope="col">Email</th>
                 <th scope="col">Usługa</th>
@@ -40,27 +54,40 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
               {currentData.map((order) => (
                 <tr key={order.idOrder}>
                   <td>{order.idOrder}</td>
-                  <td>
-                    {order.user.firstname ? order.user.firstname : "brak"}
-                  </td>
-                  <td>{order.user.lastname ? order.user.lastname : "brak"}</td>
+                  <td>{order.user.firstname || "brak"}</td>
+                  <td>{order.user.lastname || "brak"}</td>
                   <td>{order.user.username}</td>
-                  <td>{order.offer ? order.offer.kind : "brak"}</td>
+                  <td>{order.offer ? order.offer.kind || "brak" : "brak"}</td>
                   <td>{order.offer ? order.offer.cost + " zł" : "brak"}</td>
-                  <td>{order.orderDate ? order.orderDate : "brak"}</td>
+                  <td>
+                    {order.orderDate
+                      ? formatOrderDate(order.orderDate)
+                      : "brak"}
+                  </td>
                   <td>
                     {order.visitDate
                       ? formatVisitDate(order.visitDate)
                       : "brak"}
                   </td>
                   <td>
-                    <button className="btn btn-warning">Edytuj</button>
-                    <button
-                      className="btn btn-danger mx-2"
-                      onClick={() => onDeleteOrder(order.idOrder)}
-                    >
-                      Usuń
-                    </button>
+                    <div className="d-flex">
+                      <button
+                        className="btn btn-warning"
+                        style={{ marginRight: "6px" }}
+                        onClick={() => {
+                          handleEditClick(order);
+                        }}
+                      >
+                        Edytuj
+                      </button>
+                      <button
+                        className="btn btn-danger"
+                        style={{ marginRight: "-3px" }}
+                        onClick={() => onDeleteOrder(order.idOrder)}
+                      >
+                        Usuń
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

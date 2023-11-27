@@ -27,9 +27,12 @@ const Profile = () => {
   };
 
   const formatVisitDate = (date) => {
-    return format(subHours(new Date(date), 1), "yyyy-MM-dd'T'HH:mm:ss");
+    return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
   };
 
+  const formatOrderDate = (date) => {
+    return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
+  };
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -84,7 +87,11 @@ const Profile = () => {
                       <td>{order.idOrder}</td>
                       <td>{order.offer ? order.offer.kind : "brak"}</td>
                       <td>{order.offer ? order.offer.cost + " zł" : "brak"}</td>
-                      <td>{order.orderDate ? order.orderDate : "brak"}</td>
+                      <td>
+                        {order.orderDate
+                          ? formatOrderDate(order.orderDate)
+                          : "brak"}
+                      </td>
                       <td>
                         {order.visitDate
                           ? formatVisitDate(order.visitDate)

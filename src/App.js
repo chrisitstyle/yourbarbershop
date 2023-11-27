@@ -16,6 +16,7 @@ import AdminPanel from "./adminpages/AdminPanel.jsx";
 import EditOffer from "./adminpages/EditOffer.jsx";
 import EditUser from "./adminpages/EditUser.jsx";
 import RegisterOrderLogged from "./pages/RegisterOrderLogged.jsx";
+import EditOrder from "./adminpages/EditOrder.jsx";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             <Route exact path="/adminpanel" element={<AdminPanel />}></Route>
             <Route path="/adminpanel/editoffer/:id" element={<EditOffer />} />
             <Route path="/adminpanel/edituser/:id" element={<EditUser />} />
+            <Route path="/adminpanel/editorder/:id" element={<EditOrder />} />
 
             <Route
               exact
