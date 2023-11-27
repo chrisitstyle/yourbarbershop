@@ -51,7 +51,7 @@ const Offer = () => {
           <tbody>
             {currentOffers.map((offer, index) => (
               <tr key={offer.idOffer}>
-                <td className="text-center">{index + 1}</td>
+                <td className="text-center">{offer.idOffer}</td>
                 <td className="text-center">{offer.kind}</td>
                 <td className="text-center">{offer.cost} zł</td>
               </tr>
