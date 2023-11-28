@@ -3,14 +3,14 @@ package pl.barbershopproject.barbershop.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+
+import org.springframework.web.bind.annotation.*;
 import pl.barbershopproject.barbershop.model.GuestOrder;
 import pl.barbershopproject.barbershop.service.GuestOrderService;
 
-@Controller
+import java.util.List;
+
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/guestorders")
 public class GuestOrderController {
@@ -28,4 +28,12 @@ public class GuestOrderController {
         return response;
     }
 
+    @GetMapping("/get")
+    public List<GuestOrder> getAllGuestOrders(){
+        return guestOrderService.getAllGuestOrders();
+    }
+    @GetMapping("/get/{idGuestOrder}")
+    public GuestOrder getGuestOrder(@PathVariable long idGuestOrder){
+        return guestOrderService.getGuestOrder(idGuestOrder);
+    }
 }

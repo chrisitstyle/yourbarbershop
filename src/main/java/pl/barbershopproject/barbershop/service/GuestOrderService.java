@@ -5,7 +5,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import pl.barbershopproject.barbershop.model.GuestOrder;
+import pl.barbershopproject.barbershop.model.Order;
 import pl.barbershopproject.barbershop.repository.GuestOrderRepository;
+
+import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -17,4 +21,12 @@ public class GuestOrderService {
         GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
         return ResponseEntity.status(HttpStatus.CREATED).body("Zamówienie bez rejestracji konta zostało dodane.");
     }
+
+    public List<GuestOrder> getAllGuestOrders (){
+        return guestOrderRepository.findAll();
+    }
+    public GuestOrder getGuestOrder(long idGuestOrder){
+        return guestOrderRepository.findById(idGuestOrder).orElseThrow(NoSuchElementException::new);
+    }
+
 }
