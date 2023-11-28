@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import { Alert } from "react-bootstrap";
 import axios from "axios";
 
 const EditUser = () => {
@@ -8,6 +9,7 @@ const EditUser = () => {
   const location = useLocation();
   const userData = location.state?.userData;
   const navigate = useNavigate();
+  const [editUserError, setEditUserError] = useState(false);
 
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
@@ -58,22 +60,27 @@ const EditUser = () => {
       if (response.status === 200) {
         navigate("/adminpanel");
       } else {
-        console.error(
-          "Błąd podczas aktualizacji użytkownika:",
-          response.statusText
-        );
+        setEditUserError(true);
       }
     } catch (error) {
-      console.error("Błąd podczas aktualizacji użytkownika:", error.message);
+      setEditUserError(true);
     }
   };
 
   return (
     <>
       <div className="container mt-5">
-        <h2 className="text-center">Edycja użytkownika</h2>
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3 ">
+            <h4 className="text-center">Edycja użytkownika</h4>
+            <Alert
+              variant="danger"
+              show={editUserError}
+              onClose={() => setEditUserError(false)}
+              dismissible
+            >
+              Błąd podczas edytowania użytkownika. Spróbuj ponownie.
+            </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="inputfirstname" className="form-label">

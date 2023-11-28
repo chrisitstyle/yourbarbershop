@@ -4,6 +4,7 @@ import { useAuth } from "../AuthContext";
 import axios from "axios";
 import { getOffers } from "../api/api";
 import { format } from "date-fns-tz";
+import { Alert } from "react-bootstrap";
 
 const EditOrder = () => {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ const EditOrder = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
+  const [editOrderError, setEditOrderError] = useState(false);
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -90,7 +92,7 @@ const EditOrder = () => {
 
       navigate("/adminpanel");
     } catch (error) {
-      console.error("Błąd podczas edycji zamówienia:", error);
+      setEditOrderError(true);
     }
   };
 
@@ -102,6 +104,14 @@ const EditOrder = () => {
             <h4 className="text-center">
               Edycja wizyty o id {orderData.idOrder}
             </h4>
+            <Alert
+              variant="danger"
+              show={editOrderError}
+              onClose={() => setEditOrderError(false)}
+              dismissible
+            >
+              Błąd podczas edytowania wizyty. Spróbuj ponownie.
+            </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="selectOffer" className="form-label">

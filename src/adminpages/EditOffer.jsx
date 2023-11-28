@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import { Alert } from "react-bootstrap";
 import axios from "axios";
 
 const EditOffer = () => {
@@ -11,6 +12,7 @@ const EditOffer = () => {
 
   const [kind, setKind] = useState("");
   const [cost, setCost] = useState("");
+  const [editOfferError, setEditOfferError] = useState(false);
 
   useEffect(() => {
     if (offerData) {
@@ -38,22 +40,29 @@ const EditOffer = () => {
       );
 
       if (response.status === 200) {
-        console.log("Pomyślnie zaktualizowano ofertę");
         navigate("/adminpanel");
       } else {
-        console.error("Błąd podczas aktualizacji oferty:", response.statusText);
+        setEditOfferError(true);
       }
     } catch (error) {
-      console.error("Błąd podczas aktualizacji oferty:", error.message);
+      setEditOfferError(true);
     }
   };
 
   return (
     <>
-      <h2 className="text-center">Edytowanie oferty</h2>
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
+            <h2 className="text-center">Edytowanie oferty</h2>
+            <Alert
+              variant="danger"
+              show={editOfferError}
+              onClose={() => setEditOfferError(false)}
+              dismissible
+            >
+              Błąd podczas edytowania oferty. Spróbuj ponownie.
+            </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="inputkind" className="form-label">

@@ -2,14 +2,15 @@ import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import { Alert } from "react-bootstrap";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loginError, setLoginError] = useState(null);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const registrationSuccess = searchParams.get("registrationSuccess");
+  const [loginError, setLoginError] = useState(null);
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -32,7 +33,7 @@ const Login = () => {
 
       navigate("/");
     } catch (error) {
-      setLoginError("Nieprawidłowy adres e-mail lub hasło");
+      setLoginError("Nie udało się zalogować");
     }
   };
 
@@ -43,16 +44,27 @@ const Login = () => {
           <h4 className="text-center">Logowanie</h4>
           <form onSubmit={handleLogin}>
             <div className="mb-3">
-              {loginError && (
-                <div className="alert alert-danger" role="alert">
-                  {loginError}
-                </div>
-              )}
               {registrationSuccess && (
-                <div className="alert alert-success" role="alert">
+                <Alert
+                  variant="success"
+                  onClose={() => {}}
+                  dismissible
+                  className="text-center"
+                >
                   Konto zostało pomyślnie zarejestrowane. Zaloguj się.
-                </div>
+                </Alert>
               )}
+              {loginError && (
+                <Alert
+                  variant="danger"
+                  onClose={() => setLoginError(null)}
+                  dismissible
+                  className="text-center"
+                >
+                  {loginError}
+                </Alert>
+              )}
+
               <label htmlFor="inputEmail" className="form-label">
                 Adres e-mail
               </label>

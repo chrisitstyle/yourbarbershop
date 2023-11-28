@@ -2,19 +2,19 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../AuthContext";
 import { useNavigate } from "react-router-dom";
-
 import { utcToZonedTime, zonedTimeToUtc, format } from "date-fns-tz";
-
+import { Alert } from "react-bootstrap";
 import * as api from "../api/api.js";
 
 const RegisterOrderLogged = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [offers, setOffers] = useState([]);
   const [selectedOffer, setSelectedOffer] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -30,8 +30,6 @@ const RegisterOrderLogged = () => {
   }, []);
 
   const formatSelectedDateTime = (date, hour, minute) => {
-    console.log("Input date, hour, minute:", date, hour, minute);
-
     // obiekt dla UTC
     const selectedDateTimeUTC = new Date(
       `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(
@@ -93,15 +91,17 @@ const RegisterOrderLogged = () => {
       );
       navigate(`/profile/${user.id}`);
     } catch (error) {
-      console.error("Błąd podczas przesyłania zamówienia:", error);
+      setShowErrorAlert(true);
     }
   };
 
   const getCurrentDateTime = () => {
-    return format(
-      utcToZonedTime(new Date(), "Europe/Warsaw"),
-      "yyyy-MM-dd'T'HH:mm:ss"
+    const currentDateTimeUTC = utcToZonedTime(new Date(), "Europe/Warsaw");
+    const adjustedDateTimeUTC = new Date(
+      currentDateTimeUTC.getTime() + 60 * 60 * 1000 // + 1 godzina
     );
+
+    return format(adjustedDateTimeUTC, "yyyy-MM-dd'T'HH:mm:ss");
   };
 
   return (
@@ -110,6 +110,14 @@ const RegisterOrderLogged = () => {
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
             <h4 className="text-center">Umów wizytę</h4>
+            <Alert
+              variant="danger"
+              show={showErrorAlert}
+              onClose={() => setShowErrorAlert(false)}
+              dismissible
+            >
+              Błąd podczas umawiania wizyty. Spróbuj ponownie.
+            </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="selectoffer" className="form-label">

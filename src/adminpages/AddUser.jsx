@@ -17,7 +17,6 @@ const AddUser = ({ onSubmit }) => {
       role,
     };
 
-    // using function as prop
     onSubmit(newUser);
     setFirstName("");
     setLastName("");
