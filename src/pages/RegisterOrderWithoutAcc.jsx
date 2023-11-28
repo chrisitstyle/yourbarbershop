@@ -1,36 +1,116 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { utcToZonedTime, format } from "date-fns-tz";
+import Alert from "react-bootstrap/Alert";
 import axios from "axios";
-
+import * as api from "../api/api.js";
 const RegisterOrderWithoutAcc = () => {
+  const navigate = useNavigate();
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
   const [phonenumber, setPhoneNumber] = useState("");
+  const [offers, setOffers] = useState([]);
   const [selectedOffer, setSelectedOffer] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
-  const [offers, setOffers] = useState([]);
+  const [selectedHour, setSelectedHour] = useState(8);
+  const [selectedMinute, setSelectedMinute] = useState(0);
+  const [showAlert, setShowAlert] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
+
+  // Funkcja do resetowania pól formularza
+  const setInitialState = () => {
+    setFirstName("");
+    setLastName("");
+    setPhoneNumber("");
+    setSelectedOffer("");
+    setSelectedDate("");
+    setSelectedHour(8);
+    setSelectedMinute(0);
+  };
 
   useEffect(() => {
-    loadOffers();
+    const fetchOffers = async () => {
+      try {
+        const offersData = await api.getOffers();
+        setOffers(offersData);
+      } catch (error) {
+        console.error("Błąd ładowania ofert:", error);
+      }
+    };
+
+    fetchOffers();
   }, []);
 
-  const loadOffers = async () => {
+  const formatSelectedDateTime = (date, hour, minute) => {
+    console.log("Input date, hour, minute:", date, hour, minute);
+
+    const selectedDateTimeUTC = new Date(
+      `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(
+        2,
+        "0"
+      )}:00.000Z`
+    );
+
+    const offset = new Date().getTimezoneOffset();
+
+    const selectedDateTimeLocal = new Date(
+      selectedDateTimeUTC.getTime() - offset * 60 * 1000
+    );
+
+    return selectedDateTimeLocal.toISOString();
+  };
+
+  const handleOfferChange = (e) => {
+    const selectedOfferId = e.target.value;
+    setSelectedOffer(selectedOfferId);
+  };
+
+  const handleHourChange = (e) => {
+    setSelectedHour(parseInt(e.target.value, 10));
+  };
+
+  const handleMinuteChange = (e) => {
+    setSelectedMinute(parseInt(e.target.value, 10));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     try {
-      const result = await axios.get("http://localhost:8080/offers/get");
-      setOffers(result.data);
+      const response = await axios.post(
+        "http://localhost:8080/guestorders/add",
+        {
+          firstname,
+          lastname,
+          phonenumber,
+
+          offer: {
+            idOffer: selectedOffer,
+          },
+
+          orderDate: getCurrentDateTime(),
+          visitDate: formatSelectedDateTime(
+            selectedDate,
+            selectedHour,
+            selectedMinute
+          ),
+        }
+      );
+
+      setInitialState();
+      setShowAlert(true);
     } catch (error) {
-      console.error("Error loading offers:", error);
+      setShowErrorAlert(true);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const getCurrentDateTime = () => {
+    const currentDateTimeUTC = utcToZonedTime(new Date(), "Europe/Warsaw");
 
-    console.log("Selected offer:", selectedOffer);
-    console.log("Selected date:", selectedDate);
-    console.log("First name:", firstname);
-    console.log("Last name:", lastname);
-    console.log("PhoneNumber:", phonenumber);
+    currentDateTimeUTC.setHours(currentDateTimeUTC.getHours() + 1);
+
+    return format(currentDateTimeUTC, "yyyy-MM-dd'T'HH:mm:ss");
   };
 
   return (
@@ -39,10 +119,26 @@ const RegisterOrderWithoutAcc = () => {
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
             <h4 className="text-center">Umów wizytę</h4>
+            <Alert
+              variant="success"
+              show={showAlert}
+              onClose={() => setShowAlert(false)}
+              dismissible
+            >
+              Udało się umówić wizytę!
+            </Alert>
+            <Alert
+              variant="danger"
+              show={showErrorAlert}
+              onClose={() => setShowErrorAlert(false)}
+              dismissible
+            >
+              Błąd podczas umawiania wizyty. Spróbuj ponownie.
+            </Alert>
             <form onSubmit={handleSubmit}>
-              <div className="mb-3">
+              <div className="mb-2">
                 <label htmlFor="inputfirstname" className="form-label">
-                  Imie
+                  Imię
                 </label>
                 <input
                   type="text"
@@ -53,7 +149,7 @@ const RegisterOrderWithoutAcc = () => {
                   required
                 />
               </div>
-              <div className="mb-3">
+              <div className="mb-2">
                 <label htmlFor="inputlastname" className="form-label">
                   Nazwisko
                 </label>
@@ -66,7 +162,7 @@ const RegisterOrderWithoutAcc = () => {
                   required
                 />
               </div>
-              <div className="mb-3">
+              <div className="mb-2">
                 <label htmlFor="inputphonenumber" className="form-label">
                   Numer telefonu
                 </label>
@@ -79,7 +175,7 @@ const RegisterOrderWithoutAcc = () => {
                   required
                 />
               </div>
-              <div className="mb-3">
+              <div className="mb-2">
                 <label htmlFor="selectoffer" className="form-label">
                   Wybierz usługę
                 </label>
@@ -87,7 +183,7 @@ const RegisterOrderWithoutAcc = () => {
                   className="form-select"
                   id="selectoffer"
                   value={selectedOffer}
-                  onChange={(e) => setSelectedOffer(e.target.value)}
+                  onChange={handleOfferChange}
                   required
                 >
                   <option value="" disabled></option>
@@ -98,7 +194,7 @@ const RegisterOrderWithoutAcc = () => {
                   ))}
                 </select>
               </div>
-              <div className="mb-3">
+              <div className="mb-2">
                 <label htmlFor="selectdate" className="form-label">
                   Wybierz datę
                 </label>
@@ -111,6 +207,39 @@ const RegisterOrderWithoutAcc = () => {
                   min={new Date().toISOString().split("T")[0]}
                   required
                 />
+              </div>
+              <div className="mb-2">
+                <label htmlFor="selecttime" className="form-label">
+                  Wybierz godzinę i minutę
+                </label>
+                <div className="d-flex">
+                  <select
+                    className="form-select me-1"
+                    id="selecthour"
+                    value={selectedHour}
+                    onChange={handleHourChange}
+                    required
+                  >
+                    {[...Array(12).keys()].map((hour) => (
+                      <option key={hour} value={hour + 8}>
+                        {String(hour + 8).padStart(2, "0")}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="form-select me-1"
+                    id="selectminute"
+                    value={selectedMinute}
+                    onChange={handleMinuteChange}
+                    required
+                  >
+                    {[...Array(2).keys()].map((half) => (
+                      <option key={half * 30} value={half * 30}>
+                        {String(half * 30).padStart(2, "0")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <button type="submit" className="btn btn-primary mx-auto d-block">
                 Umów wizytę!

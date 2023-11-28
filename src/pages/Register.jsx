@@ -27,8 +27,7 @@ const Register = () => {
       navigate("/login?registrationSuccess=true");
     } catch (error) {
       // Obsługa błędów rejestracji
-      console.error("Błąd rejestracji", error.response.data);
-      setRegisterError("Konto z takim adresem email już istnieje");
+      setRegisterError("Błąd przy zakładaniu konta");
     }
   };
 
@@ -41,7 +40,7 @@ const Register = () => {
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 {registerError && (
-                  <div className="alert alert-danger" role="alert">
+                  <div className="alert alert-danger text-center" role="alert">
                     {registerError}
                   </div>
                 )}
