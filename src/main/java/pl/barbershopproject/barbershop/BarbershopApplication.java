@@ -41,6 +41,11 @@ public class BarbershopApplication {
 				registry.addMapping("/orders/**").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
 						.allowedHeaders("*")
 						.allowCredentials(true);
+				registry.addMapping("/guestorders/add").allowedOrigins(LOCALHOST).allowedMethods("POST","OPTIONS");
+				registry.addMapping("/guestorders/**").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+						.allowedHeaders("*")
+						.allowCredentials(true);
+
 			}
 		};
 	}
