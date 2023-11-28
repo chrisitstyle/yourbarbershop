@@ -29,7 +29,21 @@ public class GuestOrderService {
     public GuestOrder getGuestOrder(long idGuestOrder){
         return guestOrderRepository.findById(idGuestOrder).orElseThrow(NoSuchElementException::new);
     }
-
+    @Transactional
+    public ResponseEntity<GuestOrder> updateGuestOrder(GuestOrder updatedGuestOrder, Long idGuestOrder) {
+        return guestOrderRepository.findById(idGuestOrder)
+                .map(guestOrder -> {
+                    guestOrder.setFirstname(updatedGuestOrder.getFirstname());
+                    guestOrder.setLastname(updatedGuestOrder.getLastname());
+                    guestOrder.setPhonenumber(updatedGuestOrder.getPhonenumber());
+                    guestOrder.setOffer(updatedGuestOrder.getOffer());
+                    guestOrder.setOrderDate(updatedGuestOrder.getOrderDate());
+                    guestOrder.setVisitDate(updatedGuestOrder.getVisitDate());
+                    GuestOrder updatedGuestOrderEntity = guestOrderRepository.save(guestOrder);
+                    return ResponseEntity.ok(updatedGuestOrderEntity);
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
 
     @Transactional
     public void deleteGuestOrderById(long idGuestOrder) {
