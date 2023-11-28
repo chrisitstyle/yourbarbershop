@@ -37,6 +37,7 @@ public class SecurityWebConfig {
                                 .requestMatchers("/offers/delete/**").hasAuthority(Role.ADMIN.toString())
                                 .requestMatchers("/orders/add").authenticated()
                                 .requestMatchers("/orders/**").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers("/guestorders/**").permitAll()
 
                                 .anyRequest().authenticated()
                 )
