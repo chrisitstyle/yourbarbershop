@@ -9,6 +9,7 @@ import pl.barbershopproject.barbershop.model.GuestOrder;
 import pl.barbershopproject.barbershop.service.GuestOrderService;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,5 +36,15 @@ public class GuestOrderController {
     @GetMapping("/get/{idGuestOrder}")
     public GuestOrder getGuestOrder(@PathVariable long idGuestOrder){
         return guestOrderService.getGuestOrder(idGuestOrder);
+    }
+
+    @DeleteMapping("/delete/{idGuestOrder}")
+    public ResponseEntity<String> deleteGuestOrderById(@PathVariable long idGuestOrder) {
+        try {
+            guestOrderService.deleteGuestOrderById(idGuestOrder);
+            return new ResponseEntity<>("Zamówienie o ID " + idGuestOrder + " zostało usunięte.", HttpStatus.OK);
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
     }
 }
