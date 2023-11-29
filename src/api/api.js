@@ -12,6 +12,19 @@ export const registerUser = async (userData) => {
   }
 };
 
+export const loginUser = async (email, password) => {
+  try {
+    const response = await axios.post(`${apiUrl}/login`, {
+      email,
+      password,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getOffers = async () => {
   try {
     const result = await axios.get(`${apiUrl}/offers/get`);

@@ -57,19 +57,21 @@ const Navbar = () => {
                 Kontakt
               </Link>
             </li>
-            <li className="nav-item">
-              <Link
-                className="nav-link active custom-nav-link"
-                aria-current="page"
-                to={
-                  isLoggedIn
-                    ? "/registerorderlogged"
-                    : "/registerorderwithoutaccount"
-                }
-              >
-                Umów wizytę
-              </Link>
-            </li>
+            {(user?.role === "USER" || !isLoggedIn) && (
+              <li className="nav-item">
+                <Link
+                  className="nav-link active custom-nav-link"
+                  aria-current="page"
+                  to={
+                    isLoggedIn
+                      ? "/registerorderlogged"
+                      : "/registerorderwithoutaccount"
+                  }
+                >
+                  Umów wizytę
+                </Link>
+              </li>
+            )}
             <li className="nav-item dropdown">
               <a
                 className="nav-link dropdown-toggle custom-nav-link"
