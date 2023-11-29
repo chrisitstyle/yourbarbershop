@@ -17,7 +17,7 @@ const AdminPanel = () => {
   const [orders, setOrders] = useState([]);
   const [guestOrders, setGuestOrders] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
-  const [activeButton, setActiveButton] = useState(null);
+
   const [showUserTable, setShowUserTable] = useState(false);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
   const [showOfferTable, setShowOfferTable] = useState(false);
@@ -114,31 +114,23 @@ const AdminPanel = () => {
     }
   }, [user]);
   useEffect(() => {
-    if (selectedTable === "offers" && offers) {
-      loadOffers();
-    } else if (selectedTable === "users" && user) {
-      loadUsers();
-    } else if (selectedTable === "orders" && orders) {
-      loadOrders();
-    } else if (selectedTable === "guestorders" && guestOrders) {
-      loadGuestOrders();
-    }
+    selectedTable === "offers" && offers
+      ? loadOffers()
+      : selectedTable === "users" && user
+      ? loadUsers()
+      : selectedTable === "orders" && orders
+      ? loadOrders()
+      : selectedTable === "guestorders" && guestOrders && loadGuestOrders();
   }, [selectedTable, user, loadOffers, loadUsers, loadOrders, loadGuestOrders]);
-
-  const handleAddUserFormToggle = () => {
-    setShowAddUserForm(!showAddUserForm);
-    setShowUserTable(false);
-  };
 
   const handleToggleTable = (table) => {
     if (table === "users") {
       setSelectedTable((prev) => (prev === table ? null : table));
-      setActiveButton(table);
+
       setShowAddUserForm(false);
       setShowUserTable((prev) => !prev);
     } else if (table === "offers") {
       setSelectedTable((prev) => (prev === table ? null : table));
-      setActiveButton(table);
 
       setShowAddOfferForm(false);
       setShowUserTable(false);
@@ -147,7 +139,6 @@ const AdminPanel = () => {
       setShowOfferTable((prev) => !prev);
     } else if (table === "orders") {
       setSelectedTable((prev) => (prev === table ? null : table));
-      setActiveButton(table);
 
       setShowAddOfferForm(false);
       setShowUserTable(false);
@@ -156,7 +147,6 @@ const AdminPanel = () => {
       setShowOfferTable((prev) => !prev);
     } else if (table === "guestorders") {
       setSelectedTable((prev) => (prev === table ? null : table));
-      setActiveButton(table);
 
       setShowAddOfferForm(false);
       setShowUserTable(false);
@@ -254,7 +244,7 @@ const AdminPanel = () => {
             aria-haspopup="true"
             aria-expanded="false"
           >
-            Zamówienia
+            Wizyty
           </button>
           <div className="dropdown-menu" aria-labelledby="servicesDropdown">
             <button
@@ -269,7 +259,7 @@ const AdminPanel = () => {
                 setShowGuestOrderTable(false);
               }}
             >
-              Pokaż zamówienia użytkowników
+              Pokaż wizyty użytkowników
             </button>
             <button
               type="button"
@@ -283,7 +273,7 @@ const AdminPanel = () => {
                 setShowGuestOrderTable(true);
               }}
             >
-              Pokaż zamówienia gości
+              Pokaż wizyty gości
             </button>
           </div>
         </div>

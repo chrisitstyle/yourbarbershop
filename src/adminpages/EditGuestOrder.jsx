@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-
-import { getOffers, updateOrder } from "../api/api";
+import { getOffers, updateGuestOrder } from "../api/api";
 import { format } from "date-fns-tz";
 import { Alert } from "react-bootstrap";
-
-const EditOrder = () => {
+const EditGuestOrder = () => {
   const { user } = useAuth();
   const location = useLocation();
-  const orderData = location.state?.orderData;
+  const guestOrderData = location.state?.guestOrderData;
   const navigate = useNavigate();
 
   const [offers, setOffers] = useState([]);
@@ -17,17 +15,19 @@ const EditOrder = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
-  const [editOrderError, setEditOrderError] = useState(false);
+  const [editGuestOrderError, setEditGuestOrderError] = useState(false);
 
   useEffect(() => {
     const fetchOffers = async () => {
       try {
         const offersData = await getOffers();
         setOffers(offersData);
-        setSelectedOffer(orderData?.offer?.idOffer || "");
-        setSelectedDate(format(new Date(orderData?.visitDate), "yyyy-MM-dd"));
-        const hours = new Date(orderData?.visitDate).getHours();
-        const minutes = new Date(orderData?.visitDate).getMinutes();
+        setSelectedOffer(guestOrderData?.offer?.idOffer || "");
+        setSelectedDate(
+          format(new Date(guestOrderData?.visitDate), "yyyy-MM-dd")
+        );
+        const hours = new Date(guestOrderData?.visitDate).getHours();
+        const minutes = new Date(guestOrderData?.visitDate).getMinutes();
         setSelectedHour(hours - 1);
         setSelectedMinute(minutes);
       } catch (error) {
@@ -36,7 +36,7 @@ const EditOrder = () => {
     };
 
     fetchOffers();
-  }, [orderData]);
+  }, [guestOrderData]);
 
   const formatSelectedDateTime = (date, hour, minute) => {
     const selectedDateTimeUTC = new Date(
@@ -66,12 +66,16 @@ const EditOrder = () => {
     e.preventDefault();
 
     try {
-      await updateOrder(
-        orderData.idOrder,
+      await updateGuestOrder(
+        guestOrderData.idGuestOrder,
         {
-          user: { idUser: orderData.user.idUser },
-          offer: { idOffer: selectedOffer },
-          orderDate: orderData.orderDate,
+          firstname: guestOrderData.firstname,
+          lastname: guestOrderData.lastname,
+          phonenumber: guestOrderData.phonenumber,
+          offer: {
+            idOffer: selectedOffer,
+          },
+          orderDate: guestOrderData.orderDate,
           visitDate: formatSelectedDateTime(
             selectedDate,
             selectedHour,
@@ -83,7 +87,7 @@ const EditOrder = () => {
 
       navigate("/adminpanel");
     } catch (error) {
-      setEditOrderError(true);
+      setEditGuestOrderError(true);
     }
   };
 
@@ -93,12 +97,12 @@ const EditOrder = () => {
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
             <h4 className="text-center">
-              Edycja wizyty o id {orderData.idOrder}
+              Edycja wizyty o id {guestOrderData.idGuestOrder}
             </h4>
             <Alert
               variant="danger"
-              show={editOrderError}
-              onClose={() => setEditOrderError(false)}
+              show={editGuestOrderError}
+              onClose={() => setEditGuestOrderError(false)}
               dismissible
             >
               Błąd podczas edytowania wizyty. Spróbuj ponownie.
@@ -115,8 +119,8 @@ const EditOrder = () => {
                   onChange={(e) => setSelectedOffer(e.target.value)}
                   required
                 >
-                  <option value={orderData.offer.idOffer}>
-                    {orderData.offer.kind} - {orderData.offer.cost} zł
+                  <option value={guestOrderData.offer.idOffer}>
+                    {guestOrderData.offer.kind} - {guestOrderData.offer.cost} zł
                   </option>
                   {offers.map((offer) => (
                     <option key={offer.idOffer} value={offer.idOffer}>
@@ -183,4 +187,4 @@ const EditOrder = () => {
   );
 };
 
-export default EditOrder;
+export default EditGuestOrder;

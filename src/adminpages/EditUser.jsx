@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { Alert } from "react-bootstrap";
-import axios from "axios";
+import { updateUser } from "../api/api";
 
 const EditUser = () => {
   const { user } = useAuth();
@@ -28,11 +28,11 @@ const EditUser = () => {
   const roles = ["USER", "ADMIN"];
 
   useEffect(() => {
-    // Jeśli rola użytkownika jest w tablicy, ustaw ją jako domyślną
+    // domyślna rola użytkownika
     if (userData && roles.includes(userData.role)) {
       setSelectedRole(userData.role);
     } else if (roles.includes(user.role)) {
-      // Jeśli rola użytkownika nie jest dostępna, ustaw rolę zalogowanego użytkownika
+      // ustawianie roli zalogowanego użytkownika
       setSelectedRole(user.role);
     }
   }, [user.role, userData]);
@@ -41,20 +41,15 @@ const EditUser = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.put(
-        `http://localhost:8080/users/update/${userData.idUser}`,
+      const response = await updateUser(
+        userData.idUser,
         {
           firstname,
           lastname,
           email,
           role: selectedRole,
         },
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        }
+        user.token
       );
 
       if (response.status === 200) {

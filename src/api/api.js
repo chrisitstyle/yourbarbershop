@@ -3,6 +3,15 @@ import axios from "axios";
 
 const apiUrl = "http://localhost:8080";
 
+export const registerUser = async (userData) => {
+  try {
+    const response = await axios.post(`${apiUrl}/register`, userData);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getOffers = async () => {
   try {
     const result = await axios.get(`${apiUrl}/offers/get`);
@@ -26,7 +35,24 @@ export const addOffer = async (newOffer, userToken) => {
     throw error;
   }
 };
+export const updateOffer = async (offerId, newData, token) => {
+  try {
+    const response = await axios.put(
+      `http://localhost:8080/offers/update/${offerId}`,
+      newData,
+      {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 export const deleteOffer = async (idOffer, userToken) => {
   try {
     await axios.delete(`${apiUrl}/offers/delete/${idOffer}`, {
@@ -65,6 +91,25 @@ export const addUser = async (newUser) => {
   }
 };
 
+export const updateUser = async (userId, newData, token) => {
+  try {
+    const response = await axios.put(
+      `http://localhost:8080/users/update/${userId}`,
+      newData,
+      {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const deleteUser = async (idUser, userToken) => {
   try {
     await axios.delete(`${apiUrl}/users/delete/${idUser}`, {
@@ -94,6 +139,25 @@ export const getOrders = async (userToken) => {
   }
 };
 
+export const updateOrder = async (orderId, newData, token) => {
+  try {
+    const response = await axios.put(
+      `http://localhost:8080/orders/update/${orderId}`,
+      newData,
+      {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const deleteOrder = async (idOrder, userToken) => {
   try {
     await axios.delete(`${apiUrl}/orders/delete/${idOrder}`, {
@@ -119,6 +183,26 @@ export const getGuestOrders = async (userToken) => {
     return result.data;
   } catch (error) {
     console.error("Error loading guest orders:", error);
+    throw error;
+  }
+};
+
+export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
+  try {
+    const response = await axios.put(
+      `${apiUrl}/guestorders/update/${idGuestOrder}`,
+      data,
+      {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error updating guest order:", error);
     throw error;
   }
 };

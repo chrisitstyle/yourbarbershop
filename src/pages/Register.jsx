@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { registerUser } from "../api/api";
 
 const Register = () => {
   const [firstname, setFirstName] = useState("");
@@ -15,18 +15,20 @@ const Register = () => {
     e.preventDefault();
 
     try {
-      // Wysyłanie zapytania POST do backendu w formie JSON
-      const response = await axios.post("http://localhost:8080/register", {
+      const response = await registerUser({
         firstname,
         lastname,
         email,
         password,
       });
-      console.log("Udana rejestracja", response.data);
-      setRegistrationSuccess(true);
-      navigate("/login?registrationSuccess=true");
+
+      if (response.status === 200) {
+        setRegistrationSuccess(true);
+        navigate("/login?registrationSuccess=true");
+      } else {
+        setRegisterError("Błąd przy zakładaniu konta");
+      }
     } catch (error) {
-      // Obsługa błędów rejestracji
       setRegisterError("Błąd przy zakładaniu konta");
     }
   };

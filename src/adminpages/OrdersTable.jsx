@@ -6,7 +6,11 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
   const navigate = useNavigate();
   const ordersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentData = data.slice(indexOfFirstOrder, indexOfLastOrder);
 
+  const totalPages = Math.ceil(data.length / ordersPerPage);
   const handlePageClick = (page) => {
     setCurrentPage(page);
   };
@@ -25,21 +29,15 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
     return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
   };
 
-  const indexOfLastOrder = currentPage * ordersPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentData = data.slice(indexOfFirstOrder, indexOfLastOrder);
-
-  const totalPages = Math.ceil(data.length / ordersPerPage);
-
   return (
     <div className="container text-center">
       <div className="py-4">
         <div>
-          <h2>Lista zamówień</h2>
+          <h2>Lista wizyt użytkowników</h2>
           <table className="table border shadow">
             <thead>
               <tr>
-                <th scope="col">Identyfikator zamówienia</th>
+                <th scope="col">Identyfikator wizyty</th>
                 <th scope="col">Imię</th>
                 <th scope="col">Nazwisko</th>
                 <th scope="col">Email</th>

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import { updateOffer } from "../api/api";
 import { Alert } from "react-bootstrap";
-import axios from "axios";
 
 const EditOffer = () => {
   const { user } = useAuth();
@@ -25,25 +25,8 @@ const EditOffer = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.put(
-        `http://localhost:8080/offers/update/${offerData.idOffer}`,
-        {
-          kind,
-          cost,
-        },
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        navigate("/adminpanel");
-      } else {
-        setEditOfferError(true);
-      }
+      await updateOffer(offerData.idOffer, { kind, cost }, user.token);
+      navigate("/adminpanel");
     } catch (error) {
       setEditOfferError(true);
     }
@@ -54,14 +37,14 @@ const EditOffer = () => {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
-            <h2 className="text-center">Edytowanie oferty</h2>
+            <h2 className="text-center">Edytowanie usługi</h2>
             <Alert
               variant="danger"
               show={editOfferError}
               onClose={() => setEditOfferError(false)}
               dismissible
             >
-              Błąd podczas edytowania oferty. Spróbuj ponownie.
+              Błąd podczas edytowania usługi. Spróbuj ponownie.
             </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
