@@ -18,10 +18,10 @@ const AddOffer = ({ onAddOffer, onCancel }) => {
 
   return (
     <>
-      <h2>Dodawanie oferty</h2>
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3 ">
+            <h4 className="text-center">Dodawanie oferty</h4>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="inputkind" className="form-label">

@@ -8,12 +8,14 @@ import AddUser from "./AddUser";
 import OrdersTable from "./OrdersTable";
 import { useAuth } from "../AuthContext";
 import Button from "../components/Button";
+import GuestOrdersTable from "./GuestOrdersTable.jsx";
 
 const AdminPanel = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [offers, setOffers] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [guestOrders, setGuestOrders] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
   const [activeButton, setActiveButton] = useState(null);
   const [showUserTable, setShowUserTable] = useState(false);
@@ -21,6 +23,7 @@ const AdminPanel = () => {
   const [showOfferTable, setShowOfferTable] = useState(false);
   const [showOrderTable, setShowOrderTable] = useState(false);
   const [showAddOfferForm, setShowAddOfferForm] = useState(false);
+  const [showGuestOrderTable, setShowGuestOrderTable] = useState(false);
 
   const loadOffers = useCallback(async () => {
     try {
@@ -102,6 +105,14 @@ const AdminPanel = () => {
     }
   };
 
+  const loadGuestOrders = useCallback(async () => {
+    try {
+      const guestOrdersData = await api.getGuestOrders(user.token);
+      setGuestOrders(guestOrdersData);
+    } catch (error) {
+      console.error("Error loading  guest orders:", error);
+    }
+  }, [user]);
   useEffect(() => {
     if (selectedTable === "offers" && offers) {
       loadOffers();
@@ -109,8 +120,10 @@ const AdminPanel = () => {
       loadUsers();
     } else if (selectedTable === "orders" && orders) {
       loadOrders();
+    } else if (selectedTable === "guestorders" && guestOrders) {
+      loadGuestOrders();
     }
-  }, [selectedTable, user, loadOffers, loadUsers, loadOrders]);
+  }, [selectedTable, user, loadOffers, loadUsers, loadOrders, loadGuestOrders]);
 
   const handleAddUserFormToggle = () => {
     setShowAddUserForm(!showAddUserForm);
@@ -141,6 +154,14 @@ const AdminPanel = () => {
       setShowAddUserForm(false);
 
       setShowOfferTable((prev) => !prev);
+    } else if (table === "guestorders") {
+      setSelectedTable((prev) => (prev === table ? null : table));
+      setActiveButton(table);
+
+      setShowAddOfferForm(false);
+      setShowUserTable(false);
+      setShowAddUserForm(false);
+      setShowGuestOrderTable((prev) => !prev);
     }
   };
 
@@ -168,6 +189,7 @@ const AdminPanel = () => {
                 setShowAddOfferForm(false);
                 setShowUserTable(false);
                 setShowOrderTable(false);
+                setShowGuestOrderTable(false);
               }}
             >
               Pokaż usługi
@@ -181,6 +203,7 @@ const AdminPanel = () => {
                 setShowUserTable(false);
                 setShowAddUserForm(false);
                 setShowOrderTable(false);
+                setShowGuestOrderTable(false);
               }}
             >
               Dodaj usługę
@@ -200,6 +223,7 @@ const AdminPanel = () => {
                 setShowAddOfferForm(false);
                 setShowUserTable(true);
                 setShowOrderTable(false);
+                setShowGuestOrderTable(false);
               }}
             >
               Pokaż użytkowników
@@ -214,6 +238,7 @@ const AdminPanel = () => {
                 setShowOfferTable(false);
                 setShowAddOfferForm(false);
                 setShowOrderTable(false);
+                setShowGuestOrderTable(false);
               }}
             >
               Dodaj użytkownika
@@ -241,9 +266,24 @@ const AdminPanel = () => {
                 setShowAddOfferForm(false);
                 setShowUserTable(false);
                 setShowOrderTable(true);
+                setShowGuestOrderTable(false);
               }}
             >
-              Pokaż zamówienia
+              Pokaż zamówienia użytkowników
+            </button>
+            <button
+              type="button"
+              className={`dropdown-item`}
+              onClick={() => {
+                handleToggleTable("guestorders");
+                setShowOfferTable(false);
+                setShowAddOfferForm(false);
+                setShowUserTable(false);
+                setShowOrderTable(false);
+                setShowGuestOrderTable(true);
+              }}
+            >
+              Pokaż zamówienia gości
             </button>
           </div>
         </div>
@@ -262,6 +302,7 @@ const AdminPanel = () => {
       {showOrderTable && (
         <OrdersTable data={orders} onDeleteOrder={handleDeleteOrder} />
       )}
+      {showGuestOrderTable && <GuestOrdersTable data={guestOrders} />}
     </>
   );
 };

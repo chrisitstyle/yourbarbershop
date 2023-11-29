@@ -107,3 +107,18 @@ export const deleteOrder = async (idOrder, userToken) => {
     throw error;
   }
 };
+
+export const getGuestOrders = async (userToken) => {
+  try {
+    const result = await axios.get(`${apiUrl}/guestorders/get`, {
+      withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    });
+    return result.data;
+  } catch (error) {
+    console.error("Error loading guest orders:", error);
+    throw error;
+  }
+};

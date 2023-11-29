@@ -8,7 +8,7 @@ const Footer = () => {
     <footer className="footer mt-auto py-3 bg-primary text-white fixed-bottom">
       <div className="container text-center">
         <p className="mb-0">
-          &copy; {currentYear} Twój Barber. Wszelkie prawa zastrzeżone. Projekt
+          &copy; {currentYear} Barbershop. Wszelkie prawa zastrzeżone. Projekt
           wykonany przez {author}
         </p>
       </div>
