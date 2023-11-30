@@ -7,7 +7,7 @@ import UsersTable from "./UsersTable";
 import AddUser from "./AddUser";
 import OrdersTable from "./OrdersTable";
 import { useAuth } from "../AuthContext";
-import Button from "../components/Button";
+import AdminMenuButton from "../components/AdminMenuButton.jsx";
 import GuestOrdersTable from "./GuestOrdersTable.jsx";
 
 const AdminPanel = () => {
@@ -159,16 +159,8 @@ const AdminPanel = () => {
     <>
       <div className="btn-group" role="group">
         <div className="dropdown">
-          <button
-            className="btn btn-light dropdown-toggle"
-            type="button"
-            id="servicesDropdown"
-            data-bs-toggle="dropdown"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
-            Usługi
-          </button>
+          <AdminMenuButton title="Usługi" />
+
           <div className="dropdown-menu" aria-labelledby="servicesDropdown">
             <button
               type="button"
@@ -202,7 +194,7 @@ const AdminPanel = () => {
         </div>
 
         <div className="dropdown">
-          {<Button />}
+          <AdminMenuButton title="Użytkownicy" />
           <div className="dropdown-menu" aria-labelledby="usersDropdown">
             <button
               type="button"
@@ -236,16 +228,7 @@ const AdminPanel = () => {
           </div>
         </div>
         <div className="dropdown">
-          <button
-            className="btn btn-light dropdown-toggle"
-            type="button"
-            id="servicesDropdown"
-            data-bs-toggle="dropdown"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
-            Wizyty
-          </button>
+          <AdminMenuButton title="Wizyty" />
           <div className="dropdown-menu" aria-labelledby="servicesDropdown">
             <button
               type="button"

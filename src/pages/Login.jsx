@@ -98,7 +98,7 @@ const Login = () => {
                 Checkbox
               </label>
             </div>
-            <button type="submit" className="btn btn-primary mx-auto d-block">
+            <button type="submit" className="btn btn-dark mx-auto d-block">
               Zaloguj
             </button>
             <p className="mt-3 text-center">

@@ -75,7 +75,7 @@ const EditOffer = () => {
                   required
                 />
               </div>
-              <button type="submit" className="btn btn-primary mx-auto d-block">
+              <button type="submit" className="btn btn-dark mx-auto d-block">
                 Zapisz zmiany
               </button>
             </form>

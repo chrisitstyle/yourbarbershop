@@ -98,7 +98,7 @@ const Register = () => {
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary mx-auto d-block">
+              <button type="submit" className="btn btn-dark mx-auto d-block">
                 Załóż konto
               </button>
               <p className="mt-3 text-center">

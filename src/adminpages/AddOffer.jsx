@@ -49,7 +49,7 @@ const AddOffer = ({ onAddOffer, onCancel }) => {
                   required
                 />
               </div>
-              <button type="submit" className="btn btn-primary mx-auto d-block">
+              <button type="submit" className="btn btn-dark mx-auto d-block">
                 Dodaj
               </button>
             </form>

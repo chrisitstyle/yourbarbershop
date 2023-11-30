@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Button() {
+export default function Button({ title }) {
   return (
     <button
       className={`btn btn-light dropdown-toggle`}
@@ -10,7 +10,7 @@ export default function Button() {
       aria-haspopup="true"
       aria-expanded="false"
     >
-      Użytkownicy
+      {title}
     </button>
   );
 }

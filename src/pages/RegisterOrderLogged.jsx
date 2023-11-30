@@ -185,7 +185,7 @@ const RegisterOrderLogged = () => {
                   </select>
                 </div>
               </div>
-              <button type="submit" className="btn btn-primary mx-auto d-block">
+              <button type="submit" className="btn btn-dark mx-auto d-block">
                 Umów wizytę!
               </button>
             </form>
