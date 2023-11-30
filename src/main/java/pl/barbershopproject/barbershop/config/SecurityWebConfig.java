@@ -40,7 +40,6 @@ public class SecurityWebConfig {
                                 .requestMatchers("/guestorders/add").permitAll()
                                 .requestMatchers("/guestorders/**").hasAuthority(Role.ADMIN.toString())
 
-
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement ->
