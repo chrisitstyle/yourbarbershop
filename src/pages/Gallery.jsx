@@ -94,7 +94,7 @@ const Gallery = () => {
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title style={{ textAlign: "center", width: "100%" }}>
-            {selectedImage.name}
+            {selectedImage.name.slice(0, selectedImage.name.lastIndexOf("."))}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
