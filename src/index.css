@@ -6,6 +6,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   padding-bottom: 100px; /* Dostosuj wartość według potrzeb */
+  background-color: #f5f5f5 !important;
 }
 
 code {
@@ -33,4 +34,73 @@ code {
 }
 .social-icons a {
   margin-right: 100px;
+}
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding-bottom: 100px;
+  background-color: #f5f5f5 !important;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+.custom-navbar-ul {
+  display: flex;
+  width: 100%;
+  gap: 50px;
+}
+
+.site-footer {
+  width: 100%;
+  margin-top: auto;
+}
+
+.pagination {
+  margin-bottom: 70px;
+}
+
+.social-icons {
+  font-size: 70px;
+}
+.social-icons a {
+  margin-right: 100px;
+}
+@media (max-width: 768px) {
+  .arrow-icon {
+    color: black;
+    font-size: 20px;
+    margin: 0 -80px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+  .arrow-icon {
+    color: black;
+    font-size: 30px;
+  }
+}
+
+.arrow-left,
+.arrow-right {
+  color: black;
+  font-size: 30px;
+  margin-top: 10px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.arrow-left {
+  left: 160px;
+}
+
+.arrow-right {
+  right: 160px;
 }
