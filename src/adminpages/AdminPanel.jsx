@@ -167,7 +167,7 @@ const AdminPanel = () => {
 
   return (
     <>
-      <div className="btn-group" role="group">
+      <div className="btn-group flex-column flex-sm-row" role="group">
         <div className="dropdown">
           <AdminMenuButton title="Usługi" />
 
