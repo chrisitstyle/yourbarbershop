@@ -71,9 +71,6 @@ const Login = () => {
                 aria-describedby="emailHelp"
                 required
               />
-              <div id="emailHelp" className="form-text">
-                Dane są zabezpieczane przed nieautoryzowanym dostępem
-              </div>
             </div>
             <div className="mb-3">
               <label htmlFor="inputPassword" className="form-label">
@@ -88,16 +85,7 @@ const Login = () => {
                 required
               />
             </div>
-            <div className="mb-3 form-check">
-              <input
-                type="checkbox"
-                className="form-check-input"
-                id="checkbox"
-              />
-              <label className="form-check-label" htmlFor="inputCheckBox">
-                Checkbox
-              </label>
-            </div>
+
             <button type="submit" className="btn btn-dark mx-auto d-block">
               Zaloguj
             </button>
