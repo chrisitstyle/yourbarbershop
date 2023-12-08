@@ -71,7 +71,7 @@ const Profile = () => {
                 {userDetails.firstname}, poniżej znajdują się wszystkie
                 dotychczasowe wizyty
               </h6>
-              <table className="table border shadow text-center">
+              <table className="table border shadow text-center table-hover">
                 <thead>
                   <tr>
                     <th scope="col">Identyfikator wizyty</th>

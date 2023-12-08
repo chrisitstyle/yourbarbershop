@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+
 const UsersTable = ({ data, onDeleteUser }) => {
   const navigate = useNavigate();
   const usersPerPage = 10;
@@ -24,7 +27,7 @@ const UsersTable = ({ data, onDeleteUser }) => {
         <div className="py-4 ">
           <h2>Lista użytkowników</h2>
           <div>
-            <table className="table border shadow">
+            <table className="table border shadow table-hover">
               <thead>
                 <tr>
                   <th scope="col">Identyfikator użytkownika</th>
@@ -50,13 +53,16 @@ const UsersTable = ({ data, onDeleteUser }) => {
                           handleEditClick(user);
                         }}
                       >
-                        Edytuj
+                        <FontAwesomeIcon
+                          icon={faPen}
+                          style={{ color: "black" }}
+                        />
                       </button>
                       <button
                         className="btn btn-danger mx-2"
                         onClick={() => onDeleteUser(user.idUser)}
                       >
-                        Usuń
+                        <FontAwesomeIcon icon={faTrashAlt} />
                       </button>
                     </td>
                   </tr>

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, subHours } from "date-fns";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 const GuestOrdersTable = ({ data }) => {
   const navigate = useNavigate();
   const guestOrdersPerPage = 10;
@@ -34,7 +36,7 @@ const GuestOrdersTable = ({ data }) => {
       <div className="py-4">
         <div>
           <h2>Lista wizyt gości</h2>
-          <table className="table border shadow">
+          <table className="table border shadow table-hover">
             <thead>
               <tr>
                 <th scope="col">Identyfikator zamówienia</th>
@@ -78,14 +80,17 @@ const GuestOrdersTable = ({ data }) => {
                           handleEditClick(guestOrder);
                         }}
                       >
-                        Edytuj
+                        <FontAwesomeIcon
+                          icon={faPen}
+                          style={{ color: "black" }}
+                        />
                       </button>
                       <button
                         className="btn btn-danger"
                         style={{ marginRight: "-3px" }}
                         //   onClick={() => onDeleteOrder(guestOrder.idOrder)}
                       >
-                        Usuń
+                        <FontAwesomeIcon icon={faTrashAlt} />
                       </button>
                     </div>
                   </td>

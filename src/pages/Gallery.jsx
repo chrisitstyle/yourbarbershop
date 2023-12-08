@@ -34,9 +34,15 @@ const Gallery = () => {
         });
 
       if (data !== null) {
-        const filteredImages = data.filter(
-          (image) => !image.name.includes(".emptyFolderPlaceholder")
-        );
+        const filteredImages = data.filter((image) => {
+          const lowercasedName = image.name.toLowerCase();
+          return (
+            !lowercasedName.includes(".emptyFolderPlaceholder") &&
+            (lowercasedName.endsWith(".png") ||
+              lowercasedName.endsWith(".jpeg") ||
+              lowercasedName.endsWith(".jpg"))
+          );
+        });
         setImages(filteredImages);
       } else {
         alert("Error loading images");
@@ -59,42 +65,50 @@ const Gallery = () => {
         Każde zdjęcie prezentuje precyzję i umiejętności, jakie wkładamy w każdą
         przemianę naszego klienta.
       </p>
-      <Carousel
-        nextIcon={
-          <FontAwesomeIcon
-            icon={faArrowCircleRight}
-            className="arrow-icon arrow-right"
-          />
-        }
-        prevIcon={
-          <FontAwesomeIcon
-            icon={faArrowCircleLeft}
-            className="arrow-icon arrow-left"
-          />
-        }
-        interval={null}
-      >
-        {images.map((image) => (
-          <Carousel.Item
-            key={CDNURL + "images/" + image.name}
-            onClick={() => handleImageClick(image)}
-            style={{ cursor: "pointer" }}
-          >
-            <Image
-              className="d-block w-100 "
-              src={CDNURL + "images/" + image.name}
-              alt={image.name}
-              style={{ width: "500px", height: "500px", objectFit: "contain" }}
+      {images.length > 0 ? (
+        <Carousel
+          nextIcon={
+            <FontAwesomeIcon
+              icon={faArrowCircleRight}
+              className="arrow-icon arrow-right"
             />
-          </Carousel.Item>
-        ))}
-      </Carousel>
-
+          }
+          prevIcon={
+            <FontAwesomeIcon
+              icon={faArrowCircleLeft}
+              className="arrow-icon arrow-left"
+            />
+          }
+          interval={null}
+        >
+          {images.map((image) => (
+            <Carousel.Item
+              key={CDNURL + "images/" + image.name}
+              onClick={() => handleImageClick(image)}
+              style={{ cursor: "pointer" }}
+            >
+              <Image
+                className="d-block w-100 "
+                src={CDNURL + "images/" + image.name}
+                alt={image.name}
+                style={{
+                  width: "500px",
+                  height: "500px",
+                  objectFit: "contain",
+                }}
+              />
+            </Carousel.Item>
+          ))}
+        </Carousel>
+      ) : (
+        <h5 className="mt-5">Błąd ładowania zdjęć </h5>
+      )}
       {/* Modal */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title style={{ textAlign: "center", width: "100%" }}>
-            {selectedImage.name.slice(0, selectedImage.name.lastIndexOf("."))}
+            {selectedImage.name &&
+              selectedImage.name.slice(0, selectedImage.name.lastIndexOf("."))}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>

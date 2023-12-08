@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+
 import { useNavigate } from "react-router-dom";
 import { format, subHours } from "date-fns";
 
@@ -34,7 +37,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
       <div className="py-4">
         <div>
           <h2>Lista wizyt użytkowników</h2>
-          <table className="table border shadow">
+          <table className="table border shadow table-hover">
             <thead>
               <tr>
                 <th scope="col">Identyfikator wizyty</th>
@@ -76,14 +79,17 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
                           handleEditClick(order);
                         }}
                       >
-                        Edytuj
+                        <FontAwesomeIcon
+                          icon={faPen}
+                          style={{ color: "black" }}
+                        />
                       </button>
                       <button
                         className="btn btn-danger"
                         style={{ marginRight: "-3px" }}
                         onClick={() => onDeleteOrder(order.idOrder)}
                       >
-                        Usuń
+                        <FontAwesomeIcon icon={faTrashAlt} />
                       </button>
                     </div>
                   </td>
@@ -92,7 +98,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
             </tbody>
           </table>
           {totalPages > 1 && (
-            <nav className="pagination justify-content-center">
+            <nav className="pagination justify-content-center ">
               <ul className="pagination">
                 {[...Array(totalPages)].map((_, index) => (
                   <li

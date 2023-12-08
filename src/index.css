@@ -104,3 +104,8 @@ code {
 .arrow-right {
   right: 160px;
 }
+.pagination .page-item.active .page-link {
+  background-color: black;
+  color: white;
+  border-color: black;
+}

@@ -45,7 +45,7 @@ const Navbar = () => {
                 aria-current="page"
                 to="/offer"
               >
-                Nasza Oferta
+                Nasza oferta
               </Link>
             </li>
             <li className="nav-item">

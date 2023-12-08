@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 
 const OffersTable = ({ data, onDeleteOffer }) => {
   const navigate = useNavigate();
@@ -27,7 +29,7 @@ const OffersTable = ({ data, onDeleteOffer }) => {
       <div className="py-4">
         <div>
           <h2>Lista usług</h2>
-          <table className="table border shadow">
+          <table className="table border shadow table-hover">
             <thead>
               <tr>
                 <th scope="col">Identyfikator usługi</th>
@@ -49,13 +51,16 @@ const OffersTable = ({ data, onDeleteOffer }) => {
                         handleEditClick(offer);
                       }}
                     >
-                      Edytuj
+                      <FontAwesomeIcon
+                        icon={faPen}
+                        style={{ color: "black" }}
+                      />
                     </button>
                     <button
                       className="btn btn-danger mx-2"
                       onClick={() => onDeleteOffer(offer.idOffer)}
                     >
-                      Usuń
+                      <FontAwesomeIcon icon={faTrashAlt} />
                     </button>
                   </td>
                 </tr>

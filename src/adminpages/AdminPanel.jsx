@@ -9,6 +9,7 @@ import OrdersTable from "./OrdersTable";
 import { useAuth } from "../AuthContext";
 import AdminMenuButton from "../components/AdminMenuButton.jsx";
 import GuestOrdersTable from "./GuestOrdersTable.jsx";
+import GallerySettings from "./GallerySettings.jsx";
 
 const AdminPanel = () => {
   const { user } = useAuth();
@@ -24,7 +25,7 @@ const AdminPanel = () => {
   const [showOrderTable, setShowOrderTable] = useState(false);
   const [showAddOfferForm, setShowAddOfferForm] = useState(false);
   const [showGuestOrderTable, setShowGuestOrderTable] = useState(false);
-
+  const [showGallerySettings, setShowGallerySettings] = useState(false);
   const loadOffers = useCallback(async () => {
     try {
       const offersData = await api.getOffers();
@@ -128,6 +129,7 @@ const AdminPanel = () => {
       setSelectedTable((prev) => (prev === table ? null : table));
 
       setShowAddUserForm(false);
+      setShowGallerySettings(false);
       setShowUserTable((prev) => !prev);
     } else if (table === "offers") {
       setSelectedTable((prev) => (prev === table ? null : table));
@@ -135,7 +137,7 @@ const AdminPanel = () => {
       setShowAddOfferForm(false);
       setShowUserTable(false);
       setShowAddUserForm(false);
-
+      setShowGallerySettings(false);
       setShowOfferTable((prev) => !prev);
     } else if (table === "orders") {
       setSelectedTable((prev) => (prev === table ? null : table));
@@ -143,7 +145,7 @@ const AdminPanel = () => {
       setShowAddOfferForm(false);
       setShowUserTable(false);
       setShowAddUserForm(false);
-
+      setShowGallerySettings(false);
       setShowOfferTable((prev) => !prev);
     } else if (table === "guestorders") {
       setSelectedTable((prev) => (prev === table ? null : table));
@@ -151,7 +153,15 @@ const AdminPanel = () => {
       setShowAddOfferForm(false);
       setShowUserTable(false);
       setShowAddUserForm(false);
+      setShowGallerySettings(false);
       setShowGuestOrderTable((prev) => !prev);
+    } else if (table === "gallerysettings") {
+      setShowAddOfferForm(false);
+      setShowUserTable(false);
+      setShowAddUserForm(false);
+      setShowGallerySettings(false);
+      setShowAddUserForm(false);
+      setSelectedTable((prev) => (prev === table ? null : table));
     }
   };
 
@@ -172,6 +182,7 @@ const AdminPanel = () => {
                 setShowUserTable(false);
                 setShowOrderTable(false);
                 setShowGuestOrderTable(false);
+                setShowGallerySettings(false);
               }}
             >
               Pokaż usługi
@@ -186,6 +197,7 @@ const AdminPanel = () => {
                 setShowAddUserForm(false);
                 setShowOrderTable(false);
                 setShowGuestOrderTable(false);
+                setShowGallerySettings(false);
               }}
             >
               Dodaj usługę
@@ -206,6 +218,7 @@ const AdminPanel = () => {
                 setShowUserTable(true);
                 setShowOrderTable(false);
                 setShowGuestOrderTable(false);
+                setShowGallerySettings(false);
               }}
             >
               Pokaż użytkowników
@@ -221,6 +234,7 @@ const AdminPanel = () => {
                 setShowAddOfferForm(false);
                 setShowOrderTable(false);
                 setShowGuestOrderTable(false);
+                setShowGallerySettings(false);
               }}
             >
               Dodaj użytkownika
@@ -239,7 +253,9 @@ const AdminPanel = () => {
                 setShowAddOfferForm(false);
                 setShowUserTable(false);
                 setShowOrderTable(true);
+                setShowAddUserForm(false);
                 setShowGuestOrderTable(false);
+                setShowGallerySettings(false);
               }}
             >
               Pokaż wizyty użytkowników
@@ -252,11 +268,34 @@ const AdminPanel = () => {
                 setShowOfferTable(false);
                 setShowAddOfferForm(false);
                 setShowUserTable(false);
+                setShowAddUserForm(false);
                 setShowOrderTable(false);
+                setShowGallerySettings(false);
                 setShowGuestOrderTable(true);
               }}
             >
               Pokaż wizyty gości
+            </button>
+          </div>
+        </div>
+        <div className="dropdown">
+          <AdminMenuButton title="Galeria" />
+          <div className="dropdown-menu" aria-labelledby="servicesDropdown">
+            <button
+              type="button"
+              className={`dropdown-item`}
+              onClick={() => {
+                handleToggleTable("gallerysettings");
+                setShowOfferTable(false);
+                setShowAddOfferForm(false);
+                setShowAddUserForm(false);
+                setShowUserTable(false);
+                setShowOrderTable(false);
+                setShowGuestOrderTable(false);
+                setShowGallerySettings(true);
+              }}
+            >
+              Ustawienia
             </button>
           </div>
         </div>
@@ -276,6 +315,7 @@ const AdminPanel = () => {
         <OrdersTable data={orders} onDeleteOrder={handleDeleteOrder} />
       )}
       {showGuestOrderTable && <GuestOrdersTable data={guestOrders} />}
+      {showGallerySettings && <GallerySettings />}
     </>
   );
 };
