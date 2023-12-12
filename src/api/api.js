@@ -219,3 +219,17 @@ export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
     throw error;
   }
 };
+
+export const deleteGuestOrder = async (idGuestOrder, userToken) => {
+  try {
+    await axios.delete(`${apiUrl}/guestorders/delete/${idGuestOrder}`, {
+      withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting guestorder:", error);
+    throw error;
+  }
+};

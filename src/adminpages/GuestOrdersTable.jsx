@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { format, subHours } from "date-fns";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
-const GuestOrdersTable = ({ data }) => {
+const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
   const navigate = useNavigate();
   const guestOrdersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,7 +35,7 @@ const GuestOrdersTable = ({ data }) => {
     <div className="container text-center">
       <div className="py-4">
         <div>
-          <h2>Lista wizyt gości</h2>
+          <h2>Wizyty gości</h2>
           <table className="table border shadow table-hover">
             <thead>
               <tr>
@@ -88,7 +88,9 @@ const GuestOrdersTable = ({ data }) => {
                       <button
                         className="btn btn-danger"
                         style={{ marginRight: "-3px" }}
-                        //   onClick={() => onDeleteOrder(guestOrder.idOrder)}
+                        onClick={() =>
+                          onDeleteGuestOrder(guestOrder.idGuestOrder)
+                        }
                       >
                         <FontAwesomeIcon icon={faTrashAlt} />
                       </button>

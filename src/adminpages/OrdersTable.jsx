@@ -36,7 +36,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
     <div className="container text-center">
       <div className="py-4">
         <div>
-          <h2>Lista wizyt użytkowników</h2>
+          <h2>Wizyty użytkowników</h2>
           <table className="table border shadow table-hover">
             <thead>
               <tr>

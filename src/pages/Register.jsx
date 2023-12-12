@@ -7,7 +7,6 @@ const Register = () => {
   const [lastname, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registerError, setRegisterError] = useState("");
   const navigate = useNavigate();
 
@@ -23,7 +22,6 @@ const Register = () => {
       });
 
       if (response.status === 200) {
-        setRegistrationSuccess(true);
         navigate("/login?registrationSuccess=true");
       } else {
         setRegisterError("Błąd przy zakładaniu konta");
@@ -38,7 +36,7 @@ const Register = () => {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3 ">
-            <h4 className="text-center">Rejestracja konta</h4>
+            <h4 className=" display-6 text-center">Rejestracja konta</h4>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 {registerError && (

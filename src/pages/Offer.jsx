@@ -30,12 +30,12 @@ const Offer = () => {
 
   return (
     <div className="container">
-      <h1 className="text-center mb-4">Nasza oferta</h1>
+      <h1 className="display-6 text-center mb-4">Nasza oferta</h1>
       {!offers.length > 0 ? (
         <h5 className="text-center">Błąd ładowania ofert</h5>
       ) : (
         <>
-          <p className="text-center lead">
+          <p className="lead text-center">
             Zapoznaj się z naszą szeroką ofertą usług, które zadbają o Twój
             wygląd i samopoczucie. Nasz doświadczony zespół fryzjerów stworzy
             dla Ciebie unikalną stylizację, dopasowaną do Twoich preferencji.
@@ -43,7 +43,7 @@ const Offer = () => {
 
           <div className="table-responsive">
             <table
-              className="table table-striped table-bordered mx-auto"
+              className="table  table-bordered table-hover mx-auto"
               style={{ maxWidth: "600px" }}
             >
               <thead>
@@ -65,7 +65,7 @@ const Offer = () => {
             </table>
           </div>
 
-          <p className="text-center lead">
+          <p className="lead text-center">
             Nie zwlekaj, umów się na wizytę już dziś i poczuj się wyjątkowo!
           </p>
           {showPagination && (

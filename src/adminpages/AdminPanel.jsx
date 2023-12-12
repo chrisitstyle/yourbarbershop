@@ -114,6 +114,20 @@ const AdminPanel = () => {
       console.error("Error loading  guest orders:", error);
     }
   }, [user]);
+
+  const handleDeleteGuestOrder = async (idGuestOrder) => {
+    try {
+      await api.deleteGuestOrder(idGuestOrder, user.token);
+      setGuestOrders((prevGuestOrders) =>
+        prevGuestOrders.filter(
+          (guestOrder) => guestOrder.idGuestOrder !== idGuestOrder
+        )
+      );
+    } catch (error) {
+      console.error("Error deleting order:", error);
+    }
+  };
+
   useEffect(() => {
     selectedTable === "offers" && offers
       ? loadOffers()
@@ -314,7 +328,12 @@ const AdminPanel = () => {
       {showOrderTable && (
         <OrdersTable data={orders} onDeleteOrder={handleDeleteOrder} />
       )}
-      {showGuestOrderTable && <GuestOrdersTable data={guestOrders} />}
+      {showGuestOrderTable && (
+        <GuestOrdersTable
+          data={guestOrders}
+          onDeleteGuestOrder={handleDeleteGuestOrder}
+        />
+      )}
       {showGallerySettings && <GallerySettings />}
     </>
   );

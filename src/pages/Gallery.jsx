@@ -30,7 +30,7 @@ const Gallery = () => {
         .list("images", {
           limit: 100,
           offset: 0,
-          sortBy: { column: "name", order: "asc" },
+          sortBy: { column: "created_at", order: "desc" },
         });
 
       if (data !== null) {
@@ -59,8 +59,8 @@ const Gallery = () => {
 
   return (
     <Container className="text-center mt-4">
-      <h2>Nasze portfolio</h2>
-      <p>
+      <h2 className="display-6">Nasze portfolio</h2>
+      <p className="lead">
         Odkryj artystyczną i kreatywną pracę naszych utalentowanych barberów.
         Każde zdjęcie prezentuje precyzję i umiejętności, jakie wkładamy w każdą
         przemianę naszego klienta.

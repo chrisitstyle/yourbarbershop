@@ -118,7 +118,7 @@ const RegisterOrderWithoutAcc = () => {
       <div className="container mt-2">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
-            <h4 className="text-center">Umów wizytę</h4>
+            <h4 className="display-6 text-center">Umów wizytę</h4>
             <Alert
               variant="success"
               show={showAlert}

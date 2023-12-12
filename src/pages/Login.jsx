@@ -35,7 +35,7 @@ const Login = () => {
     <div className="container mt-5">
       <div className="row justify-content-center">
         <div className="col-md-4 border p-3 ">
-          <h4 className="text-center">Logowanie</h4>
+          <h4 className="display-6 text-center">Logowanie</h4>
           <form onSubmit={handleLogin}>
             <div className="mb-3">
               {registrationSuccess && (
@@ -89,7 +89,7 @@ const Login = () => {
             <button type="submit" className="btn btn-dark mx-auto d-block">
               Zaloguj
             </button>
-            <p className="mt-3 text-center">
+            <p className=" mt-3 text-center">
               Nie masz konta? <Link to="/register">Zarejestruj się</Link>
             </p>
           </form>

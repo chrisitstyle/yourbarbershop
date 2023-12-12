@@ -25,7 +25,7 @@ const UsersTable = ({ data, onDeleteUser }) => {
     <>
       <div className="container text-center">
         <div className="py-4 ">
-          <h2>Lista użytkowników</h2>
+          <h2>Użytkownicy</h2>
           <div>
             <table className="table border shadow table-hover">
               <thead>

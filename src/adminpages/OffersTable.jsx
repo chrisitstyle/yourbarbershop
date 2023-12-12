@@ -28,7 +28,7 @@ const OffersTable = ({ data, onDeleteOffer }) => {
     <div className="container text-center">
       <div className="py-4">
         <div>
-          <h2>Lista usług</h2>
+          <h2>Usługi</h2>
           <table className="table border shadow table-hover">
             <thead>
               <tr>
