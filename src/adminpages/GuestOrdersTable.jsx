@@ -9,7 +9,14 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const indexOfLastGuestOrder = currentPage * guestOrdersPerPage;
   const indexOfFirstGuestOrder = indexOfLastGuestOrder - guestOrdersPerPage;
-  const currentData = data.slice(indexOfFirstGuestOrder, indexOfLastGuestOrder);
+  const [searchTerm, setSearchTerm] = useState("");
+  const currentData = data
+    .filter((guestOrder) =>
+      `${guestOrder.idGuestOrder} ${guestOrder.firstname} ${guestOrder.lastname} ${guestOrder.phonenumber} ${guestOrder.offer.kind} ${guestOrder.offer.cost} ${guestOrder.orderDate} ${guestOrder.visitDate}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    )
+    .slice(indexOfFirstGuestOrder, indexOfLastGuestOrder);
 
   const totalPages = Math.ceil(data.length / guestOrdersPerPage);
 
@@ -36,6 +43,15 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
       <div className="py-4">
         <div>
           <h2>Wizyty gości</h2>
+          <div className="mb-3 mt-4">
+            <input
+              type="text"
+              placeholder="Szukaj wizyty..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="form-control"
+            />
+          </div>
           <table className="table border shadow table-hover">
             <thead>
               <tr>

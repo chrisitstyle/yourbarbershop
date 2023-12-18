@@ -7,11 +7,21 @@ const UsersTable = ({ data, onDeleteUser }) => {
   const navigate = useNavigate();
   const usersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState(""); // search input
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentData = data.slice(indexOfFirstUser, indexOfLastUser);
+
+  // aktualizacja danych na podstawie search input
+  const currentData = data
+    .filter((user) =>
+      ` ${user.idUser} ${user.firstname} ${user.lastname} ${user.email} ${user.role}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    )
+    .slice(indexOfFirstUser, indexOfLastUser);
 
   const totalPages = Math.ceil(data.length / usersPerPage);
+
   const handlePageClick = (page) => {
     setCurrentPage(page);
   };
@@ -21,17 +31,30 @@ const UsersTable = ({ data, onDeleteUser }) => {
       state: { userData: user },
     });
   };
+
   return (
     <>
       <div className="container text-center">
         <div className="py-4 ">
           <h2>Użytkownicy</h2>
+
+          {/* pole wyszukiwania */}
+          <div className="mb-3 mt-4">
+            <input
+              type="text"
+              placeholder="Szukaj użytkownika..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="form-control"
+            />
+          </div>
+
           <div>
             <table className="table border shadow table-hover">
               <thead>
                 <tr>
                   <th scope="col">Identyfikator użytkownika</th>
-                  <th scope="col">Imie</th>
+                  <th scope="col">Imię</th>
                   <th scope="col">Nazwisko</th>
                   <th scope="col">E-mail</th>
                   <th scope="col">Rola</th>

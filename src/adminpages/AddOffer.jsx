@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const AddOffer = ({ onAddOffer, onCancel }) => {
+const AddOffer = ({ onAddOffer }) => {
   const [kind, setKind] = useState("");
   const [cost, setCost] = useState("");
   const navigate = useNavigate();

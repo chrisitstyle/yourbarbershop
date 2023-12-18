@@ -31,7 +31,7 @@ function AdminRoute({ element }) {
   if (user && user.role === "ADMIN") {
     return element;
   } else {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 }
 
@@ -41,7 +41,7 @@ function UserRoute({ element }) {
   if (user && user.role === "USER") {
     return element;
   } else {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 }
 

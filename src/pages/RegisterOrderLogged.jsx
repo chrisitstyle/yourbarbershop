@@ -89,7 +89,7 @@ const RegisterOrderLogged = () => {
           },
         }
       );
-      navigate(`/profile/${user.id}`);
+      navigate(`/profile/${user.id}?registrationOrderSuccess=true"`);
     } catch (error) {
       setShowErrorAlert(true);
     }

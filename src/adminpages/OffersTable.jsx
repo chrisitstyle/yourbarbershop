@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 
 const OffersTable = ({ data, onDeleteOffer }) => {
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const offersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -14,7 +15,13 @@ const OffersTable = ({ data, onDeleteOffer }) => {
 
   const indexOfLastOffer = currentPage * offersPerPage;
   const indexOfFirstOffer = indexOfLastOffer - offersPerPage;
-  const currentData = data.slice(indexOfFirstOffer, indexOfLastOffer);
+  const currentData = data
+    .filter((offer) =>
+      ` ${offer.idOffer} ${offer.kind} ${offer.cost}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    )
+    .slice(indexOfFirstOffer, indexOfLastOffer);
 
   const totalPages = Math.ceil(data.length / offersPerPage);
 
@@ -29,6 +36,16 @@ const OffersTable = ({ data, onDeleteOffer }) => {
       <div className="py-4">
         <div>
           <h2>Usługi</h2>
+          {/* pole wyszukiwania */}
+          <div className="mb-3 mt-4">
+            <input
+              type="text"
+              placeholder="Szukaj usługi..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="form-control"
+            />
+          </div>
           <table className="table border shadow table-hover">
             <thead>
               <tr>

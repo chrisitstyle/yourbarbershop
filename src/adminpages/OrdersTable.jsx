@@ -11,7 +11,14 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentData = data.slice(indexOfFirstOrder, indexOfLastOrder);
+  const [searchTerm, setSearchTerm] = useState("");
+  const currentData = data
+    .filter((order) =>
+      ` ${order.idOrder} ${order.user.firstname}  ${order.user.lastname}  ${order.user.username} ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    )
+    .slice(indexOfFirstOrder, indexOfLastOrder);
 
   const totalPages = Math.ceil(data.length / ordersPerPage);
   const handlePageClick = (page) => {
@@ -37,6 +44,16 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
       <div className="py-4">
         <div>
           <h2>Wizyty użytkowników</h2>
+          {/* pole wyszukiwania */}
+          <div className="mb-3 mt-4">
+            <input
+              type="text"
+              placeholder="Szukaj wizyty..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="form-control"
+            />
+          </div>
           <table className="table border shadow table-hover">
             <thead>
               <tr>

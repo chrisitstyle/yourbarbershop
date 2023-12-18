@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../AuthContext";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { format, subHours } from "date-fns";
+import { Alert } from "react-bootstrap";
 
 const Profile = () => {
   const { user } = useAuth();
   const { id } = useParams();
-
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const registrationOrderSuccess = searchParams.get("registrationOrderSuccess");
   const [userDetails, setUserDetails] = useState(null);
 
   const visitsPerPage = 10;
@@ -65,6 +68,16 @@ const Profile = () => {
       <div className="py-4 ">
         <h6 className="text-center">{`Jesteś zalogowany jako ${userDetails.email}`}</h6>
         <div>
+          {registrationOrderSuccess && (
+            <Alert
+              variant="success"
+              onClose={() => {}}
+              dismissible
+              className="text-center"
+            >
+              Twoja wizyta została zarejestrowana
+            </Alert>
+          )}
           {userDetails.userOrders && userDetails.userOrders.length > 0 && (
             <>
               <h6 className="text-center">

@@ -1,6 +1,7 @@
-// AdminPanel.jsx
 import React, { useState, useEffect, useCallback } from "react";
+
 import * as api from "../api/api.js";
+import { Alert } from "react-bootstrap";
 import OffersTable from "./OffersTable";
 import AddOffer from "./AddOffer";
 import UsersTable from "./UsersTable";
@@ -26,6 +27,20 @@ const AdminPanel = () => {
   const [showAddOfferForm, setShowAddOfferForm] = useState(false);
   const [showGuestOrderTable, setShowGuestOrderTable] = useState(false);
   const [showGallerySettings, setShowGallerySettings] = useState(false);
+
+  const [addOfferErrorMsg, setAddOfferErrorMsg] = useState(null);
+  const [addOfferSuccessfulMsg, setAddOfferSuccessfulMsg] = useState(null);
+  const [deleteOfferErrorMsg, setDeleteOfferErrorMsg] = useState(null);
+
+  const [addUserErrorMsg, setAddUserErrorMsg] = useState(null);
+  const [addUserSuccessfulMsg, setAddUserSuccessfulMsg] = useState(null);
+  const [deleteUserErrorMsg, setDeleteUserErrorMsg] = useState(null);
+
+  const [deleteOrderErrorMsg, setDeleteOrderErrorMsg] = useState(null);
+
+  const [deleteGuestOrderErrorMsg, setDeleteGuestOrderErrorMsg] =
+    useState(null);
+
   const loadOffers = useCallback(async () => {
     try {
       const offersData = await api.getOffers();
@@ -40,8 +55,10 @@ const AdminPanel = () => {
       await api.addOffer(newOffer, user.token);
       loadOffers();
       handleToggleTable("offers");
+      setAddOfferSuccessfulMsg("Pomyślnie dodano nową usługę");
     } catch (error) {
       console.error("Error adding offer:", error);
+      setAddOfferErrorMsg("Wystąpił błąd dodawania usługi");
     }
   };
 
@@ -53,6 +70,7 @@ const AdminPanel = () => {
       );
     } catch (error) {
       console.error("Error deleting offer:", error);
+      setDeleteOfferErrorMsg("Nie udało się usunąć usługi");
     }
   };
 
@@ -68,9 +86,11 @@ const AdminPanel = () => {
   const handleAddUser = async (newUser) => {
     try {
       await api.addUser(newUser);
+      setAddUserSuccessfulMsg("Pomyślnie dodano nowego użytkownika");
       loadUsers();
       handleToggleTable("users");
     } catch (error) {
+      setAddUserErrorMsg("Wystąpił błąd z dodawaniem użytkownika");
       console.error("Error adding user:", error);
     }
   };
@@ -82,6 +102,7 @@ const AdminPanel = () => {
         prevUsers.filter((user) => user.idUser !== idUser)
       );
     } catch (error) {
+      setDeleteUserErrorMsg("Wystąpił błąd podczas usuwania użytkownika");
       console.error("Error deleting user:", error);
     }
   };
@@ -102,6 +123,7 @@ const AdminPanel = () => {
         prevOrders.filter((order) => order.idOrder !== idOrder)
       );
     } catch (error) {
+      setDeleteOrderErrorMsg("Wystąpił błąd podczas usuwania wizyty");
       console.error("Error deleting order:", error);
     }
   };
@@ -124,6 +146,9 @@ const AdminPanel = () => {
         )
       );
     } catch (error) {
+      setDeleteGuestOrderErrorMsg(
+        "Wystąpił błąd podczas usuwania wizyty gościa"
+      );
       console.error("Error deleting order:", error);
     }
   };
@@ -181,6 +206,7 @@ const AdminPanel = () => {
 
   return (
     <>
+      {/* navbar menu admin*/}
       <div className="btn-group flex-column flex-sm-row" role="group">
         <div className="dropdown">
           <AdminMenuButton title="Usługi" />
@@ -314,7 +340,91 @@ const AdminPanel = () => {
           </div>
         </div>
       </div>
+      {/* alerty */}
 
+      {addOfferErrorMsg && (
+        <Alert
+          variant="danger"
+          onClose={() => setAddOfferErrorMsg(null)}
+          dismissible
+          className="text-center"
+        >
+          {addOfferErrorMsg}
+        </Alert>
+      )}
+      {addOfferSuccessfulMsg && (
+        <Alert
+          variant="success"
+          onClose={() => setAddOfferSuccessfulMsg(null)}
+          dismissible
+          className="text-center"
+        >
+          {addOfferSuccessfulMsg}
+        </Alert>
+      )}
+
+      {deleteOfferErrorMsg && (
+        <Alert
+          variant="danger"
+          onClose={() => setDeleteOfferErrorMsg(null)}
+          dismissible
+          className="text-center"
+        >
+          {deleteOfferErrorMsg}
+        </Alert>
+      )}
+      {addUserSuccessfulMsg && (
+        <Alert
+          variant="success"
+          onClose={() => setAddUserSuccessfulMsg(null)}
+          dismissible
+          className="text-center"
+        >
+          {addUserSuccessfulMsg}
+        </Alert>
+      )}
+      {addUserErrorMsg && (
+        <Alert
+          variant="danger"
+          onClose={() => setAddUserErrorMsg(null)}
+          dismissible
+          className="text-center"
+        >
+          {addUserErrorMsg}
+        </Alert>
+      )}
+      {deleteUserErrorMsg && (
+        <Alert
+          variant="danger"
+          onClose={() => setDeleteUserErrorMsg(null)}
+          dismissible
+          className="text-center"
+        >
+          {deleteUserErrorMsg}
+        </Alert>
+      )}
+      {deleteOrderErrorMsg && (
+        <Alert
+          variant="danger"
+          onClose={() => setDeleteOrderErrorMsg(null)}
+          dismissible
+          className="text-center"
+        >
+          {deleteOrderErrorMsg}
+        </Alert>
+      )}
+      {deleteGuestOrderErrorMsg && (
+        <Alert
+          variant="danger"
+          onClose={() => setDeleteGuestOrderErrorMsg(null)}
+          dismissible
+          className="text-center"
+        >
+          {deleteGuestOrderErrorMsg}
+        </Alert>
+      )}
+
+      {/* warunkowe renderowanie komponentow z menu */}
       {showAddOfferForm && (
         <AddOffer data={offers} onAddOffer={handleAddOffer} />
       )}
