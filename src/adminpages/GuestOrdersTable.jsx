@@ -50,6 +50,7 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="form-control"
+              style={{ width: "200px" }}
             />
           </div>
           <table className="table border shadow table-hover">

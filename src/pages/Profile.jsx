@@ -17,10 +17,15 @@ const Profile = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const indexOfLastVisit = currentPage * visitsPerPage;
   const indexOfFirstVisit = indexOfLastVisit - visitsPerPage;
-  const currentData = userDetails?.userOrders?.slice(
-    indexOfFirstVisit,
-    indexOfLastVisit
-  );
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const currentData = userDetails?.userOrders
+    ?.filter((order) =>
+      `${order.idOrder}  ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    )
+    .slice(indexOfFirstVisit, indexOfLastVisit);
 
   const totalPages = Math.ceil(
     (userDetails?.userOrders?.length || 0) / visitsPerPage
@@ -84,6 +89,17 @@ const Profile = () => {
                 {userDetails.firstname}, poniżej znajdują się wszystkie
                 dotychczasowe wizyty
               </h6>
+              {/* pole wyszukiwania */}
+              <div className="mb-3 mt-4">
+                <input
+                  type="text"
+                  placeholder="Szukaj wizyty..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ width: "200px" }}
+                />
+              </div>
               <table className="table border shadow text-center table-hover">
                 <thead>
                   <tr>

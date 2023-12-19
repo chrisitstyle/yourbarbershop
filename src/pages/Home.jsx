@@ -63,7 +63,7 @@ const Home = () => {
           <Col md={4}>
             <Card className="mb-4">
               <Image
-                src="./images/employees/barber3.jpg"
+                src="./images/employees/marcinwolny.jpg"
                 alt="employee photo"
                 fluid
                 style={{
@@ -85,7 +85,7 @@ const Home = () => {
           <Col md={4}>
             <Card className="mb-4">
               <Image
-                src="./images/employees/redhead.jpg"
+                src="./images/employees/monikakowalska.jpg"
                 fluid
                 style={{
                   width: "900px",
@@ -104,7 +104,7 @@ const Home = () => {
           <Col md={4}>
             <Card className="mb-4">
               <Image
-                src="./images/employees/johndoebarber.jpg"
+                src="./images/employees/oskarkozlowski.jpg"
                 fluid
                 style={{
                   width: "900px",

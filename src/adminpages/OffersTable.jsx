@@ -44,6 +44,7 @@ const OffersTable = ({ data, onDeleteOffer }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="form-control"
+              style={{ width: "200px" }}
             />
           </div>
           <table className="table border shadow table-hover">
@@ -94,12 +95,12 @@ const OffersTable = ({ data, onDeleteOffer }) => {
                       index + 1 === currentPage ? "active" : ""
                     }`}
                   >
-                    <a
+                    <button
                       className="page-link"
                       onClick={() => handlePageClick(index + 1)}
                     >
                       {index + 1}
-                    </a>
+                    </button>
                   </li>
                 ))}
               </ul>

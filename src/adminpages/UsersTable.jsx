@@ -46,6 +46,7 @@ const UsersTable = ({ data, onDeleteUser }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="form-control"
+              style={{ width: "200px" }}
             />
           </div>
 
@@ -102,12 +103,12 @@ const UsersTable = ({ data, onDeleteUser }) => {
                         index + 1 === currentPage ? "active" : ""
                       }`}
                     >
-                      <a
+                      <button
                         className="page-link"
                         onClick={() => handlePageClick(index + 1)}
                       >
                         {index + 1}
-                      </a>
+                      </button>
                     </li>
                   ))}
                 </ul>
