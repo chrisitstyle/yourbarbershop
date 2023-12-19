@@ -101,7 +101,7 @@ const Gallery = () => {
           ))}
         </Carousel>
       ) : (
-        <h5 className="mt-5">Błąd ładowania zdjęć </h5>
+        <h5 className="mt-5">Ładowanie... </h5>
       )}
       {/* Modal */}
       <Modal show={showModal} onHide={handleCloseModal}>

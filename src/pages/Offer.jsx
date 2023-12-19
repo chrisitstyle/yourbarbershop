@@ -14,7 +14,6 @@ const Offer = () => {
     try {
       const result = await axios.get("http://localhost:8080/offers/get");
       setOffers(result.data);
-      console.log(result.data);
     } catch (error) {
       console.error("Error loading offers:", error);
     }
@@ -32,7 +31,7 @@ const Offer = () => {
     <div className="container">
       <h1 className="display-6 text-center mb-4">Nasza oferta</h1>
       {!offers.length > 0 ? (
-        <h5 className="text-center">Błąd ładowania ofert</h5>
+        <h5 className="text-center">Ładowanie...</h5>
       ) : (
         <>
           <p className="lead text-center">
@@ -78,12 +77,12 @@ const Offer = () => {
                       index + 1 === currentPage ? "active" : ""
                     }`}
                   >
-                    <a
+                    <button
                       className="page-link"
                       onClick={() => paginate(index + 1)}
                     >
                       {index + 1}
-                    </a>
+                    </button>
                   </li>
                 )
               )}

@@ -27,7 +27,7 @@ const Login = () => {
 
       navigate("/");
     } catch (error) {
-      setLoginError("Nie udało się zalogować");
+      setLoginError("Błąd logowania");
     }
   };
 
