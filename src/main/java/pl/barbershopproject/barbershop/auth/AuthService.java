@@ -17,11 +17,8 @@ import pl.barbershopproject.barbershop.repository.UserRepository;
 @RequiredArgsConstructor
 public class AuthService {
     private final UserRepository userRepository;
-
     private final PasswordEncoder passwordEncoder;
-
     private final JwtService jwtService;
-
     private final AuthenticationManager authenticationManager;
 
     public AuthResponse register(User user) {

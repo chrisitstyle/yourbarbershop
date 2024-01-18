@@ -16,7 +16,7 @@ import java.util.NoSuchElementException;
 public class OfferController {
 
     private final OfferService offerService;
-    //create
+
     @PostMapping("/add")
     public ResponseEntity<String> addOffer(@RequestBody Offer offer) {
         ResponseEntity<String> response;
@@ -27,21 +27,22 @@ public class OfferController {
         }
         return response;
     }
-    //read
+
     @GetMapping("/get")
     public List<Offer> getAllOffers(){
         return offerService.getAllOffers();
     }
+
     @GetMapping("/get/{id_offer}")
     public Offer getSingleOffer(@PathVariable long id_offer){
         return offerService.getSingleOffer(id_offer);
     }
-    //update
+
     @PutMapping("/update/{id_offer}")
     public Offer updateOffer(@RequestBody Offer updatedOffer, @PathVariable long id_offer){
         return offerService.updateOffer(updatedOffer, id_offer);
     }
-    //delete
+
     @DeleteMapping("/delete/{id_offer}")
     public ResponseEntity<String> deleteOfferById(@PathVariable long id_offer) {
         try {

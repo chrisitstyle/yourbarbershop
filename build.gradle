@@ -33,6 +33,12 @@ dependencies {
 	implementation group: 'io.jsonwebtoken', name:'jjwt-impl', version: '0.11.5'
 	implementation group: 'io.jsonwebtoken', name:'jjwt-jackson', version: '0.11.5'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+
+	testImplementation 'org.junit.jupiter:junit-jupiter-api'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+	testImplementation 'org.mockito:mockito-core'
+	testImplementation 'org.hamcrest:hamcrest'
 }
 
 tasks.named('test') {

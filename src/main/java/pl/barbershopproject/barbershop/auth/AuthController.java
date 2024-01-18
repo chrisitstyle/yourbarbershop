@@ -1,6 +1,7 @@
 package pl.barbershopproject.barbershop.auth;
 
 
+import jakarta.validation.Valid;
 import pl.barbershopproject.barbershop.validation.ValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,6 @@ import pl.barbershopproject.barbershop.model.User;
 
 @RestController
 @RequiredArgsConstructor
-//@RequestMapping("/users")
 public class AuthController {
 
     private final AuthService authService;

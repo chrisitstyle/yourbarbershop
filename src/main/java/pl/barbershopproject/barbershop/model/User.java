@@ -32,6 +32,8 @@ public class User implements UserDetails {
     @JsonIgnoreProperties({"user"})
     private List<Order> userOrders;
 
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

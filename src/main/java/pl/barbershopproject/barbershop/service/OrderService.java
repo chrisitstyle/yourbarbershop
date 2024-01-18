@@ -19,19 +19,19 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
 
-    //create
+
     public ResponseEntity<String> addOrder(Order order) {
        Order savedOffer = orderRepository.save(order);
         return ResponseEntity.status(HttpStatus.CREATED).body("Zamówienie zostało dodane.");
     }
-    //read
+
     public List<Order> getAllOrders(){
         return orderRepository.findAll();
     }
     public Order getSingleOrder(long id_order){
         return orderRepository.findById(id_order).orElseThrow(NoSuchElementException::new);
     }
-    //update
+
     @Transactional
     public ResponseEntity<Order> updateOrder(Order updatedOrder, Long id_order) {
         return orderRepository.findById(id_order)
@@ -45,7 +45,7 @@ public class OrderService {
                 })
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
-    //delete
+
     @Transactional
     public void deleteOrderById(long id_order) {
         Optional<Order> orderExists = orderRepository.findById(id_order);

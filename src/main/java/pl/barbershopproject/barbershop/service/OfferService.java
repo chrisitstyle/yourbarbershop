@@ -18,20 +18,20 @@ public class OfferService {
 
     private final OfferRepository offerRepository;
 
-    // create
+
     public ResponseEntity<String> addOffer(Offer offer) {
         Offer savedOffer = offerRepository.save(offer);
         return ResponseEntity.status(HttpStatus.CREATED).body("Oferta została dodana.");
     }
 
-    //read
+
     public List<Offer> getAllOffers(){
         return offerRepository.findAll();
     }
     public Offer getSingleOffer(long id_offer){
         return offerRepository.findById(id_offer).orElseThrow(NoSuchElementException::new);
     }
-    //update
+
     @Transactional
     public Offer updateOffer(Offer updatedOffer, long id_offer){
         return offerRepository.findById(id_offer)
@@ -41,7 +41,7 @@ public class OfferService {
                     return offerRepository.save(offer);
                 }).orElseThrow(NoSuchElementException::new);
     }
-    //delete
+
     @Transactional
     public void deleteOfferById(long id_offer) {
         Optional<Offer> offerExists = offerRepository.findById(id_offer);

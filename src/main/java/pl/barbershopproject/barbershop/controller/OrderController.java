@@ -18,7 +18,6 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    //create
     @PostMapping("/add")
     public ResponseEntity<String> addOrder(@RequestBody Order order) {
         ResponseEntity<String> response;
@@ -29,7 +28,7 @@ public class OrderController {
         }
         return response;
     }
-    //read
+
     @GetMapping("/get")
     public List<Order> getAllOrders(){
         return orderService.getAllOrders();
@@ -38,12 +37,12 @@ public class OrderController {
     public Order getSingleOrder(@PathVariable long id_order){
         return orderService.getSingleOrder(id_order);
     }
-    //update
+
     @PutMapping("/update/{id_order}")
     public ResponseEntity<Order> updateOrder(@RequestBody Order updatedOrder, @PathVariable long id_order) {
         return orderService.updateOrder(updatedOrder, id_order);
     }
-    //delete
+
     @DeleteMapping("/delete/{id_order}")
     public ResponseEntity<String> deleteOrderById(@PathVariable long id_order) {
         try {

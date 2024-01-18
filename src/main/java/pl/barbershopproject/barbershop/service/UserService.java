@@ -3,6 +3,7 @@ package pl.barbershopproject.barbershop.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    //create
+
     public ResponseEntity<User> addUser(User user) {
         Optional<User> userFromDatabase = userRepository.findByEmail(user.getEmail());
 
@@ -33,7 +34,6 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
 
-    //read
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
@@ -48,7 +48,6 @@ public class UserService {
         }
     }
 
-    //update
     @Transactional
     public User updateUser(User updatedUser, long id_user) {
         return userRepository.findById(id_user)
@@ -64,17 +63,23 @@ public class UserService {
                 }).orElseThrow(NoSuchElementException::new);
     }
 
-    //delete
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteUserById(long id_user) {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        long loggedUserId = user.getIdUser();
         Optional<User> userExists = userRepository.findById(id_user);
 
-        if (userExists.isPresent()) {
-            userRepository.deleteById(id_user);
-        } else {
-            throw new NoSuchElementException("Użytkownik o podanym ID nie istnieje");
-        }
+            if (userExists.isPresent()) {
+                if( loggedUserId != id_user) {
+                    userRepository.deleteById(id_user);
+                } else{ throw new IllegalArgumentException("Nie można usunąć obecnie zalogowanego użytkownika.");}
+
+            } else {
+                throw new NoSuchElementException("Użytkownik o podanym ID nie istnieje");
+            }
     }
+
 
 
 }

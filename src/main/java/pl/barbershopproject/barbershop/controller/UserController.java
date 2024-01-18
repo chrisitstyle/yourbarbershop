@@ -18,13 +18,11 @@ public class UserController {
 
     private final UserService userService;
 
-    //create
     @PostMapping("/add")
     public ResponseEntity<User> addUser(@RequestBody User user) {
         return userService.addUser(user);
     }
 
-    //read
     @GetMapping("/get")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
