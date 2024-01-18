@@ -45,7 +45,7 @@ const Gallery = () => {
         });
         setImages(filteredImages);
       } else {
-        alert("Error loading images");
+        //alert("Error loading images");
         console.error("Data is null, error:", error);
       }
     } catch (error) {
