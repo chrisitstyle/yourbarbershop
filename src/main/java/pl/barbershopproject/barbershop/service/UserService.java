@@ -55,6 +55,7 @@ public class UserService {
                     user.setFirstname(updatedUser.getFirstname());
                     user.setLastname(updatedUser.getLastname());
                     user.setEmail(updatedUser.getEmail());
+                    user.setRole(updatedUser.getRole());
 
                     if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
                         user.setPassword(updatedUser.getPassword());
