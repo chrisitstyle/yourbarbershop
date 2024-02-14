@@ -13,11 +13,14 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const [searchTerm, setSearchTerm] = useState("");
   const currentData = data
-    .filter((order) =>
-      ` ${order.idOrder} ${order.user.firstname}  ${order.user.lastname}  ${order.user.username} ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    )
+    .filter((order) => {
+      const searchTerms = `${order.idOrder} ${order.user.firstname} ${
+        order.user.lastname
+      } ${order.user.username} ${order.offer ? order.offer.kind : "brak"} ${
+        order.offer ? order.offer.cost : "brak"
+      } ${order.orderDate} ${order.visitDate}`;
+      return searchTerms.toLowerCase().includes(searchTerm.toLowerCase());
+    })
     .slice(indexOfFirstOrder, indexOfLastOrder);
 
   const totalPages = Math.ceil(data.length / ordersPerPage);
@@ -76,7 +79,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
                   <td>{order.user.firstname || "brak"}</td>
                   <td>{order.user.lastname || "brak"}</td>
                   <td>{order.user.username}</td>
-                  <td>{order.offer ? order.offer.kind || "brak" : "brak"}</td>
+                  <td>{order.offer ? order.offer.kind : "brak"}</td>
                   <td>{order.offer ? order.offer.cost + " zł" : "brak"}</td>
                   <td>
                     {order.orderDate

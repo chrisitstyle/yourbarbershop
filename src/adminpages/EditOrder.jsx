@@ -115,8 +115,9 @@ const EditOrder = () => {
                   onChange={(e) => setSelectedOffer(e.target.value)}
                   required
                 >
-                  <option value={orderData.offer.idOffer}>
-                    {orderData.offer.kind} - {orderData.offer.cost} zł
+                  <option value={orderData.offer?.idOffer || "brak"}>
+                    {orderData.offer?.kind || "brak"} -{" "}
+                    {orderData.offer?.cost || "brak"} zł
                   </option>
                   {offers.map((offer) => (
                     <option key={offer.idOffer} value={offer.idOffer}>

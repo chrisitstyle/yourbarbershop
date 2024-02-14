@@ -21,7 +21,9 @@ const Profile = () => {
 
   const currentData = userDetails?.userOrders
     ?.filter((order) =>
-      `${order.idOrder}  ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate}`
+      `${order.idOrder}  ${order.offer ? order.offer.kind : "brak"} ${
+        order.offer ? order.offer.cost : "brak"
+      } ${order.orderDate} ${order.visitDate}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
     )
