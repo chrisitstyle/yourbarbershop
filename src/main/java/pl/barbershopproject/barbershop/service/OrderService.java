@@ -32,6 +32,11 @@ public class OrderService {
         return orderRepository.findById(id_order).orElseThrow(NoSuchElementException::new);
     }
 
+    public List<Order> getOrdersByStatus(String status){
+
+        return orderRepository.findOrdersByStatus(status);
+    }
+
     @Transactional
     public ResponseEntity<Order> updateOrder(Order updatedOrder, Long id_order) {
         return orderRepository.findById(id_order)
