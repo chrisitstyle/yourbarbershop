@@ -31,4 +31,7 @@ public class Order {
     @Column (name = "visit_date")
 
     private LocalDateTime visitDate;
+
+    private String status;
+
 }

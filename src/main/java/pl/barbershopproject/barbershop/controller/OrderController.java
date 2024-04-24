@@ -30,8 +30,14 @@ public class OrderController {
     }
 
     @GetMapping("/get")
-    public List<Order> getAllOrders(){
-        return orderService.getAllOrders();
+    public List<Order> getAllOrders(@RequestParam(required = false) String status){
+
+        if(status != null && !status.isEmpty()){
+            return orderService.getOrdersByStatus(status);
+        }
+        else{
+            return orderService.getAllOrders();
+        }
     }
     @GetMapping("/get/{id_order}")
     public Order getSingleOrder(@PathVariable long id_order){
