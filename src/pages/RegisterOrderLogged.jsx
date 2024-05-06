@@ -30,23 +30,25 @@ const RegisterOrderLogged = () => {
   }, []);
 
   const formatSelectedDateTime = (date, hour, minute) => {
-    // obiekt dla UTC
-    const selectedDateTimeUTC = new Date(
-      `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(
-        2,
-        "0"
-      )}:00.000Z`
+    // new object from date, hours and minutes
+    const selectedDateTime = new Date(date);
+    selectedDateTime.setHours(hour);
+    selectedDateTime.setMinutes(minute);
+
+    // convert to UTC
+    const selectedDateTimeUTC = zonedTimeToUtc(
+      selectedDateTime,
+      "Europe/Warsaw"
     );
 
-    // przesunięcie czasu dla wybranej daty w czasie lokalnym (Europe/Warsaw)
-    const offset = new Date().getTimezoneOffset();
-
-    // przesunięcie do daty UTC
-    const selectedDateTimeLocal = new Date(
-      selectedDateTimeUTC.getTime() - offset * 60 * 1000
+    // Format date and time for server
+    const formattedDateTime = format(
+      selectedDateTimeUTC,
+      "yyyy-MM-dd'T'HH:mm:ss",
+      { timeZone: "UTC" }
     );
 
-    return selectedDateTimeLocal.toISOString();
+    return formattedDateTime;
   };
 
   const handleOfferChange = (e) => {
@@ -81,6 +83,7 @@ const RegisterOrderLogged = () => {
             selectedHour,
             selectedMinute
           ),
+          status: "NOWE",
         },
         {
           withCredentials: true,
@@ -97,11 +100,7 @@ const RegisterOrderLogged = () => {
 
   const getCurrentDateTime = () => {
     const currentDateTimeUTC = utcToZonedTime(new Date(), "Europe/Warsaw");
-    const adjustedDateTimeUTC = new Date(
-      currentDateTimeUTC.getTime() + 60 * 60 * 1000 // + 1 godzina
-    );
-
-    return format(adjustedDateTimeUTC, "yyyy-MM-dd'T'HH:mm:ss");
+    return format(currentDateTimeUTC, "yyyy-MM-dd'T'HH:mm:ss");
   };
 
   return (

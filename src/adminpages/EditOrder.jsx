@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 
 import { getOffers, updateOrder } from "../api/api";
-import { format } from "date-fns-tz";
+import { format, zonedTimeToUtc } from "date-fns-tz";
 import { Alert } from "react-bootstrap";
 
 const EditOrder = () => {
@@ -18,6 +18,7 @@ const EditOrder = () => {
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [editOrderError, setEditOrderError] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("");
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -26,9 +27,11 @@ const EditOrder = () => {
         setOffers(offersData);
         setSelectedOffer(orderData?.offer?.idOffer || "");
         setSelectedDate(format(new Date(orderData?.visitDate), "yyyy-MM-dd"));
+
+        // Set time from orderData
         const hours = new Date(orderData?.visitDate).getHours();
         const minutes = new Date(orderData?.visitDate).getMinutes();
-        setSelectedHour(hours - 1);
+        setSelectedHour(hours);
         setSelectedMinute(minutes);
       } catch (error) {
         console.error("Błąd ładowania ofert:", error);
@@ -39,19 +42,25 @@ const EditOrder = () => {
   }, [orderData]);
 
   const formatSelectedDateTime = (date, hour, minute) => {
-    const selectedDateTimeUTC = new Date(
-      `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(
-        2,
-        "0"
-      )}:00.000Z`
+    // new object from date, hours and minutes
+    const selectedDateTime = new Date(date);
+    selectedDateTime.setHours(hour);
+    selectedDateTime.setMinutes(minute);
+
+    // convert to UTC
+    const selectedDateTimeUTC = zonedTimeToUtc(
+      selectedDateTime,
+      "Europe/Warsaw"
     );
 
-    const offset = new Date().getTimezoneOffset();
-    const selectedDateTimeLocal = new Date(
-      selectedDateTimeUTC.getTime() - offset * 60 * 1000
+    // Format date and time for server
+    const formattedDateTime = format(
+      selectedDateTimeUTC,
+      "yyyy-MM-dd'T'HH:mm:ss",
+      { timeZone: "UTC" }
     );
 
-    return selectedDateTimeLocal.toISOString();
+    return formattedDateTime;
   };
 
   const handleHourChange = (e) => {
@@ -66,6 +75,7 @@ const EditOrder = () => {
     e.preventDefault();
 
     try {
+      const statusToSend = selectedStatus ? selectedStatus : orderData.status;
       await updateOrder(
         orderData.idOrder,
         {
@@ -77,6 +87,7 @@ const EditOrder = () => {
             selectedHour,
             selectedMinute
           ),
+          status: statusToSend,
         },
         user.token
       );
@@ -172,6 +183,32 @@ const EditOrder = () => {
                   </select>
                 </div>
               </div>
+              <div className="mb-3">
+                <label htmlFor="selectstatus" className="form-label">
+                  Wybierz status
+                </label>
+                <select
+                  className="form-select"
+                  id="selectstatus"
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  required
+                >
+                  {/* actual status as first option */}
+                  <option value={orderData.status}>{orderData.status}</option>
+                  {/* Map other status */}
+                  {["NOWE", "ZREALIZOWANE", "ANULOWANE"].map(
+                    (status) =>
+                      // skip actual status
+                      status !== orderData.status && (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      )
+                  )}
+                </select>
+              </div>
+
               <button type="submit" className="btn btn-dark mx-auto d-block">
                 Zapisz zmiany
               </button>

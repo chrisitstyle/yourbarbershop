@@ -14,7 +14,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const currentData = data
     .filter((order) =>
-      ` ${order.idOrder} ${order.user.firstname}  ${order.user.lastname}  ${order.user.username} ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate}`
+      ` ${order.idOrder} ${order.user.firstname}  ${order.user.lastname}  ${order.user.username} ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate} ${order.status}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
     )
@@ -32,11 +32,11 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
   };
 
   const formatVisitDate = (date) => {
-    return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
+    return format(new Date(date), "yyyy-MM-dd HH:mm:ss");
   };
 
   const formatOrderDate = (date) => {
-    return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
+    return format(new Date(date), "yyyy-MM-dd HH:mm:ss");
   };
 
   return (
@@ -44,7 +44,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
       <div className="py-4">
         <div>
           <h2>Wizyty użytkowników</h2>
-          {/* pole wyszukiwania */}
+          {/* search field */}
           <div className="mb-3 mt-4">
             <input
               type="text"
@@ -66,6 +66,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
                 <th scope="col">Koszt</th>
                 <th scope="col">Data zamówienia</th>
                 <th scope="col">Data wizyty</th>
+                <th scope="col">Status</th>
                 <th scope="col">Akcja</th>
               </tr>
             </thead>
@@ -76,7 +77,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
                   <td>{order.user.firstname || "brak"}</td>
                   <td>{order.user.lastname || "brak"}</td>
                   <td>{order.user.username}</td>
-                  <td>{order.offer ? order.offer.kind || "brak" : "brak"}</td>
+                  <td>{order.offer ? order.offer.kind : "brak"}</td>
                   <td>{order.offer ? order.offer.cost + " zł" : "brak"}</td>
                   <td>
                     {order.orderDate
@@ -88,6 +89,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
                       ? formatVisitDate(order.visitDate)
                       : "brak"}
                   </td>
+                  <td>{order.status}</td>
                   <td>
                     <div className="d-flex">
                       <button

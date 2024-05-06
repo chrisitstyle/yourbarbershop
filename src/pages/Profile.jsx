@@ -21,7 +21,7 @@ const Profile = () => {
 
   const currentData = userDetails?.userOrders
     ?.filter((order) =>
-      `${order.idOrder}  ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate}`
+      `${order.idOrder}  ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate} ${order.status}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
     )
@@ -35,11 +35,11 @@ const Profile = () => {
   };
 
   const formatVisitDate = (date) => {
-    return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
+    return format(subHours(new Date(date), 0), "yyyy-MM-dd HH:mm:ss");
   };
 
   const formatOrderDate = (date) => {
-    return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
+    return format(subHours(new Date(date), 0), "yyyy-MM-dd HH:mm:ss");
   };
   useEffect(() => {
     const loadUser = async () => {
@@ -89,7 +89,7 @@ const Profile = () => {
                 {userDetails.firstname}, poniżej znajdują się wszystkie
                 dotychczasowe wizyty
               </h6>
-              {/* pole wyszukiwania */}
+              {/* search field */}
               <div className="mb-3 mt-4">
                 <input
                   type="text"
@@ -108,6 +108,7 @@ const Profile = () => {
                     <th scope="col">Koszt</th>
                     <th scope="col">Data złożenia wizyty</th>
                     <th scope="col">Data wizyty</th>
+                    <th scope="col">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -126,6 +127,7 @@ const Profile = () => {
                           ? formatVisitDate(order.visitDate)
                           : "brak"}
                       </td>
+                      <td>{order.status}</td>
                     </tr>
                   ))}
                 </tbody>
