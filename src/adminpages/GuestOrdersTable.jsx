@@ -11,11 +11,25 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
   const indexOfFirstGuestOrder = indexOfLastGuestOrder - guestOrdersPerPage;
   const [searchTerm, setSearchTerm] = useState("");
   const currentData = data
-    .filter((guestOrder) =>
-      `${guestOrder.idGuestOrder} ${guestOrder.firstname} ${guestOrder.lastname} ${guestOrder.phonenumber} ${guestOrder.offer.kind} ${guestOrder.offer.cost} ${guestOrder.orderDate} ${guestOrder.visitDate}`
+    .filter((guestOrder) => {
+      const {
+        idGuestOrder,
+        firstname,
+        lastname,
+        phonenumber,
+        offer,
+        orderDate,
+        visitDate,
+      } = guestOrder;
+
+      const offerKind = offer && offer.kind !== undefined ? offer.kind : "brak";
+      const offerCost =
+        offer && offer.cost !== undefined ? `${offer.cost} zł` : "brak";
+
+      return `${idGuestOrder} ${firstname} ${lastname} ${phonenumber} ${offerKind} ${offerCost} ${orderDate} ${visitDate}`
         .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    )
+        .includes(searchTerm.toLowerCase());
+    })
     .slice(indexOfFirstGuestOrder, indexOfLastGuestOrder);
 
   const totalPages = Math.ceil(data.length / guestOrdersPerPage);
