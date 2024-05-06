@@ -31,8 +31,13 @@ public class GuestOrderController {
     }
 
     @GetMapping("/get")
-    public List<GuestOrder> getAllGuestOrders(){
-        return guestOrderService.getAllGuestOrders();
+    public List<GuestOrder> getAllGuestOrders(@RequestParam(required = false) String status){
+        if(status != null && !status.isEmpty()){
+            return guestOrderService.getGuestOrdersByStatus(status);
+        }else{
+            return guestOrderService.getAllGuestOrders();
+        }
+
     }
 
     @GetMapping("/get/{idGuestOrder}")

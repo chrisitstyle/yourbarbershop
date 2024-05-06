@@ -30,4 +30,6 @@ public class GuestOrder {
 
     private LocalDateTime visitDate;
 
+    private String status;
+
 }

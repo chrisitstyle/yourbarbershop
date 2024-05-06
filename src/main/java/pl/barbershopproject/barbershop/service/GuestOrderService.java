@@ -29,6 +29,11 @@ public class GuestOrderService {
     public GuestOrder getGuestOrder(long idGuestOrder){
         return guestOrderRepository.findById(idGuestOrder).orElseThrow(NoSuchElementException::new);
     }
+
+    public List<GuestOrder> getGuestOrdersByStatus(String status){
+
+        return guestOrderRepository.findGuestOrdersByStatus(status);
+    }
     @Transactional
     public ResponseEntity<GuestOrder> updateGuestOrder(GuestOrder updatedGuestOrder, Long idGuestOrder) {
         return guestOrderRepository.findById(idGuestOrder)
@@ -39,6 +44,7 @@ public class GuestOrderService {
                     guestOrder.setOffer(updatedGuestOrder.getOffer());
                     guestOrder.setOrderDate(updatedGuestOrder.getOrderDate());
                     guestOrder.setVisitDate(updatedGuestOrder.getVisitDate());
+                    guestOrder.setStatus(updatedGuestOrder.getStatus());
                     GuestOrder updatedGuestOrderEntity = guestOrderRepository.save(guestOrder);
                     return ResponseEntity.ok(updatedGuestOrderEntity);
                 })
