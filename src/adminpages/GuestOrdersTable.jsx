@@ -20,13 +20,14 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
         offer,
         orderDate,
         visitDate,
+        status,
       } = guestOrder;
 
       const offerKind = offer && offer.kind !== undefined ? offer.kind : "brak";
       const offerCost =
         offer && offer.cost !== undefined ? `${offer.cost} zł` : "brak";
 
-      return `${idGuestOrder} ${firstname} ${lastname} ${phonenumber} ${offerKind} ${offerCost} ${orderDate} ${visitDate}`
+      return `${idGuestOrder} ${firstname} ${lastname} ${phonenumber} ${offerKind} ${offerCost} ${orderDate} ${visitDate} ${status}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
     })
@@ -78,6 +79,7 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
                 <th scope="col">Koszt</th>
                 <th scope="col">Data zamówienia</th>
                 <th scope="col">Data wizyty</th>
+                <th scope="col">Status</th>
                 <th scope="col">Akcja</th>
               </tr>
             </thead>
@@ -102,6 +104,7 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
                       ? formatVisitDate(guestOrder.visitDate)
                       : "brak"}
                   </td>
+                  <td>{guestOrder.status}</td>
                   <td>
                     <div className="d-flex">
                       <button
