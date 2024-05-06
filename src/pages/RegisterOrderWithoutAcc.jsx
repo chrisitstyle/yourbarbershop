@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { utcToZonedTime, format } from "date-fns-tz";
+import { utcToZonedTime, zonedTimeToUtc, format } from "date-fns-tz";
 import Alert from "react-bootstrap/Alert";
 import axios from "axios";
 import * as api from "../api/api.js";
@@ -18,7 +18,7 @@ const RegisterOrderWithoutAcc = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
 
-  // Funkcja do resetowania pól formularza
+  // function to reset form fields
   const setInitialState = () => {
     setFirstName("");
     setLastName("");
@@ -43,22 +43,25 @@ const RegisterOrderWithoutAcc = () => {
   }, []);
 
   const formatSelectedDateTime = (date, hour, minute) => {
-    console.log("Input date, hour, minute:", date, hour, minute);
+    // new object from date, hours and minutes
+    const selectedDateTime = new Date(date);
+    selectedDateTime.setHours(hour);
+    selectedDateTime.setMinutes(minute);
 
-    const selectedDateTimeUTC = new Date(
-      `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(
-        2,
-        "0"
-      )}:00.000Z`
+    // convert to UTC
+    const selectedDateTimeUTC = zonedTimeToUtc(
+      selectedDateTime,
+      "Europe/Warsaw"
     );
 
-    const offset = new Date().getTimezoneOffset();
-
-    const selectedDateTimeLocal = new Date(
-      selectedDateTimeUTC.getTime() - offset * 60 * 1000
+    // Format date and time for server
+    const formattedDateTime = format(
+      selectedDateTimeUTC,
+      "yyyy-MM-dd'T'HH:mm:ss",
+      { timeZone: "UTC" }
     );
 
-    return selectedDateTimeLocal.toISOString();
+    return formattedDateTime;
   };
 
   const handleOfferChange = (e) => {
@@ -95,6 +98,7 @@ const RegisterOrderWithoutAcc = () => {
             selectedHour,
             selectedMinute
           ),
+          status: "NOWE",
         }
       );
 
@@ -107,9 +111,6 @@ const RegisterOrderWithoutAcc = () => {
 
   const getCurrentDateTime = () => {
     const currentDateTimeUTC = utcToZonedTime(new Date(), "Europe/Warsaw");
-
-    currentDateTimeUTC.setHours(currentDateTimeUTC.getHours() + 1);
-
     return format(currentDateTimeUTC, "yyyy-MM-dd'T'HH:mm:ss");
   };
 
