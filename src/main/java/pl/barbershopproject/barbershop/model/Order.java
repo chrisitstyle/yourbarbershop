@@ -32,6 +32,7 @@ public class Order {
 
     private LocalDateTime visitDate;
 
+
     private String status;
 
 }

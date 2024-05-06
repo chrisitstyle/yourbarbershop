@@ -45,6 +45,7 @@ public class OrderService {
                     order.setOffer(updatedOrder.getOffer());
                     order.setOrderDate(updatedOrder.getOrderDate());
                     order.setVisitDate(updatedOrder.getVisitDate());
+                    order.setStatus(updatedOrder.getStatus());
                     Order updatedOrderEntity = orderRepository.save(order);
                     return ResponseEntity.ok(updatedOrderEntity);
                 })
