@@ -46,11 +46,11 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
   };
 
   const formatVisitDate = (date) => {
-    return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
+    return format(new Date(date), "yyyy-MM-dd HH:mm:ss");
   };
 
   const formatOrderDate = (date) => {
-    return format(subHours(new Date(date), 1), "yyyy-MM-dd HH:mm:ss");
+    return format(new Date(date), "yyyy-MM-dd HH:mm:ss");
   };
 
   return (
