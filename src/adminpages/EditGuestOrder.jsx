@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { getOffers, updateGuestOrder } from "../api/api";
-import { format } from "date-fns-tz";
+import { zonedTimeToUtc, format } from "date-fns-tz";
 import { Alert } from "react-bootstrap";
 const EditGuestOrder = () => {
   const { user } = useAuth();
@@ -28,7 +28,7 @@ const EditGuestOrder = () => {
         );
         const hours = new Date(guestOrderData?.visitDate).getHours();
         const minutes = new Date(guestOrderData?.visitDate).getMinutes();
-        setSelectedHour(hours - 1);
+        setSelectedHour(hours);
         setSelectedMinute(minutes);
       } catch (error) {
         console.error("Błąd ładowania ofert:", error);
@@ -39,19 +39,25 @@ const EditGuestOrder = () => {
   }, [guestOrderData]);
 
   const formatSelectedDateTime = (date, hour, minute) => {
-    const selectedDateTimeUTC = new Date(
-      `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(
-        2,
-        "0"
-      )}:00.000Z`
+    // new object from date, hours and minutes
+    const selectedDateTime = new Date(date);
+    selectedDateTime.setHours(hour);
+    selectedDateTime.setMinutes(minute);
+
+    // convert to UTC
+    const selectedDateTimeUTC = zonedTimeToUtc(
+      selectedDateTime,
+      "Europe/Warsaw"
     );
 
-    const offset = new Date().getTimezoneOffset();
-    const selectedDateTimeLocal = new Date(
-      selectedDateTimeUTC.getTime() - offset * 60 * 1000
+    // Format date and time for server
+    const formattedDateTime = format(
+      selectedDateTimeUTC,
+      "yyyy-MM-dd'T'HH:mm:ss",
+      { timeZone: "UTC" }
     );
 
-    return selectedDateTimeLocal.toISOString();
+    return formattedDateTime;
   };
 
   const handleHourChange = (e) => {
