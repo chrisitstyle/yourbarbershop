@@ -16,6 +16,7 @@ const EditGuestOrder = () => {
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [editGuestOrderError, setEditGuestOrderError] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("");
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -72,6 +73,9 @@ const EditGuestOrder = () => {
     e.preventDefault();
 
     try {
+      const statusToSend = selectedStatus
+        ? selectedStatus
+        : guestOrderData.status;
       await updateGuestOrder(
         guestOrderData.idGuestOrder,
         {
@@ -87,6 +91,7 @@ const EditGuestOrder = () => {
             selectedHour,
             selectedMinute
           ),
+          status: statusToSend,
         },
         user.token
       );
@@ -183,6 +188,33 @@ const EditGuestOrder = () => {
                     ))}
                   </select>
                 </div>
+              </div>
+              <div className="mb-3">
+                <label htmlFor="selectstatus" className="form-label">
+                  Wybierz status
+                </label>
+                <select
+                  className="form-select"
+                  id="selectstatus"
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  required
+                >
+                  {/* actual status as first option */}
+                  <option value={guestOrderData.status}>
+                    {guestOrderData.status}
+                  </option>
+                  {/* Map other status */}
+                  {["NOWE", "ZREALIZOWANE", "ANULOWANE"].map(
+                    (status) =>
+                      // skip actual status
+                      status !== guestOrderData.status && (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      )
+                  )}
+                </select>
               </div>
               <button type="submit" className="btn btn-dark mx-auto d-block">
                 Zapisz zmiany
