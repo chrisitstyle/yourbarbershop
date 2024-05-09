@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { utcToZonedTime, zonedTimeToUtc, format } from "date-fns-tz";
 import Alert from "react-bootstrap/Alert";
 import axios from "axios";
-import * as api from "../api/api.js";
+import { getOffers } from "../api/offerService";
 const RegisterOrderWithoutAcc = () => {
   const navigate = useNavigate();
   const [firstname, setFirstName] = useState("");
@@ -32,7 +32,7 @@ const RegisterOrderWithoutAcc = () => {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const offersData = await api.getOffers();
+        const offersData = await getOffers();
         setOffers(offersData);
       } catch (error) {
         console.error("Błąd ładowania ofert:", error);

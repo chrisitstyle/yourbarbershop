@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import { getOffers, updateGuestOrder } from "../api/api";
+import { updateGuestOrder } from "../api/guestOrderService";
 import { zonedTimeToUtc, format } from "date-fns-tz";
 import { Alert } from "react-bootstrap";
+import { getOffers } from "../api/offerService";
 const EditGuestOrder = () => {
   const { user } = useAuth();
   const location = useLocation();

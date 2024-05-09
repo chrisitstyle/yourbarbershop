@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { Alert } from "react-bootstrap";
-import { loginUser } from "../api/api";
+import { loginUser } from "../api/authService";
 
 const Login = () => {
   const [email, setEmail] = useState("");

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { Alert } from "react-bootstrap";
-import { updateUser } from "../api/api";
+import { updateUser } from "../api/userService";
 
 const EditUser = () => {
   const { user } = useAuth();

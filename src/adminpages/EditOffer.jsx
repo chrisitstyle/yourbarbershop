@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import { updateOffer } from "../api/api";
+import { updateOffer } from "../api/offerService";
 import { Alert } from "react-bootstrap";
 
 const EditOffer = () => {

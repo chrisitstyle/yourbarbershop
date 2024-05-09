@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 
-import { getOffers, updateOrder } from "../api/api";
+import { updateOrder } from "../api/orderService";
+import { getOffers } from "../api/offerService";
 import { format, zonedTimeToUtc } from "date-fns-tz";
 import { Alert } from "react-bootstrap";
 

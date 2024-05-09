@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 
-import * as api from "../api/api.js";
+import userService from "../api/userService.js";
+import offerService from "../api/offerService.js";
+import orderService from "../api/orderService.js";
+import guestOrderService from "../api/guestOrderService.js";
 import { Alert } from "react-bootstrap";
 import OffersTable from "./OffersTable";
 import AddOffer from "./AddOffer";
@@ -43,7 +46,7 @@ const AdminPanel = () => {
 
   const loadOffers = useCallback(async () => {
     try {
-      const offersData = await api.getOffers();
+      const offersData = await offerService.getOffers();
       setOffers(offersData);
     } catch (error) {
       console.error("Error loading offers:", error);
@@ -52,7 +55,7 @@ const AdminPanel = () => {
 
   const handleAddOffer = async (newOffer) => {
     try {
-      await api.addOffer(newOffer, user.token);
+      await offerService.addOffer(newOffer, user.token);
       loadOffers();
       handleToggleTable("offers");
       setAddOfferSuccessfulMsg("Pomyślnie dodano nową usługę");
@@ -64,7 +67,7 @@ const AdminPanel = () => {
 
   const handleDeleteOffer = async (idOffer) => {
     try {
-      await api.deleteOffer(idOffer, user.token);
+      await offerService.deleteOffer(idOffer, user.token);
       setOffers((prevOffers) =>
         prevOffers.filter((offer) => offer.idOffer !== idOffer)
       );
@@ -76,7 +79,7 @@ const AdminPanel = () => {
 
   const loadUsers = useCallback(async () => {
     try {
-      const usersData = await api.getUsers(user.token);
+      const usersData = await userService.getUsers(user.token);
       setUsers(usersData);
     } catch (error) {
       console.error("Error loading users: ", error);
@@ -85,7 +88,7 @@ const AdminPanel = () => {
 
   const handleAddUser = async (newUser) => {
     try {
-      await api.addUser(newUser);
+      await userService.addUser(newUser);
       setAddUserSuccessfulMsg("Pomyślnie dodano nowego użytkownika");
       loadUsers();
       handleToggleTable("users");
@@ -97,7 +100,7 @@ const AdminPanel = () => {
 
   const handleDeleteUser = async (idUser) => {
     try {
-      await api.deleteUser(idUser, user.token);
+      await userService.deleteUser(idUser, user.token);
       setUsers((prevUsers) =>
         prevUsers.filter((user) => user.idUser !== idUser)
       );
@@ -109,7 +112,7 @@ const AdminPanel = () => {
 
   const loadOrders = useCallback(async () => {
     try {
-      const ordersData = await api.getOrders(user.token);
+      const ordersData = await orderService.getOrders(user.token);
       setOrders(ordersData);
     } catch (error) {
       console.error("Error loading orders:", error);
@@ -118,7 +121,7 @@ const AdminPanel = () => {
 
   const handleDeleteOrder = async (idOrder) => {
     try {
-      await api.deleteOrder(idOrder, user.token);
+      await orderService.deleteOrder(idOrder, user.token);
       setOrders((prevOrders) =>
         prevOrders.filter((order) => order.idOrder !== idOrder)
       );
@@ -130,7 +133,9 @@ const AdminPanel = () => {
 
   const loadGuestOrders = useCallback(async () => {
     try {
-      const guestOrdersData = await api.getGuestOrders(user.token);
+      const guestOrdersData = await guestOrderService.getGuestOrders(
+        user.token
+      );
       setGuestOrders(guestOrdersData);
     } catch (error) {
       console.error("Error loading  guest orders:", error);
@@ -139,7 +144,7 @@ const AdminPanel = () => {
 
   const handleDeleteGuestOrder = async (idGuestOrder) => {
     try {
-      await api.deleteGuestOrder(idGuestOrder, user.token);
+      await guestOrderService.deleteGuestOrder(idGuestOrder, user.token);
       setGuestOrders((prevGuestOrders) =>
         prevGuestOrders.filter(
           (guestOrder) => guestOrder.idGuestOrder !== idGuestOrder
