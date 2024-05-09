@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../AuthContext";
 import { useNavigate } from "react-router-dom";
-import { utcToZonedTime, zonedTimeToUtc, format } from "date-fns-tz";
+import { getCurrentDateTime, formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
 import { getOffers } from "../api/offerService";
 
@@ -28,28 +28,6 @@ const RegisterOrderLogged = () => {
 
     fetchOffers();
   }, []);
-
-  const formatSelectedDateTime = (date, hour, minute) => {
-    // new object from date, hours and minutes
-    const selectedDateTime = new Date(date);
-    selectedDateTime.setHours(hour);
-    selectedDateTime.setMinutes(minute);
-
-    // convert to UTC
-    const selectedDateTimeUTC = zonedTimeToUtc(
-      selectedDateTime,
-      "Europe/Warsaw"
-    );
-
-    // Format date and time for server
-    const formattedDateTime = format(
-      selectedDateTimeUTC,
-      "yyyy-MM-dd'T'HH:mm:ss",
-      { timeZone: "UTC" }
-    );
-
-    return formattedDateTime;
-  };
 
   const handleOfferChange = (e) => {
     const selectedOfferId = e.target.value;
@@ -96,11 +74,6 @@ const RegisterOrderLogged = () => {
     } catch (error) {
       setShowErrorAlert(true);
     }
-  };
-
-  const getCurrentDateTime = () => {
-    const currentDateTimeUTC = utcToZonedTime(new Date(), "Europe/Warsaw");
-    return format(currentDateTimeUTC, "yyyy-MM-dd'T'HH:mm:ss");
   };
 
   return (

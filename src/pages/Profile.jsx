@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../AuthContext";
 import axios from "axios";
 import { useParams, useLocation } from "react-router-dom";
-import { format, subHours } from "date-fns";
+import { formatDate } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
 
 const Profile = () => {
@@ -34,13 +34,6 @@ const Profile = () => {
     setCurrentPage(page);
   };
 
-  const formatVisitDate = (date) => {
-    return format(subHours(new Date(date), 0), "yyyy-MM-dd HH:mm:ss");
-  };
-
-  const formatOrderDate = (date) => {
-    return format(subHours(new Date(date), 0), "yyyy-MM-dd HH:mm:ss");
-  };
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -118,14 +111,10 @@ const Profile = () => {
                       <td>{order.offer ? order.offer.kind : "brak"}</td>
                       <td>{order.offer ? order.offer.cost + " zł" : "brak"}</td>
                       <td>
-                        {order.orderDate
-                          ? formatOrderDate(order.orderDate)
-                          : "brak"}
+                        {order.orderDate ? formatDate(order.orderDate) : "brak"}
                       </td>
                       <td>
-                        {order.visitDate
-                          ? formatVisitDate(order.visitDate)
-                          : "brak"}
+                        {order.visitDate ? formatDate(order.visitDate) : "brak"}
                       </td>
                       <td>{order.status}</td>
                     </tr>

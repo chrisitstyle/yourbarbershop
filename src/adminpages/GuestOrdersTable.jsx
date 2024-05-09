@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { format, subHours } from "date-fns";
+import { formatDate } from "../api/dataParser";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
@@ -43,14 +43,6 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
 
   const handlePageClick = (page) => {
     setCurrentPage(page);
-  };
-
-  const formatVisitDate = (date) => {
-    return format(new Date(date), "yyyy-MM-dd HH:mm:ss");
-  };
-
-  const formatOrderDate = (date) => {
-    return format(new Date(date), "yyyy-MM-dd HH:mm:ss");
   };
 
   return (
@@ -96,12 +88,12 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
                   </td>
                   <td>
                     {guestOrder.orderDate
-                      ? formatOrderDate(guestOrder.orderDate)
+                      ? formatDate(guestOrder.orderDate)
                       : "brak"}
                   </td>
                   <td>
                     {guestOrder.visitDate
-                      ? formatVisitDate(guestOrder.visitDate)
+                      ? formatDate(guestOrder.visitDate)
                       : "brak"}
                   </td>
                   <td>{guestOrder.status}</td>

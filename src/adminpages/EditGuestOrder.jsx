@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { updateGuestOrder } from "../api/guestOrderService";
-import { zonedTimeToUtc, format } from "date-fns-tz";
+import { format } from "date-fns-tz";
+import { formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
 import { getOffers } from "../api/offerService";
 const EditGuestOrder = () => {
@@ -39,28 +40,6 @@ const EditGuestOrder = () => {
 
     fetchOffers();
   }, [guestOrderData]);
-
-  const formatSelectedDateTime = (date, hour, minute) => {
-    // new object from date, hours and minutes
-    const selectedDateTime = new Date(date);
-    selectedDateTime.setHours(hour);
-    selectedDateTime.setMinutes(minute);
-
-    // convert to UTC
-    const selectedDateTimeUTC = zonedTimeToUtc(
-      selectedDateTime,
-      "Europe/Warsaw"
-    );
-
-    // Format date and time for server
-    const formattedDateTime = format(
-      selectedDateTimeUTC,
-      "yyyy-MM-dd'T'HH:mm:ss",
-      { timeZone: "UTC" }
-    );
-
-    return formattedDateTime;
-  };
 
   const handleHourChange = (e) => {
     setSelectedHour(parseInt(e.target.value, 10));

@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
-
 import { useNavigate } from "react-router-dom";
-import { format, subHours } from "date-fns";
+import { formatDate } from "../api/dataParser";
 
 const OrdersTable = ({ data, onDeleteOrder }) => {
   const navigate = useNavigate();
@@ -29,14 +28,6 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
     navigate(`/adminpanel/editorder/${order.idOrder}`, {
       state: { orderData: order },
     });
-  };
-
-  const formatVisitDate = (date) => {
-    return format(new Date(date), "yyyy-MM-dd HH:mm:ss");
-  };
-
-  const formatOrderDate = (date) => {
-    return format(new Date(date), "yyyy-MM-dd HH:mm:ss");
   };
 
   return (
@@ -80,14 +71,10 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
                   <td>{order.offer ? order.offer.kind : "brak"}</td>
                   <td>{order.offer ? order.offer.cost + " zł" : "brak"}</td>
                   <td>
-                    {order.orderDate
-                      ? formatOrderDate(order.orderDate)
-                      : "brak"}
+                    {order.orderDate ? formatDate(order.orderDate) : "brak"}
                   </td>
                   <td>
-                    {order.visitDate
-                      ? formatVisitDate(order.visitDate)
-                      : "brak"}
+                    {order.visitDate ? formatDate(order.visitDate) : "brak"}
                   </td>
                   <td>{order.status}</td>
                   <td>
