@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+  faPen,
+  faTrashAlt,
+  faEnvelope,
+} from "@fortawesome/free-solid-svg-icons";
 
 const UsersTable = ({ data, onDeleteUser }) => {
   const navigate = useNavigate();
@@ -71,6 +75,9 @@ const UsersTable = ({ data, onDeleteUser }) => {
                     <td>{user.email}</td>
                     <td>{user.role}</td>
                     <td>
+                      <button class="btn btn-primary mx-2">
+                        <FontAwesomeIcon icon={faEnvelope} />
+                      </button>
                       <button
                         className="btn btn-warning"
                         onClick={() => {
@@ -82,6 +89,7 @@ const UsersTable = ({ data, onDeleteUser }) => {
                           style={{ color: "black" }}
                         />
                       </button>
+
                       <button
                         className="btn btn-danger mx-2"
                         onClick={() => onDeleteUser(user.idUser)}
