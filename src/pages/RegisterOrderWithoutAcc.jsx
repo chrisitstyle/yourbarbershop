@@ -4,14 +4,20 @@ import { useNavigate } from "react-router-dom";
 import Alert from "react-bootstrap/Alert";
 import axios from "axios";
 import { getOffers } from "../api/offerService";
+import { sendConfirmationEmail } from "../api/emailService";
 import { getCurrentDateTime, formatSelectedDateTime } from "../api/dataParser";
 const RegisterOrderWithoutAcc = () => {
   const navigate = useNavigate();
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
   const [phonenumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [offers, setOffers] = useState([]);
   const [selectedOffer, setSelectedOffer] = useState("");
+
+  const [selectedOfferName, setSelectedOfferName] = useState("");
+  const [selectedOfferCost, setSelectedOfferCost] = useState(0);
+
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
@@ -23,6 +29,7 @@ const RegisterOrderWithoutAcc = () => {
     setFirstName("");
     setLastName("");
     setPhoneNumber("");
+    setEmail("");
     setSelectedOffer("");
     setSelectedDate("");
     setSelectedHour(8);
@@ -44,7 +51,15 @@ const RegisterOrderWithoutAcc = () => {
 
   const handleOfferChange = (e) => {
     const selectedOfferId = e.target.value;
-    setSelectedOffer(selectedOfferId);
+
+    const selectedOfferData = offers.find(
+      (offer) => offer.idOffer === parseInt(selectedOfferId)
+    );
+    if (selectedOfferData) {
+      setSelectedOffer(selectedOfferId);
+      setSelectedOfferName(selectedOfferData.kind);
+      setSelectedOfferCost(selectedOfferData.cost);
+    }
   };
 
   const handleHourChange = (e) => {
@@ -65,6 +80,7 @@ const RegisterOrderWithoutAcc = () => {
           firstname,
           lastname,
           phonenumber,
+          email,
 
           offer: {
             idOffer: selectedOffer,
@@ -79,8 +95,17 @@ const RegisterOrderWithoutAcc = () => {
           status: "NOWE",
         }
       );
-
       setInitialState();
+      await sendConfirmationEmail(
+        email,
+        firstname,
+        lastname,
+        selectedDate,
+        selectedHour,
+        selectedMinute,
+        selectedOfferName,
+        selectedOfferCost
+      );
       setShowAlert(true);
     } catch (error) {
       setShowErrorAlert(true);
@@ -146,6 +171,19 @@ const RegisterOrderWithoutAcc = () => {
                   id="phonenumber"
                   value={phonenumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-2">
+                <label htmlFor="inputemail" className="form-label">
+                  Adres e-mail
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
