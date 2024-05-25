@@ -19,6 +19,7 @@ public class GuestOrder {
     private String firstname;
     private String lastname;
     private String phonenumber;
+    private String email;
     @ManyToOne
     @JoinColumn(name = "id_offer")
     private Offer offer;

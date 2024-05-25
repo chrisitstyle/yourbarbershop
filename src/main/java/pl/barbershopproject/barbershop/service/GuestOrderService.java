@@ -41,6 +41,7 @@ public class GuestOrderService {
                     guestOrder.setFirstname(updatedGuestOrder.getFirstname());
                     guestOrder.setLastname(updatedGuestOrder.getLastname());
                     guestOrder.setPhonenumber(updatedGuestOrder.getPhonenumber());
+                    guestOrder.setEmail(updatedGuestOrder.getEmail());
                     guestOrder.setOffer(updatedGuestOrder.getOffer());
                     guestOrder.setOrderDate(updatedGuestOrder.getOrderDate());
                     guestOrder.setVisitDate(updatedGuestOrder.getVisitDate());
