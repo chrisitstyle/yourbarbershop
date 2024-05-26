@@ -29,8 +29,21 @@ export const sendConfirmationEmail = async (
   }
 };
 
+export const sendCustomEmail = async (to, subject, message) => {
+  try {
+    await axios.post("http://localhost:8080/send-email", {
+      to,
+      subject,
+      message,
+    });
+  } catch (error) {
+    console.error("Błąd wysyłania e-maila:", error);
+  }
+};
+
 const emailService = {
   sendConfirmationEmail,
+  sendCustomEmail,
 };
 
 export default emailService;

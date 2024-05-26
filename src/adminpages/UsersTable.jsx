@@ -6,16 +6,23 @@ import {
   faTrashAlt,
   faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
+import { sendCustomEmail } from "../api/emailService";
+import EmailMessageModal from "../components/EmailMessageModal";
 
 const UsersTable = ({ data, onDeleteUser }) => {
   const navigate = useNavigate();
   const usersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState(""); // search input
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
 
-  // aktualizacja danych na podstawie search input
   const currentData = data
     .filter((user) =>
       ` ${user.idUser} ${user.firstname} ${user.lastname} ${user.email} ${user.role}`
@@ -36,13 +43,29 @@ const UsersTable = ({ data, onDeleteUser }) => {
     });
   };
 
+  const handleEmailClick = (user) => {
+    setEmailTo(user.email);
+    setShowEmailModal(true);
+  };
+
+  const handleEmailSend = () => {
+    sendCustomEmail(emailTo, emailSubject, emailMessage);
+    setShowEmailModal(false);
+    resetEmailFields();
+  };
+
+  const resetEmailFields = () => {
+    setEmailTo("");
+    setEmailSubject("");
+    setEmailMessage("");
+  };
+
   return (
     <>
       <div className="container text-center">
-        <div className="py-4 ">
+        <div className="py-4">
           <h2>Użytkownicy</h2>
 
-          {/* pole wyszukiwania */}
           <div className="mb-3 mt-4">
             <input
               type="text"
@@ -75,21 +98,21 @@ const UsersTable = ({ data, onDeleteUser }) => {
                     <td>{user.email}</td>
                     <td>{user.role}</td>
                     <td>
-                      <button class="btn btn-primary mx-2">
+                      <button
+                        className="btn btn-primary mx-2"
+                        onClick={() => handleEmailClick(user)}
+                      >
                         <FontAwesomeIcon icon={faEnvelope} />
                       </button>
                       <button
                         className="btn btn-warning"
-                        onClick={() => {
-                          handleEditClick(user);
-                        }}
+                        onClick={() => handleEditClick(user)}
                       >
                         <FontAwesomeIcon
                           icon={faPen}
                           style={{ color: "black" }}
                         />
                       </button>
-
                       <button
                         className="btn btn-danger mx-2"
                         onClick={() => onDeleteUser(user.idUser)}
@@ -125,6 +148,18 @@ const UsersTable = ({ data, onDeleteUser }) => {
           </div>
         </div>
       </div>
+
+      <EmailMessageModal
+        show={showEmailModal}
+        handleClose={() => setShowEmailModal(false)}
+        emailTo={emailTo}
+        emailSubject={emailSubject}
+        setEmailSubject={setEmailSubject}
+        emailMessage={emailMessage}
+        setEmailMessage={setEmailMessage}
+        handleEmailSend={handleEmailSend}
+        resetEmailFields={resetEmailFields}
+      />
     </>
   );
 };
