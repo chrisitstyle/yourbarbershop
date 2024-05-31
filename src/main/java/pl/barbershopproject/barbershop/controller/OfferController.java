@@ -21,7 +21,8 @@ public class OfferController {
     public ResponseEntity<String> addOffer(@RequestBody Offer offer) {
         ResponseEntity<String> response;
         try {
-            response = offerService.addOffer(offer);
+             offerService.addOffer(offer);
+            response = ResponseEntity.status(HttpStatus.CREATED).body("Oferta została dodana.");
         } catch (Exception e) {
             response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Nie udało się dodać oferty.");
         }

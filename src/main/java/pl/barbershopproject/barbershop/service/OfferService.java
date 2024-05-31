@@ -1,8 +1,6 @@
 package pl.barbershopproject.barbershop.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.model.Offer;
@@ -18,10 +16,10 @@ public class OfferService {
 
     private final OfferRepository offerRepository;
 
+    public Offer addOffer(Offer offer) {
 
-    public ResponseEntity<String> addOffer(Offer offer) {
-        Offer savedOffer = offerRepository.save(offer);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Oferta została dodana.");
+        return offerRepository.save(offer);
+
     }
 
 
