@@ -40,8 +40,13 @@ public class OfferController {
     }
 
     @GetMapping("/get/{id_offer}")
-    public Offer getSingleOffer(@PathVariable long id_offer){
-        return offerService.getSingleOffer(id_offer);
+    public ResponseEntity<Offer> getSingleOffer(@PathVariable long id_offer) {
+        try {
+            Offer offer = offerService.getSingleOffer(id_offer);
+            return new ResponseEntity<>(offer, HttpStatus.OK);
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @PutMapping("/update/{id_offer}")

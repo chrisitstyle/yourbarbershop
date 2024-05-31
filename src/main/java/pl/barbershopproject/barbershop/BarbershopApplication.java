@@ -23,6 +23,7 @@ public class BarbershopApplication {
 				registry.addMapping("/login").allowedOrigins(LOCALHOST);
 				registry.addMapping("/register").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS");
 				registry.addMapping("/offers/get").allowedOrigins(LOCALHOST);
+				registry.addMapping("/offers/get/**").allowedOrigins(LOCALHOST);
 				registry.addMapping("/offers/add").allowedOrigins(LOCALHOST).allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
 						.allowedHeaders("*")
 						.allowCredentials(true);
