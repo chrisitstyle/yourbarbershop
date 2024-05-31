@@ -59,8 +59,9 @@ public class GuestOrderService {
         if (guestOrderExists.isPresent()) {
             guestOrderRepository.deleteById(idGuestOrder);
         } else {
-            throw new NoSuchElementException("Zamówienie o podanym ID nie istnieje");
+            throw new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder);
         }
     }
+
 
 }
