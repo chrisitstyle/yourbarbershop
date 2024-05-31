@@ -50,9 +50,17 @@ public class OfferController {
     }
 
     @PutMapping("/update/{id_offer}")
-    public Offer updateOffer(@RequestBody Offer updatedOffer, @PathVariable long id_offer){
-        return offerService.updateOffer(updatedOffer, id_offer);
+    public ResponseEntity<Object> updateOffer(@RequestBody Offer updatedOffer, @PathVariable long id_offer) {
+        try {
+            Offer updated = offerService.updateOffer(updatedOffer, id_offer);
+            return new ResponseEntity<>(updated, HttpStatus.OK);
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>("Oferta nie znaleziona", HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Wystąpił błąd podczas aktualizacji oferty", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
 
     @DeleteMapping("/delete/{id_offer}")
     public ResponseEntity<String> deleteOfferById(@PathVariable long id_offer) {
