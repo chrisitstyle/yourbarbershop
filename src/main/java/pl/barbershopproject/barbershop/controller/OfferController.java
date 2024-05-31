@@ -30,8 +30,13 @@ public class OfferController {
     }
 
     @GetMapping("/get")
-    public List<Offer> getAllOffers(){
-        return offerService.getAllOffers();
+    public ResponseEntity<List<Offer>> getAllOffers() {
+        try {
+            List<Offer> offers = offerService.getAllOffers();
+            return ResponseEntity.ok(offers);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     @GetMapping("/get/{id_offer}")
