@@ -27,7 +27,7 @@ public class GuestOrderService {
         return guestOrderRepository.findAll();
     }
     public GuestOrder getGuestOrder(long idGuestOrder){
-        return guestOrderRepository.findById(idGuestOrder).orElseThrow(NoSuchElementException::new);
+        return guestOrderRepository.findById(idGuestOrder).orElse(null);
     }
 
     public List<GuestOrder> getGuestOrdersByStatus(String status){

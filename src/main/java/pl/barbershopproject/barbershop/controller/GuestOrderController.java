@@ -31,18 +31,25 @@ public class GuestOrderController {
     }
 
     @GetMapping("/get")
-    public List<GuestOrder> getAllGuestOrders(@RequestParam(required = false) String status){
-        if(status != null && !status.isEmpty()){
-            return guestOrderService.getGuestOrdersByStatus(status);
-        }else{
-            return guestOrderService.getAllGuestOrders();
+    public ResponseEntity<List<GuestOrder>> getAllGuestOrders(@RequestParam(required = false) String status) {
+        List<GuestOrder> guestOrders;
+        if (status != null && !status.isEmpty()) {
+            guestOrders = guestOrderService.getGuestOrdersByStatus(status);
+        } else {
+            guestOrders = guestOrderService.getAllGuestOrders();
         }
 
+        return ResponseEntity.ok(guestOrders);
     }
 
     @GetMapping("/get/{idGuestOrder}")
-    public GuestOrder getGuestOrder(@PathVariable long idGuestOrder){
-        return guestOrderService.getGuestOrder(idGuestOrder);
+    public ResponseEntity<GuestOrder> getGuestOrder(@PathVariable long idGuestOrder) {
+        GuestOrder guestOrder = guestOrderService.getGuestOrder(idGuestOrder);
+        if (guestOrder != null) {
+            return ResponseEntity.ok(guestOrder);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/update/{idGuestOrder}")
