@@ -20,9 +20,9 @@ public class OrderService {
     private final OrderRepository orderRepository;
 
 
-    public ResponseEntity<String> addOrder(Order order) {
-       Order savedOffer = orderRepository.save(order);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Zamówienie zostało dodane.");
+    public Order addOrder(Order order) {
+       return orderRepository.save(order);
+
     }
 
     public List<Order> getAllOrders(){
@@ -38,7 +38,7 @@ public class OrderService {
     }
 
     @Transactional
-    public ResponseEntity<Order> updateOrder(Order updatedOrder, Long id_order) {
+    public Order updateOrder(Order updatedOrder, Long id_order) {
         return orderRepository.findById(id_order)
                 .map(order -> {
                     order.setUser(updatedOrder.getUser());
@@ -46,10 +46,9 @@ public class OrderService {
                     order.setOrderDate(updatedOrder.getOrderDate());
                     order.setVisitDate(updatedOrder.getVisitDate());
                     order.setStatus(updatedOrder.getStatus());
-                    Order updatedOrderEntity = orderRepository.save(order);
-                    return ResponseEntity.ok(updatedOrderEntity);
+                    return orderRepository.save(order);
                 })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                .orElseThrow(NoSuchElementException::new);
     }
 
     @Transactional
