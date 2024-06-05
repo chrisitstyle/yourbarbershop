@@ -1,3 +1,3 @@
-export const projectURL = process.env.REACT_APP_SUPABASE_PROJECTURL;
-export const publicApiKey = process.env.REACT_APP_SUPABASE_PUBLICAPIKEY;
-export const CDNURL = process.env.REACT_APP_SUPABASE_CDNURL;
+export const projectURL = import.meta.env.VITE_SUPABASE_PROJECTURL;
+export const publicApiKey = import.meta.env.VITE_SUPABASE_PUBLICAPIKEY;
+export const CDNURL = import.meta.env.VITE_SUPABASE_CDNURL;

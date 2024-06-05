@@ -1,12 +1,12 @@
 import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
-import "../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import {
   BrowserRouter as Router,
   Route,
   Routes,
   Navigate,
 } from "react-router-dom";
-import Navbar from "./Navbar";
+import Navbar from "./Navbar.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
@@ -15,8 +15,8 @@ import Offer from "./pages/Offer.jsx";
 import Contact from "./pages/Contact.jsx";
 import RegisterOrderWithoutAcc from "./pages/RegisterOrderWithoutAcc.jsx";
 import Footer from "./Footer.jsx";
-import { AuthProvider } from "./AuthContext";
-import { useAuth } from "./AuthContext";
+import { AuthProvider } from "./AuthContext.jsx";
+import { useAuth } from "./AuthContext.jsx";
 import Profile from "./pages/Profile.jsx";
 import AdminPanel from "./adminpages/AdminPanel.jsx";
 import EditOffer from "./adminpages/EditOffer.jsx";
@@ -24,6 +24,7 @@ import EditUser from "./adminpages/EditUser.jsx";
 import RegisterOrderLogged from "./pages/RegisterOrderLogged.jsx";
 import EditOrder from "./adminpages/EditOrder.jsx";
 import EditGuestOrder from "./adminpages/EditGuestOrder.jsx";
+import React from "react";
 
 function AdminRoute({ element }) {
   const { user } = useAuth();
