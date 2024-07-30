@@ -89,6 +89,9 @@ const Login = () => {
             <button type="submit" className="btn btn-dark mx-auto d-block">
               Zaloguj
             </button>
+            <p className="mt-3 text-center">
+              <Link to="/forgotpassword">Zapomniałem hasła</Link>
+            </p>
             <p className=" mt-3 text-center">
               Nie masz konta? <Link to="/register">Zarejestruj się</Link>
             </p>

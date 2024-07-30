@@ -25,6 +25,8 @@ import RegisterOrderLogged from "./pages/RegisterOrderLogged.jsx";
 import EditOrder from "./adminpages/EditOrder.jsx";
 import EditGuestOrder from "./adminpages/EditGuestOrder.jsx";
 import React from "react";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPasswordForm from "./pages/ResetPasswordForm.jsx";
 
 function AdminRoute({ element }) {
   const { user } = useAuth();
@@ -55,6 +57,16 @@ function App() {
           <Routes>
             <Route exact path="/" element={<Home />}></Route>
             <Route exact path="/login" element={<Login />}></Route>
+            <Route
+              exact
+              path="/forgotpassword"
+              element={<ForgotPassword />}
+            ></Route>
+            <Route
+              exact
+              path="/resetpassword"
+              element={<ResetPasswordForm />}
+            ></Route>
             <Route exact path="/register" element={<Register />}></Route>
             <Route exact path="/gallery" element={<Gallery />}></Route>
             <Route exact path="/offer" element={<Offer />}></Route>

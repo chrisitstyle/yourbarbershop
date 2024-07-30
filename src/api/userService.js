@@ -59,11 +59,36 @@ export const deleteUser = async (idUser, userToken) => {
   }
 };
 
+export const userForgotPasswordRequest = async (email) => {
+  try {
+    const response = await axios.post(`${apiUrl}/forgot-password`, { email });
+    return response.data;
+  } catch (error) {
+    console.error("Error sending forgot password request:", error);
+    throw error;
+  }
+};
+
+export const userResetPasswordRequest = async (token, newPassword) => {
+  try {
+    const response = await axios.post(`${apiUrl}/reset-password`, {
+      token,
+      newPassword,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    throw error;
+  }
+};
+
 const userService = {
   addUser,
   getUsers,
   updateUser,
   deleteUser,
+  userForgotPasswordRequest,
+  userResetPasswordRequest,
 };
 
 export default userService;
