@@ -29,4 +29,16 @@ public class AuthController {
         return  ResponseEntity.ok(authService.authenticate(request));
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok("Link do resetowania hasła został wysłany na podany adres email.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok("Hasło zostało pomyślnie zresetowane.");
+    }
+
 }

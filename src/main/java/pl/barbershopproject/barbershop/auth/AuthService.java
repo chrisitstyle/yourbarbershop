@@ -9,9 +9,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
+import pl.barbershopproject.barbershop.exception.InvalidPasswordTokenException;
+import pl.barbershopproject.barbershop.model.PasswordResetToken;
 import pl.barbershopproject.barbershop.model.Role;
 import pl.barbershopproject.barbershop.model.User;
+import pl.barbershopproject.barbershop.repository.PasswordResetTokenRepository;
 import pl.barbershopproject.barbershop.repository.UserRepository;
+import pl.barbershopproject.barbershop.service.EmailSenderService;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +27,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final EmailSenderService emailSenderService;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     public AuthResponse register(User user) {
 
@@ -56,6 +65,34 @@ public class AuthService {
                 .id(user.getIdUser())
                 .role(user.getRole())
                 .build();
+    }
+    public void forgotPassword(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        String token = UUID.randomUUID().toString();
+        PasswordResetToken passwordResetToken = new PasswordResetToken();
+        passwordResetToken.setToken(token);
+        passwordResetToken.setUser(user);
+        passwordResetToken.setExpiryDate(Instant.now().plusSeconds(1800)); // 30 minutes expiry
+        passwordResetTokenRepository.save(passwordResetToken);
+
+        String resetLink = "http://localhost:3000/resetpassword?token=" + token;
+        emailSenderService.sendEmail(email, "Reset your password link", resetLink + " \n\n Link expire after 30 minutes");
+    }
+
+    public void resetPassword(String token, String newPassword) {
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new InvalidPasswordTokenException("Invalid token"));
+
+        if (passwordResetToken.getExpiryDate().isBefore(Instant.now())) {
+            throw new InvalidPasswordTokenException("Token expired");
+        }
+
+        User user = passwordResetToken.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // delete the token after use
+        passwordResetTokenRepository.delete(passwordResetToken);
     }
 
 }

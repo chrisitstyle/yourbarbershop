@@ -26,7 +26,7 @@ The application provides functionalities below:
 
 ## Planned features
 
-- Reset password;
+- <s>Reset password;</s> - implemented
 - Handle e-mails;
 - Customisable avatars.
 
