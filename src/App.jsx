@@ -54,61 +54,63 @@ function App() {
       <div className="App">
         <Router>
           <Navbar />
-          <Routes>
-            <Route exact path="/" element={<Home />}></Route>
-            <Route exact path="/login" element={<Login />}></Route>
-            <Route
-              exact
-              path="/forgotpassword"
-              element={<ForgotPassword />}
-            ></Route>
-            <Route
-              exact
-              path="/resetpassword"
-              element={<ResetPasswordForm />}
-            ></Route>
-            <Route exact path="/register" element={<Register />}></Route>
-            <Route exact path="/gallery" element={<Gallery />}></Route>
-            <Route exact path="/offer" element={<Offer />}></Route>
-            <Route exact path="/contact" element={<Contact />}></Route>
-            <Route
-              exact
-              path="/profile/:id"
-              element={<UserRoute element={<Profile />} />}
-            />
-            <Route
-              exact
-              path="/adminpanel"
-              element={<AdminRoute element={<AdminPanel />} />}
-            />
-            <Route
-              path="/adminpanel/editoffer/:id"
-              element={<AdminRoute element={<EditOffer />} />}
-            />
-            <Route
-              path="/adminpanel/edituser/:id"
-              element={<AdminRoute element={<EditUser />} />}
-            />
-            <Route
-              path="/adminpanel/editorder/:id"
-              element={<AdminRoute element={<EditOrder />} />}
-            />
-            <Route
-              path="/adminpanel/editguestorder/:id"
-              element={<AdminRoute element={<EditGuestOrder />} />}
-            />
+          <main>
+            <Routes>
+              <Route exact path="/" element={<Home />}></Route>
+              <Route exact path="/login" element={<Login />}></Route>
+              <Route
+                exact
+                path="/forgotpassword"
+                element={<ForgotPassword />}
+              ></Route>
+              <Route
+                exact
+                path="/resetpassword"
+                element={<ResetPasswordForm />}
+              ></Route>
+              <Route exact path="/register" element={<Register />}></Route>
+              <Route exact path="/gallery" element={<Gallery />}></Route>
+              <Route exact path="/offer" element={<Offer />}></Route>
+              <Route exact path="/contact" element={<Contact />}></Route>
+              <Route
+                exact
+                path="/profile/:id"
+                element={<UserRoute element={<Profile />} />}
+              />
+              <Route
+                exact
+                path="/adminpanel"
+                element={<AdminRoute element={<AdminPanel />} />}
+              />
+              <Route
+                path="/adminpanel/editoffer/:id"
+                element={<AdminRoute element={<EditOffer />} />}
+              />
+              <Route
+                path="/adminpanel/edituser/:id"
+                element={<AdminRoute element={<EditUser />} />}
+              />
+              <Route
+                path="/adminpanel/editorder/:id"
+                element={<AdminRoute element={<EditOrder />} />}
+              />
+              <Route
+                path="/adminpanel/editguestorder/:id"
+                element={<AdminRoute element={<EditGuestOrder />} />}
+              />
 
-            <Route
-              exact
-              path="/registerorderwithoutaccount"
-              element={<RegisterOrderWithoutAcc />}
-            ></Route>
-            <Route
-              exact
-              path="/registerorderlogged"
-              element={<RegisterOrderLogged />}
-            />
-          </Routes>
+              <Route
+                exact
+                path="/registerorderwithoutaccount"
+                element={<RegisterOrderWithoutAcc />}
+              ></Route>
+              <Route
+                exact
+                path="/registerorderlogged"
+                element={<RegisterOrderLogged />}
+              />
+            </Routes>
+          </main>
           <Footer />
         </Router>
       </div>

@@ -5,7 +5,7 @@ const Footer = () => {
   const author = "Krzysztof Podjacki";
 
   return (
-    <footer className="footer mt-auto py-3  bg-dark text-white fixed-bottom ">
+    <footer className="footer mt-auto py-3 bg-dark text-white">
       <div className="container text-center">
         <p className="mb-0">
           &copy; {currentYear} Barbershop. Wszelkie prawa zastrzeżone. Projekt
