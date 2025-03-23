@@ -38,19 +38,19 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User getSingleUser(long id_user) {
+    public User getSingleUser(long idUser) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         long loggedUserId = user.getIdUser();
-        if (loggedUserId == id_user || user.getRole().equals(Role.ADMIN)) {
-            return userRepository.findById(id_user).orElseThrow(NoSuchElementException::new);
+        if (loggedUserId == idUser || user.getRole().equals(Role.ADMIN)) {
+            return userRepository.findById(idUser).orElseThrow(NoSuchElementException::new);
         }else {
             return null;
         }
     }
 
     @Transactional
-    public User updateUser(User updatedUser, long id_user) {
-        return userRepository.findById(id_user)
+    public User updateUser(User updatedUser, long idUser) {
+        return userRepository.findById(idUser)
                 .map(user -> {
                     user.setFirstname(updatedUser.getFirstname());
                     user.setLastname(updatedUser.getLastname());
@@ -66,14 +66,14 @@ public class UserService {
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public void deleteUserById(long id_user) {
+    public void deleteUserById(long idUser) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         long loggedUserId = user.getIdUser();
-        Optional<User> userExists = userRepository.findById(id_user);
+        Optional<User> userExists = userRepository.findById(idUser);
 
             if (userExists.isPresent()) {
-                if( loggedUserId != id_user) {
-                    userRepository.deleteById(id_user);
+                if( loggedUserId != idUser) {
+                    userRepository.deleteById(idUser);
                 } else{ throw new IllegalArgumentException("Nie można usunąć obecnie zalogowanego użytkownika.");}
 
             } else {

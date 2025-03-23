@@ -25,29 +25,29 @@ public class UserController {
 
     @GetMapping("/get")
     public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+        List<User> usersResponse = userService.getAllUsers();
+        return ResponseEntity.ok(usersResponse);
     }
 
-    @GetMapping("/get/{id_user}")
-    public ResponseEntity<User> getSingleUser(@PathVariable long id_user) {
-        User user = userService.getSingleUser(id_user);
+    @GetMapping("/get/{idUser}")
+    public ResponseEntity<User> getSingleUser(@PathVariable long idUser) {
+        User user = userService.getSingleUser(idUser);
         if (user != null) {
             return new ResponseEntity<>(user, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
 
-    @PutMapping("/update/{id_user}")
-    public User updateUser(@RequestBody User updatedUser, @PathVariable long id_user) {
-        return userService.updateUser(updatedUser, id_user);
+    @PutMapping("/update/{idUser}")
+    public User updateUser(@RequestBody User updatedUser, @PathVariable long idUser) {
+        return userService.updateUser(updatedUser, idUser);
     }
 
-    @DeleteMapping("/delete/{id_user}")
-    public ResponseEntity<String> deleteUserById(@PathVariable long id_user) {
+    @DeleteMapping("/delete/{idUser}")
+    public ResponseEntity<String> deleteUserById(@PathVariable long idUser) {
         try {
-            userService.deleteUserById(id_user);
-            return new ResponseEntity<>("Użytkownik o ID " + id_user + " został usunięty.", HttpStatus.OK);
+            userService.deleteUserById(idUser);
+            return new ResponseEntity<>("Użytkownik o ID " + idUser + " został usunięty.", HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }

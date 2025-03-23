@@ -1,8 +1,6 @@
 package pl.barbershopproject.barbershop.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.model.Order;
@@ -20,26 +18,27 @@ public class OrderService {
     private final OrderRepository orderRepository;
 
 
-    public Order addOrder(Order order) {
-       return orderRepository.save(order);
+    public void addOrder(Order order) {
+        orderRepository.save(order);
 
     }
 
-    public List<Order> getAllOrders(){
+    public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
-    public Order getSingleOrder(long id_order){
-        return orderRepository.findById(id_order).orElseThrow(NoSuchElementException::new);
+
+    public Order getSingleOrder(long idOrder) {
+        return orderRepository.findById(idOrder).orElseThrow(NoSuchElementException::new);
     }
 
-    public List<Order> getOrdersByStatus(String status){
+    public List<Order> getOrdersByStatus(String status) {
 
         return orderRepository.findOrdersByStatus(status);
     }
 
     @Transactional
-    public Order updateOrder(Order updatedOrder, Long id_order) {
-        return orderRepository.findById(id_order)
+    public Order updateOrder(Order updatedOrder, Long idOrder) {
+        return orderRepository.findById(idOrder)
                 .map(order -> {
                     order.setUser(updatedOrder.getUser());
                     order.setOffer(updatedOrder.getOffer());
@@ -52,11 +51,11 @@ public class OrderService {
     }
 
     @Transactional
-    public void deleteOrderById(long id_order) {
-        Optional<Order> orderExists = orderRepository.findById(id_order);
+    public void deleteOrderById(long idOrder) {
+        Optional<Order> orderExists = orderRepository.findById(idOrder);
 
         if (orderExists.isPresent()) {
-            orderRepository.deleteById(id_order);
+            orderRepository.deleteById(idOrder);
         } else {
             throw new NoSuchElementException("Zamówienie o podanym ID nie istnieje");
         }

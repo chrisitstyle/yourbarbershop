@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import pl.barbershopproject.barbershop.model.Order;
 import pl.barbershopproject.barbershop.service.OrderService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -51,31 +50,31 @@ public class OrderController {
         return new ResponseEntity<>(orders, HttpStatus.OK);
     }
 
-    @GetMapping("/get/{id_order}")
-    public ResponseEntity<Order> getSingleOrder(@PathVariable long id_order) {
+    @GetMapping("/get/{idOrder}")
+    public ResponseEntity<Order> getSingleOrder(@PathVariable long idOrder) {
         try {
-            Order order = orderService.getSingleOrder(id_order);
+            Order order = orderService.getSingleOrder(idOrder);
             return new ResponseEntity<>(order, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
-    @PutMapping("/update/{id_order}")
-    public ResponseEntity<?> updateOrder(@RequestBody Order updatedOrder, @PathVariable long id_order) {
+    @PutMapping("/update/{idOrder}")
+    public ResponseEntity<Order> updateOrder(@RequestBody Order updatedOrder, @PathVariable long idOrder) {
         try {
-            Order order = orderService.updateOrder(updatedOrder, id_order);
-            return ResponseEntity.ok(order);
+            Order orderResponse = orderService.updateOrder(updatedOrder, idOrder);
+            return ResponseEntity.ok(orderResponse);
         } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nie znaleziono wizyty o id: " + id_order);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
-    @DeleteMapping("/delete/{id_order}")
-    public ResponseEntity<String> deleteOrderById(@PathVariable long id_order) {
+    @DeleteMapping("/delete/{idOrder}")
+    public ResponseEntity<String> deleteOrderById(@PathVariable long idOrder) {
         try {
-            orderService.deleteOrderById(id_order);
-            return new ResponseEntity<>("Zamówienie o ID " + id_order + " zostało usunięte.", HttpStatus.OK);
+            orderService.deleteOrderById(idOrder);
+            return new ResponseEntity<>("Zamówienie o ID " + idOrder + " zostało usunięte.", HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }

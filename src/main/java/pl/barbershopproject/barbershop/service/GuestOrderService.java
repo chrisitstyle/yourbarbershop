@@ -1,8 +1,6 @@
 package pl.barbershopproject.barbershop.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.model.GuestOrder;
@@ -18,9 +16,8 @@ public class GuestOrderService {
 
     private final GuestOrderRepository guestOrderRepository;
 
-    public ResponseEntity<String> addGuestOrder(GuestOrder guestOrder) {
-        GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Zamówienie bez rejestracji konta zostało dodane.");
+    public GuestOrder addGuestOrder(GuestOrder guestOrder) {
+        return guestOrderRepository.save(guestOrder);
     }
 
     public List<GuestOrder> getAllGuestOrders (){
@@ -35,7 +32,7 @@ public class GuestOrderService {
         return guestOrderRepository.findGuestOrdersByStatus(status);
     }
     @Transactional
-    public ResponseEntity<GuestOrder> updateGuestOrder(GuestOrder updatedGuestOrder, Long idGuestOrder) {
+    public GuestOrder updateGuestOrder(GuestOrder updatedGuestOrder, Long idGuestOrder) {
         return guestOrderRepository.findById(idGuestOrder)
                 .map(guestOrder -> {
                     guestOrder.setFirstname(updatedGuestOrder.getFirstname());
@@ -46,10 +43,9 @@ public class GuestOrderService {
                     guestOrder.setOrderDate(updatedGuestOrder.getOrderDate());
                     guestOrder.setVisitDate(updatedGuestOrder.getVisitDate());
                     guestOrder.setStatus(updatedGuestOrder.getStatus());
-                    GuestOrder updatedGuestOrderEntity = guestOrderRepository.save(guestOrder);
-                    return ResponseEntity.ok(updatedGuestOrderEntity);
+                    return guestOrderRepository.save(guestOrder);
                 })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                .orElseThrow(() -> new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder));
     }
 
     @Transactional

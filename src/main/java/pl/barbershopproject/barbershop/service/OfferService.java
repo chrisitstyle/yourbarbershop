@@ -26,13 +26,13 @@ public class OfferService {
     public List<Offer> getAllOffers(){
         return offerRepository.findAll();
     }
-    public Offer getSingleOffer(long id_offer){
-        return offerRepository.findById(id_offer).orElseThrow(NoSuchElementException::new);
+    public Offer getSingleOffer(long idOffer){
+        return offerRepository.findById(idOffer).orElseThrow(NoSuchElementException::new);
     }
 
     @Transactional
-    public Offer updateOffer(Offer updatedOffer, long id_offer){
-        return offerRepository.findById(id_offer)
+    public Offer updateOffer(Offer updatedOffer, long idOffer){
+        return offerRepository.findById(idOffer)
                 .map(offer -> {
                     offer.setKind(updatedOffer.getKind());
                     offer.setCost(updatedOffer.getCost());
@@ -41,11 +41,11 @@ public class OfferService {
     }
 
     @Transactional
-    public void deleteOfferById(long id_offer) {
-        Optional<Offer> offerExists = offerRepository.findById(id_offer);
+    public void deleteOfferById(long idOffer) {
+        Optional<Offer> offerExists = offerRepository.findById(idOffer);
 
         if (offerExists.isPresent()) {
-            offerRepository.deleteById(id_offer);
+            offerRepository.deleteById(idOffer);
         } else {
             throw new NoSuchElementException("Oferta o podanym ID nie istnieje");
         }

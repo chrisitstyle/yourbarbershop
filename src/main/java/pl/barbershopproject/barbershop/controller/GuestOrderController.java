@@ -20,14 +20,9 @@ public class GuestOrderController {
     private final GuestOrderService guestOrderService;
 
     @PostMapping("/add")
-    public ResponseEntity<String> addGuestOrder(@RequestBody GuestOrder guestOrder) {
-        ResponseEntity<String> response;
-        try {
-            response = guestOrderService.addGuestOrder(guestOrder);
-        } catch (Exception e) {
-            response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Nie udało się dodać Zamówienia.");
-        }
-        return response;
+    public ResponseEntity<GuestOrder> addGuestOrder(@RequestBody GuestOrder guestOrder) {
+       GuestOrder savedGuestOrder = guestOrderService.addGuestOrder(guestOrder);
+        return new ResponseEntity<>(savedGuestOrder, HttpStatus.CREATED);
     }
 
     @GetMapping("/get")
@@ -54,7 +49,9 @@ public class GuestOrderController {
 
     @PutMapping("/update/{idGuestOrder}")
     public ResponseEntity<GuestOrder> updateGuestOrder(@RequestBody GuestOrder updatedGuestOrder, @PathVariable long idGuestOrder) {
-        return guestOrderService.updateGuestOrder(updatedGuestOrder, idGuestOrder);
+        GuestOrder guestOrderResponse = guestOrderService.updateGuestOrder(updatedGuestOrder, idGuestOrder);
+        return new ResponseEntity<>(guestOrderResponse, HttpStatus.OK);
+
     }
 
     @DeleteMapping("/delete/{idGuestOrder}")

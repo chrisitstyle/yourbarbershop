@@ -39,20 +39,20 @@ public class OfferController {
         }
     }
 
-    @GetMapping("/get/{id_offer}")
-    public ResponseEntity<Offer> getSingleOffer(@PathVariable long id_offer) {
+    @GetMapping("/get/{idOffer}")
+    public ResponseEntity<Offer> getSingleOffer(@PathVariable long idOffer) {
         try {
-            Offer offer = offerService.getSingleOffer(id_offer);
+            Offer offer = offerService.getSingleOffer(idOffer);
             return new ResponseEntity<>(offer, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
-    @PutMapping("/update/{id_offer}")
-    public ResponseEntity<Object> updateOffer(@RequestBody Offer updatedOffer, @PathVariable long id_offer) {
+    @PutMapping("/update/{idOffer}")
+    public ResponseEntity<Object> updateOffer(@RequestBody Offer updatedOffer, @PathVariable long idOffer) {
         try {
-            Offer updated = offerService.updateOffer(updatedOffer, id_offer);
+            Offer updated = offerService.updateOffer(updatedOffer, idOffer);
             return new ResponseEntity<>(updated, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>("Oferta nie znaleziona", HttpStatus.NOT_FOUND);
@@ -62,11 +62,11 @@ public class OfferController {
     }
 
 
-    @DeleteMapping("/delete/{id_offer}")
-    public ResponseEntity<String> deleteOfferById(@PathVariable long id_offer) {
+    @DeleteMapping("/delete/{idOffer}")
+    public ResponseEntity<String> deleteOfferById(@PathVariable long idOffer) {
         try {
-            offerService.deleteOfferById(id_offer);
-            return new ResponseEntity<>("Oferta o ID " + id_offer + " została usunięta.", HttpStatus.OK);
+            offerService.deleteOfferById(idOffer);
+            return new ResponseEntity<>("Oferta o ID " + idOffer + " została usunięta.", HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
