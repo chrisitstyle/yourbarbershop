@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.model;
+package pl.barbershopproject.barbershop.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import pl.barbershopproject.barbershop.order.Order;
 
 import java.util.Collection;
 import java.util.List;

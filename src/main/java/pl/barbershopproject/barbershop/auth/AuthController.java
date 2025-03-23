@@ -1,14 +1,13 @@
 package pl.barbershopproject.barbershop.auth;
 
 
-import jakarta.validation.Valid;
 import pl.barbershopproject.barbershop.validation.ValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import pl.barbershopproject.barbershop.model.User;
+import pl.barbershopproject.barbershop.user.User;
 
 @RestController
 @RequiredArgsConstructor

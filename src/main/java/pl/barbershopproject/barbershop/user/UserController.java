@@ -1,12 +1,9 @@
-package pl.barbershopproject.barbershop.controller;
+package pl.barbershopproject.barbershop.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import pl.barbershopproject.barbershop.model.User;
-import pl.barbershopproject.barbershop.service.UserService;
 
 import java.util.List;
 import java.util.NoSuchElementException;

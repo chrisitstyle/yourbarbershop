@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.model;
+package pl.barbershopproject.barbershop.email;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

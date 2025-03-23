@@ -1,7 +1,8 @@
-package pl.barbershopproject.barbershop.model;
+package pl.barbershopproject.barbershop.passwordreset;
 
 import jakarta.persistence.*;
 import lombok.*;
+import pl.barbershopproject.barbershop.user.User;
 
 import java.time.Instant;
 

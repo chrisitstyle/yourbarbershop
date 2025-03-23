@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.model;
+package pl.barbershopproject.barbershop.offer;
 
 import jakarta.persistence.*;
 import lombok.Getter;

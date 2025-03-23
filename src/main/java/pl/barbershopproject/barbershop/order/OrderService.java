@@ -1,10 +1,8 @@
-package pl.barbershopproject.barbershop.service;
+package pl.barbershopproject.barbershop.order;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pl.barbershopproject.barbershop.model.Order;
-import pl.barbershopproject.barbershop.repository.OrderRepository;
 
 import java.util.List;
 import java.util.NoSuchElementException;

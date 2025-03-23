@@ -11,7 +11,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import pl.barbershopproject.barbershop.model.Role;
+import pl.barbershopproject.barbershop.user.Role;
 
 @Configuration
 @EnableWebSecurity

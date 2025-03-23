@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.service;
+package pl.barbershopproject.barbershop.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,9 +8,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import pl.barbershopproject.barbershop.model.Role;
-import pl.barbershopproject.barbershop.model.User;
-import pl.barbershopproject.barbershop.repository.UserRepository;
 
 import java.util.List;
 import java.util.NoSuchElementException;

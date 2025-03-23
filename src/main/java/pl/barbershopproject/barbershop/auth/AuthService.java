@@ -10,12 +10,12 @@ import org.springframework.stereotype.Service;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.InvalidPasswordTokenException;
-import pl.barbershopproject.barbershop.model.PasswordResetToken;
-import pl.barbershopproject.barbershop.model.Role;
-import pl.barbershopproject.barbershop.model.User;
-import pl.barbershopproject.barbershop.repository.PasswordResetTokenRepository;
-import pl.barbershopproject.barbershop.repository.UserRepository;
-import pl.barbershopproject.barbershop.service.EmailSenderService;
+import pl.barbershopproject.barbershop.passwordreset.PasswordResetToken;
+import pl.barbershopproject.barbershop.user.Role;
+import pl.barbershopproject.barbershop.user.User;
+import pl.barbershopproject.barbershop.passwordreset.PasswordResetTokenRepository;
+import pl.barbershopproject.barbershop.user.UserRepository;
+import pl.barbershopproject.barbershop.email.EmailSenderService;
 
 import java.time.Instant;
 import java.util.UUID;

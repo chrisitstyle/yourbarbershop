@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import pl.barbershopproject.barbershop.model.Role;
+import pl.barbershopproject.barbershop.user.Role;
 
 @Data
 @Builder

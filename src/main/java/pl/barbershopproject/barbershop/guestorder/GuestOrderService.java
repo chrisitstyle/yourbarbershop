@@ -1,10 +1,8 @@
-package pl.barbershopproject.barbershop.service;
+package pl.barbershopproject.barbershop.guestorder;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pl.barbershopproject.barbershop.model.GuestOrder;
-import pl.barbershopproject.barbershop.repository.GuestOrderRepository;
 
 import java.util.List;
 import java.util.NoSuchElementException;

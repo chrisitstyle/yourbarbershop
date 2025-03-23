@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import pl.barbershopproject.barbershop.repository.UserRepository;
+import pl.barbershopproject.barbershop.user.UserRepository;
 
 @RequiredArgsConstructor
 @Configuration

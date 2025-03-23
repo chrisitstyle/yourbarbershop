@@ -1,8 +1,7 @@
-package pl.barbershopproject.barbershop.repository;
+package pl.barbershopproject.barbershop.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import pl.barbershopproject.barbershop.model.User;
 
 import java.util.Optional;
 

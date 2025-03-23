@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.service;
+package pl.barbershopproject.barbershop.email;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;

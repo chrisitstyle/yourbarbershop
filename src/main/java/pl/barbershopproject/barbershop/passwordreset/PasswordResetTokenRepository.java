@@ -1,7 +1,6 @@
-package pl.barbershopproject.barbershop.repository;
+package pl.barbershopproject.barbershop.passwordreset;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import pl.barbershopproject.barbershop.model.PasswordResetToken;
 
 import java.util.Optional;
 

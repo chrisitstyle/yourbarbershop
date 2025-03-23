@@ -1,13 +1,10 @@
-package pl.barbershopproject.barbershop.controller;
+package pl.barbershopproject.barbershop.guestorder;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.*;
-import pl.barbershopproject.barbershop.model.GuestOrder;
-
-import pl.barbershopproject.barbershop.service.GuestOrderService;
 
 import java.util.List;
 import java.util.NoSuchElementException;
