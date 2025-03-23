@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
 
@@ -31,7 +32,7 @@ public class GuestOrder {
     @Column (name = "visit_date")
 
     private LocalDateTime visitDate;
-
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
 }

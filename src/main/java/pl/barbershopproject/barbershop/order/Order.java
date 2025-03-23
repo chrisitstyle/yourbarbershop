@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.user.User;
+import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
 
@@ -34,7 +35,7 @@ public class Order {
 
     private LocalDateTime visitDate;
 
-
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
 }
