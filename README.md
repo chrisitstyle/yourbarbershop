@@ -1,4 +1,4 @@
-# YourBarbershop - backend
+# YourBarbershop
 
 YourBarbershop is an application for managing own barbershop. The project originated as an idea for a BEng Thesis.
 
