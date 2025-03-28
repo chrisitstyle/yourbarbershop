@@ -20,7 +20,8 @@ The application provides functionalities below:
 - MySQL;
 - React;
 - Bootstrap;
-- Supabase.
+- Supabase;
+- Docker.
 
 ## Planned features
 
