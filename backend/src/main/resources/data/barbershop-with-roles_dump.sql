@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `offer` (
   PRIMARY KEY (`id_offer`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-INSERT INTO `offer` (`id_offer`,`kind`,`cost`) VALUES (1,'dreadlocks',25.50);
+INSERT INTO `offer` (`kind`,`cost`) VALUES ('dreadlocks',25.50);
 
 -- Dumping structure for table barbershop-with-roles.password_reset_token
 CREATE TABLE IF NOT EXISTS `password_reset_token` (
@@ -65,8 +65,8 @@ CREATE TABLE IF NOT EXISTS `user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Insert for sample admin and user
-INSERT INTO `user` (`id_user`, `firstname`, `lastname`, `e-mail`, `password`, `role`) VALUES (73, 'TestAdmin', 'TestAdmin', 'admin@test.com', '$2a$10$50CMRbm4BFvmQfOcukUjCeFrZIZWGiLr9RYO6ON5zI.xv/a3ltS2S', 'ADMIN');
-INSERT INTO `user` (`id_user`, `firstname`, `lastname`, `e-mail`, `password`, `role`) VALUES (74, 'John', 'Doe', 'johndoe@example.com', '$2a$10$HjId9JiXQUUmmQEwcoJNG.DynNWrKFFvv0kP3WxdlTd6/3vXDgOlG', 'USER');
+INSERT INTO `user` (`firstname`, `lastname`, `e-mail`, `password`, `role`) VALUES ( 'TestAdmin', 'TestAdmin', 'admin@test.com', '$2a$10$50CMRbm4BFvmQfOcukUjCeFrZIZWGiLr9RYO6ON5zI.xv/a3ltS2S', 'ADMIN');
+INSERT INTO `user` (`firstname`, `lastname`, `e-mail`, `password`, `role`) VALUES ('John', 'Doe', 'johndoe@example.com', '$2a$10$HjId9JiXQUUmmQEwcoJNG.DynNWrKFFvv0kP3WxdlTd6/3vXDgOlG', 'USER');
 /* password for both  is "test123"*/
 
 
