@@ -8,9 +8,56 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    depends_on:
+      - backend
     networks:
       - app-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: DockerFileBackend
+    container_name: barbershop-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    networks:
+      - app-network
+
+  database:
+    image: mysql:8.0
+    container_name: barbershop-db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - barbershop-with-roles_db_data:/var/lib/mysql
+      - ./backend/src/main/resources/data/barbershop-with-roles_dump.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD}",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
 
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  barbershop-with-roles_db_data:
