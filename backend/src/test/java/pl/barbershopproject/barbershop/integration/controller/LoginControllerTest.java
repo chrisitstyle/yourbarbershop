@@ -26,10 +26,10 @@ class LoginControllerTest {
     @Test
     void shouldLoginAndReceiveToken() throws Exception {
 
-        String email = "insertemail";
-        String password = "insertpassword";
+        String email = "admin@test.com";
+        String password = "test123";
 
-        // tworzenie obiektu JSON
+        // create JSON object for login
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode loginData = objectMapper.createObjectNode()
                 .put("email", email)
