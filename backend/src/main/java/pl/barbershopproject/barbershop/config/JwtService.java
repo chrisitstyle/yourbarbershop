@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.function.Function;
 @Service
 public class JwtService {
-    @Value("${JWT.SECRET.KEY}")
+    @Value("${JWT_SECRET_KEY}")
     private String SECRET_KEY;
     private SecretKey getSignKey(){
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
