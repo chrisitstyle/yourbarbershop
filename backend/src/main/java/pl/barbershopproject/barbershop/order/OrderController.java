@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -29,8 +30,8 @@ public class OrderController {
     }
 
     @GetMapping("/get")
-    public ResponseEntity<List<Order>> getAllOrders(@RequestParam(required = false) String status) {
-        List<Order> orders;
+    public ResponseEntity<List<OrderDTO>> getAllOrders(@RequestParam(required = false) String status) {
+        List<OrderDTO> orders;
 
         if (status != null && !status.isEmpty()) {
             orders = orderService.getOrdersByStatus(status);
@@ -49,10 +50,10 @@ public class OrderController {
     }
 
     @GetMapping("/get/{idOrder}")
-    public ResponseEntity<Order> getSingleOrder(@PathVariable long idOrder) {
+    public ResponseEntity<OrderDTO> getSingleOrder(@PathVariable long idOrder) {
         try {
-            Order order = orderService.getSingleOrder(idOrder);
-            return new ResponseEntity<>(order, HttpStatus.OK);
+            OrderDTO orderDTO = orderService.getSingleOrder(idOrder);
+            return new ResponseEntity<>(orderDTO, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

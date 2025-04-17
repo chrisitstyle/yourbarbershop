@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.barbershopproject.barbershop.user.dto.UserDTO;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -21,18 +22,17 @@ public class UserController {
     }
 
     @GetMapping("/get")
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> usersResponse = userService.getAllUsers();
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<UserDTO> usersResponse = userService.getAllUsers();
         return ResponseEntity.ok(usersResponse);
     }
 
     @GetMapping("/get/{idUser}")
-    public ResponseEntity<User> getSingleUser(@PathVariable long idUser) {
-        User user = userService.getSingleUser(idUser);
-        if (user != null) {
-            return new ResponseEntity<>(user, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    public ResponseEntity<UserDTO> getSingleUser(@PathVariable long idUser) {
+        UserDTO user = userService.getSingleUser(idUser);
+        return user != null ?
+                ResponseEntity.ok(user) :
+                ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @PutMapping("/update/{idUser}")

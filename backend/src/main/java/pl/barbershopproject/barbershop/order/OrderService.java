@@ -3,6 +3,9 @@ package pl.barbershopproject.barbershop.order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.order.dto.OrderDTO;
+import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
+import pl.barbershopproject.barbershop.util.Status;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -21,17 +24,23 @@ public class OrderService {
 
     }
 
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public List<OrderDTO> getAllOrders() {
+        return orderRepository.findAll().stream()
+                .map(OrderDTOMapper::toDTO)
+                .toList();
     }
 
-    public Order getSingleOrder(long idOrder) {
-        return orderRepository.findById(idOrder).orElseThrow(NoSuchElementException::new);
+    public OrderDTO getSingleOrder(long idOrder) {
+        Order order = orderRepository.findById(idOrder).orElseThrow(NoSuchElementException::new);
+        return OrderDTOMapper.toDTO(order);
     }
 
-    public List<Order> getOrdersByStatus(String status) {
+    public List<OrderDTO> getOrdersByStatus(String status) {
 
-        return orderRepository.findOrdersByStatus(status);
+        return orderRepository.findOrdersByStatus(Status.valueOf(status.toUpperCase()))
+                .stream()
+                .map(OrderDTOMapper::toDTO)
+                .toList();
     }
 
     @Transactional

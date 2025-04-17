@@ -8,6 +8,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import pl.barbershopproject.barbershop.user.dto.UserDTO;
+import pl.barbershopproject.barbershop.user.mapper.UserDTOMapper;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -31,15 +33,19 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(UserDTOMapper::toDTO)
+                .toList();
     }
 
-    public User getSingleUser(long idUser) {
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        long loggedUserId = user.getIdUser();
-        if (loggedUserId == idUser || user.getRole().equals(Role.ADMIN)) {
-            return userRepository.findById(idUser).orElseThrow(NoSuchElementException::new);
+    public UserDTO getSingleUser(long idUser) {
+        User authUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        long loggedUserId = authUser.getIdUser();
+        if (loggedUserId == idUser || authUser.getRole().equals(Role.ADMIN)) {
+            User user =  userRepository.findById(idUser).orElseThrow(NoSuchElementException::new);
+            return UserDTOMapper.toDTO(user);
         }else {
             return null;
         }
@@ -64,8 +70,8 @@ public class UserService {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteUserById(long idUser) {
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        long loggedUserId = user.getIdUser();
+        User authUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        long loggedUserId = authUser.getIdUser();
         Optional<User> userExists = userRepository.findById(idUser);
 
             if (userExists.isPresent()) {
