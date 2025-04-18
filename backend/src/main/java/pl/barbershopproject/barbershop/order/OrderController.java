@@ -13,7 +13,7 @@ import java.util.NoSuchElementException;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/orders")
-public class OrderController {
+class OrderController {
 
     private final OrderService orderService;
 

@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/offers")
-public class OfferController {
+class OfferController {
 
     private final OfferService offerService;
 

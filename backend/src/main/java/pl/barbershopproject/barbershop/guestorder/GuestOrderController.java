@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.NoSuchElementException;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/guestorders")
-public class GuestOrderController {
+class GuestOrderController {
 
     private final GuestOrderService guestOrderService;
 
@@ -24,13 +25,9 @@ public class GuestOrderController {
 
     @GetMapping("/get")
     public ResponseEntity<List<GuestOrder>> getAllGuestOrders(@RequestParam(required = false) String status) {
-        List<GuestOrder> guestOrders;
-        if (status != null && !status.isEmpty()) {
-            guestOrders = guestOrderService.getGuestOrdersByStatus(status);
-        } else {
-            guestOrders = guestOrderService.getAllGuestOrders();
-        }
-
+        List<GuestOrder> guestOrders = StringUtils.hasText(status)
+                ? guestOrderService.getGuestOrdersByStatus(status)
+                : guestOrderService.getAllGuestOrders();
         return ResponseEntity.ok(guestOrders);
     }
 

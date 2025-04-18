@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class OfferService {
+class OfferService {
 
     private final OfferRepository offerRepository;
 

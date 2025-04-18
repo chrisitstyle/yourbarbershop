@@ -3,6 +3,7 @@ package pl.barbershopproject.barbershop.guestorder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.util.Status;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -10,7 +11,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class GuestOrderService {
+class GuestOrderService {
 
     private final GuestOrderRepository guestOrderRepository;
 
@@ -27,7 +28,7 @@ public class GuestOrderService {
 
     public List<GuestOrder> getGuestOrdersByStatus(String status){
 
-        return guestOrderRepository.findGuestOrdersByStatus(status);
+        return guestOrderRepository.findGuestOrdersByStatus(Status.valueOf(status.toUpperCase()));
     }
     @Transactional
     public GuestOrder updateGuestOrder(GuestOrder updatedGuestOrder, Long idGuestOrder) {

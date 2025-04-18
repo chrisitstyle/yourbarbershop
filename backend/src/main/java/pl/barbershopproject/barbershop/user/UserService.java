@@ -34,7 +34,7 @@ public class UserService {
     }
 
     public List<UserDTO> getAllUsers() {
-        return userRepository.findAll()
+        return userRepository.findAllWithOrders()
                 .stream()
                 .map(UserDTOMapper::toDTO)
                 .toList();
