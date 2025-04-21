@@ -8,7 +8,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.SelfDeletionException;
+import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
+import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
+import pl.barbershopproject.barbershop.user.mapper.UserCreationDTOMapper;
 import pl.barbershopproject.barbershop.user.mapper.UserDTOMapper;
 
 import java.util.List;
@@ -21,13 +24,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public User addUser(User user) {
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new EmailAlreadyExistsException("Użytkownik o podanym emailu istnieje!");
-        }
+    public UserResponseDTO addUser(UserCreationDTO userCreationDTO) {
+        userRepository.findByEmail(userCreationDTO.email())
+                .ifPresent(u -> {
+                    throw new EmailAlreadyExistsException("Użytkownik o podanym emailu istnieje!");
+                });
 
+        User user = UserCreationDTOMapper.toEntity(userCreationDTO);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+
+        User savedUser = userRepository.save(user);
+        return UserCreationDTOMapper.toResponseDTO(savedUser);
     }
 
     public List<UserDTO> getAllUsers() {

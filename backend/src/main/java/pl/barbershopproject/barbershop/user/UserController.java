@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.SelfDeletionException;
+import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
+import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
 
 import java.net.URI;
 import java.util.List;
@@ -23,12 +25,12 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
-        User savedUser = userService.addUser(user);
+    public ResponseEntity<UserResponseDTO> addUser(@Valid @RequestBody UserCreationDTO userCreationDTO) {
+        UserResponseDTO savedUser = userService.addUser(userCreationDTO);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(savedUser.getIdUser())
+                .buildAndExpand(savedUser.idUser())
                 .toUri();
 
         return ResponseEntity.created(location).body(savedUser);
