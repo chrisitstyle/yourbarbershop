@@ -25,10 +25,9 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public UserResponseDTO addUser(UserCreationDTO userCreationDTO) {
-        userRepository.findByEmail(userCreationDTO.email())
-                .ifPresent(u -> {
-                    throw new EmailAlreadyExistsException("Użytkownik o podanym emailu istnieje!");
-                });
+        if (userRepository.existsByEmail(userCreationDTO.email())) {
+            throw new EmailAlreadyExistsException("Użytkownik o podanym emailu istnieje!");
+        }
 
         User user = UserCreationDTOMapper.toEntity(userCreationDTO);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
