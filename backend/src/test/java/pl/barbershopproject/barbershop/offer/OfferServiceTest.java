@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.unit.offer;
+package pl.barbershopproject.barbershop.offer;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,9 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import pl.barbershopproject.barbershop.offer.Offer;
-import pl.barbershopproject.barbershop.offer.OfferRepository;
-import pl.barbershopproject.barbershop.offer.OfferService;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -40,7 +37,7 @@ class OfferServiceTest {
     }
 
     @Test
-    void OfferService_AddOffer_ShouldReturnOffer(){
+    void addOffer_ShouldReturnOffer(){
 
         when(offerRepository.save(offer)).thenReturn(offer);
 
@@ -56,7 +53,7 @@ class OfferServiceTest {
 
     }
     @Test
-    void OfferService_GetAllOffers_ShouldReturnAllOffers(){
+    void getAllOffers_ShouldReturnAllOffers(){
 
         when(offerRepository.findAll()).thenReturn(List.of(offer));
 
@@ -67,7 +64,7 @@ class OfferServiceTest {
     }
 
     @Test
-    void OfferService_GetSingleOffer_ShouldReturnSingleOffer(){
+    void getSingleOffer_ShouldReturnSingleOffer(){
         long idOffer = 1L;
         when(offerRepository.findById(idOffer)).thenReturn(Optional.of(offer));
 
@@ -78,7 +75,7 @@ class OfferServiceTest {
     }
 
     @Test
-    void OfferService_UpdateOffer_ShouldUpdateAndReturnOffer_WhenOfferExists() {
+    void updateOffer_ShouldUpdateAndReturnOffer_WhenOfferExists() {
 
         Offer updatedOffer = new Offer();
         updatedOffer.setKind("New Kind");
@@ -97,7 +94,7 @@ class OfferServiceTest {
     }
 
     @Test
-   void OfferService_UpdateOffer_ShouldThrowException_WhenOfferDoesNotExist() {
+   void updateOffer_ShouldThrowException_WhenOfferDoesNotExist() {
         Offer updatedOffer = new Offer();
 
         when(offerRepository.findById(1L)).thenReturn(Optional.empty());
@@ -109,23 +106,23 @@ class OfferServiceTest {
     }
 
     @Test
-    void OfferService_DeleteOfferById_ShouldDeleteOffer_WhenOfferExists() {
-        when(offerRepository.findById(1L)).thenReturn(Optional.of(offer));
+    void deleteOfferById_ShouldDeleteOffer_WhenOfferExists() {
+        when(offerRepository.existsById(1L)).thenReturn(true);
 
         offerService.deleteOfferById(1L);
 
-        verify(offerRepository, times(1)).findById(1L);
+        verify(offerRepository, times(1)).existsById(1L);
         verify(offerRepository, times(1)).deleteById(1L);
     }
 
 
     @Test
-    void OfferService_DeleteOfferById_ShouldThrowException_WhenOfferDoesNotExist() {
-        when(offerRepository.findById(1L)).thenReturn(Optional.empty());
+    void deleteOfferById_ShouldThrowException_WhenOfferDoesNotExist() {
+        when(offerRepository.existsById(1L)).thenReturn(false);
 
         assertThrows(NoSuchElementException.class, () -> offerService.deleteOfferById(1L));
 
-        verify(offerRepository, times(1)).findById(1L);
+        verify(offerRepository, times(1)).existsById(1L);
         verify(offerRepository, never()).deleteById(1L);
     }
 

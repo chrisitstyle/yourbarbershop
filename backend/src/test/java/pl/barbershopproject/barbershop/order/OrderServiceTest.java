@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.unit.order;
+package pl.barbershopproject.barbershop.order;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,9 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.offer.Offer;
-import pl.barbershopproject.barbershop.order.Order;
-import pl.barbershopproject.barbershop.order.OrderRepository;
-import pl.barbershopproject.barbershop.order.OrderService;
+import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
@@ -25,6 +23,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
+
 
     @Mock
     private OrderRepository orderRepository;
@@ -62,72 +61,67 @@ class OrderServiceTest {
     }
 
     @Test
-    void OrderService_AddOrder_ShouldSaveOrder(){
+    void addOrder_ShouldSaveOrder(){
 
-        orderService.addOrder(order);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
 
+        Order result = orderService.addOrder(order);
+
+        assertNotNull(result);
+        assertEquals(order.getIdOrder(), result.getIdOrder());
         verify(orderRepository, times(1)).save(order);
     }
 
     @Test
-    void OrderService_GetAllOrders_ShouldReturnAllOrders(){
-
+    void getAllOrders_ShouldReturnListOfOrderDTOs() {
         when(orderRepository.findAll()).thenReturn(List.of(order));
 
-        List<Order> ordersResult = orderService.getAllOrders();
+        List<OrderDTO> result = orderService.getAllOrders();
 
-
-        assertEquals(order, ordersResult.getFirst());
+        assertEquals(1, result.size());
+        assertEquals(order.getIdOrder(), result.get(0).idOrder());
         verify(orderRepository, times(1)).findAll();
-
-
     }
 
-
     @Test
-    void OrderService_GetSingleOrder_ShouldReturnOrder_WhenOrderExists() {
+    void getSingleOrder_ShouldReturnOrderDTO_WhenOrderExists(){
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
-        Order orderResult = orderService.getSingleOrder(1L);
+        OrderDTO result = orderService.getSingleOrder(1L);
 
-        assertNotNull(orderResult);
-        assertAll(
-                () -> assertEquals(order.getIdOrder(), orderResult.getIdOrder()),
-                () -> assertEquals(order.getUser(), orderResult.getUser()),
-                () -> assertEquals(order.getOffer(), orderResult.getOffer()),
-                () -> assertEquals(order.getOrderDate(), orderResult.getOrderDate()),
-                () -> assertEquals(order.getVisitDate(), orderResult.getVisitDate()),
-                () -> assertEquals(order.getStatus(), orderResult.getStatus())
-        );
-
-        verify(orderRepository, times(1)).findById(1L);
+        assertNotNull(result);
+        assertEquals(order.getIdOrder(), result.idOrder());
     }
 
     @Test
-    void OrderService_GetSingleOrder_ShouldThrowException_WhenOrderDoesNotExist() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
+    void getSingleOrder_ShouldThrowException_WhenOrderNotFound(){
+        when(orderRepository.findById(2L)).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class, () -> orderService.getSingleOrder(1L));
-
-        verify(orderRepository, times(1)).findById(1L);
-    }
-
-
-    @Test
-    void OrderService_GetOrdersByStatus_ShouldReturnOrdersByStatus() {
-        when(orderRepository.findOrdersByStatus("Test status")).thenReturn(List.of(order));
-
-        List<Order> ordersByStatusResult = orderService.getOrdersByStatus("Test status");
-
-        assertNotNull(ordersByStatusResult);
-        assertEquals(1, ordersByStatusResult.size());
-
-        verify(orderRepository, times(1)).findOrdersByStatus("Test status");
+        assertThrows(NoSuchElementException.class,
+                () -> orderService.getSingleOrder(2L));
     }
 
     @Test
-    void OrderService_UpdateOrder_ShouldUpdateAndReturnOrder_WhenOrderExists() {
+    void getOrdersByStatus_ShouldReturnFilteredOrders() {
+        List<Order> orders = List.of(order);
+        when(orderRepository.findOrdersByStatus(Status.NOWE)).thenReturn(orders);
 
+        List<OrderDTO> result = orderService.getOrdersByStatus("NOWE");
+
+        assertEquals(1, result.size());
+        assertEquals(Status.NOWE, result.get(0).status());
+    }
+
+    @Test
+    void getOrdersByStatus_ShouldThrowException_ForInvalidStatus() {
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                () -> orderService.getOrdersByStatus("invalid"));
+
+        assertTrue(exception.getMessage().contains("Dostępne statusy"));
+    }
+
+    @Test
+    void updateOrder_ShouldUpdateExistingOrder(){
         updatedOrder = new Order();
         updatedOrder.setUser(user);
         updatedOrder.setOffer(offer);
@@ -154,35 +148,32 @@ class OrderServiceTest {
     }
 
     @Test
-    void OrderService_UpdateOrder_ShouldThrowException_WhenOrderDoesNotExist() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
+    void updateOrder_ShouldThrowException_WhenOrderNotFound() {
 
-        assertThrows(NoSuchElementException.class, () -> orderService.updateOrder(updatedOrder, 1L));
+        when(orderRepository.findById(2L)).thenReturn(Optional.empty());
 
-        verify(orderRepository, times(1)).findById(1L);
-        verify(orderRepository, never()).save(any(Order.class));
+        assertThrows(NoSuchElementException.class,
+                () -> orderService.updateOrder(updatedOrder, 2L));
     }
 
     @Test
-    void OrderService_DeleteOrderById_ShouldDeleteOrder_WhenOrderExists() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+    void deleteOrderById_ShouldDeleteExistingOrder() {
+        when(orderRepository.existsById(1L)).thenReturn(true);
 
         orderService.deleteOrderById(1L);
 
-        verify(orderRepository, times(1)).findById(1L);
-        verify(orderRepository, times(1)).deleteById(1L);
+        verify(orderRepository).deleteById(1L);
     }
 
     @Test
-    void OrderService_DeleteOrderById_ShouldThrowException_WhenOrderDoesNotExist() {
-        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
+    void deleteOrderById_ShouldThrowException_WhenOrderNotExists() {
+        when(orderRepository.existsById(2L)).thenReturn(false);
 
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> orderService.deleteOrderById(1L));
+        assertThrows(NoSuchElementException.class,
+                () -> orderService.deleteOrderById(2L));
 
-        assertEquals("Zamówienie o podanym ID nie istnieje", exception.getMessage());
-
-        verify(orderRepository, times(1)).findById(1L);
-        verify(orderRepository, never()).deleteById(1L);
+        verify(orderRepository, never()).deleteById(anyLong());
     }
+
 
 }

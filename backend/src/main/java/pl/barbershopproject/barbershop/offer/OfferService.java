@@ -29,7 +29,7 @@ class OfferService {
 
     @Transactional
     public Offer updateOffer(Offer updatedOffer, long idOffer) {
-        Offer existingOffer = getSingleOffer(idOffer);
+        Offer existingOffer = offerRepository.findById(idOffer).orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje"));
         existingOffer.setKind(updatedOffer.getKind());
         existingOffer.setCost(updatedOffer.getCost());
         return offerRepository.save(existingOffer);

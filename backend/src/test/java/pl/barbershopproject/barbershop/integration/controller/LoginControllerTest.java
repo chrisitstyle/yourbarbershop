@@ -44,7 +44,7 @@ class LoginControllerTest {
 
         String token = loginResult.getResponse().getContentAsString();
 
-        mockMvc.perform(get("/users/get")
+        mockMvc.perform(get("/users")
                         .header("Authorization", "Bearer " + token)
                 )
                 .andExpect(status().isOk());

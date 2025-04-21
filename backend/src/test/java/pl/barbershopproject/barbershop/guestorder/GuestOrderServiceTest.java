@@ -1,5 +1,4 @@
-package pl.barbershopproject.barbershop.unit.guestorder;
-
+package pl.barbershopproject.barbershop.guestorder;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,10 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.offer.Offer;
-import pl.barbershopproject.barbershop.guestorder.GuestOrderRepository;
-import pl.barbershopproject.barbershop.guestorder.GuestOrderService;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.math.BigDecimal;
@@ -20,7 +16,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,7 +52,7 @@ class GuestOrderServiceTest {
     }
 
     @Test
-    void GuestOrderService_AddGuestOrder_ShouldReturnGuestOrder(){
+    void addGuestOrder_ShouldReturnGuestOrder(){
 
         when(guestOrderRepository.save(guestOrder)).thenReturn(guestOrder);
 
@@ -70,7 +65,7 @@ class GuestOrderServiceTest {
     }
 
     @Test
-    void GuestOrderService_GetAllGuestOrders_ShouldReturnListOfGuestOrders(){
+    void getAllGuestOrders_ShouldReturnListOfGuestOrders(){
 
         when(guestOrderRepository.findAll()).thenReturn(List.of(guestOrder));
 
@@ -82,7 +77,7 @@ class GuestOrderServiceTest {
     }
 
     @Test
-    void GuestOrderService_GetGuestOrder_ShouldReturnGuestOrder_WhenOrderExists() {
+    void getGuestOrder_ShouldReturnGuestOrder_WhenOrderExists() {
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
 
         GuestOrder guestOrderResult = guestOrderService.getGuestOrder(1L);
@@ -92,27 +87,25 @@ class GuestOrderServiceTest {
     }
 
     @Test
-   void GuestOrderService_GetGuestOrder_ShouldReturnNull_WhenOrderDoesNotExist() {
+    void getGuestOrder_ShouldThrowException_WhenOrderDoesNotExist() {
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
 
-        GuestOrder guestOrderResult = guestOrderService.getGuestOrder(1L);
-
-        assertNull(guestOrderResult);
+        assertThrows(NoSuchElementException.class, () -> guestOrderService.getGuestOrder(1L));
 
         verify(guestOrderRepository, times(1)).findById(1L);
     }
 
     @Test
-    void GuestOrderService_GetGuestOrdersByStatus_ShouldReturnGuestOrders_WhenStatusExists() {
+    void getGuestOrdersByStatus_ShouldReturnGuestOrders_WhenStatusExists() {
 
-        when(guestOrderRepository.findGuestOrdersByStatus("NOWE")).thenReturn(List.of(guestOrder));
+        when(guestOrderRepository.findGuestOrdersByStatus(Status.NOWE)).thenReturn(List.of(guestOrder));
 
-        List<GuestOrder> guestOrdersByStatusResult = guestOrderService.getGuestOrdersByStatus("NOWE");
+        List<GuestOrder> guestOrdersByStatusResult = guestOrderService.getGuestOrdersByStatus(Status.NOWE);
 
         assertNotNull(guestOrdersByStatusResult);
         assertEquals(1, guestOrdersByStatusResult.size());
 
-        verify(guestOrderRepository, times(1)).findGuestOrdersByStatus("NOWE");
+        verify(guestOrderRepository, times(1)).findGuestOrdersByStatus(Status.NOWE);
     }
 
     @Test
@@ -124,7 +117,6 @@ class GuestOrderServiceTest {
         updatedGuestOrder.setPhonenumber("987654321");
         updatedGuestOrder.setEmail("jane.smith@example.com");
         updatedGuestOrder.setOffer(offer);
-        updatedGuestOrder.setOrderDate(LocalDateTime.parse("2025-03-25T10:00:00"));
         updatedGuestOrder.setVisitDate(LocalDateTime.parse("2025-03-26T10:00:00"));
         updatedGuestOrder.setStatus(Status.NOWE);
 
@@ -136,13 +128,12 @@ class GuestOrderServiceTest {
 
 
         assertNotNull(guestOrderResult);
-       assertAll(
+        assertAll(
                 () -> assertEquals(updatedGuestOrder.getFirstname(), guestOrderResult.getFirstname()),
                 () -> assertEquals(updatedGuestOrder.getLastname(), guestOrderResult.getLastname()),
                 () -> assertEquals(updatedGuestOrder.getPhonenumber(), guestOrderResult.getPhonenumber()),
                 () -> assertEquals(updatedGuestOrder.getEmail(), guestOrderResult.getEmail()),
                 () -> assertEquals(updatedGuestOrder.getOffer(), guestOrderResult.getOffer()),
-                () -> assertEquals(updatedGuestOrder.getOrderDate(), guestOrderResult.getOrderDate()),
                 () -> assertEquals(updatedGuestOrder.getVisitDate(), guestOrderResult.getVisitDate()),
                 () -> assertEquals(updatedGuestOrder.getStatus(), guestOrderResult.getStatus())
         );
@@ -177,23 +168,23 @@ class GuestOrderServiceTest {
 
     @Test
     void GuestOrderService_deleteGuestOrderById_ShouldDeleteGuestOrder_WhenGuestOrderExists() {
-        when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
+        when(guestOrderRepository.existsById(1L)).thenReturn(true);
 
         guestOrderService.deleteGuestOrderById(1L);
 
-        verify(guestOrderRepository, times(1)).findById(1L);
+        verify(guestOrderRepository, times(1)).existsById(1L);
         verify(guestOrderRepository, times(1)).deleteById(1L);
     }
 
     @Test
     void GuestOrderService_deleteGuestOrderById_ShouldThrowException_WhenGuestOrderDoesNotExist() {
-        when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
+        when(guestOrderRepository.existsById(1L)).thenReturn(false);
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> guestOrderService.deleteGuestOrderById(1L));
 
         assertEquals("Nie znaleziono zamówienia o ID: 1", exception.getMessage());
 
-        verify(guestOrderRepository, times(1)).findById(1L);
+        verify(guestOrderRepository, times(1)).existsById(1L);
         verify(guestOrderRepository, never()).deleteById(1L);
     }
 

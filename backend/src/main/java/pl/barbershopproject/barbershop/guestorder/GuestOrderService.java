@@ -32,7 +32,8 @@ class GuestOrderService {
     }
     @Transactional
     public GuestOrder updateGuestOrder(GuestOrder updatedGuestOrder, Long idGuestOrder) {
-        GuestOrder existingOrder = getGuestOrder(idGuestOrder);
+        GuestOrder existingOrder = guestOrderRepository.findById(idGuestOrder)
+                .orElseThrow(() -> new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder));
 
         existingOrder.setFirstname(updatedGuestOrder.getFirstname());
         existingOrder.setLastname(updatedGuestOrder.getLastname());

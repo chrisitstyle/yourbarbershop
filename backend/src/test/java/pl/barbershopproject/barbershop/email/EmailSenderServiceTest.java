@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.unit.email;
+package pl.barbershopproject.barbershop.email;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
