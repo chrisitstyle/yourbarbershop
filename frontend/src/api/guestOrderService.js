@@ -4,7 +4,7 @@ const apiUrl = "http://localhost:8080";
 
 export const getGuestOrders = async (userToken) => {
   try {
-    const result = await axios.get(`${apiUrl}/guestorders/get`, {
+    const result = await axios.get(`${apiUrl}/guestorders`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,
@@ -20,7 +20,7 @@ export const getGuestOrders = async (userToken) => {
 export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
   try {
     const response = await axios.put(
-      `${apiUrl}/guestorders/update/${idGuestOrder}`,
+      `${apiUrl}/guestorders/${idGuestOrder}`,
       data,
       {
         withCredentials: true,
@@ -39,7 +39,7 @@ export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
 
 export const deleteGuestOrder = async (idGuestOrder, userToken) => {
   try {
-    await axios.delete(`${apiUrl}/guestorders/delete/${idGuestOrder}`, {
+    await axios.delete(`${apiUrl}/guestorders/${idGuestOrder}`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,

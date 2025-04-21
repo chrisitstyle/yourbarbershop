@@ -4,7 +4,7 @@ const apiUrl = "http://localhost:8080";
 
 export const getOrders = async (userToken) => {
   try {
-    const result = await axios.get(`${apiUrl}/orders/get`, {
+    const result = await axios.get(`${apiUrl}/orders`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,
@@ -20,7 +20,7 @@ export const getOrders = async (userToken) => {
 export const updateOrder = async (orderId, newData, token) => {
   try {
     const response = await axios.put(
-      `http://localhost:8080/orders/update/${orderId}`,
+      `http://localhost:8080/orders/${orderId}`,
       newData,
       {
         withCredentials: true,
@@ -38,7 +38,7 @@ export const updateOrder = async (orderId, newData, token) => {
 
 export const deleteOrder = async (idOrder, userToken) => {
   try {
-    await axios.delete(`${apiUrl}/orders/delete/${idOrder}`, {
+    await axios.delete(`${apiUrl}/orders/${idOrder}`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,

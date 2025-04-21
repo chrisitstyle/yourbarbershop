@@ -12,7 +12,7 @@ const Offer = () => {
 
   const loadOffers = async () => {
     try {
-      const result = await axios.get("http://localhost:8080/offers/get");
+      const result = await axios.get("http://localhost:8080/offers");
       setOffers(result.data);
     } catch (error) {
       console.error("Error loading offers:", error);

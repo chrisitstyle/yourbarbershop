@@ -13,7 +13,7 @@ export const addUser = async (newUser) => {
 
 export const getUsers = async (userToken) => {
   try {
-    const result = await axios.get(`${apiUrl}/users/get`, {
+    const result = await axios.get(`${apiUrl}/users`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,
@@ -29,7 +29,7 @@ export const getUsers = async (userToken) => {
 export const updateUser = async (userId, newData, token) => {
   try {
     const response = await axios.put(
-      `http://localhost:8080/users/update/${userId}`,
+      `http://localhost:8080/users/${userId}`,
       newData,
       {
         withCredentials: true,
@@ -47,7 +47,7 @@ export const updateUser = async (userId, newData, token) => {
 
 export const deleteUser = async (idUser, userToken) => {
   try {
-    await axios.delete(`${apiUrl}/users/delete/${idUser}`, {
+    await axios.delete(`${apiUrl}/users/${idUser}`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,
