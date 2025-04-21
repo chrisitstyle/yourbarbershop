@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,32 +19,27 @@ class OfferService {
 
     }
 
-
     public List<Offer> getAllOffers(){
         return offerRepository.findAll();
     }
-    public Offer getSingleOffer(long idOffer){
-        return offerRepository.findById(idOffer).orElseThrow(NoSuchElementException::new);
+    public Offer getSingleOffer(long idOffer) {
+        return offerRepository.findById(idOffer)
+                .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje"));
     }
 
     @Transactional
-    public Offer updateOffer(Offer updatedOffer, long idOffer){
-        return offerRepository.findById(idOffer)
-                .map(offer -> {
-                    offer.setKind(updatedOffer.getKind());
-                    offer.setCost(updatedOffer.getCost());
-                    return offerRepository.save(offer);
-                }).orElseThrow(NoSuchElementException::new);
+    public Offer updateOffer(Offer updatedOffer, long idOffer) {
+        Offer existingOffer = getSingleOffer(idOffer);
+        existingOffer.setKind(updatedOffer.getKind());
+        existingOffer.setCost(updatedOffer.getCost());
+        return offerRepository.save(existingOffer);
     }
 
     @Transactional
     public void deleteOfferById(long idOffer) {
-        Optional<Offer> offerExists = offerRepository.findById(idOffer);
-
-        if (offerExists.isPresent()) {
-            offerRepository.deleteById(idOffer);
-        } else {
-            throw new NoSuchElementException("Oferta o podanym ID nie istnieje");
+        if (!offerRepository.existsById(idOffer)) {
+            throw new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje");
         }
+        offerRepository.deleteById(idOffer);
     }
 }

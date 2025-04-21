@@ -77,7 +77,7 @@ class UserServiceTest {
     }
 
     @Test
-    void UserService_GetSingleUser_ShouldReturnUser_whenUserIsSameId() {
+    void UserService_GetUser_ShouldReturnUser_whenUserByIdIsSameId() {
 
         User user2 = new User();
         user2.setIdUser(2L);
@@ -87,7 +87,7 @@ class UserServiceTest {
         when(authentication.getPrincipal()).thenReturn(user2);
         when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
 
-        User result = userService.getSingleUser(2L);
+        User result = userService.getUserById(2L);
 
         assertNotNull(result);
         assertEquals(2L, result.getIdUser());
@@ -95,7 +95,7 @@ class UserServiceTest {
     }
 
     @Test
-    void UserService_GetSingleUser_ShouldReturnUser_whenUserIsAdmin() {
+    void UserService_GetUser_ShouldReturnUser_whenUserByIdIsAdmin() {
 
         User adminUser = new User();
         adminUser.setIdUser(2L);
@@ -104,7 +104,7 @@ class UserServiceTest {
         when(authentication.getPrincipal()).thenReturn(adminUser);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        User userFromDB = userService.getSingleUser(1L);
+        User userFromDB = userService.getUserById(1L);
 
         assertNotNull(userFromDB);
         assertEquals(1L, userFromDB.getIdUser());
@@ -113,12 +113,12 @@ class UserServiceTest {
     }
 
     @Test
-    void UserService_GetSingleUser_ShouldReturnNull_whenUserHasDifferentIdAndNotAdmin() {
+    void UserService_GetUser_ShouldReturnNull_whenUserByIdHasDifferentIdAndNotAdmin() {
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(user);
 
-        User result = userService.getSingleUser(4L);
+        User result = userService.getUserById(4L);
 
         assertNotEquals(4L, user.getIdUser());
         assertNotEquals(Role.ADMIN, user.getRole());
@@ -127,14 +127,14 @@ class UserServiceTest {
     }
 
     @Test
-    void UserService_GetSingleUser_ShouldThrowException_whenUserNotFound() {
+    void UserService_GetUser_ShouldThrowException_whenUserByIdNotFound() {
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(user);
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
 
-        assertThrows(NoSuchElementException.class, () -> userService.getSingleUser(1L));
+        assertThrows(NoSuchElementException.class, () -> userService.getUserById(1L));
 
     }
 

@@ -1,36 +1,33 @@
 package pl.barbershopproject.barbershop.user;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
+import pl.barbershopproject.barbershop.exception.SelfDeletionException;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
 import pl.barbershopproject.barbershop.user.mapper.UserDTOMapper;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-
-    public ResponseEntity<User> addUser(User user) {
-        Optional<User> userFromDatabase = userRepository.findByEmail(user.getEmail());
-
-        if (userFromDatabase.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Użytkownik o podanym e-mail istnieje");
+    public User addUser(User user) {
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new EmailAlreadyExistsException("Użytkownik o podanym emailu istnieje!");
         }
 
-        User savedUser = userRepository.save(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(user);
     }
 
     public List<UserDTO> getAllUsers() {
@@ -40,50 +37,60 @@ public class UserService {
                 .toList();
     }
 
-    public UserDTO getSingleUser(long idUser) {
-        User authUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        long loggedUserId = authUser.getIdUser();
-        if (loggedUserId == idUser || authUser.getRole().equals(Role.ADMIN)) {
-            User user =  userRepository.findById(idUser).orElseThrow(NoSuchElementException::new);
-            return UserDTOMapper.toDTO(user);
-        }else {
-            return null;
-        }
+    public UserDTO getUserById(long idUser) {
+        User authUser = getAuthenticatedUser();
+        validateUserAccess(authUser, idUser);
+
+        return userRepository.findById(idUser)
+                .map(UserDTOMapper::toDTO)
+                .orElseThrow(() -> new NoSuchElementException("Użytkownik o podanym ID nie istnieje"));
     }
 
     @Transactional
     public User updateUser(User updatedUser, long idUser) {
-        return userRepository.findById(idUser)
-                .map(user -> {
-                    user.setFirstname(updatedUser.getFirstname());
-                    user.setLastname(updatedUser.getLastname());
-                    user.setEmail(updatedUser.getEmail());
-                    user.setRole(updatedUser.getRole());
+        User authUser = getAuthenticatedUser();
+        validateUserAccess(authUser, idUser);
+        User existingUser = userRepository.findById(idUser)
+                .orElseThrow(() -> new NoSuchElementException("Użytkownik o podanym ID nie istnieje"));
 
-                    if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
-                        user.setPassword(updatedUser.getPassword());
-                    }
-                    return userRepository.save(user);
-                }).orElseThrow(NoSuchElementException::new);
+        updateUserFields(existingUser, updatedUser);
+        return userRepository.save(existingUser);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteUserById(long idUser) {
-        User authUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        long loggedUserId = authUser.getIdUser();
-        Optional<User> userExists = userRepository.findById(idUser);
+        User authUser = getAuthenticatedUser();
+        if (authUser.getIdUser() == idUser) {
+            throw new SelfDeletionException("Nie można usunąć własnego konta");
+        }
 
-            if (userExists.isPresent()) {
-                if( loggedUserId != idUser) {
-                    userRepository.deleteById(idUser);
-                } else{ throw new IllegalArgumentException("Nie można usunąć obecnie zalogowanego użytkownika.");}
+        if (!userRepository.existsById(idUser)) {
+            throw new NoSuchElementException("Użytkownik o podanym ID nie istnieje");
+        }
 
-            } else {
-                throw new NoSuchElementException("Użytkownik o podanym ID nie istnieje");
-            }
+        userRepository.deleteById(idUser);
     }
 
 
+    private User getAuthenticatedUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
 
+    private void validateUserAccess(User authUser, long targetUserId) {
+        if (authUser.getIdUser() != targetUserId && !authUser.getRole().equals(Role.ADMIN)) {
+            throw new AccessDeniedException("Brak uprawnień");
+        }
+    }
+
+    private void updateUserFields(User existing, User updated) {
+        existing.setFirstname(updated.getFirstname());
+        existing.setLastname(updated.getLastname());
+        existing.setEmail(updated.getEmail());
+
+        if (updated.getPassword() != null) {
+            existing.setPassword(passwordEncoder.encode(updated.getPassword()));
+        }
+    }
 }
+
+

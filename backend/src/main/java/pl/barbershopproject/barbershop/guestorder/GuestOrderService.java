@@ -7,7 +7,6 @@ import pl.barbershopproject.barbershop.util.Status;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,40 +21,37 @@ class GuestOrderService {
     public List<GuestOrder> getAllGuestOrders (){
         return guestOrderRepository.findAll();
     }
-    public GuestOrder getGuestOrder(long idGuestOrder){
-        return guestOrderRepository.findById(idGuestOrder).orElse(null);
+    public GuestOrder getGuestOrder(long idGuestOrder) {
+        return guestOrderRepository.findById(idGuestOrder)
+                .orElseThrow(() -> new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder));
     }
 
-    public List<GuestOrder> getGuestOrdersByStatus(String status){
+    public List<GuestOrder> getGuestOrdersByStatus(Status status){
 
-        return guestOrderRepository.findGuestOrdersByStatus(Status.valueOf(status.toUpperCase()));
+        return guestOrderRepository.findGuestOrdersByStatus(status);
     }
     @Transactional
     public GuestOrder updateGuestOrder(GuestOrder updatedGuestOrder, Long idGuestOrder) {
-        return guestOrderRepository.findById(idGuestOrder)
-                .map(guestOrder -> {
-                    guestOrder.setFirstname(updatedGuestOrder.getFirstname());
-                    guestOrder.setLastname(updatedGuestOrder.getLastname());
-                    guestOrder.setPhonenumber(updatedGuestOrder.getPhonenumber());
-                    guestOrder.setEmail(updatedGuestOrder.getEmail());
-                    guestOrder.setOffer(updatedGuestOrder.getOffer());
-                    guestOrder.setOrderDate(updatedGuestOrder.getOrderDate());
-                    guestOrder.setVisitDate(updatedGuestOrder.getVisitDate());
-                    guestOrder.setStatus(updatedGuestOrder.getStatus());
-                    return guestOrderRepository.save(guestOrder);
-                })
-                .orElseThrow(() -> new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder));
+        GuestOrder existingOrder = getGuestOrder(idGuestOrder);
+
+        existingOrder.setFirstname(updatedGuestOrder.getFirstname());
+        existingOrder.setLastname(updatedGuestOrder.getLastname());
+        existingOrder.setPhonenumber(updatedGuestOrder.getPhonenumber());
+        existingOrder.setEmail(updatedGuestOrder.getEmail());
+        existingOrder.setOffer(updatedGuestOrder.getOffer());
+        existingOrder.setVisitDate(updatedGuestOrder.getVisitDate());
+        existingOrder.setStatus(updatedGuestOrder.getStatus());
+
+        return guestOrderRepository.save(existingOrder);
     }
 
     @Transactional
     public void deleteGuestOrderById(long idGuestOrder) {
-        Optional<GuestOrder> guestOrderExists = guestOrderRepository.findById(idGuestOrder);
 
-        if (guestOrderExists.isPresent()) {
-            guestOrderRepository.deleteById(idGuestOrder);
-        } else {
+        if (!guestOrderRepository.existsById(idGuestOrder)) {
             throw new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder);
         }
+        guestOrderRepository.deleteById(idGuestOrder);
     }
 
 

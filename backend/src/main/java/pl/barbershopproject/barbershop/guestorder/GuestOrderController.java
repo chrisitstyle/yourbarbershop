@@ -1,12 +1,14 @@
 package pl.barbershopproject.barbershop.guestorder;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import pl.barbershopproject.barbershop.util.Status;
 
+import java.net.URI;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -17,44 +19,51 @@ class GuestOrderController {
 
     private final GuestOrderService guestOrderService;
 
-    @PostMapping("/add")
-    public ResponseEntity<GuestOrder> addGuestOrder(@RequestBody GuestOrder guestOrder) {
-       GuestOrder savedGuestOrder = guestOrderService.addGuestOrder(guestOrder);
-        return new ResponseEntity<>(savedGuestOrder, HttpStatus.CREATED);
+    @PostMapping
+    public ResponseEntity<GuestOrder> addGuestOrder(@Valid @RequestBody GuestOrder guestOrder) {
+        GuestOrder savedGuestOrder = guestOrderService.addGuestOrder(guestOrder);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(savedGuestOrder.getIdGuestOrder())
+                .toUri();
+
+        return ResponseEntity.created(location).body(savedGuestOrder);
     }
 
-    @GetMapping("/get")
-    public ResponseEntity<List<GuestOrder>> getAllGuestOrders(@RequestParam(required = false) String status) {
-        List<GuestOrder> guestOrders = StringUtils.hasText(status)
+    @GetMapping
+    public List<GuestOrder> getAllGuestOrders(@RequestParam(required = false) Status status) {
+        return status != null
                 ? guestOrderService.getGuestOrdersByStatus(status)
                 : guestOrderService.getAllGuestOrders();
-        return ResponseEntity.ok(guestOrders);
     }
 
-    @GetMapping("/get/{idGuestOrder}")
-    public ResponseEntity<GuestOrder> getGuestOrder(@PathVariable long idGuestOrder) {
-        GuestOrder guestOrder = guestOrderService.getGuestOrder(idGuestOrder);
-        if (guestOrder != null) {
-            return ResponseEntity.ok(guestOrder);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @GetMapping("/{idGuestOrder}")
+    public GuestOrder getGuestOrder(@PathVariable long idGuestOrder) {
+        return guestOrderService.getGuestOrder(idGuestOrder);
     }
 
-    @PutMapping("/update/{idGuestOrder}")
-    public ResponseEntity<GuestOrder> updateGuestOrder(@RequestBody GuestOrder updatedGuestOrder, @PathVariable long idGuestOrder) {
-        GuestOrder guestOrderResponse = guestOrderService.updateGuestOrder(updatedGuestOrder, idGuestOrder);
-        return new ResponseEntity<>(guestOrderResponse, HttpStatus.OK);
-
+    @PutMapping("/{idGuestOrder}")
+    public GuestOrder updateGuestOrder(@Valid @RequestBody GuestOrder updatedGuestOrder,
+                                       @PathVariable long idGuestOrder) {
+        return guestOrderService.updateGuestOrder(updatedGuestOrder, idGuestOrder);
     }
 
-    @DeleteMapping("/delete/{idGuestOrder}")
-    public ResponseEntity<String> deleteGuestOrderById(@PathVariable long idGuestOrder) {
-        try {
-            guestOrderService.deleteGuestOrderById(idGuestOrder);
-            return new ResponseEntity<>("Zamówienie o ID " + idGuestOrder + " zostało usunięte.", HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }
+    @DeleteMapping("/{idGuestOrder}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteGuestOrderById(@PathVariable long idGuestOrder) {
+        guestOrderService.deleteGuestOrderById(idGuestOrder);
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String handleNotFound(NoSuchElementException ex) {
+        return ex.getMessage();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String handleBadRequest(IllegalArgumentException ex) {
+        return ex.getMessage();
     }
 }

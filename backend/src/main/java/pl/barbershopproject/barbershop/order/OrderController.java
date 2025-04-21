@@ -1,12 +1,15 @@
 package pl.barbershopproject.barbershop.order;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 
+import java.net.URI;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -17,65 +20,52 @@ class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping("/add")
-    public ResponseEntity<String> addOrder(@RequestBody Order order) {
-        ResponseEntity<String> response;
-        try {
-            orderService.addOrder(order);
-            response = ResponseEntity.status(HttpStatus.CREATED).body("Wizyta została złożona.");
-        } catch (Exception e) {
-            response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Nie udało się zapisać wizyty.");
-        }
-        return response;
+    @PostMapping
+    public ResponseEntity<String> addOrder(@Valid @RequestBody Order order) {
+        Order savedOrder = orderService.addOrder(order);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(savedOrder.getIdOrder())
+                .toUri();
+
+        return ResponseEntity.created(location)
+                .body("Wizyta została dodana. ID Wizyty: " + savedOrder.getIdOrder());
     }
 
-    @GetMapping("/get")
-    public ResponseEntity<List<OrderDTO>> getAllOrders(@RequestParam(required = false) String status) {
-        List<OrderDTO> orders;
-
-        if (status != null && !status.isEmpty()) {
-            orders = orderService.getOrdersByStatus(status);
-            if (orders.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            }
-        } else {
-            orders = orderService.getAllOrders();
-
-            if (orders.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            }
-        }
-
-        return new ResponseEntity<>(orders, HttpStatus.OK);
+    @GetMapping
+    public List<OrderDTO> getAllOrders(@RequestParam(required = false) String status) {
+        return status != null && !status.isEmpty()
+                ? orderService.getOrdersByStatus(status)
+                : orderService.getAllOrders();
     }
 
-    @GetMapping("/get/{idOrder}")
-    public ResponseEntity<OrderDTO> getSingleOrder(@PathVariable long idOrder) {
-        try {
-            OrderDTO orderDTO = orderService.getSingleOrder(idOrder);
-            return new ResponseEntity<>(orderDTO, HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    @GetMapping("/{idOrder}")
+    public OrderDTO getSingleOrder(@PathVariable long idOrder) {
+        return orderService.getSingleOrder(idOrder);
     }
 
-    @PutMapping("/update/{idOrder}")
-    public ResponseEntity<Order> updateOrder(@RequestBody Order updatedOrder, @PathVariable long idOrder) {
-        try {
-            Order orderResponse = orderService.updateOrder(updatedOrder, idOrder);
-            return ResponseEntity.ok(orderResponse);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    @PutMapping("/{idOrder}")
+    public Order updateOrder(@Valid @RequestBody Order updatedOrder,
+                             @PathVariable long idOrder) {
+        return orderService.updateOrder(updatedOrder, idOrder);
     }
 
-    @DeleteMapping("/delete/{idOrder}")
-    public ResponseEntity<String> deleteOrderById(@PathVariable long idOrder) {
-        try {
-            orderService.deleteOrderById(idOrder);
-            return new ResponseEntity<>("Zamówienie o ID " + idOrder + " zostało usunięte.", HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }
+    @DeleteMapping("/{idOrder}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteOrderById(@PathVariable long idOrder) {
+        orderService.deleteOrderById(idOrder);
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String handleNotFound(NoSuchElementException ex) {
+        return ex.getMessage();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String handleBadRequest(IllegalArgumentException ex) {
+        return ex.getMessage();
     }
 }
