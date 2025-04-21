@@ -23,7 +23,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<User> addGuestOrder(@Valid @RequestBody User user) {
+    public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
         User savedUser = userService.addUser(user);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
