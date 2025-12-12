@@ -79,7 +79,7 @@ class OrderServiceTest {
         List<OrderDTO> result = orderService.getAllOrders();
 
         assertEquals(1, result.size());
-        assertEquals(order.getIdOrder(), result.get(0).idOrder());
+        assertEquals(order.getIdOrder(), result.getFirst().idOrder());
         verify(orderRepository, times(1)).findAll();
     }
 
@@ -109,7 +109,7 @@ class OrderServiceTest {
         List<OrderDTO> result = orderService.getOrdersByStatus("NOWE");
 
         assertEquals(1, result.size());
-        assertEquals(Status.NOWE, result.get(0).status());
+        assertEquals(Status.NOWE, result.getFirst().status());
     }
 
     @Test

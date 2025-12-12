@@ -8,9 +8,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import pl.barbershopproject.barbershop.email.EmailSenderService;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class EmailSenderServiceTest {
@@ -23,7 +23,7 @@ class EmailSenderServiceTest {
     private EmailSenderService emailSenderService;
 
     @BeforeEach
-   void setUp() {
+    void setUp() {
         emailSenderService = new EmailSenderService(mailSender);
     }
 
@@ -42,7 +42,6 @@ class EmailSenderServiceTest {
 
         verify(mailSender, times(1)).send(expectedMessage);
     }
-
 
 
 }

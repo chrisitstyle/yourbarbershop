@@ -1,5 +1,6 @@
 package pl.barbershopproject.barbershop.guestorder;
 
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -145,6 +146,19 @@ class GuestOrderServiceTest {
 
     @Test
     void GuestOrderService_UpdateGuestOrder_ShouldThrowException_WhenOrderDoesNotExist() {
+        GuestOrder updatedGuestOrder = getGuestOrderFromDB();
+
+        when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> guestOrderService.updateGuestOrder(updatedGuestOrder, 1L));
+
+        assertEquals("Nie znaleziono zamówienia o ID: 1", exception.getMessage());
+
+        verify(guestOrderRepository, times(1)).findById(1L);
+        verify(guestOrderRepository, never()).save(any(GuestOrder.class));
+    }
+
+    private @NonNull GuestOrder getGuestOrderFromDB() {
         GuestOrder updatedGuestOrder = new GuestOrder();
         updatedGuestOrder.setIdGuestOrder(1L);
         updatedGuestOrder.setFirstname("Jane");
@@ -155,15 +169,7 @@ class GuestOrderServiceTest {
         updatedGuestOrder.setOrderDate(LocalDateTime.parse("2025-03-25T10:00:00"));
         updatedGuestOrder.setVisitDate(LocalDateTime.parse("2025-03-26T10:00:00"));
         updatedGuestOrder.setStatus(Status.NOWE);
-
-        when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
-
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> guestOrderService.updateGuestOrder(updatedGuestOrder, 1L));
-
-        assertEquals("Nie znaleziono zamówienia o ID: 1", exception.getMessage());
-
-        verify(guestOrderRepository, times(1)).findById(1L);
-        verify(guestOrderRepository, never()).save(any(GuestOrder.class));
+        return updatedGuestOrder;
     }
 
     @Test

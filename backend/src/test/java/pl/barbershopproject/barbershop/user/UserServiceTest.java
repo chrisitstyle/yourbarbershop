@@ -15,10 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.SelfDeletionException;
 import pl.barbershopproject.barbershop.order.Order;
-import pl.barbershopproject.barbershop.user.Role;
-import pl.barbershopproject.barbershop.user.User;
-import pl.barbershopproject.barbershop.user.UserRepository;
-import pl.barbershopproject.barbershop.user.UserService;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
 import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
@@ -119,7 +115,7 @@ class UserServiceTest {
     }
 
     @Test
-    void getUserById_ShouldReturnUserDTO_WhenAuthorized(){
+    void getUserById_ShouldReturnUserDTO_WhenAuthorized() {
         User adminUser = createAdminUser();
         mockSecurityContext(adminUser);
 
@@ -132,7 +128,7 @@ class UserServiceTest {
     }
 
     @Test
-    void getUserById_ThrowsException_WhenUnauthorized(){
+    void getUserById_ThrowsException_WhenUnauthorized() {
         User regularUser = createRegularUser(2L);
         mockSecurityContext(regularUser);
 
@@ -167,9 +163,7 @@ class UserServiceTest {
         when(userRepository.findById(nonExistingId)).thenReturn(Optional.empty());
 
 
-        assertThrows(NoSuchElementException.class, () -> {
-            userService.updateUser(updatedUser, nonExistingId);
-        });
+        assertThrows(NoSuchElementException.class, () -> userService.updateUser(updatedUser, nonExistingId));
 
         verify(userRepository, times(1)).findById(nonExistingId);
         verify(userRepository, never()).save(any(User.class));
@@ -195,8 +189,6 @@ class UserServiceTest {
 
         verify(userRepository).deleteById(2L);
     }
-
-
 
 
     private User createAdminUser() {
