@@ -4,6 +4,7 @@ import axios from "axios";
 import { useParams, useLocation } from "react-router-dom";
 import { formatDate } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -58,7 +59,7 @@ const Profile = () => {
   }, [id, user?.token]);
 
   if (!userDetails) {
-    return <div>ładowanie...</div>;
+    return <LoadingSpinner text="Ładowanie profilu..." />;
   }
 
   return (
