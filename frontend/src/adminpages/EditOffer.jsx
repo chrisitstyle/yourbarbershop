@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { updateOffer } from "../api/offerService";
 import { Alert } from "react-bootstrap";
+import ButtonSpinner from "../components/common/ButtonSpinner";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const EditOffer = () => {
   const { user } = useAuth();
@@ -13,24 +15,42 @@ const EditOffer = () => {
   const [kind, setKind] = useState("");
   const [cost, setCost] = useState("");
   const [editOfferError, setEditOfferError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
     if (offerData) {
       setKind(offerData.kind);
       setCost(offerData.cost);
     }
+    setIsInitialLoading(false);
   }, [offerData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
       await updateOffer(offerData.idOffer, { kind, cost }, user.token);
       navigate("/adminpanel");
     } catch (error) {
       setEditOfferError(true);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  if (isInitialLoading) {
+    return <LoadingSpinner text="Ładowanie danych usługi..." />;
+  }
+
+  if (!offerData) {
+    return (
+      <div className="container mt-5 text-center">
+        <Alert variant="warning">Nie znaleziono danych usługi. </Alert>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -59,6 +79,7 @@ const EditOffer = () => {
                   value={kind}
                   onChange={(e) => setKind(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="mb-3">
@@ -73,11 +94,18 @@ const EditOffer = () => {
                   value={cost}
                   onChange={(e) => setCost(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
-              <button type="submit" className="btn btn-dark mx-auto d-block">
+              <ButtonSpinner
+                type="submit"
+                variant="dark"
+                className="mx-auto d-block"
+                loading={isLoading}
+                loadingText="Zapisywanie..."
+              >
                 Zapisz zmiany
-              </button>
+              </ButtonSpinner>
             </form>
           </div>
         </div>
