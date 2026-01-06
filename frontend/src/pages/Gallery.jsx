@@ -7,6 +7,7 @@ import {
   faArrowCircleLeft,
   faArrowCircleRight,
 } from "@fortawesome/free-solid-svg-icons";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const Gallery = () => {
   const [images, setImages] = useState([]);
@@ -101,7 +102,7 @@ const Gallery = () => {
           ))}
         </Carousel>
       ) : (
-        <h5 className="mt-5">Ładowanie... </h5>
+        <LoadingSpinner text="Ładowanie galerii..." />
       )}
       {/* Modal */}
       <Modal show={showModal} onHide={handleCloseModal}>
