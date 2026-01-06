@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../api/authService";
+import ButtonSpinner from "../components/common/ButtonSpinner";
 
 const Register = () => {
   const [firstname, setFirstName] = useState("");
@@ -8,10 +9,12 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [registerError, setRegisterError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
       const response = await registerUser({
@@ -28,6 +31,8 @@ const Register = () => {
       }
     } catch (error) {
       setRegisterError("Błąd przy zakładaniu konta");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -96,9 +101,15 @@ const Register = () => {
                 />
               </div>
 
-              <button type="submit" className="btn btn-dark mx-auto d-block">
+              <ButtonSpinner
+                type="submit"
+                variant="dark"
+                className="mx-auto d-block"
+                loading={isLoading}
+                loadingText="Rejestracja..."
+              >
                 Załóż konto
-              </button>
+              </ButtonSpinner>
               <p className="mt-3 text-center">
                 Masz konto? <Link to="/login">Zaloguj się</Link>
               </p>
