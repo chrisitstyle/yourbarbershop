@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-
+import LoadingSpinner from "../components/common/LoadingSpinner";
 const Offer = () => {
   const [offers, setOffers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [offersPerPage] = useState(10);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadOffers();
@@ -16,6 +17,8 @@ const Offer = () => {
       setOffers(result.data);
     } catch (error) {
       console.error("Error loading offers:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -27,11 +30,15 @@ const Offer = () => {
 
   const showPagination = offers.length > offersPerPage;
 
+  if (isLoading) {
+    return <LoadingSpinner text="Ładowanie usług..." />;
+  }
+
   return (
     <div className="container">
       <h1 className="display-6 text-center mb-4">Nasza oferta</h1>
       {!offers.length > 0 ? (
-        <h5 className="text-center">Ładowanie...</h5>
+        <LoadingSpinner text="Ładowanie usług..." />
       ) : (
         <>
           <p className="lead text-center">
