@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { Alert } from "react-bootstrap";
 import { loginUser } from "../api/authService";
+import ButtonSpinner from "../components/common/ButtonSpinner";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -11,12 +12,14 @@ const Login = () => {
   const searchParams = new URLSearchParams(location.search);
   const registrationSuccess = searchParams.get("registrationSuccess");
   const [loginError, setLoginError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
       const userData = await loginUser(email, password);
@@ -28,6 +31,8 @@ const Login = () => {
       navigate("/");
     } catch (error) {
       setLoginError("Błąd logowania");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -86,9 +91,15 @@ const Login = () => {
               />
             </div>
 
-            <button type="submit" className="btn btn-dark mx-auto d-block">
+            <ButtonSpinner
+              type="submit"
+              variant="dark"
+              className="mx-auto d-block"
+              loading={isLoading}
+              loadingText="Logowanie..."
+            >
               Zaloguj
-            </button>
+            </ButtonSpinner>
             <p className="mt-3 text-center">
               <Link to="/forgotpassword">Zapomniałem hasła</Link>
             </p>
