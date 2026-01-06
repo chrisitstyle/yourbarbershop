@@ -1,19 +1,27 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ButtonSpinner from "../components/common/ButtonSpinner";
 
 const AddOffer = ({ onAddOffer }) => {
   const [kind, setKind] = useState("");
   const [cost, setCost] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    onAddOffer({ kind, cost });
-
-    setKind("");
-    setCost("");
-    navigate("/adminpanel");
+    try {
+      await onAddOffer({ kind, cost });
+      setKind("");
+      setCost("");
+      navigate("/adminpanel");
+    } catch (error) {
+      console.error("Błąd dodawania oferty:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,9 +57,15 @@ const AddOffer = ({ onAddOffer }) => {
                   required
                 />
               </div>
-              <button type="submit" className="btn btn-dark mx-auto d-block">
+              <ButtonSpinner
+                type="submit"
+                variant="dark"
+                className="mx-auto d-block"
+                loading={isLoading}
+                loadingText="Dodawanie..."
+              >
                 Dodaj
-              </button>
+              </ButtonSpinner>
             </form>
           </div>
         </div>

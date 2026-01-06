@@ -1,13 +1,17 @@
 import React, { useState } from "react";
+import ButtonSpinner from "../components/common/ButtonSpinner";
 
 const AddUser = ({ onSubmit }) => {
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("");
-  const handleSubmit = (e) => {
+  const [role, setRole] = useState("USER");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const newUser = {
       firstname,
@@ -17,11 +21,17 @@ const AddUser = ({ onSubmit }) => {
       role,
     };
 
-    onSubmit(newUser);
-    setFirstName("");
-    setLastName("");
-    setEmail("");
-    setPassword("");
+    try {
+      await onSubmit(newUser);
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPassword("");
+    } catch (error) {
+      console.error("Błąd dodawania użytkownika:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -99,9 +109,15 @@ const AddUser = ({ onSubmit }) => {
                 </select>
               </div>
 
-              <button type="submit" className="btn btn-dark mx-auto d-block">
+              <ButtonSpinner
+                type="submit"
+                variant="dark"
+                className="mx-auto d-block"
+                loading={isLoading}
+                loadingText="Dodawanie..."
+              >
                 Dodaj użytkownika
-              </button>
+              </ButtonSpinner>
             </form>
           </div>
         </div>
