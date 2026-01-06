@@ -1,29 +1,35 @@
-FROM openjdk:21-jdk-slim
+
+
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /backend
 
-
+# copy Gradle files first to cache dependency downloads
 COPY backend/build.gradle backend/settings.gradle ./
+COPY backend/gradlew backend/gradlew.bat ./
+COPY backend/gradle/ ./gradle/
 
+RUN chmod +x gradlew \
+  && ./gradlew --no-daemon dependencies
 
-COPY backend/gradlew ./
-COPY backend/gradlew.bat ./
-COPY backend/gradle/wrapper/gradle-wrapper.jar ./gradle/wrapper/
-COPY backend/gradle/wrapper/gradle-wrapper.properties ./gradle/wrapper/
-
-
-RUN chmod +x gradlew && \
-    ./gradlew dependencies --no-daemon
-
-
+# copy sources after deps for better cache reuse
 COPY backend/src ./src
 
+RUN ./gradlew --no-daemon bootJar
 
-RUN ./gradlew bootJar --no-daemon
+# runtime - smaller image
+FROM eclipse-temurin:25-jre
+WORKDIR /app
 
-
+#  dockerize waiting for db before starting spring
 COPY dockerize /usr/local/bin/dockerize
 RUN chmod +x /usr/local/bin/dockerize
 
+# copy jar from build stage
+COPY --from=build /backend/build/libs/*.jar /app/app.jar
+
 EXPOSE 8080
 
-CMD ["dockerize", "-wait", "tcp://database:3306", "-timeout", "120s", "java", "-jar", "build/libs/barbershop-0.0.1-SNAPSHOT.jar"]
+# better jvm defaults for containers
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -Dfile.encoding=UTF-8"
+
+CMD ["dockerize", "-wait", "tcp://database:3306", "-timeout", "120s", "java", "-jar", "/app/app.jar"]
