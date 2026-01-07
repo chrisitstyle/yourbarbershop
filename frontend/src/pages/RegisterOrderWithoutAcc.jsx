@@ -6,6 +6,10 @@ import axios from "axios";
 import { getOffers } from "../api/offerService";
 import { sendConfirmationEmail } from "../api/emailService";
 import { getCurrentDateTime, formatSelectedDateTime } from "../api/dataParser";
+import { fi } from "date-fns/locale";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import ButtonSpinner from "../components/common/ButtonSpinner";
+
 const RegisterOrderWithoutAcc = () => {
   const navigate = useNavigate();
   const [firstname, setFirstName] = useState("");
@@ -23,6 +27,23 @@ const RegisterOrderWithoutAcc = () => {
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [showAlert, setShowAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [isLoadingOffers, setIsLoadingOffers] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const offersData = await getOffers();
+        setOffers(offersData);
+      } catch (error) {
+        console.error("Błąd ładowania ofert:", error);
+      } finally {
+        setIsLoadingOffers(false);
+      }
+    };
+
+    fetchOffers();
+  }, []);
 
   // function to reset form fields
   const setInitialState = () => {
@@ -35,19 +56,6 @@ const RegisterOrderWithoutAcc = () => {
     setSelectedHour(8);
     setSelectedMinute(0);
   };
-
-  useEffect(() => {
-    const fetchOffers = async () => {
-      try {
-        const offersData = await getOffers();
-        setOffers(offersData);
-      } catch (error) {
-        console.error("Błąd ładowania ofert:", error);
-      }
-    };
-
-    fetchOffers();
-  }, []);
 
   const handleOfferChange = (e) => {
     const selectedOfferId = e.target.value;
@@ -72,29 +80,27 @@ const RegisterOrderWithoutAcc = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:8080/guestorders/add",
-        {
-          firstname,
-          lastname,
-          phonenumber,
-          email,
+      const response = await axios.post("http://localhost:8080/guestorders", {
+        firstname,
+        lastname,
+        phonenumber,
+        email,
 
-          offer: {
-            idOffer: selectedOffer,
-          },
+        offer: {
+          idOffer: selectedOffer,
+        },
 
-          orderDate: getCurrentDateTime(),
-          visitDate: formatSelectedDateTime(
-            selectedDate,
-            selectedHour,
-            selectedMinute
-          ),
-          status: "NOWE",
-        }
-      );
+        orderDate: getCurrentDateTime(),
+        visitDate: formatSelectedDateTime(
+          selectedDate,
+          selectedHour,
+          selectedMinute
+        ),
+        status: "NOWE",
+      });
       setInitialState();
       await sendConfirmationEmail(
         email,
@@ -109,8 +115,14 @@ const RegisterOrderWithoutAcc = () => {
       setShowAlert(true);
     } catch (error) {
       setShowErrorAlert(true);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  if (isLoadingOffers) {
+    return <LoadingSpinner text="Ładowanie dostępnych usług..." />;
+  }
 
   return (
     <>
@@ -146,6 +158,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={firstname}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="mb-2">
@@ -159,6 +172,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={lastname}
                   onChange={(e) => setLastName(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="mb-2">
@@ -172,6 +186,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={phonenumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="mb-2">
@@ -185,6 +200,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="mb-2">
@@ -197,6 +213,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={selectedOffer}
                   onChange={handleOfferChange}
                   required
+                  disabled={isLoading}
                 >
                   <option value="" disabled></option>
                   {offers.map((offer) => (
@@ -218,11 +235,12 @@ const RegisterOrderWithoutAcc = () => {
                   onChange={(e) => setSelectedDate(e.target.value)}
                   min={new Date().toISOString().split("T")[0]}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="mb-2">
                 <label htmlFor="selecttime" className="form-label">
-                  Wybierz godzinę i minutę
+                  Wybierz godzinę
                 </label>
                 <div className="d-flex">
                   <select
@@ -231,6 +249,7 @@ const RegisterOrderWithoutAcc = () => {
                     value={selectedHour}
                     onChange={handleHourChange}
                     required
+                    disabled={isLoading}
                   >
                     {[...Array(12).keys()].map((hour) => (
                       <option key={hour} value={hour + 8}>
@@ -244,6 +263,7 @@ const RegisterOrderWithoutAcc = () => {
                     value={selectedMinute}
                     onChange={handleMinuteChange}
                     required
+                    disabled={isLoading}
                   >
                     {[...Array(2).keys()].map((half) => (
                       <option key={half * 30} value={half * 30}>
@@ -253,9 +273,15 @@ const RegisterOrderWithoutAcc = () => {
                   </select>
                 </div>
               </div>
-              <button type="submit" className="btn btn-dark mx-auto d-block">
-                Umów wizytę!
-              </button>
+              <ButtonSpinner
+                type="submit"
+                variant="dark"
+                className="mx-auto d-block"
+                loading={isLoading}
+                loadingText="Rezerwowanie wizyty..."
+              >
+                Umów wizytę
+              </ButtonSpinner>
               <p className="mt-2 text-center">
                 Nie masz konta? <Link to="/register">Zarejestruj się</Link>
               </p>
