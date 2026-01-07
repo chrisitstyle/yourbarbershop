@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { userResetPasswordRequest } from "../api/userService";
 import { Alert } from "react-bootstrap";
-
+import ButtonSpinner from "../components/common/ButtonSpinner";
 const ChangePasswordForm = () => {
   const [newPassword, setNewPassword] = useState("");
   const [alert, setAlert] = useState({ message: "", variant: "" });
   const location = useLocation();
   const [token, setToken] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -24,17 +25,21 @@ const ChangePasswordForm = () => {
 
   const handleResetPasswordForm = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       await userResetPasswordRequest(token, newPassword);
       setAlert({
         message: "Hasło zostało pomyślnie zmienione.",
         variant: "success",
       });
+      setNewPassword("");
     } catch (err) {
       setAlert({
         message: "Wystąpił błąd podczas zmiany hasła.",
         variant: "danger",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -70,11 +75,18 @@ const ChangePasswordForm = () => {
                 onChange={(e) => setNewPassword(e.target.value)}
                 aria-describedby="passwordHelp"
                 required
+                disabled={isLoading}
               />
             </div>
-            <button type="submit" className="btn btn-dark mx-auto d-block">
+            <ButtonSpinner
+              type="submit"
+              variant="dark"
+              className="mx-auto d-block"
+              loading={isLoading}
+              loadingText="Zapisywanie..."
+            >
               Zmień hasło
-            </button>
+            </ButtonSpinner>
           </form>
         </div>
       </div>

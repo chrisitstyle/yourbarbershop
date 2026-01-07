@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Alert } from "react-bootstrap";
 import { userForgotPasswordRequest } from "../api/userService";
+import ButtonSpinner from "../components/common/ButtonSpinner";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [alert, setAlert] = useState({ message: "", variant: "" });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       await userForgotPasswordRequest(email);
       setAlert({
@@ -20,6 +23,8 @@ const ForgotPassword = () => {
         message: "Wystąpił błąd podczas wysyłania żądania.",
         variant: "danger",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -55,11 +60,18 @@ const ForgotPassword = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 aria-describedby="emailHelp"
                 required
+                disabled={isLoading}
               />
             </div>
-            <button type="submit" className="btn btn-dark mx-auto d-block">
+            <ButtonSpinner
+              type="submit"
+              variant="dark"
+              className="mx-auto d-block"
+              loading={isLoading}
+              loadingText="Wysyłanie..."
+            >
               Wyślij
-            </button>
+            </ButtonSpinner>
           </form>
         </div>
       </div>
