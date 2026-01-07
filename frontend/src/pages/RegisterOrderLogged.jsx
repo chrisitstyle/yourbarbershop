@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { getCurrentDateTime, formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
 import { getOffers } from "../api/offerService";
+import ButtonSpinner from "../components/common/ButtonSpinner";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import { fi } from "date-fns/locale";
 
 const RegisterOrderLogged = () => {
   const { user } = useAuth();
@@ -14,6 +17,8 @@ const RegisterOrderLogged = () => {
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingOffers, setIsLoadingOffers] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,6 +28,8 @@ const RegisterOrderLogged = () => {
         setOffers(offersData);
       } catch (error) {
         console.error("Błąd ładowania ofert:", error);
+      } finally {
+        setIsLoadingOffers(false);
       }
     };
 
@@ -47,7 +54,7 @@ const RegisterOrderLogged = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/orders/add",
+        "http://localhost:8080/orders",
         {
           user: {
             idUser: user.id,
@@ -73,8 +80,14 @@ const RegisterOrderLogged = () => {
       navigate(`/profile/${user.id}?registrationOrderSuccess=true"`);
     } catch (error) {
       setShowErrorAlert(true);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  if (isLoadingOffers) {
+    return <LoadingSpinner text="Ładowanie ofert..." />;
+  }
 
   return (
     <>
@@ -157,9 +170,15 @@ const RegisterOrderLogged = () => {
                   </select>
                 </div>
               </div>
-              <button type="submit" className="btn btn-dark mx-auto d-block">
-                Umów wizytę!
-              </button>
+              <ButtonSpinner
+                type="submit"
+                variant="dark"
+                className="mx-auto d-block"
+                loading={isLoading}
+                loadingText="Rezerwacja..."
+              >
+                Umów wizytę
+              </ButtonSpinner>
             </form>
           </div>
         </div>
