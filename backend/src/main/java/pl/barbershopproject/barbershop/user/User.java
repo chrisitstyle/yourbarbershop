@@ -16,7 +16,7 @@ import java.util.List;
 @Table(name = "user")
 @Entity
 @NoArgsConstructor
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
