@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-
 import { updateOrder } from "../api/orderService";
 import { getOffers } from "../api/offerService";
 import { format } from "date-fns-tz";
 import { formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
+import ButtonSpinner from "../components/common/ButtonSpinner";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const EditOrder = () => {
   const { user } = useAuth();
@@ -21,22 +22,32 @@ const EditOrder = () => {
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [editOrderError, setEditOrderError] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingOffers, setIsLoadingOffers] = useState(true);
 
   useEffect(() => {
     const fetchOffers = async () => {
+      if (!orderData) {
+        setIsLoadingOffers(false);
+        return;
+      }
+
       try {
         const offersData = await getOffers();
         setOffers(offersData);
-        setSelectedOffer(orderData?.offer?.idOffer || "");
-        setSelectedDate(format(new Date(orderData?.visitDate), "yyyy-MM-dd"));
+        setSelectedOffer(orderData.offer?.idOffer || "");
+        setSelectedDate(format(new Date(orderData.visitDate), "yyyy-MM-dd"));
 
         // Set time from orderData
-        const hours = new Date(orderData?.visitDate).getHours();
-        const minutes = new Date(orderData?.visitDate).getMinutes();
+        const hours = new Date(orderData.visitDate).getHours();
+        const minutes = new Date(orderData.visitDate).getMinutes();
         setSelectedHour(hours);
         setSelectedMinute(minutes);
+        setSelectedStatus(orderData.status);
       } catch (error) {
         console.error("Błąd ładowania ofert:", error);
+      } finally {
+        setIsLoadingOffers(false);
       }
     };
 
@@ -53,9 +64,9 @@ const EditOrder = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
-      const statusToSend = selectedStatus ? selectedStatus : orderData.status;
       await updateOrder(
         orderData.idOrder,
         {
@@ -67,7 +78,7 @@ const EditOrder = () => {
             selectedHour,
             selectedMinute
           ),
-          status: statusToSend,
+          status: selectedStatus,
         },
         user.token
       );
@@ -75,8 +86,24 @@ const EditOrder = () => {
       navigate("/adminpanel");
     } catch (error) {
       setEditOrderError(true);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // Sprawdź najpierw czy mamy orderData
+  if (!orderData) {
+    return (
+      <div className="container mt-5 text-center">
+        <Alert variant="warning">Nie znaleziono danych wizyty. </Alert>
+      </div>
+    );
+  }
+
+  // Potem sprawdź czy ładujemy oferty
+  if (isLoadingOffers) {
+    return <LoadingSpinner text="Ładowanie danych wizyty..." />;
+  }
 
   return (
     <>
@@ -105,10 +132,10 @@ const EditOrder = () => {
                   value={selectedOffer}
                   onChange={(e) => setSelectedOffer(e.target.value)}
                   required
+                  disabled={isLoading}
                 >
-                  <option value={orderData.offer?.idOffer || "brak"}>
-                    {orderData.offer?.kind || "brak"} -{" "}
-                    {orderData.offer?.cost || "brak"} zł
+                  <option value="" disabled>
+                    Wybierz usługę
                   </option>
                   {offers.map((offer) => (
                     <option key={offer.idOffer} value={offer.idOffer}>
@@ -127,8 +154,8 @@ const EditOrder = () => {
                   id="selectdate"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  //  min={new Date().toISOString().split("T")[0]}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="mb-3">
@@ -142,6 +169,7 @@ const EditOrder = () => {
                     value={selectedHour}
                     onChange={handleHourChange}
                     required
+                    disabled={isLoading}
                   >
                     {[...Array(12).keys()].map((hour) => (
                       <option key={hour} value={hour + 8}>
@@ -155,6 +183,7 @@ const EditOrder = () => {
                     value={selectedMinute}
                     onChange={handleMinuteChange}
                     required
+                    disabled={isLoading}
                   >
                     {[...Array(2).keys()].map((half) => (
                       <option key={half * 30} value={half * 30}>
@@ -174,25 +203,25 @@ const EditOrder = () => {
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   required
+                  disabled={isLoading}
                 >
-                  {/* actual status as first option */}
-                  <option value={orderData.status}>{orderData.status}</option>
-                  {/* Map other status */}
-                  {["NOWE", "ZREALIZOWANE", "ANULOWANE"].map(
-                    (status) =>
-                      // skip actual status
-                      status !== orderData.status && (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      )
-                  )}
+                  {["NOWE", "ZREALIZOWANE", "ANULOWANE"].map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              <button type="submit" className="btn btn-dark mx-auto d-block">
+              <ButtonSpinner
+                type="submit"
+                variant="dark"
+                className="mx-auto d-block"
+                loading={isLoading}
+                loadingText="Zapisywanie..."
+              >
                 Zapisz zmiany
-              </button>
+              </ButtonSpinner>
             </form>
           </div>
         </div>
