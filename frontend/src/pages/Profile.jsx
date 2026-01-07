@@ -38,15 +38,12 @@ const Profile = () => {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const result = await axios.get(
-          `http://localhost:8080/users/get/${id}`,
-          {
-            withCredentials: true,
-            headers: {
-              Authorization: `Bearer ${user?.token}`,
-            },
-          }
-        );
+        const result = await axios.get(`http://localhost:8080/users/${id}`, {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        });
         setUserDetails(result.data);
       } catch (error) {
         console.error("Błąd ładowania użytkownika", error);
