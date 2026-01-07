@@ -51,7 +51,7 @@ public class SecurityWebConfig {
                                 .requestMatchers(HttpMethod.PUT,"/guestorders/{idGuestOrder}").hasAuthority(Role.ADMIN.toString())
                                 .requestMatchers(HttpMethod.DELETE,"/guestorders/{idGuestOrder}").hasAuthority(Role.ADMIN.toString())
                                 // Email endpoints
-                                .requestMatchers("/send-email").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers("/send-email").permitAll()
 
                                 .anyRequest().authenticated()
                 )
