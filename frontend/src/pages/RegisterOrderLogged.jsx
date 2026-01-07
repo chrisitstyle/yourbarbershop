@@ -1,40 +1,24 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getCurrentDateTime, formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
-import { getOffers } from "../api/offerService";
+import useOffers from "../hooks/useOffers";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { fi } from "date-fns/locale";
 
 const RegisterOrderLogged = () => {
   const { user } = useAuth();
-  const [offers, setOffers] = useState([]);
   const [selectedOffer, setSelectedOffer] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingOffers, setIsLoadingOffers] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchOffers = async () => {
-      try {
-        const offersData = await getOffers();
-        setOffers(offersData);
-      } catch (error) {
-        console.error("Błąd ładowania ofert:", error);
-      } finally {
-        setIsLoadingOffers(false);
-      }
-    };
-
-    fetchOffers();
-  }, []);
+  const { offers, isLoading: isLoadingOffers, error } = useOffers();
 
   const handleOfferChange = (e) => {
     const selectedOfferId = e.target.value;
@@ -51,6 +35,7 @@ const RegisterOrderLogged = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
       const response = await axios.post(
