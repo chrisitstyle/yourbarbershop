@@ -11,6 +11,9 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  const isAdmin = user?.role === "ADMIN";
+  const isUser = user?.role === "USER";
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container-fluid">
@@ -28,42 +31,32 @@ const Navbar = () => {
         >
           <span className="navbar-toggler-icon"></span>
         </button>
+
         <div className="collapse navbar-collapse" id="navbarNavDropdown">
           <ul className="navbar-nav custom-navbar-ul">
             <li className="nav-item">
-              <Link
-                className="nav-link active custom-nav-link"
-                aria-current="page"
-                to="/gallery"
-              >
+              <Link className="nav-link active custom-nav-link" to="/gallery">
                 Galeria
               </Link>
             </li>
             <li className="nav-item">
-              <Link
-                className="nav-link active custom-nav-link"
-                aria-current="page"
-                to="/offer"
-              >
+              <Link className="nav-link active custom-nav-link" to="/offer">
                 Nasza Oferta
               </Link>
             </li>
             <li className="nav-item">
-              <Link
-                className="nav-link active custom-nav-link"
-                aria-current="page"
-                to="/contact"
-              >
+              <Link className="nav-link active custom-nav-link" to="/contact">
                 Kontakt
               </Link>
             </li>
-            {(user?.role === "USER" || !isLoggedIn) && (
+
+            {/* Umów wizytę – visible only for USER and unauthenticated users */}
+            {!isAdmin && (
               <li className="nav-item">
                 <Link
                   className="nav-link active custom-nav-link"
-                  aria-current="page"
                   to={
-                    isLoggedIn
+                    isUser
                       ? "/registerorderlogged"
                       : "/registerorderwithoutaccount"
                   }
@@ -72,26 +65,20 @@ const Navbar = () => {
                 </Link>
               </li>
             )}
+
             <li className="nav-item dropdown">
               <a
                 className="nav-link dropdown-toggle custom-nav-link"
                 role="button"
                 data-bs-toggle="dropdown"
+                tabIndex={0}
               >
                 Konto
               </a>
               <ul className="dropdown-menu">
                 {isLoggedIn ? (
                   <>
-                    <li>
-                      <button
-                        className="dropdown-item custom-nav-link"
-                        onClick={handleLogout}
-                      >
-                        Wyloguj się
-                      </button>
-                    </li>
-                    {user?.role === "ADMIN" ? (
+                    {isAdmin && (
                       <li>
                         <Link
                           className="dropdown-item custom-nav-link"
@@ -100,7 +87,8 @@ const Navbar = () => {
                           Panel administratora
                         </Link>
                       </li>
-                    ) : (
+                    )}
+                    {isUser && (
                       <li>
                         <Link
                           className="dropdown-item custom-nav-link"
@@ -110,6 +98,14 @@ const Navbar = () => {
                         </Link>
                       </li>
                     )}
+                    <li>
+                      <button
+                        className="dropdown-item custom-nav-link"
+                        onClick={handleLogout}
+                      >
+                        Wyloguj się
+                      </button>
+                    </li>
                   </>
                 ) : (
                   <>
