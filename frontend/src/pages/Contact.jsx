@@ -78,12 +78,13 @@ const Contact = () => {
           <div className="map-responsive rounded-4 overflow-hidden shadow-sm">
             <iframe
               title="Mapa"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2420.123853947458!2d18.13079468350402!3d53.14336747259944!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47bf7b48502b929f%3A0x1d8b9df1a26ee9ea!2sPolitechnika%20Bydgoska%20im.%20J%C3%B3zefa%20%C5%9Aniadeckiego!5e0!3m2!1sen!2sus!4v1672368772172!5m2!1sen!2sus"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2393.1580454650143!2d18.128182213203868!3d53.143258072115295!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470313b103a9ea1d%3A0x2a29c87a5d2749d5!2sPolitechnika%20Bydgoska%20im.%20Jana%20i%20J%C4%99drzeja%20%C5%9Aniadeckich!5e0!3m2!1spl!2spl!4v1767884619059!5m2!1spl!2spl"
               width="100%"
               height="300"
               style={{ border: 0 }}
               allowFullScreen=""
               loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
             ></iframe>
           </div>
         </div>
