@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-
+import { API_BASE_URL } from "../api/config";
 const useUserDetails = (userId, userToken) => {
   const [userDetails, setUserDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -11,7 +11,7 @@ const useUserDetails = (userId, userToken) => {
     setIsLoading(true);
     setError(null);
     axios
-      .get(`http://localhost:8080/users/${userId}`, {
+      .get(`${API_BASE_URL}/users/${userId}`, {
         withCredentials: true,
         headers: { Authorization: `Bearer ${userToken}` },
       })

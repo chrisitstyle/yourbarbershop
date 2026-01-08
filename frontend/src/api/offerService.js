@@ -1,10 +1,9 @@
 import axios from "axios";
-
-const apiUrl = "http://localhost:8080";
+import { API_BASE_URL } from "./config.js";
 
 export const addOffer = async (newOffer, userToken) => {
   try {
-    await axios.post(`${apiUrl}/offers`, newOffer, {
+    await axios.post(`${API_BASE_URL}/offers`, newOffer, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,
@@ -18,7 +17,7 @@ export const addOffer = async (newOffer, userToken) => {
 
 export const getOffers = async () => {
   try {
-    const result = await axios.get(`${apiUrl}/offers`);
+    const result = await axios.get(`${API_BASE_URL}/offers`);
     return result.data;
   } catch (error) {
     console.error("Error loading offers:", error);
@@ -29,7 +28,7 @@ export const getOffers = async () => {
 export const updateOffer = async (offerId, newData, token) => {
   try {
     const response = await axios.put(
-      `http://localhost:8080/offers/${offerId}`,
+      `${API_BASE_URL}/offers/${offerId}`,
       newData,
       {
         withCredentials: true,
@@ -46,7 +45,7 @@ export const updateOffer = async (offerId, newData, token) => {
 };
 export const deleteOffer = async (idOffer, userToken) => {
   try {
-    await axios.delete(`${apiUrl}/offers/${idOffer}`, {
+    await axios.delete(`${API_BASE_URL}/offers/${idOffer}`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,

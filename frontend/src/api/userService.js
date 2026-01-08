@@ -1,10 +1,9 @@
 import axios from "axios";
-
-const apiUrl = "http://localhost:8080";
+import { API_BASE_URL } from "./config.js";
 
 export const addUser = async (newUser) => {
   try {
-    await axios.post(`${apiUrl}/register`, newUser);
+    await axios.post(`${API_BASE_URL}/register`, newUser);
   } catch (error) {
     console.error("Error adding user:", error);
     throw error;
@@ -13,7 +12,7 @@ export const addUser = async (newUser) => {
 
 export const getUsers = async (userToken) => {
   try {
-    const result = await axios.get(`${apiUrl}/users`, {
+    const result = await axios.get(`${API_BASE_URL}/users`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,
@@ -29,7 +28,7 @@ export const getUsers = async (userToken) => {
 export const updateUser = async (userId, newData, token) => {
   try {
     const response = await axios.put(
-      `http://localhost:8080/users/${userId}`,
+      `${API_BASE_URL}/users/${userId}`,
       newData,
       {
         withCredentials: true,
@@ -47,7 +46,7 @@ export const updateUser = async (userId, newData, token) => {
 
 export const deleteUser = async (idUser, userToken) => {
   try {
-    await axios.delete(`${apiUrl}/users/${idUser}`, {
+    await axios.delete(`${API_BASE_URL}/users/${idUser}`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,
@@ -61,7 +60,9 @@ export const deleteUser = async (idUser, userToken) => {
 
 export const userForgotPasswordRequest = async (email) => {
   try {
-    const response = await axios.post(`${apiUrl}/forgot-password`, { email });
+    const response = await axios.post(`${API_BASE_URL}/forgot-password`, {
+      email,
+    });
     return response.data;
   } catch (error) {
     console.error("Error sending forgot password request:", error);
@@ -71,7 +72,7 @@ export const userForgotPasswordRequest = async (email) => {
 
 export const userResetPasswordRequest = async (token, newPassword) => {
   try {
-    const response = await axios.post(`${apiUrl}/reset-password`, {
+    const response = await axios.post(`${API_BASE_URL}/reset-password`, {
       token,
       newPassword,
     });

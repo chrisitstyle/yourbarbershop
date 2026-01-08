@@ -1,10 +1,9 @@
 import axios from "axios";
-
-const apiUrl = "http://localhost:8080";
+import { API_BASE_URL } from "./config.js";
 
 export const getOrders = async (userToken) => {
   try {
-    const result = await axios.get(`${apiUrl}/orders`, {
+    const result = await axios.get(`${API_BASE_URL}/orders`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,
@@ -20,7 +19,7 @@ export const getOrders = async (userToken) => {
 export const updateOrder = async (orderId, newData, token) => {
   try {
     const response = await axios.put(
-      `http://localhost:8080/orders/${orderId}`,
+      `${API_BASE_URL}/orders/${orderId}`,
       newData,
       {
         withCredentials: true,
@@ -38,7 +37,7 @@ export const updateOrder = async (orderId, newData, token) => {
 
 export const deleteOrder = async (idOrder, userToken) => {
   try {
-    await axios.delete(`${apiUrl}/orders/${idOrder}`, {
+    await axios.delete(`${API_BASE_URL}/orders/${idOrder}`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,

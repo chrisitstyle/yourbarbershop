@@ -1,6 +1,6 @@
 import axios from "axios";
 import { formatSelectedDateTime } from "../api/dataParser";
-
+import { API_BASE_URL } from "../api/config.js";
 export const sendConfirmationEmail = async (
   email,
   firstname,
@@ -12,7 +12,7 @@ export const sendConfirmationEmail = async (
   selectedOfferCost
 ) => {
   try {
-    await axios.post("http://localhost:8080/send-email", {
+    await axios.post(`${API_BASE_URL}/send-email`, {
       to: email,
       subject: "Potwierdzenie umówienia wizyty w YourBarbershop",
       message: `Szanowny(a) ${firstname} ${lastname},\n\nDziękujemy za umówienie wizyty w naszym salonie YourBarbershop.\n\nData wizyty: ${formatSelectedDateTime(
@@ -31,7 +31,7 @@ export const sendConfirmationEmail = async (
 
 export const sendCustomEmail = async (to, subject, message) => {
   try {
-    await axios.post("http://localhost:8080/send-email", {
+    await axios.post(`${API_BASE_URL}/send-email`, {
       to,
       subject,
       message,

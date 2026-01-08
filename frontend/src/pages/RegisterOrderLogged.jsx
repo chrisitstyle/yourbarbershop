@@ -7,6 +7,7 @@ import { Alert } from "react-bootstrap";
 import useOffers from "../hooks/useOffers";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import { API_BASE_URL } from "../api/config";
 
 const RegisterOrderLogged = () => {
   const { user } = useAuth();
@@ -39,7 +40,7 @@ const RegisterOrderLogged = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/orders",
+        `${API_BASE_URL}/orders`,
         {
           user: {
             idUser: user.id,

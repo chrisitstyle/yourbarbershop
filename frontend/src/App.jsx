@@ -43,7 +43,7 @@ function App() {
               ></Route>
               <Route path="/register" element={<Register />}></Route>
               <Route path="/gallery" element={<Gallery />}></Route>
-              <Route path="/offer" element={<Offer />}></Route>
+              <Route path="/offers" element={<Offer />}></Route>
               <Route path="/contact" element={<Contact />}></Route>
 
               <Route element={<AdminRoute />}>

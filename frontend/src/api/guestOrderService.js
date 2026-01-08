@@ -1,10 +1,9 @@
 import axios from "axios";
-
-const apiUrl = "http://localhost:8080";
+import { API_BASE_URL } from "./config.js";
 
 export const getGuestOrders = async (userToken) => {
   try {
-    const result = await axios.get(`${apiUrl}/guestorders`, {
+    const result = await axios.get(`${API_BASE_URL}/guestorders`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,
@@ -20,7 +19,7 @@ export const getGuestOrders = async (userToken) => {
 export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
   try {
     const response = await axios.put(
-      `${apiUrl}/guestorders/${idGuestOrder}`,
+      `${API_BASE_URL}/guestorders/${idGuestOrder}`,
       data,
       {
         withCredentials: true,
@@ -39,7 +38,7 @@ export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
 
 export const deleteGuestOrder = async (idGuestOrder, userToken) => {
   try {
-    await axios.delete(`${apiUrl}/guestorders/${idGuestOrder}`, {
+    await axios.delete(`${API_BASE_URL}/guestorders/${idGuestOrder}`, {
       withCredentials: true,
       headers: {
         Authorization: `Bearer ${userToken}`,
