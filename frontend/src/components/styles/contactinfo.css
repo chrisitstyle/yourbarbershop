@@ -1,0 +1,103 @@
+.contactinfo-container {
+  background: #fff;
+  color: #181818;
+  border-radius: 24px;
+  padding: 1.5rem 1.3rem 1.2rem 1.3rem;
+  margin-bottom: 1.2rem;
+  box-shadow: none;
+}
+
+.contactinfo-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.contactinfo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.contactinfo-icon {
+  font-size: 1.6rem;
+  color: #242424;
+  background: #f4f4f4;
+  border-radius: 50%;
+  padding: 12px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  box-shadow: 0 0.5px 2px 0 rgba(0, 0, 0, 0.02);
+}
+
+.contactinfo-label {
+  font-weight: 600;
+  color: #181818;
+  margin-bottom: 1px;
+  letter-spacing: 0.1px;
+  font-size: 1rem;
+}
+
+.contactinfo-value {
+  color: #232323;
+  font-size: 1rem;
+  text-decoration: none;
+  line-height: 1.3;
+}
+
+.contactinfo-value:hover {
+  color: #47d97d;
+  text-decoration: underline;
+}
+
+.contactinfo-hours {
+  margin-top: 2rem;
+}
+
+.contactinfo-hours-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+
+.contactinfo-badge {
+  display: inline-block;
+  background: #1ec759;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.97rem;
+  border-radius: 16px;
+  padding: 3px 14px;
+  margin-left: 0.8rem;
+}
+
+.contactinfo-hours-table div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin-bottom: 4px;
+  font-size: 0.98rem;
+  color: #232323;
+}
+
+.contactinfo-hours-time {
+  font-weight: 500;
+}
+
+.contactinfo-hours-time.closed {
+  color: #eb5454;
+  font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .contactinfo-container {
+    padding: 1.2rem 0.5rem;
+    font-size: 0.99rem;
+    border-radius: 11px;
+  }
+  .contactinfo-icon {
+    font-size: 1.15rem;
+    padding: 8px;
+  }
+}

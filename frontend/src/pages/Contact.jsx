@@ -1,4 +1,4 @@
-import React from "react";
+import ContactInfo from "../components/ContactInfo";
 import {
   faFacebook,
   faXTwitter,
@@ -15,40 +15,9 @@ const Contact = () => {
       <div className="row gy-4 align-items-center">
         {/* left column */}
         <div className="col-md-6">
-          <h2 className="mb-2 contact-title">Skontaktuj się z nami</h2>
-          <address className="mb-3">
-            <p>
-              <strong>YourBarbershop</strong>
-              <br />
-              ul. Testowa 123 <br />
-              85-796 Bydgoszcz
-            </p>
-            <p>
-              <strong>Telefon:</strong>{" "}
-              <a href="tel:+48123123123">+48 123-123-123</a>
-            </p>
-            <p>
-              <strong>Email:</strong>{" "}
-              <a href="mailto:kontakt@yourbarbershop.com">
-                kontakt@yourbarbershop.com
-              </a>
-            </p>
-          </address>
-          <div className="mb-3">
-            <h4>Godziny otwarcia</h4>
-            <ul className="hours-list">
-              <li>
-                <span>Poniedziałek - Piątek:</span> 8:00 - 19:30
-              </li>
-              <li>
-                <span>Sobota:</span> 10:00 - 14:00
-              </li>
-              <li>
-                <span>Niedziela:</span>{" "}
-                <span className="text-danger">Zamknięte</span>
-              </li>
-            </ul>
-          </div>
+          <ContactInfo />
+
+          {/* SOCIAL MEDIA*/}
           <div>
             <div className="mb-1 fw-medium">
               Jesteśmy dostępni również w mediach społecznościowych:
