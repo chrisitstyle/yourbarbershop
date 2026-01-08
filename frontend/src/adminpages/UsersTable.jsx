@@ -89,7 +89,10 @@ const UsersTable = ({ onDeleteUser }) => {
               type="text"
               placeholder="Szukaj użytkownika..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               className="form-control"
               style={{ width: "200px" }}
             />

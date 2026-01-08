@@ -63,7 +63,10 @@ const OrdersTable = ({ onDeleteOrder }) => {
               type="text"
               placeholder="Szukaj wizyty..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               className="form-control"
               style={{ width: "200px" }}
             />
