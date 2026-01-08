@@ -10,17 +10,36 @@ import {
 import useOffers from "../hooks/useOffers";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { Alert } from "react-bootstrap";
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 
 const OffersTable = ({ onDeleteOffer }) => {
-  const { offers, isLoading, error } = useOffers();
+  const { offers, isLoading, error, refetch } = useOffers();
 
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const offersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
+  // delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [offerToDelete, setOfferToDelete] = useState(null);
+
   const handlePageClick = (page) => {
     setCurrentPage(page);
+  };
+
+  const handleAskDeleteOffer = (offer) => {
+    setOfferToDelete(offer);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteOffer = async () => {
+    if (offerToDelete) {
+      await onDeleteOffer(offerToDelete.idOffer);
+      await refetch();
+    }
+    setShowDeleteModal(false);
+    setOfferToDelete(null);
   };
 
   // filtering and slicing offers according to current page and search term
@@ -110,7 +129,7 @@ const OffersTable = ({ onDeleteOffer }) => {
                         className="btn btn-danger btn-sm"
                         style={{ minWidth: "40px" }}
                         title="Usuń usługę"
-                        onClick={() => onDeleteOffer(offer.idOffer)}
+                        onClick={() => handleAskDeleteOffer(offer)}
                       >
                         <FontAwesomeIcon icon={faTrashAlt} />
                       </button>
@@ -183,6 +202,13 @@ const OffersTable = ({ onDeleteOffer }) => {
           </nav>
         )}
       </div>
+      <ConfirmDeleteModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteOffer}
+        itemName={offerToDelete?.kind}
+        label="usługę"
+      />
     </div>
   );
 };
