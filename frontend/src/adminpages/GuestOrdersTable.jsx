@@ -2,7 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "../api/dataParser";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+  faPen,
+  faTrashAlt,
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../AuthContext";
 import useGuestOrders from "../hooks/useGuestOrders";
 import { Alert } from "react-bootstrap";
@@ -17,24 +22,25 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
   const navigate = useNavigate();
   const guestOrdersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
-  const indexOfLastOrder = currentPage * guestOrdersPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - guestOrdersPerPage;
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
 
-  const currentData = guestOrders
-    .filter((order) =>
-      ` ${order.idGuestOrder} ${order.firstname}  ${order.lastname} ${
-        order.email
-      } ${order.offer?.kind || ""} ${order.offer?.cost || ""} ${
-        order.phonenumber || ""
-      } ${order.orderDate} ${order.visitDate} ${order.status}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    )
-    .slice(indexOfFirstOrder, indexOfLastOrder);
+  // filter guest orders based on search input
+  const filteredOrders = guestOrders.filter((order) =>
+    ` ${order.idGuestOrder} ${order.firstname} ${order.lastname} ${
+      order.email
+    } ${order.offer?.kind || ""} ${order.offer?.cost || ""} ${
+      order.phonenumber || ""
+    } ${order.orderDate} ${order.visitDate} ${order.status}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
 
-  const totalPages = Math.ceil(guestOrders.length / guestOrdersPerPage);
+  const indexOfLastOrder = currentPage * guestOrdersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - guestOrdersPerPage;
+  const currentData = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+
+  const totalPages = Math.ceil(filteredOrders.length / guestOrdersPerPage);
 
   const handleEditClick = (guestOrder) => {
     navigate(`/adminpanel/editguestorder/${guestOrder.idGuestOrder}`, {
@@ -52,6 +58,7 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
       await onDeleteGuestOrder(idGuestOrder);
       await refetch();
     } catch (err) {
+      console.error(err);
     } finally {
       setDeleteLoadingId(null);
     }
@@ -61,75 +68,94 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
-    <div className="container text-center">
-      <div className="py-4">
-        <div>
-          <h2>Wizyty gości</h2>
-          <div className="mb-3 mt-4">
-            <input
-              type="text"
-              placeholder="Szukaj wizyty..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="form-control"
-              style={{ width: "200px" }}
-            />
-          </div>
-          <table className="table border shadow table-hover">
-            <thead>
-              <tr>
-                <th scope="col">Identyfikator zamówienia</th>
-                <th scope="col">Imię</th>
-                <th scope="col">Nazwisko</th>
-                <th scope="col">Numer telefonu</th>
-                <th scope="col">Usługa</th>
-                <th scope="col">Koszt</th>
-                <th scope="col">Data zamówienia</th>
-                <th scope="col">Data wizyty</th>
-                <th scope="col">Status</th>
-                <th scope="col">Akcja</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentData.map((guestOrder) => (
+    <div className="container my-5 py-4 text-center">
+      <h2 className="mb-4">Wizyty gości</h2>
+      {/* search field */}
+      <div className="mb-3">
+        <input
+          type="text"
+          placeholder="Szukaj wizyty..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="form-control mx-auto"
+          style={{ width: "300px", fontSize: "1rem" }}
+        />
+      </div>
+      <div className="table-responsive">
+        <table
+          className="table table-bordered table-hover shadow rounded mx-auto"
+          style={{ maxWidth: "1100px" }}
+        >
+          <thead className="table-dark">
+            <tr>
+              <th className="text-center align-middle">
+                Identyfikator zamówienia
+              </th>
+              <th className="text-center align-middle">Imię</th>
+              <th className="text-center align-middle">Nazwisko</th>
+              <th className="text-center align-middle">Numer telefonu</th>
+              <th className="text-center align-middle">Usługa</th>
+              <th className="text-center align-middle">Koszt</th>
+              <th className="text-center align-middle">Data zamówienia</th>
+              <th className="text-center align-middle">Data wizyty</th>
+              <th className="text-center align-middle">Status</th>
+              <th className="text-center align-middle">Akcja</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentData.length > 0 ? (
+              currentData.map((guestOrder) => (
                 <tr key={guestOrder.idGuestOrder}>
-                  <td>{guestOrder.idGuestOrder}</td>
-                  <td>{guestOrder.firstname}</td>
-                  <td>{guestOrder.lastname}</td>
-                  <td>{guestOrder.phonenumber || "brak"}</td>
-                  <td>{guestOrder.offer ? guestOrder.offer.kind : "brak"}</td>
-                  <td>
+                  <td className="align-middle text-center">
+                    {guestOrder.idGuestOrder}
+                  </td>
+                  <td className="align-middle text-center">
+                    {guestOrder.firstname || "brak"}
+                  </td>
+                  <td className="align-middle text-center">
+                    {guestOrder.lastname || "brak"}
+                  </td>
+                  <td className="align-middle text-center">
+                    {guestOrder.phonenumber || "brak"}
+                  </td>
+                  <td className="align-middle text-center">
+                    {guestOrder.offer ? guestOrder.offer.kind : "brak"}
+                  </td>
+                  <td className="align-middle text-center">
                     {guestOrder.offer ? guestOrder.offer.cost + " zł" : "brak"}
                   </td>
-                  <td>
+                  <td className="align-middle text-center">
                     {guestOrder.orderDate
                       ? formatDate(guestOrder.orderDate)
                       : "brak"}
                   </td>
-                  <td>
+                  <td className="align-middle text-center">
                     {guestOrder.visitDate
                       ? formatDate(guestOrder.visitDate)
                       : "brak"}
                   </td>
-                  <td>{guestOrder.status}</td>
-                  <td>
-                    <div className="d-flex">
+                  <td className="align-middle text-center">
+                    {guestOrder.status}
+                  </td>
+                  <td className="align-middle text-center">
+                    <div className="d-flex justify-content-center">
+                      {/* edit button with tooltip */}
                       <button
-                        className="btn btn-warning"
-                        style={{ marginRight: "6px" }}
+                        className="btn btn-warning btn-sm me-2"
+                        style={{ minWidth: "40px" }}
+                        title="Edit guest visit"
                         onClick={() => handleEditClick(guestOrder)}
                       >
-                        <FontAwesomeIcon
-                          icon={faPen}
-                          style={{ color: "black" }}
-                        />
+                        <FontAwesomeIcon icon={faPen} />
                       </button>
+                      {/* delete button with tooltip and loader text */}
                       <button
-                        className="btn btn-danger"
-                        style={{ marginRight: "-3px" }}
+                        className="btn btn-danger btn-sm"
+                        style={{ minWidth: "40px" }}
+                        title="Delete guest visit"
                         onClick={() =>
                           handleDeleteGuestOrder(guestOrder.idGuestOrder)
                         }
@@ -144,32 +170,71 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {totalPages > 1 && (
-            <nav className="pagination justify-content-center">
-              <ul className="pagination">
-                {[...Array(totalPages)].map((_, index) => (
-                  <li
-                    key={index + 1}
-                    className={`page-item ${
-                      index + 1 === currentPage ? "active" : ""
-                    }`}
-                  >
-                    <button
-                      className="page-link"
-                      onClick={() => handlePageClick(index + 1)}
-                    >
-                      {index + 1}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
-        </div>
+              ))
+            ) : (
+              // if there is no data to display
+              <tr>
+                <td colSpan="10" className="text-center py-4">
+                  <Alert variant="info" className="mb-0">
+                    Brak wyników do wyświetlenia.
+                  </Alert>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
+      {totalPages > 1 && (
+        <nav className="pagination justify-content-center mt-4">
+          <ul className="pagination">
+            {/* previous button */}
+            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+              <button
+                className="page-link"
+                onClick={() => handlePageClick(currentPage - 1)}
+                disabled={currentPage === 1}
+                aria-label="Poprzednia"
+                style={{ minWidth: "38px" }}
+              >
+                <FontAwesomeIcon icon={faChevronLeft} />
+              </button>
+            </li>
+            {/* page numbers */}
+            {[...Array(totalPages)].map((_, index) => (
+              <li
+                key={index + 1}
+                className={`page-item ${
+                  index + 1 === currentPage ? "active" : ""
+                }`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => handlePageClick(index + 1)}
+                  style={{ minWidth: "38px" }}
+                >
+                  {index + 1}
+                </button>
+              </li>
+            ))}
+            {/* next button */}
+            <li
+              className={`page-item ${
+                currentPage === totalPages ? "disabled" : ""
+              }`}
+            >
+              <button
+                className="page-link"
+                onClick={() => handlePageClick(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                aria-label="Następna"
+                style={{ minWidth: "38px" }}
+              >
+                <FontAwesomeIcon icon={faChevronRight} />
+              </button>
+            </li>
+          </ul>
+        </nav>
+      )}
     </div>
   );
 };

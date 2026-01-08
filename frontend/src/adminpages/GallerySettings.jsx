@@ -12,6 +12,7 @@ const GallerySettings = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const supabase = useSupabaseClient();
 
+  // messages for different scenarios
   const [deleteImageErrorMsg, setDeleteImageErrorMsg] = useState(null);
   const [uploadImageSuccessfulMsg, setUploadImageSuccessfulMsg] =
     useState(null);
@@ -28,6 +29,7 @@ const GallerySettings = () => {
     setShowModal(false);
   };
 
+  // fetch the image list from Supabase storage (filtered by file type)
   async function getImages() {
     try {
       const { data, error } = await supabase.storage
@@ -37,12 +39,12 @@ const GallerySettings = () => {
           offset: 0,
           sortBy: { column: "created_at", order: "desc" },
         });
-
       if (data !== null) {
+        // filter out unwanted files (non-images and placeholder files)
         const filteredImages = data.filter((image) => {
           const lowercasedName = image.name.toLowerCase();
           return (
-            !lowercasedName.includes(".emptyFolderPlaceholder") &&
+            !lowercasedName.includes(".emptyfolderplaceholder") &&
             (lowercasedName.endsWith(".png") ||
               lowercasedName.endsWith(".jpeg") ||
               lowercasedName.endsWith(".jpg"))
@@ -50,7 +52,6 @@ const GallerySettings = () => {
         });
         setImages(filteredImages);
       } else {
-        // alert("Error loading images");
         console.error("Data is null, error:", error);
       }
     } catch (error) {
@@ -58,56 +59,48 @@ const GallerySettings = () => {
     }
   }
 
+  // upload images sequentially, handle UI feedback and reset file input
   const handleUploadImage = async (e) => {
     e.preventDefault();
-
     const inputElement = document.getElementById("formFile");
     const files = inputElement.files;
 
     if (!files || files.length === 0) {
       setUploadImageErrorMsg("Nie wybrano pliku");
-
       return;
     }
 
-    let uploadSuccessful = true; // flaga dla pliku
+    let uploadSuccessful = true;
 
     try {
-      // Iteracja przez wszystkie pliki i przesyłanie pojedynczo
+      // upload each file, show status message
       for (const file of files) {
-        setUploadingImageMsg(`Przesyłanie pliku ${file.name} `);
-        console.log(`Przesyłanie pliku: ${file.name}`);
+        setUploadingImageMsg(`Przesyłanie pliku ${file.name}...`);
         const { data, error } = await supabase.storage
           .from("barbershopimages")
-          .upload("images" + "/" + encodeURIComponent(file.name), file);
+          .upload("images/" + encodeURIComponent(file.name), file);
 
         if (!data) {
-          uploadSuccessful = false; // ustawienie flagi w przypadku bledu
-          setUploadImageErrorMsg(
-            `Wystąpił błąd podczas przesyłania pliku ${file.name}`
-          );
+          uploadSuccessful = false;
+          setUploadImageErrorMsg(`Błąd podczas przesyłania pliku ${file.name}`);
           break;
         }
       }
-
       if (uploadSuccessful) {
-        setUploadImageSuccessfulMsg("Przesyłanie plików powiodło się");
-
-        // resetowanie pola wyboru pliku
+        setUploadImageSuccessfulMsg("Pomyślnie przesłano pliki!");
         inputElement.value = null;
-
         setUploadingImageMsg(null);
-        // timer na 5 sekund
+
         const timeoutID = setTimeout(() => {
           setUploadImageSuccessfulMsg(null);
         }, 5000);
-        // odswiezanie listy zdjec
+        setUploadingImageTimeout(timeoutID);
         getImages();
       }
     } catch (error) {
       setUploadImageSuccessfulMsg(null);
       setUploadImageErrorMsg("Wystąpił błąd podczas przesyłania pliku");
-      console.error("Błąd przesyłania pliku:", error.message);
+      console.error("File upload error:", error.message);
     }
   };
 
@@ -116,15 +109,14 @@ const GallerySettings = () => {
       const { error } = await supabase.storage
         .from("barbershopimages")
         .remove([`images/${selectedImage.name}`]);
-
       if (error) {
-        setDeleteImageErrorMsg("Usuwanie zdjęcia nie powiodło się");
+        setDeleteImageErrorMsg("Usuwanie obrazu nie powiodło się");
         console.error("Error removing image:", error.message);
         return;
       }
       getImages();
     } catch (error) {
-      setDeleteImageErrorMsg("Usuwanie zdjęcia nie powiodło się");
+      setDeleteImageErrorMsg("Usuwanie obrazu nie powiodło się");
       console.error("Error deleting image:", error.message);
     }
   };
@@ -133,14 +125,17 @@ const GallerySettings = () => {
     getImages();
   }, []);
 
+  // cleanup any timeouts left from upload feedback
   useEffect(() => {
     return () => {
       clearTimeout(uploadingImageTimeout);
     };
   }, [uploadingImageTimeout]);
+
   return (
     <>
-      <h2 className="text-center mt-4">Ustawienia Galerii</h2>
+      <h2 className="text-center mt-4">Ustawienia galerii</h2>
+      {/* feedback during upload */}
       {uploadingImageMsg && (
         <Alert
           variant="info"
@@ -151,8 +146,11 @@ const GallerySettings = () => {
           {uploadingImageMsg}
         </Alert>
       )}
-      <Container className=" mt-5 d-flex flex-column align-items-center">
+
+      {/* image upload Form */}
+      <Container className="mt-5 d-flex flex-column align-items-center">
         <Form className="mb-3 d-flex align-items-center">
+          {/* file input (multiple files) */}
           <Form.Group controlId="formFile" className="mb-3 me-2">
             <Form.Control
               type="file"
@@ -160,15 +158,20 @@ const GallerySettings = () => {
               multiple
             />
           </Form.Group>
+
           <Button
             className="mb-3"
             variant="primary"
-            onClick={(e) => handleUploadImage(e)}
+            onClick={handleUploadImage}
+            title="Wgraj obraz(y)"
+            style={{ minWidth: "40px" }}
           >
             <FontAwesomeIcon icon={faPlus} style={{ color: "white" }} />
           </Button>
         </Form>
       </Container>
+
+      {/* success feedback */}
       {uploadImageSuccessfulMsg && (
         <Alert
           variant="success"
@@ -179,6 +182,7 @@ const GallerySettings = () => {
           {uploadImageSuccessfulMsg}
         </Alert>
       )}
+      {/* error feedback */}
       {uploadImageErrorMsg && (
         <Alert
           variant="danger"
@@ -189,6 +193,7 @@ const GallerySettings = () => {
           {uploadImageErrorMsg}
         </Alert>
       )}
+      {/* feedback on delete error */}
       {deleteImageErrorMsg && (
         <Alert
           variant="danger"
@@ -199,25 +204,42 @@ const GallerySettings = () => {
           {deleteImageErrorMsg}
         </Alert>
       )}
+
+      {/* table with images and their actions */}
       <Container className="text-center mt-4">
         {images.length > 0 ? (
-          <div className="table-responsive mx-auto" style={{ maxWidth: "50%" }}>
-            <Table bordered hover size="sm">
-              <thead className="thead-dark">
+          <div
+            className="table-responsive mx-auto"
+            style={{ maxWidth: "500px" }}
+          >
+            <Table bordered hover size="sm" className="shadow rounded">
+              <thead className="table-dark">
                 <tr>
-                  <th scope="col">Nazwa zdjęcia</th>
-                  <th scope="col">Akcja</th>
+                  <th scope="col" className="text-center align-middle">
+                    Nazwa obrazu
+                  </th>
+                  <th scope="col" className="text-center align-middle">
+                    Akcja
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {images.map((image) => (
                   <tr key={image.name} style={{ cursor: "pointer" }}>
-                    <td onClick={() => handleImageClick(image)}>
+                    {/* preview modal on click */}
+                    <td
+                      onClick={() => handleImageClick(image)}
+                      title="Pokaż podgląd obrazu"
+                      className="align-middle text-center"
+                    >
                       {image.name}
                     </td>
-                    <td>
+                    <td className="align-middle text-center">
+                      {/* delete button with tooltip */}
                       <button
                         className="btn btn-danger btn-sm"
+                        title="Usuń obraz"
+                        style={{ minWidth: "38px" }}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteImage(image);
@@ -232,10 +254,11 @@ const GallerySettings = () => {
             </Table>
           </div>
         ) : (
-          <h5 className="mt-5">Brak zdjęć</h5>
+          <h5 className="mt-5">Nie znaleziono zdjęć</h5>
         )}
 
-        <Modal show={showModal} onHide={handleCloseModal}>
+        {/* modal for image preview */}
+        <Modal show={showModal} onHide={handleCloseModal} centered>
           <Modal.Header closeButton>
             <Modal.Title style={{ textAlign: "center", width: "100%" }}>
               {selectedImage.name &&
@@ -246,11 +269,13 @@ const GallerySettings = () => {
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <img
-              src={CDNURL + "images/" + selectedImage.name}
-              alt={selectedImage.name}
-              style={{ width: "100%" }}
-            />
+            {selectedImage.name && (
+              <img
+                src={CDNURL + "images/" + selectedImage.name}
+                alt={selectedImage.name}
+                style={{ width: "100%", borderRadius: "6px" }}
+              />
+            )}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleCloseModal}>

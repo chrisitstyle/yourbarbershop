@@ -1,7 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+  faPen,
+  faTrashAlt,
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
 import useOffers from "../hooks/useOffers";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { Alert } from "react-bootstrap";
@@ -18,17 +23,18 @@ const OffersTable = ({ onDeleteOffer }) => {
     setCurrentPage(page);
   };
 
+  // filtering and slicing offers according to current page and search term
+  const filteredOffers = offers.filter((offer) =>
+    ` ${offer.idOffer} ${offer.kind} ${offer.cost}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+
   const indexOfLastOffer = currentPage * offersPerPage;
   const indexOfFirstOffer = indexOfLastOffer - offersPerPage;
-  const currentData = offers
-    .filter((offer) =>
-      ` ${offer.idOffer} ${offer.kind} ${offer.cost}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    )
-    .slice(indexOfFirstOffer, indexOfLastOffer);
+  const currentData = filteredOffers.slice(indexOfFirstOffer, indexOfLastOffer);
 
-  const totalPages = Math.ceil(offers.length / offersPerPage);
+  const totalPages = Math.ceil(filteredOffers.length / offersPerPage);
 
   const handleEditClick = (offer) => {
     navigate(`/adminpanel/editoffer/${offer.idOffer}`, {
@@ -40,83 +46,142 @@ const OffersTable = ({ onDeleteOffer }) => {
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
-    <div className="container text-center">
-      <div className="py-4">
-        <div>
-          <h2>Usługi</h2>
-          <div className="mb-3 mt-4">
-            <input
-              type="text"
-              placeholder="Szukaj usługi..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="form-control"
-              style={{ width: "200px" }}
-            />
-          </div>
-          <table className="table border shadow table-hover">
-            <thead>
+    <div className="container my-5 py-4 text-center">
+      <div>
+        <h2 className="mb-4">Usługi</h2>
+        <div className="mb-3">
+          {/* search box */}
+          <input
+            type="text"
+            placeholder="Szukaj usługi..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="form-control mx-auto"
+            style={{ width: "300px", fontSize: "1rem" }}
+          />
+        </div>
+        <div className="table-responsive">
+          <table
+            className="table table-bordered table-hover shadow rounded mx-auto"
+            style={{ maxWidth: "900px" }}
+          >
+            <thead className="table-dark">
               <tr>
-                <th scope="col">Identyfikator usługi</th>
-                <th scope="col">Usługa</th>
-                <th scope="col">Koszt</th>
-                <th scope="col">Akcja</th>
+                <th scope="col" className="text-center align-middle">
+                  Identyfikator usługi
+                </th>
+                <th scope="col" className="text-center align-middle">
+                  Usługa
+                </th>
+                <th scope="col" className="text-center align-middle">
+                  Koszt
+                </th>
+                <th scope="col" className="text-center align-middle">
+                  Akcja
+                </th>
               </tr>
             </thead>
             <tbody>
-              {currentData.map((offer) => (
-                <tr key={offer.idOffer}>
-                  <td>{offer.idOffer}</td>
-                  <td>{offer.kind}</td>
-                  <td>{offer.cost} zł</td>
-                  <td>
-                    <button
-                      className="btn btn-warning"
-                      onClick={() => {
-                        handleEditClick(offer);
-                      }}
-                    >
-                      <FontAwesomeIcon
-                        icon={faPen}
-                        style={{ color: "black" }}
-                      />
-                    </button>
-                    <button
-                      className="btn btn-danger mx-2"
-                      onClick={() => onDeleteOffer(offer.idOffer)}
-                    >
-                      <FontAwesomeIcon icon={faTrashAlt} />
-                    </button>
+              {currentData.length > 0 ? (
+                currentData.map((offer) => (
+                  <tr key={offer.idOffer}>
+                    <td className="align-middle text-center">
+                      {offer.idOffer}
+                    </td>
+                    <td className="align-middle text-center">{offer.kind}</td>
+                    <td className="align-middle text-center">
+                      {offer.cost} zł
+                    </td>
+                    <td className="align-middle text-center">
+                      {/* edit button with tooltip */}
+                      <button
+                        className="btn btn-warning btn-sm me-2"
+                        style={{ minWidth: "40px" }}
+                        title="Edytuj usługę"
+                        onClick={() => handleEditClick(offer)}
+                      >
+                        <FontAwesomeIcon icon={faPen} />
+                      </button>
+                      {/* delete button with tooltip */}
+                      <button
+                        className="btn btn-danger btn-sm"
+                        style={{ minWidth: "40px" }}
+                        title="Usuń usługę"
+                        onClick={() => onDeleteOffer(offer.idOffer)}
+                      >
+                        <FontAwesomeIcon icon={faTrashAlt} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="text-center py-4">
+                    <Alert variant="info" className="mb-0">
+                      Brak wyników do wyświetlenia.
+                    </Alert>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
-          {totalPages > 1 && (
-            <nav className="pagination justify-content-center">
-              <ul className="pagination">
-                {[...Array(totalPages)].map((_, index) => (
-                  <li
-                    key={index + 1}
-                    className={`page-item ${
-                      index + 1 === currentPage ? "active" : ""
-                    }`}
-                  >
-                    <button
-                      className="page-link"
-                      onClick={() => handlePageClick(index + 1)}
-                    >
-                      {index + 1}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
         </div>
+        {totalPages > 1 && (
+          <nav className="pagination justify-content-center mt-4">
+            <ul className="pagination">
+              {/* previous button */}
+              <li
+                className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => handlePageClick(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  aria-label="Poprzednia"
+                  style={{ minWidth: "38px" }}
+                >
+                  <FontAwesomeIcon icon={faChevronLeft} />
+                </button>
+              </li>
+              {/* page number buttons */}
+              {[...Array(totalPages)].map((_, index) => (
+                <li
+                  key={index + 1}
+                  className={`page-item ${
+                    index + 1 === currentPage ? "active" : ""
+                  }`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageClick(index + 1)}
+                    style={{ minWidth: "38px" }}
+                  >
+                    {index + 1}
+                  </button>
+                </li>
+              ))}
+              {/* next button */}
+              <li
+                className={`page-item ${
+                  currentPage === totalPages ? "disabled" : ""
+                }`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => handlePageClick(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Następna"
+                  style={{ minWidth: "38px" }}
+                >
+                  <FontAwesomeIcon icon={faChevronRight} />
+                </button>
+              </li>
+            </ul>
+          </nav>
+        )}
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ const Contact = () => {
         <div className="col-md-6">
           <ContactInfo />
 
-          {/* SOCIAL MEDIA*/}
+          {/* social media*/}
           <div>
             <div className="mb-1 fw-medium">
               Jesteśmy dostępni również w mediach społecznościowych:
