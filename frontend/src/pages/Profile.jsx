@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../AuthContext";
-import axios from "axios";
 import { useParams, useLocation } from "react-router-dom";
 import { formatDate } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import useUserDetails from "../hooks/useUserDetails";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -12,7 +12,8 @@ const Profile = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const registrationOrderSuccess = searchParams.get("registrationOrderSuccess");
-  const [userDetails, setUserDetails] = useState(null);
+
+  const { userDetails, isLoading, error } = useUserDetails(id, user?.token);
 
   const visitsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,49 +21,40 @@ const Profile = () => {
   const indexOfFirstVisit = indexOfLastVisit - visitsPerPage;
   const [searchTerm, setSearchTerm] = useState("");
 
-  const currentData = userDetails?.userOrders
-    ?.filter((order) =>
-      `${order.idOrder}  ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate} ${order.status}`
+  const filteredData =
+    userDetails?.userOrders?.filter((order) =>
+      `${order.idOrder} ${order.offer?.kind || ""} ${order.offer?.cost || ""} ${
+        order.orderDate
+      } ${order.visitDate} ${order.status}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
-    )
-    .slice(indexOfFirstVisit, indexOfLastVisit);
+    ) || [];
 
-  const totalPages = Math.ceil(
-    (userDetails?.userOrders?.length || 0) / visitsPerPage
-  );
+  const currentData = filteredData.slice(indexOfFirstVisit, indexOfLastVisit);
+  const totalPages = Math.ceil(filteredData.length / visitsPerPage);
+
   const handlePageClick = (page) => {
     setCurrentPage(page);
   };
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const result = await axios.get(`http://localhost:8080/users/${id}`, {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        });
-        setUserDetails(result.data);
-      } catch (error) {
-        console.error("Błąd ładowania użytkownika", error);
-      }
-    };
-
-    if (id && user?.token) {
-      loadUser();
-    }
-  }, [id, user?.token]);
-
-  if (!userDetails) {
+  if (isLoading) {
     return <LoadingSpinner text="Ładowanie profilu..." />;
+  }
+
+  if (error) {
+    return (
+      <Alert variant="danger" className="text-center">
+        {error}
+      </Alert>
+    );
   }
 
   return (
     <div className="container">
       <div className="py-4 ">
-        <h6 className="text-center">{`Jesteś zalogowany jako ${userDetails.email}`}</h6>
+        <h6 className="text-center">
+          {`Jesteś zalogowany jako ${userDetails?.email ?? "Brak danych"}`}
+        </h6>
         <div>
           {registrationOrderSuccess && (
             <Alert
@@ -74,13 +66,12 @@ const Profile = () => {
               Twoja wizyta została zarejestrowana
             </Alert>
           )}
-          {userDetails.userOrders && userDetails.userOrders.length > 0 && (
+          {userDetails?.userOrders && userDetails.userOrders.length > 0 ? (
             <>
               <h6 className="text-center">
-                {userDetails.firstname}, poniżej znajdują się wszystkie
-                dotychczasowe wizyty
+                {(userDetails?.firstname ?? "Użytkownik") +
+                  ", poniżej znajdują się wszystkie dotychczasowe wizyty"}
               </h6>
-              {/* search field */}
               <div className="mb-3 mt-4">
                 <input
                   type="text"
@@ -141,6 +132,10 @@ const Profile = () => {
                 </nav>
               )}
             </>
+          ) : (
+            <Alert variant="info" className="text-center">
+              Brak zarejestrowanych wizyt.
+            </Alert>
           )}
         </div>
       </div>

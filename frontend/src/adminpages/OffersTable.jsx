@@ -2,8 +2,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import useOffers from "../hooks/useOffers";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import { Alert } from "react-bootstrap";
 
-const OffersTable = ({ data, onDeleteOffer }) => {
+const OffersTable = ({ onDeleteOffer }) => {
+  const { offers, isLoading, error } = useOffers();
+
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const offersPerPage = 10;
@@ -15,7 +20,7 @@ const OffersTable = ({ data, onDeleteOffer }) => {
 
   const indexOfLastOffer = currentPage * offersPerPage;
   const indexOfFirstOffer = indexOfLastOffer - offersPerPage;
-  const currentData = data
+  const currentData = offers
     .filter((offer) =>
       ` ${offer.idOffer} ${offer.kind} ${offer.cost}`
         .toLowerCase()
@@ -23,7 +28,7 @@ const OffersTable = ({ data, onDeleteOffer }) => {
     )
     .slice(indexOfFirstOffer, indexOfLastOffer);
 
-  const totalPages = Math.ceil(data.length / offersPerPage);
+  const totalPages = Math.ceil(offers.length / offersPerPage);
 
   const handleEditClick = (offer) => {
     navigate(`/adminpanel/editoffer/${offer.idOffer}`, {
@@ -31,12 +36,14 @@ const OffersTable = ({ data, onDeleteOffer }) => {
     });
   };
 
+  if (isLoading) return <LoadingSpinner text="Ładowanie usług..." />;
+  if (error) return <Alert variant="danger">{error}</Alert>;
+
   return (
     <div className="container text-center">
       <div className="py-4">
         <div>
           <h2>Usługi</h2>
-          {/* pole wyszukiwania */}
           <div className="mb-3 mt-4">
             <input
               type="text"

@@ -1,39 +1,40 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "../api/dataParser";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
-const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
+import { useAuth } from "../AuthContext";
+import useGuestOrders from "../hooks/useGuestOrders";
+import { Alert } from "react-bootstrap";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+
+const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
+  const { user } = useAuth();
+  const { guestOrders, isLoading, error, refetch } = useGuestOrders(
+    user?.token
+  );
+
   const navigate = useNavigate();
   const guestOrdersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
-  const indexOfLastGuestOrder = currentPage * guestOrdersPerPage;
-  const indexOfFirstGuestOrder = indexOfLastGuestOrder - guestOrdersPerPage;
+  const indexOfLastOrder = currentPage * guestOrdersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - guestOrdersPerPage;
   const [searchTerm, setSearchTerm] = useState("");
-  const currentData = data
-    .filter((guestOrder) => {
-      const {
-        idGuestOrder,
-        firstname,
-        lastname,
-        phonenumber,
-        offer,
-        orderDate,
-        visitDate,
-        status,
-      } = guestOrder;
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
 
-      const offerKind = offer && offer.kind !== undefined ? offer.kind : "brak";
-      const offerCost =
-        offer && offer.cost !== undefined ? `${offer.cost} zł` : "brak";
-
-      return `${idGuestOrder} ${firstname} ${lastname} ${phonenumber} ${offerKind} ${offerCost} ${orderDate} ${visitDate} ${status}`
+  const currentData = guestOrders
+    .filter((order) =>
+      ` ${order.idGuestOrder} ${order.firstname}  ${order.lastname} ${
+        order.email
+      } ${order.offer?.kind || ""} ${order.offer?.cost || ""} ${
+        order.phonenumber || ""
+      } ${order.orderDate} ${order.visitDate} ${order.status}`
         .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-    })
-    .slice(indexOfFirstGuestOrder, indexOfLastGuestOrder);
+        .includes(searchTerm.toLowerCase())
+    )
+    .slice(indexOfFirstOrder, indexOfLastOrder);
 
-  const totalPages = Math.ceil(data.length / guestOrdersPerPage);
+  const totalPages = Math.ceil(guestOrders.length / guestOrdersPerPage);
 
   const handleEditClick = (guestOrder) => {
     navigate(`/adminpanel/editguestorder/${guestOrder.idGuestOrder}`, {
@@ -44,6 +45,20 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
   const handlePageClick = (page) => {
     setCurrentPage(page);
   };
+
+  const handleDeleteGuestOrder = async (idGuestOrder) => {
+    setDeleteLoadingId(idGuestOrder);
+    try {
+      await onDeleteGuestOrder(idGuestOrder);
+      await refetch();
+    } catch (err) {
+    } finally {
+      setDeleteLoadingId(null);
+    }
+  };
+
+  if (isLoading) return <LoadingSpinner text="Ładowanie wizyt gości..." />;
+  if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <div className="container text-center">
@@ -81,7 +96,7 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
                   <td>{guestOrder.idGuestOrder}</td>
                   <td>{guestOrder.firstname}</td>
                   <td>{guestOrder.lastname}</td>
-                  <td>{guestOrder.phonenumber}</td>
+                  <td>{guestOrder.phonenumber || "brak"}</td>
                   <td>{guestOrder.offer ? guestOrder.offer.kind : "brak"}</td>
                   <td>
                     {guestOrder.offer ? guestOrder.offer.cost + " zł" : "brak"}
@@ -102,9 +117,7 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
                       <button
                         className="btn btn-warning"
                         style={{ marginRight: "6px" }}
-                        onClick={() => {
-                          handleEditClick(guestOrder);
-                        }}
+                        onClick={() => handleEditClick(guestOrder)}
                       >
                         <FontAwesomeIcon
                           icon={faPen}
@@ -115,10 +128,15 @@ const GuestOrdersTable = ({ data, onDeleteGuestOrder }) => {
                         className="btn btn-danger"
                         style={{ marginRight: "-3px" }}
                         onClick={() =>
-                          onDeleteGuestOrder(guestOrder.idGuestOrder)
+                          handleDeleteGuestOrder(guestOrder.idGuestOrder)
                         }
+                        disabled={deleteLoadingId === guestOrder.idGuestOrder}
                       >
-                        <FontAwesomeIcon icon={faTrashAlt} />
+                        {deleteLoadingId === guestOrder.idGuestOrder ? (
+                          "Usuwanie..."
+                        ) : (
+                          <FontAwesomeIcon icon={faTrashAlt} />
+                        )}
                       </button>
                     </div>
                   </td>

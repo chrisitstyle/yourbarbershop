@@ -1,17 +1,24 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "../api/dataParser";
+import { Alert } from "react-bootstrap";
+import { useAuth } from "../AuthContext";
+import useOrders from "../hooks/useOrders";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+const OrdersTable = ({ onDeleteOrder }) => {
+  const { user } = useAuth();
+  const { orders, isLoading, error, refetch } = useOrders(user?.token);
 
-const OrdersTable = ({ data, onDeleteOrder }) => {
   const navigate = useNavigate();
   const ordersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const [searchTerm, setSearchTerm] = useState("");
-  const currentData = data
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
+  const currentData = orders
     .filter((order) =>
       ` ${order.idOrder} ${order.user.firstname}  ${order.user.lastname}  ${order.user.username} ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate} ${order.status}`
         .toLowerCase()
@@ -19,7 +26,7 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
     )
     .slice(indexOfFirstOrder, indexOfLastOrder);
 
-  const totalPages = Math.ceil(data.length / ordersPerPage);
+  const totalPages = Math.ceil(orders.length / ordersPerPage);
   const handlePageClick = (page) => {
     setCurrentPage(page);
   };
@@ -29,6 +36,21 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
       state: { orderData: order },
     });
   };
+
+  const handleDeleteOrder = async (orderId) => {
+    setDeleteLoadingId(orderId);
+    try {
+      await onDeleteOrder(orderId);
+      await refetch();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeleteLoadingId(null);
+    }
+  };
+
+  if (isLoading) return <LoadingSpinner text="Ładowanie zamówień..." />;
+  if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <div className="container text-center">
@@ -94,9 +116,14 @@ const OrdersTable = ({ data, onDeleteOrder }) => {
                       <button
                         className="btn btn-danger"
                         style={{ marginRight: "-3px" }}
-                        onClick={() => onDeleteOrder(order.idOrder)}
+                        onClick={() => handleDeleteOrder(order.idOrder)}
+                        disabled={deleteLoadingId === order.idOrder}
                       >
-                        <FontAwesomeIcon icon={faTrashAlt} />
+                        {deleteLoadingId === order.idOrder ? (
+                          "Usuwanie..."
+                        ) : (
+                          <FontAwesomeIcon icon={faTrashAlt} />
+                        )}
                       </button>
                     </div>
                   </td>

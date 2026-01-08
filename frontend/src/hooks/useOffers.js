@@ -15,7 +15,7 @@ const useOffers = () => {
         const data = await getOffers();
         setOffers(data);
       } catch (err) {
-        setError("Błąd podczas ładowania ofert");
+        setError("Błąd podczas ładowania usług");
       } finally {
         setIsLoading(false);
       }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,8 +8,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { sendCustomEmail } from "../api/emailService";
 import EmailMessageModal from "../components/EmailMessageModal";
+import useUsers from "../hooks/useUsers";
+import { useAuth } from "../AuthContext";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import { Alert } from "react-bootstrap";
 
-const UsersTable = ({ data, onDeleteUser }) => {
+const UsersTable = ({ onDeleteUser }) => {
   const navigate = useNavigate();
   const usersPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,19 +23,19 @@ const UsersTable = ({ data, onDeleteUser }) => {
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
-
+  const { user } = useAuth();
+  const { users, isLoading, error, refetch } = useUsers(user?.token);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
 
-  const currentData = data
-    .filter((user) =>
-      ` ${user.idUser} ${user.firstname} ${user.lastname} ${user.email} ${user.role}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    )
-    .slice(indexOfFirstUser, indexOfLastUser);
-
-  const totalPages = Math.ceil(data.length / usersPerPage);
+  const filteredUsers = users.filter((user) =>
+    ` ${user.idUser} ${user.firstname} ${user.lastname} ${user.email} ${user.role}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+  const currentData = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   const handlePageClick = (page) => {
     setCurrentPage(page);
@@ -59,6 +63,20 @@ const UsersTable = ({ data, onDeleteUser }) => {
     setEmailSubject("");
     setEmailMessage("");
   };
+
+  const handleDeleteUserWrapper = async (idUser) => {
+    setDeleteLoadingId(idUser);
+    try {
+      await onDeleteUser(idUser);
+      await refetch();
+    } catch (error) {
+      console.error("Błąd podczas usuwania użytkownika:", error);
+    } finally {
+      setDeleteLoadingId(null);
+    }
+  };
+  if (isLoading) return <LoadingSpinner text="Ładowanie użytkowników..." />;
+  if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <>
@@ -115,9 +133,14 @@ const UsersTable = ({ data, onDeleteUser }) => {
                       </button>
                       <button
                         className="btn btn-danger mx-2"
-                        onClick={() => onDeleteUser(user.idUser)}
+                        onClick={() => handleDeleteUserWrapper(user.idUser)}
+                        disabled={deleteLoadingId === user.idUser}
                       >
-                        <FontAwesomeIcon icon={faTrashAlt} />
+                        {deleteLoadingId === user.idUser ? (
+                          "Usuwanie..."
+                        ) : (
+                          <FontAwesomeIcon icon={faTrashAlt} />
+                        )}
                       </button>
                     </td>
                   </tr>
