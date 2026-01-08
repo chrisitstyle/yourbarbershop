@@ -33,7 +33,8 @@ const Navbar = () => {
         </button>
 
         <div className="collapse navbar-collapse" id="navbarNavDropdown">
-          <ul className="navbar-nav custom-navbar-ul">
+          {/* Main navigation links left */}
+          <ul className="navbar-nav">
             <li className="nav-item">
               <Link className="nav-link active custom-nav-link" to="/gallery">
                 Galeria
@@ -41,7 +42,7 @@ const Navbar = () => {
             </li>
             <li className="nav-item">
               <Link className="nav-link active custom-nav-link" to="/offers">
-                Nasza Oferta
+                Nasza oferta
               </Link>
             </li>
             <li className="nav-item">
@@ -65,7 +66,10 @@ const Navbar = () => {
                 </Link>
               </li>
             )}
+          </ul>
 
+          {/* Account navigation right */}
+          <ul className="navbar-nav ms-auto">
             <li className="nav-item dropdown">
               <a
                 className="nav-link dropdown-toggle custom-nav-link"
@@ -75,7 +79,7 @@ const Navbar = () => {
               >
                 Konto
               </a>
-              <ul className="dropdown-menu">
+              <ul className="dropdown-menu dropdown-menu-end">
                 {isLoggedIn ? (
                   <>
                     {isAdmin && (
@@ -98,6 +102,9 @@ const Navbar = () => {
                         </Link>
                       </li>
                     )}
+                    <li>
+                      <hr className="dropdown-divider" />
+                    </li>
                     <li>
                       <button
                         className="dropdown-item custom-nav-link"
