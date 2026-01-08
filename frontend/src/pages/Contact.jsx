@@ -17,7 +17,7 @@ const Contact = () => {
             <h2 className="mb-4">Skontaktuj się z nami</h2>
             <address>
               <p>
-                <strong>Barbershop</strong>
+                <strong>YourBarbershop</strong>
                 <br />
                 ul. Testowa 123
                 <br />
@@ -28,8 +28,8 @@ const Contact = () => {
               </p>
               <p>
                 <strong>Email:</strong>{" "}
-                <a href="mailto:kontakt@barbershop.com">
-                  kontakt@barbershop.com
+                <a href="mailto:kontakt@yourbarbershop.com">
+                  kontakt@yourbarbershop.com
                 </a>
               </p>
             </address>
