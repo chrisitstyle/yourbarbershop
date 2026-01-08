@@ -6,7 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
-
+  const [authLoading, setAuthLoading] = useState(true);
   // check localStorage for credentials on app init/refresh
   useEffect(() => {
     const checkLocalStorage = () => {
@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
       }
+      setAuthLoading(false);
     };
 
     checkLocalStorage();
@@ -50,7 +51,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, login, logout }}>
+    <AuthContext.Provider
+      value={{ isLoggedIn, user, login, logout, authLoading }}
+    >
       {children}
     </AuthContext.Provider>
   );
