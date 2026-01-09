@@ -16,14 +16,23 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 import { Alert } from "react-bootstrap";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 
+const userFieldsHeaders = [
+  "Identyfikator użytkownika",
+  "Imię",
+  "Nazwisko",
+  "E-mail",
+  "Rola",
+];
+const userFields = ["idUser", "firstname", "lastname", "email", "role"];
+
 const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
   return (
     <tr>
-      <td className="align-middle text-center">{user.idUser}</td>
-      <td className="align-middle text-center">{user.firstname}</td>
-      <td className="align-middle text-center">{user.lastname}</td>
-      <td className="align-middle text-center">{user.email}</td>
-      <td className="align-middle text-center">{user.role}</td>
+      {userFields.map((field) => (
+        <td key={field} className="align-middle text-center">
+          {user[field]}
+        </td>
+      ))}
       <td className="align-middle text-center">
         <button
           className="btn btn-primary btn-sm mx-1"
@@ -71,7 +80,6 @@ const UsersTable = ({ onDeleteUser }) => {
   const { user } = useAuth();
   const { users, isLoading, error, refetch } = useUsers(user?.token);
 
-  // data fallback: make sure users is always an array
   const safeUsers = Array.isArray(users) ? users : [];
 
   const filteredUsers = useMemo(
@@ -167,21 +175,15 @@ const UsersTable = ({ onDeleteUser }) => {
             >
               <thead className="table-dark">
                 <tr>
-                  <th scope="col" className="text-center align-middle">
-                    Identyfikator użytkownika
-                  </th>
-                  <th scope="col" className="text-center align-middle">
-                    Imię
-                  </th>
-                  <th scope="col" className="text-center align-middle">
-                    Nazwisko
-                  </th>
-                  <th scope="col" className="text-center align-middle">
-                    E-mail
-                  </th>
-                  <th scope="col" className="text-center align-middle">
-                    Rola
-                  </th>
+                  {userFieldsHeaders.map((header, idx) => (
+                    <th
+                      key={userFields[idx]}
+                      scope="col"
+                      className="text-center align-middle"
+                    >
+                      {header}
+                    </th>
+                  ))}
                   <th scope="col" className="text-center align-middle">
                     Akcja
                   </th>
@@ -200,7 +202,10 @@ const UsersTable = ({ onDeleteUser }) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="text-center py-4">
+                    <td
+                      colSpan={userFields.length + 1}
+                      className="text-center py-4"
+                    >
                       Brak wyników do wyświetlenia.
                     </td>
                   </tr>
@@ -274,7 +279,6 @@ const UsersTable = ({ onDeleteUser }) => {
         }
         label="użytkownika"
       />
-      {/* modal for sending emails */}
       <EmailMessageModal
         show={showEmailModal}
         handleClose={() => setShowEmailModal(false)}

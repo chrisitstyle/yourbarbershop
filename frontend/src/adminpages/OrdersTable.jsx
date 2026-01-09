@@ -14,6 +14,44 @@ import useOrders from "../hooks/useOrders";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 
+const orderFieldsHeaders = [
+  "Identyfikator wizyty",
+  "Imię",
+  "Nazwisko",
+  "Email",
+  "Usługa",
+  "Koszt",
+  "Data zamówienia",
+  "Data wizyty",
+  "Status",
+];
+
+const orderFields = [
+  "idOrder",
+  "user.firstname",
+  "user.lastname",
+  "user.username",
+  "offer.kind",
+  "offer.cost",
+  "orderDate",
+  "visitDate",
+  "status",
+];
+
+function getValue(order, field) {
+  if (field === "offer.cost")
+    return order.offer ? order.offer.cost + " zł" : "brak";
+  if (field === "orderDate")
+    return order.orderDate ? formatDate(order.orderDate) : "brak";
+  if (field === "visitDate")
+    return order.visitDate ? formatDate(order.visitDate) : "brak";
+  if (field.includes(".")) {
+    const [a, b] = field.split(".");
+    return order[a] && order[a][b] ? order[a][b] : "brak";
+  }
+  return order[field];
+}
+
 const OrderRow = memo(function OrderRow({
   order,
   onEdit,
@@ -22,27 +60,11 @@ const OrderRow = memo(function OrderRow({
 }) {
   return (
     <tr>
-      <td className="align-middle text-center">{order.idOrder}</td>
-      <td className="align-middle text-center">
-        {order.user.firstname || "brak"}
-      </td>
-      <td className="align-middle text-center">
-        {order.user.lastname || "brak"}
-      </td>
-      <td className="align-middle text-center">{order.user.username}</td>
-      <td className="align-middle text-center">
-        {order.offer ? order.offer.kind : "brak"}
-      </td>
-      <td className="align-middle text-center">
-        {order.offer ? order.offer.cost + " zł" : "brak"}
-      </td>
-      <td className="align-middle text-center">
-        {order.orderDate ? formatDate(order.orderDate) : "brak"}
-      </td>
-      <td className="align-middle text-center">
-        {order.visitDate ? formatDate(order.visitDate) : "brak"}
-      </td>
-      <td className="align-middle text-center">{order.status}</td>
+      {orderFields.map((field) => (
+        <td key={field} className="align-middle text-center">
+          {getValue(order, field)}
+        </td>
+      ))}
       <td className="align-middle text-center">
         <div className="d-flex justify-content-center">
           {/* edit button with tooltip */}
@@ -88,7 +110,6 @@ const OrdersTable = ({ onDeleteOrder }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
 
-  // filter by user/order data using the search bar
   const filteredOrders = useMemo(
     () =>
       orders.filter((order) =>
@@ -172,15 +193,11 @@ const OrdersTable = ({ onDeleteOrder }) => {
         >
           <thead className="table-dark">
             <tr>
-              <th className="text-center align-middle">Identyfikator wizyty</th>
-              <th className="text-center align-middle">Imię</th>
-              <th className="text-center align-middle">Nazwisko</th>
-              <th className="text-center align-middle">Email</th>
-              <th className="text-center align-middle">Usługa</th>
-              <th className="text-center align-middle">Koszt</th>
-              <th className="text-center align-middle">Data zamówienia</th>
-              <th className="text-center align-middle">Data wizyty</th>
-              <th className="text-center align-middle">Status</th>
+              {orderFieldsHeaders.map((header, idx) => (
+                <th key={orderFields[idx]} className="text-center align-middle">
+                  {header}
+                </th>
+              ))}
               <th className="text-center align-middle">Akcja</th>
             </tr>
           </thead>
@@ -197,7 +214,10 @@ const OrdersTable = ({ onDeleteOrder }) => {
               ))
             ) : (
               <tr>
-                <td colSpan="10" className="text-center py-4">
+                <td
+                  colSpan={orderFields.length + 1}
+                  className="text-center py-4"
+                >
                   <Alert variant="info" className="mb-0">
                     Brak wyników do wyświetlenia.
                   </Alert>

@@ -14,6 +14,44 @@ import { Alert } from "react-bootstrap";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 
+const guestOrderFieldsHeaders = [
+  "Identyfikator zamówienia",
+  "Imię",
+  "Nazwisko",
+  "Numer telefonu",
+  "Usługa",
+  "Koszt",
+  "Data zamówienia",
+  "Data wizyty",
+  "Status",
+];
+
+const guestOrderFields = [
+  "idGuestOrder",
+  "firstname",
+  "lastname",
+  "phonenumber",
+  "offer.kind",
+  "offer.cost",
+  "orderDate",
+  "visitDate",
+  "status",
+];
+
+function getValue(guestOrder, field) {
+  if (field === "offer.cost")
+    return guestOrder.offer ? guestOrder.offer.cost + " zł" : "brak";
+  if (field === "orderDate")
+    return guestOrder.orderDate ? formatDate(guestOrder.orderDate) : "brak";
+  if (field === "visitDate")
+    return guestOrder.visitDate ? formatDate(guestOrder.visitDate) : "brak";
+  if (field.includes(".")) {
+    const [a, b] = field.split(".");
+    return guestOrder[a] && guestOrder[a][b] ? guestOrder[a][b] : "brak";
+  }
+  return guestOrder[field] || "brak";
+}
+
 const GuestOrderRow = memo(function GuestOrderRow({
   guestOrder,
   onEdit,
@@ -22,29 +60,11 @@ const GuestOrderRow = memo(function GuestOrderRow({
 }) {
   return (
     <tr>
-      <td className="align-middle text-center">{guestOrder.idGuestOrder}</td>
-      <td className="align-middle text-center">
-        {guestOrder.firstname || "brak"}
-      </td>
-      <td className="align-middle text-center">
-        {guestOrder.lastname || "brak"}
-      </td>
-      <td className="align-middle text-center">
-        {guestOrder.phonenumber || "brak"}
-      </td>
-      <td className="align-middle text-center">
-        {guestOrder.offer ? guestOrder.offer.kind : "brak"}
-      </td>
-      <td className="align-middle text-center">
-        {guestOrder.offer ? guestOrder.offer.cost + " zł" : "brak"}
-      </td>
-      <td className="align-middle text-center">
-        {guestOrder.orderDate ? formatDate(guestOrder.orderDate) : "brak"}
-      </td>
-      <td className="align-middle text-center">
-        {guestOrder.visitDate ? formatDate(guestOrder.visitDate) : "brak"}
-      </td>
-      <td className="align-middle text-center">{guestOrder.status}</td>
+      {guestOrderFields.map((field) => (
+        <td key={field} className="align-middle text-center">
+          {getValue(guestOrder, field)}
+        </td>
+      ))}
       <td className="align-middle text-center">
         <div className="d-flex justify-content-center">
           <button
@@ -175,17 +195,14 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
         >
           <thead className="table-dark">
             <tr>
-              <th className="text-center align-middle">
-                Identyfikator zamówienia
-              </th>
-              <th className="text-center align-middle">Imię</th>
-              <th className="text-center align-middle">Nazwisko</th>
-              <th className="text-center align-middle">Numer telefonu</th>
-              <th className="text-center align-middle">Usługa</th>
-              <th className="text-center align-middle">Koszt</th>
-              <th className="text-center align-middle">Data zamówienia</th>
-              <th className="text-center align-middle">Data wizyty</th>
-              <th className="text-center align-middle">Status</th>
+              {guestOrderFieldsHeaders.map((header, idx) => (
+                <th
+                  key={guestOrderFields[idx]}
+                  className="text-center align-middle"
+                >
+                  {header}
+                </th>
+              ))}
               <th className="text-center align-middle">Akcja</th>
             </tr>
           </thead>
@@ -201,8 +218,12 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
                 />
               ))
             ) : (
+              // if there is no data to display
               <tr>
-                <td colSpan="10" className="text-center py-4">
+                <td
+                  colSpan={guestOrderFields.length + 1}
+                  className="text-center py-4"
+                >
                   <Alert variant="info" className="mb-0">
                     Brak wyników do wyświetlenia.
                   </Alert>

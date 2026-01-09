@@ -12,12 +12,17 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 import { Alert } from "react-bootstrap";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 
+const offerFieldsHeaders = ["Identyfikator usługi", "Usługa", "Koszt"];
+const offerFields = ["idOffer", "kind", "cost"];
+
 const OfferRow = memo(function OfferRow({ offer, onEdit, onDelete }) {
   return (
     <tr>
-      <td className="align-middle text-center">{offer.idOffer}</td>
-      <td className="align-middle text-center">{offer.kind}</td>
-      <td className="align-middle text-center">{offer.cost} zł</td>
+      {offerFields.map((field) => (
+        <td key={field} className="align-middle text-center">
+          {field === "cost" ? `${offer[field]} zł` : offer[field]}
+        </td>
+      ))}
       <td className="align-middle text-center">
         {/* edit button with tooltip */}
         <button
@@ -130,15 +135,15 @@ const OffersTable = ({ onDeleteOffer }) => {
           >
             <thead className="table-dark">
               <tr>
-                <th scope="col" className="text-center align-middle">
-                  Identyfikator usługi
-                </th>
-                <th scope="col" className="text-center align-middle">
-                  Usługa
-                </th>
-                <th scope="col" className="text-center align-middle">
-                  Koszt
-                </th>
+                {offerFieldsHeaders.map((header, idx) => (
+                  <th
+                    key={offerFields[idx]}
+                    scope="col"
+                    className="text-center align-middle"
+                  >
+                    {header}
+                  </th>
+                ))}
                 <th scope="col" className="text-center align-middle">
                   Akcja
                 </th>
@@ -156,7 +161,10 @@ const OffersTable = ({ onDeleteOffer }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center py-4">
+                  <td
+                    colSpan={offerFields.length + 1}
+                    className="text-center py-4"
+                  >
                     <Alert variant="info" className="mb-0">
                       Brak wyników do wyświetlenia.
                     </Alert>

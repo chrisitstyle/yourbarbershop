@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, memo } from "react";
 import { useSupabaseClient } from "../api/supabaseApi";
 import { Container, Table, Modal, Button, Form } from "react-bootstrap";
 import { CDNURL } from "../api/supabaseApi";
@@ -6,6 +6,51 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { Alert } from "react-bootstrap";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
+
+const imageFieldsHeaders = ["Nazwa obrazu"];
+const imageFields = ["name"];
+
+const ImageRow = memo(function ImageRow({
+  image,
+  onImageClick,
+  onDelete,
+  deleteLoading,
+  imageToDelete,
+}) {
+  return (
+    <tr key={image.name} style={{ cursor: "pointer" }}>
+      {imageFields.map((field) => (
+        <td
+          key={field}
+          onClick={() => onImageClick(image)}
+          title="Pokaż podgląd obrazu"
+          className="align-middle text-center"
+        >
+          {image[field]}
+        </td>
+      ))}
+      <td className="align-middle text-center">
+        {/* delete button with tooltip */}
+        <button
+          className="btn btn-danger btn-sm"
+          title="Usuń obraz"
+          style={{ minWidth: "38px" }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(image);
+          }}
+          disabled={deleteLoading}
+        >
+          {deleteLoading && imageToDelete?.name === image.name ? (
+            "Usuwanie..."
+          ) : (
+            <FontAwesomeIcon icon={faTrashAlt} />
+          )}
+        </button>
+      </td>
+    </tr>
+  );
+});
 
 const GallerySettings = () => {
   const [images, setImages] = useState([]);
@@ -148,6 +193,8 @@ const GallerySettings = () => {
     };
   }, [uploadingImageTimeout]);
 
+  const memoizedImages = useMemo(() => images, [images]);
+
   return (
     <>
       <h2 className="text-center mt-4">Ustawienia galerii</h2>
@@ -223,7 +270,7 @@ const GallerySettings = () => {
 
       {/* table with images and their actions */}
       <Container className="text-center mt-4">
-        {images.length > 0 ? (
+        {memoizedImages.length > 0 ? (
           <div
             className="table-responsive mx-auto"
             style={{ maxWidth: "500px" }}
@@ -231,45 +278,30 @@ const GallerySettings = () => {
             <Table bordered hover size="sm" className="shadow rounded">
               <thead className="table-dark">
                 <tr>
-                  <th scope="col" className="text-center align-middle">
-                    Nazwa obrazu
-                  </th>
+                  {imageFieldsHeaders.map((header, idx) => (
+                    <th
+                      key={imageFields[idx]}
+                      scope="col"
+                      className="text-center align-middle"
+                    >
+                      {header}
+                    </th>
+                  ))}
                   <th scope="col" className="text-center align-middle">
                     Akcja
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {images.map((image) => (
-                  <tr key={image.name} style={{ cursor: "pointer" }}>
-                    {/* preview modal on click */}
-                    <td
-                      onClick={() => handleImageClick(image)}
-                      title="Pokaż podgląd obrazu"
-                      className="align-middle text-center"
-                    >
-                      {image.name}
-                    </td>
-                    <td className="align-middle text-center">
-                      {/* delete button with tooltip */}
-                      <button
-                        className="btn btn-danger btn-sm"
-                        title="Usuń obraz"
-                        style={{ minWidth: "38px" }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAskDeleteImage(image);
-                        }}
-                        disabled={deleteLoading}
-                      >
-                        {deleteLoading && imageToDelete?.name === image.name ? (
-                          "Usuwanie..."
-                        ) : (
-                          <FontAwesomeIcon icon={faTrashAlt} />
-                        )}
-                      </button>
-                    </td>
-                  </tr>
+                {memoizedImages.map((image) => (
+                  <ImageRow
+                    key={image.name}
+                    image={image}
+                    onImageClick={handleImageClick}
+                    onDelete={handleAskDeleteImage}
+                    deleteLoading={deleteLoading}
+                    imageToDelete={imageToDelete}
+                  />
                 ))}
               </tbody>
             </Table>
