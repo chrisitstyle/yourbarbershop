@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -15,6 +15,44 @@ import useUsers from "../hooks/useUsers";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { Alert } from "react-bootstrap";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
+
+const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
+  return (
+    <tr>
+      <td className="align-middle text-center">{user.idUser}</td>
+      <td className="align-middle text-center">{user.firstname}</td>
+      <td className="align-middle text-center">{user.lastname}</td>
+      <td className="align-middle text-center">{user.email}</td>
+      <td className="align-middle text-center">{user.role}</td>
+      <td className="align-middle text-center">
+        <button
+          className="btn btn-primary btn-sm mx-1"
+          title="Wyślij e-mail"
+          onClick={() => onEmail(user)}
+          style={{ minWidth: "38px" }}
+        >
+          <FontAwesomeIcon icon={faEnvelope} />
+        </button>
+        <button
+          className="btn btn-warning btn-sm mx-1"
+          title="Edytuj"
+          onClick={() => onEdit(user)}
+          style={{ minWidth: "38px" }}
+        >
+          <FontAwesomeIcon icon={faPen} style={{ color: "black" }} />
+        </button>
+        <button
+          className="btn btn-danger btn-sm mx-1"
+          title="Usuń"
+          onClick={() => onDelete(user)}
+          style={{ minWidth: "38px" }}
+        >
+          <FontAwesomeIcon icon={faTrashAlt} />
+        </button>
+      </td>
+    </tr>
+  );
+});
 
 const UsersTable = ({ onDeleteUser }) => {
   const navigate = useNavigate();
@@ -36,22 +74,32 @@ const UsersTable = ({ onDeleteUser }) => {
   // data fallback: make sure users is always an array
   const safeUsers = Array.isArray(users) ? users : [];
 
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-
-  // search + paging
-  const filteredUsers = safeUsers.filter((user) =>
-    ` ${user.idUser} ${user.firstname} ${user.lastname} ${user.email} ${user.role}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+  const filteredUsers = useMemo(
+    () =>
+      safeUsers.filter((user) =>
+        ` ${user.idUser} ${user.firstname} ${user.lastname} ${user.email} ${user.role}`
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      ),
+    [safeUsers, searchTerm]
   );
-  const currentData = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const totalPages = useMemo(
+    () => Math.ceil(filteredUsers.length / usersPerPage),
+    [filteredUsers.length, usersPerPage]
+  );
 
-  const handlePageClick = (page) => {
-    setCurrentPage(page);
-  };
+  const currentData = useMemo(
+    () =>
+      filteredUsers.slice(
+        (currentPage - 1) * usersPerPage,
+        currentPage * usersPerPage
+      ),
+    [filteredUsers, currentPage, usersPerPage]
+  );
+
+  // handlers
+  const handlePageClick = (page) => setCurrentPage(page);
 
   const handleEditClick = (user) => {
     navigate(`/adminpanel/edituser/${user.idUser}`, {
@@ -142,50 +190,13 @@ const UsersTable = ({ onDeleteUser }) => {
               <tbody>
                 {currentData.length > 0 ? (
                   currentData.map((user) => (
-                    <tr key={user.idUser}>
-                      <td className="align-middle text-center">
-                        {user.idUser}
-                      </td>
-                      <td className="align-middle text-center">
-                        {user.firstname}
-                      </td>
-                      <td className="align-middle text-center">
-                        {user.lastname}
-                      </td>
-                      <td className="align-middle text-center">{user.email}</td>
-                      <td className="align-middle text-center">{user.role}</td>
-                      <td className="align-middle text-center">
-                        <button
-                          className="btn btn-primary btn-sm mx-1"
-                          title="Wyślij e-mail"
-                          onClick={() => handleEmailClick(user)}
-                          style={{ minWidth: "38px" }}
-                        >
-                          <FontAwesomeIcon icon={faEnvelope} />
-                        </button>
-
-                        <button
-                          className="btn btn-warning btn-sm mx-1"
-                          title="Edytuj"
-                          onClick={() => handleEditClick(user)}
-                          style={{ minWidth: "38px" }}
-                        >
-                          <FontAwesomeIcon
-                            icon={faPen}
-                            style={{ color: "black" }}
-                          />
-                        </button>
-
-                        <button
-                          className="btn btn-danger btn-sm mx-1"
-                          title="Usuń"
-                          onClick={() => handleAskDeleteUser(user)}
-                          style={{ minWidth: "38px" }}
-                        >
-                          <FontAwesomeIcon icon={faTrashAlt} />
-                        </button>
-                      </td>
-                    </tr>
+                    <UserRow
+                      key={user.idUser}
+                      user={user}
+                      onEdit={handleEditClick}
+                      onEmail={handleEmailClick}
+                      onDelete={handleAskDeleteUser}
+                    />
                   ))
                 ) : (
                   <tr>

@@ -1,24 +1,33 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import useOffers from "../hooks/useOffers";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { Alert } from "react-bootstrap";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faScissors } from "@fortawesome/free-solid-svg-icons";
+
+const fields = ["idOffer", "kind", "cost"];
 
 const Offer = () => {
   const { offers, isLoading, error } = useOffers();
   const [currentPage, setCurrentPage] = useState(1);
   const offersPerPage = 10;
 
-  const indexOfLastOffer = currentPage * offersPerPage;
-  const indexOfFirstOffer = indexOfLastOffer - offersPerPage;
-  const currentOffers = offers.slice(indexOfFirstOffer, indexOfLastOffer);
+  const showPagination = offers.length > offersPerPage;
+  const totalPages = useMemo(
+    () => Math.ceil(offers.length / offersPerPage),
+    [offers.length, offersPerPage]
+  );
+
+  const currentOffers = useMemo(
+    () =>
+      offers.slice(
+        (currentPage - 1) * offersPerPage,
+        currentPage * offersPerPage
+      ),
+    [offers, currentPage, offersPerPage]
+  );
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  const showPagination = offers.length > offersPerPage;
-  const totalPages = Math.ceil(offers.length / offersPerPage);
 
   if (isLoading) {
     return <LoadingSpinner text="Ładowanie usług..." />;
@@ -32,7 +41,6 @@ const Offer = () => {
     );
   }
 
-  // in case there are no offers in the system
   if (offers.length === 0) {
     return (
       <div className="container my-5 py-4">
@@ -72,9 +80,11 @@ const Offer = () => {
           <tbody>
             {currentOffers.map((offer) => (
               <tr key={offer.idOffer}>
-                <td className="text-center align-middle">{offer.idOffer}</td>
-                <td className="text-center align-middle">{offer.kind}</td>
-                <td className="text-center align-middle">{offer.cost} zł</td>
+                {fields.map((field) => (
+                  <td key={field} className="text-center align-middle">
+                    {field === "cost" ? `${offer[field]} zł` : offer[field]}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
@@ -82,7 +92,6 @@ const Offer = () => {
       </div>
       {showPagination && (
         <ul className="pagination justify-content-center mt-4">
-          {/* previous page button */}
           <li className={`page-item${currentPage === 1 ? " disabled" : ""}`}>
             <button
               className="page-link"
@@ -93,7 +102,6 @@ const Offer = () => {
               &laquo;
             </button>
           </li>
-          {/* page numbers */}
           {[...Array(totalPages)].map((_, index) => (
             <li
               key={index + 1}
@@ -110,7 +118,6 @@ const Offer = () => {
               </button>
             </li>
           ))}
-          {/* next page button */}
           <li
             className={`page-item${
               currentPage === totalPages ? " disabled" : ""

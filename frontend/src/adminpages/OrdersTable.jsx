@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPen,
@@ -13,6 +13,66 @@ import { useAuth } from "../AuthContext";
 import useOrders from "../hooks/useOrders";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
+
+const OrderRow = memo(function OrderRow({
+  order,
+  onEdit,
+  onDelete,
+  deleteLoadingId,
+}) {
+  return (
+    <tr>
+      <td className="align-middle text-center">{order.idOrder}</td>
+      <td className="align-middle text-center">
+        {order.user.firstname || "brak"}
+      </td>
+      <td className="align-middle text-center">
+        {order.user.lastname || "brak"}
+      </td>
+      <td className="align-middle text-center">{order.user.username}</td>
+      <td className="align-middle text-center">
+        {order.offer ? order.offer.kind : "brak"}
+      </td>
+      <td className="align-middle text-center">
+        {order.offer ? order.offer.cost + " zł" : "brak"}
+      </td>
+      <td className="align-middle text-center">
+        {order.orderDate ? formatDate(order.orderDate) : "brak"}
+      </td>
+      <td className="align-middle text-center">
+        {order.visitDate ? formatDate(order.visitDate) : "brak"}
+      </td>
+      <td className="align-middle text-center">{order.status}</td>
+      <td className="align-middle text-center">
+        <div className="d-flex justify-content-center">
+          {/* edit button with tooltip */}
+          <button
+            className="btn btn-warning btn-sm me-2"
+            style={{ minWidth: "40px" }}
+            title="Edytuj wizytę"
+            onClick={() => onEdit(order)}
+          >
+            <FontAwesomeIcon icon={faPen} />
+          </button>
+          {/* delete button with tooltip */}
+          <button
+            className="btn btn-danger btn-sm"
+            style={{ minWidth: "40px" }}
+            title="Usuń wizytę"
+            onClick={() => onDelete(order)}
+            disabled={deleteLoadingId === order.idOrder}
+          >
+            {deleteLoadingId === order.idOrder ? (
+              "Usuwanie..."
+            ) : (
+              <FontAwesomeIcon icon={faTrashAlt} />
+            )}
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
 
 const OrdersTable = ({ onDeleteOrder }) => {
   const { user } = useAuth();
@@ -29,17 +89,31 @@ const OrdersTable = ({ onDeleteOrder }) => {
   const [orderToDelete, setOrderToDelete] = useState(null);
 
   // filter by user/order data using the search bar
-  const filteredOrders = orders.filter((order) =>
-    ` ${order.idOrder} ${order.user.firstname}  ${order.user.lastname}  ${order.user.username} ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate} ${order.status}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+  const filteredOrders = useMemo(
+    () =>
+      orders.filter((order) =>
+        ` ${order.idOrder} ${order.user.firstname}  ${order.user.lastname}  ${order.user.username} ${order.offer.kind} ${order.offer.cost} ${order.orderDate} ${order.visitDate} ${order.status}`
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      ),
+    [orders, searchTerm]
   );
 
-  const indexOfLastOrder = currentPage * ordersPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentData = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
-  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const totalPages = useMemo(
+    () => Math.ceil(filteredOrders.length / ordersPerPage),
+    [filteredOrders.length, ordersPerPage]
+  );
 
+  const currentData = useMemo(
+    () =>
+      filteredOrders.slice(
+        (currentPage - 1) * ordersPerPage,
+        currentPage * ordersPerPage
+      ),
+    [filteredOrders, currentPage, ordersPerPage]
+  );
+
+  // handlers
   const handlePageClick = (page) => {
     setCurrentPage(page);
   };
@@ -113,58 +187,13 @@ const OrdersTable = ({ onDeleteOrder }) => {
           <tbody>
             {currentData.length > 0 ? (
               currentData.map((order) => (
-                <tr key={order.idOrder}>
-                  <td className="align-middle text-center">{order.idOrder}</td>
-                  <td className="align-middle text-center">
-                    {order.user.firstname || "brak"}
-                  </td>
-                  <td className="align-middle text-center">
-                    {order.user.lastname || "brak"}
-                  </td>
-                  <td className="align-middle text-center">
-                    {order.user.username}
-                  </td>
-                  <td className="align-middle text-center">
-                    {order.offer ? order.offer.kind : "brak"}
-                  </td>
-                  <td className="align-middle text-center">
-                    {order.offer ? order.offer.cost + " zł" : "brak"}
-                  </td>
-                  <td className="align-middle text-center">
-                    {order.orderDate ? formatDate(order.orderDate) : "brak"}
-                  </td>
-                  <td className="align-middle text-center">
-                    {order.visitDate ? formatDate(order.visitDate) : "brak"}
-                  </td>
-                  <td className="align-middle text-center">{order.status}</td>
-                  <td className="align-middle text-center">
-                    <div className="d-flex justify-content-center">
-                      {/* edit button with tooltip */}
-                      <button
-                        className="btn btn-warning btn-sm me-2"
-                        style={{ minWidth: "40px" }}
-                        title="Edytuj wizytę"
-                        onClick={() => handleEditClick(order)}
-                      >
-                        <FontAwesomeIcon icon={faPen} />
-                      </button>
-                      {/* delete button with tooltip */}
-                      <button
-                        className="btn btn-danger btn-sm"
-                        style={{ minWidth: "40px" }}
-                        title="Usuń wizytę"
-                        onClick={() => handleAskDeleteOrder(order)}
-                        disabled={deleteLoadingId === order.idOrder}
-                      >
-                        {deleteLoadingId === order.idOrder ? (
-                          "Usuwanie..."
-                        ) : (
-                          <FontAwesomeIcon icon={faTrashAlt} />
-                        )}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <OrderRow
+                  key={order.idOrder}
+                  order={order}
+                  onEdit={handleEditClick}
+                  onDelete={handleAskDeleteOrder}
+                  deleteLoadingId={deleteLoadingId}
+                />
               ))
             ) : (
               <tr>

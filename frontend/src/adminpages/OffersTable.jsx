@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -11,6 +11,36 @@ import useOffers from "../hooks/useOffers";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { Alert } from "react-bootstrap";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
+
+const OfferRow = memo(function OfferRow({ offer, onEdit, onDelete }) {
+  return (
+    <tr>
+      <td className="align-middle text-center">{offer.idOffer}</td>
+      <td className="align-middle text-center">{offer.kind}</td>
+      <td className="align-middle text-center">{offer.cost} zł</td>
+      <td className="align-middle text-center">
+        {/* edit button with tooltip */}
+        <button
+          className="btn btn-warning btn-sm me-2"
+          style={{ minWidth: "40px" }}
+          title="Edytuj usługę"
+          onClick={() => onEdit(offer)}
+        >
+          <FontAwesomeIcon icon={faPen} />
+        </button>
+        {/* delete button with tooltip */}
+        <button
+          className="btn btn-danger btn-sm"
+          style={{ minWidth: "40px" }}
+          title="Usuń usługę"
+          onClick={() => onDelete(offer)}
+        >
+          <FontAwesomeIcon icon={faTrashAlt} />
+        </button>
+      </td>
+    </tr>
+  );
+});
 
 const OffersTable = ({ onDeleteOffer }) => {
   const { offers, isLoading, error, refetch } = useOffers();
@@ -42,18 +72,29 @@ const OffersTable = ({ onDeleteOffer }) => {
     setOfferToDelete(null);
   };
 
-  // filtering and slicing offers according to current page and search term
-  const filteredOffers = offers.filter((offer) =>
-    ` ${offer.idOffer} ${offer.kind} ${offer.cost}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+  const filteredOffers = useMemo(
+    () =>
+      offers.filter((offer) =>
+        ` ${offer.idOffer} ${offer.kind} ${offer.cost}`
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      ),
+    [offers, searchTerm]
   );
 
-  const indexOfLastOffer = currentPage * offersPerPage;
-  const indexOfFirstOffer = indexOfLastOffer - offersPerPage;
-  const currentData = filteredOffers.slice(indexOfFirstOffer, indexOfLastOffer);
+  const totalPages = useMemo(
+    () => Math.ceil(filteredOffers.length / offersPerPage),
+    [filteredOffers.length, offersPerPage]
+  );
 
-  const totalPages = Math.ceil(filteredOffers.length / offersPerPage);
+  const currentData = useMemo(
+    () =>
+      filteredOffers.slice(
+        (currentPage - 1) * offersPerPage,
+        currentPage * offersPerPage
+      ),
+    [filteredOffers, currentPage, offersPerPage]
+  );
 
   const handleEditClick = (offer) => {
     navigate(`/adminpanel/editoffer/${offer.idOffer}`, {
@@ -106,35 +147,12 @@ const OffersTable = ({ onDeleteOffer }) => {
             <tbody>
               {currentData.length > 0 ? (
                 currentData.map((offer) => (
-                  <tr key={offer.idOffer}>
-                    <td className="align-middle text-center">
-                      {offer.idOffer}
-                    </td>
-                    <td className="align-middle text-center">{offer.kind}</td>
-                    <td className="align-middle text-center">
-                      {offer.cost} zł
-                    </td>
-                    <td className="align-middle text-center">
-                      {/* edit button with tooltip */}
-                      <button
-                        className="btn btn-warning btn-sm me-2"
-                        style={{ minWidth: "40px" }}
-                        title="Edytuj usługę"
-                        onClick={() => handleEditClick(offer)}
-                      >
-                        <FontAwesomeIcon icon={faPen} />
-                      </button>
-                      {/* delete button with tooltip */}
-                      <button
-                        className="btn btn-danger btn-sm"
-                        style={{ minWidth: "40px" }}
-                        title="Usuń usługę"
-                        onClick={() => handleAskDeleteOffer(offer)}
-                      >
-                        <FontAwesomeIcon icon={faTrashAlt} />
-                      </button>
-                    </td>
-                  </tr>
+                  <OfferRow
+                    key={offer.idOffer}
+                    offer={offer}
+                    onEdit={handleEditClick}
+                    onDelete={handleAskDeleteOffer}
+                  />
                 ))
               ) : (
                 <tr>
