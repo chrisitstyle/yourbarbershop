@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useEffect, useState } from "react";
+import { useSupabaseClient } from "../api/supabaseApi";
 import { Container, Carousel, Image, Modal, Button } from "react-bootstrap";
 import { CDNURL } from "../api/supabaseApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
