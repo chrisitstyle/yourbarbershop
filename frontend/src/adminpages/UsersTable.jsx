@@ -14,6 +14,7 @@ import { useAuth } from "../AuthContext";
 import useUsers from "../hooks/useUsers";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { Alert } from "react-bootstrap";
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 
 const UsersTable = ({ onDeleteUser }) => {
   const navigate = useNavigate();
@@ -25,6 +26,9 @@ const UsersTable = ({ onDeleteUser }) => {
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   const { user } = useAuth();
   const { users, isLoading, error, refetch } = useUsers(user?.token);
@@ -72,13 +76,18 @@ const UsersTable = ({ onDeleteUser }) => {
     setEmailMessage("");
   };
 
-  const handleDeleteUserWrapper = async (idUser) => {
-    try {
-      await onDeleteUser(idUser);
+  const handleAskDeleteUser = (user) => {
+    setUserToDelete(user);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (userToDelete) {
+      await onDeleteUser(userToDelete.idUser);
       await refetch();
-    } catch (error) {
-      console.error("Błąd podczas usuwania użytkownika:", error);
     }
+    setShowDeleteModal(false);
+    setUserToDelete(null);
   };
 
   if (isLoading) return <LoadingSpinner text="Ładowanie użytkowników..." />;
@@ -170,7 +179,7 @@ const UsersTable = ({ onDeleteUser }) => {
                         <button
                           className="btn btn-danger btn-sm mx-1"
                           title="Usuń"
-                          onClick={() => handleDeleteUserWrapper(user.idUser)}
+                          onClick={() => handleAskDeleteUser(user)}
                           style={{ minWidth: "38px" }}
                         >
                           <FontAwesomeIcon icon={faTrashAlt} />
@@ -243,6 +252,17 @@ const UsersTable = ({ onDeleteUser }) => {
           )}
         </div>
       </div>
+      <ConfirmDeleteModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteUser}
+        itemName={
+          userToDelete
+            ? `${userToDelete.firstname} ${userToDelete.lastname}`
+            : ""
+        }
+        label="użytkownika"
+      />
       {/* modal for sending emails */}
       <EmailMessageModal
         show={showEmailModal}

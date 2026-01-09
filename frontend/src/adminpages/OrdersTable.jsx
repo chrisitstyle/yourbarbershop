@@ -12,6 +12,7 @@ import { Alert } from "react-bootstrap";
 import { useAuth } from "../AuthContext";
 import useOrders from "../hooks/useOrders";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 
 const OrdersTable = ({ onDeleteOrder }) => {
   const { user } = useAuth();
@@ -22,6 +23,10 @@ const OrdersTable = ({ onDeleteOrder }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
+
+  // modal state for confirmation of deletion
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   // filter by user/order data using the search bar
   const filteredOrders = orders.filter((order) =>
@@ -45,15 +50,24 @@ const OrdersTable = ({ onDeleteOrder }) => {
     });
   };
 
-  const handleDeleteOrder = async (orderId) => {
-    setDeleteLoadingId(orderId);
-    try {
-      await onDeleteOrder(orderId);
-      await refetch();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDeleteLoadingId(null);
+  const handleAskDeleteOrder = (order) => {
+    setOrderToDelete(order);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteOrder = async () => {
+    if (orderToDelete) {
+      setDeleteLoadingId(orderToDelete.idOrder);
+      try {
+        await onDeleteOrder(orderToDelete.idOrder);
+        await refetch();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setDeleteLoadingId(null);
+        setShowDeleteModal(false);
+        setOrderToDelete(null);
+      }
     }
   };
 
@@ -139,7 +153,7 @@ const OrdersTable = ({ onDeleteOrder }) => {
                         className="btn btn-danger btn-sm"
                         style={{ minWidth: "40px" }}
                         title="Usuń wizytę"
-                        onClick={() => handleDeleteOrder(order.idOrder)}
+                        onClick={() => handleAskDeleteOrder(order)}
                         disabled={deleteLoadingId === order.idOrder}
                       >
                         {deleteLoadingId === order.idOrder ? (
@@ -215,6 +229,19 @@ const OrdersTable = ({ onDeleteOrder }) => {
           </ul>
         </nav>
       )}
+      <ConfirmDeleteModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteOrder}
+        itemName={
+          orderToDelete
+            ? `${orderToDelete.offer ? orderToDelete.offer.kind : "brak"} (${
+                orderToDelete.idOrder
+              })`
+            : ""
+        }
+        label="wizytę"
+      />
     </div>
   );
 };

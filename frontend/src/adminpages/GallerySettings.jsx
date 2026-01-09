@@ -5,12 +5,18 @@ import { CDNURL } from "../api/supabaseApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { Alert } from "react-bootstrap";
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 
 const GallerySettings = () => {
   const [images, setImages] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const supabase = useSupabaseClient();
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // modal state for confirming delete
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState(null);
 
   // messages for different scenarios
   const [deleteImageErrorMsg, setDeleteImageErrorMsg] = useState(null);
@@ -104,21 +110,31 @@ const GallerySettings = () => {
     }
   };
 
-  const handleDeleteImage = async (selectedImage) => {
+  const handleAskDeleteImage = (image) => {
+    setImageToDelete(image);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteImage = async () => {
+    if (!imageToDelete) return;
+    setDeleteLoading(true);
     try {
       const { error } = await supabase.storage
         .from("barbershopimages")
-        .remove([`images/${selectedImage.name}`]);
+        .remove([`images/${imageToDelete.name}`]);
       if (error) {
         setDeleteImageErrorMsg("Usuwanie obrazu nie powiodło się");
         console.error("Error removing image:", error.message);
-        return;
+      } else {
+        getImages();
       }
-      getImages();
     } catch (error) {
       setDeleteImageErrorMsg("Usuwanie obrazu nie powiodło się");
       console.error("Error deleting image:", error.message);
     }
+    setDeleteLoading(false);
+    setShowDeleteModal(false);
+    setImageToDelete(null);
   };
 
   useEffect(() => {
@@ -242,10 +258,15 @@ const GallerySettings = () => {
                         style={{ minWidth: "38px" }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteImage(image);
+                          handleAskDeleteImage(image);
                         }}
+                        disabled={deleteLoading}
                       >
-                        <FontAwesomeIcon icon={faTrashAlt} />
+                        {deleteLoading && imageToDelete?.name === image.name ? (
+                          "Usuwanie..."
+                        ) : (
+                          <FontAwesomeIcon icon={faTrashAlt} />
+                        )}
                       </button>
                     </td>
                   </tr>
@@ -283,6 +304,13 @@ const GallerySettings = () => {
             </Button>
           </Modal.Footer>
         </Modal>
+        <ConfirmDeleteModal
+          show={showDeleteModal}
+          onHide={() => setShowDeleteModal(false)}
+          onConfirm={confirmDeleteImage}
+          itemName={imageToDelete?.name}
+          label="obraz"
+        />
       </Container>
     </>
   );

@@ -12,6 +12,7 @@ import { useAuth } from "../AuthContext";
 import useGuestOrders from "../hooks/useGuestOrders";
 import { Alert } from "react-bootstrap";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 
 const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
   const { user } = useAuth();
@@ -24,6 +25,10 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
+
+  // state for confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [guestOrderToDelete, setGuestOrderToDelete] = useState(null);
 
   // filter guest orders based on search input
   const filteredOrders = guestOrders.filter((order) =>
@@ -52,15 +57,24 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
     setCurrentPage(page);
   };
 
-  const handleDeleteGuestOrder = async (idGuestOrder) => {
-    setDeleteLoadingId(idGuestOrder);
-    try {
-      await onDeleteGuestOrder(idGuestOrder);
-      await refetch();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDeleteLoadingId(null);
+  const handleAskDeleteGuestOrder = (guestOrder) => {
+    setGuestOrderToDelete(guestOrder);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteGuestOrder = async () => {
+    if (guestOrderToDelete) {
+      setDeleteLoadingId(guestOrderToDelete.idGuestOrder);
+      try {
+        await onDeleteGuestOrder(guestOrderToDelete.idGuestOrder);
+        await refetch();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setDeleteLoadingId(null);
+        setShowDeleteModal(false);
+        setGuestOrderToDelete(null);
+      }
     }
   };
 
@@ -156,9 +170,7 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
                         className="btn btn-danger btn-sm"
                         style={{ minWidth: "40px" }}
                         title="Delete guest visit"
-                        onClick={() =>
-                          handleDeleteGuestOrder(guestOrder.idGuestOrder)
-                        }
+                        onClick={() => handleAskDeleteGuestOrder(guestOrder)}
                         disabled={deleteLoadingId === guestOrder.idGuestOrder}
                       >
                         {deleteLoadingId === guestOrder.idGuestOrder ? (
@@ -235,6 +247,19 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
           </ul>
         </nav>
       )}
+      <ConfirmDeleteModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteGuestOrder}
+        itemName={
+          guestOrderToDelete
+            ? `${guestOrderToDelete.offer?.kind ?? "brak"} (${
+                guestOrderToDelete.idGuestOrder
+              })`
+            : ""
+        }
+        label="wizytę gościa"
+      />
     </div>
   );
 };
