@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
@@ -26,7 +26,7 @@ import UserRoute from "./routes/UserRoute";
 import NotFound from "./pages/NotFound";
 function App() {
   const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") || "dark"
+    () => localStorage.getItem("theme") || "light"
   );
 
   useEffect(() => {

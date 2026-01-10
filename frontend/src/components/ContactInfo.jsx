@@ -18,7 +18,7 @@ const ContactInfo = () => {
   })();
 
   return (
-    <div className="contactinfo-container">
+    <div className="contactinfo-container bg-body">
       <h2 className="mb-3">Dane kontaktowe</h2>
       <div className="contactinfo-grid">
         <div className="contactinfo-item">
