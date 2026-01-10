@@ -101,3 +101,26 @@
     padding: 8px;
   }
 }
+
+// override contact card colors for dark mode to match site dark theme
+html[data-bs-theme="dark"] .contactinfo-container {
+  background: #23272b;
+  color: #f2f2f2;
+}
+
+html[data-bs-theme="dark"] .contactinfo-label {
+  color: #e6e6e6;
+}
+
+html[data-bs-theme="dark"] .contactinfo-value {
+  color: #f2f2f2;
+}
+
+html[data-bs-theme="dark"] .contactinfo-icon {
+  color: #fff;
+  background: #181a1e;
+}
+
+html[data-bs-theme="dark"] .contactinfo-hours-table div {
+  color: #e6e6e6;
+}

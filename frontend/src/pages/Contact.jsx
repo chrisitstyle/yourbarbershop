@@ -11,7 +11,7 @@ import "./styles/contact.css";
 
 const Contact = () => {
   return (
-    <div className="contact-container container mt-5 py-4 px-3 shadow-lg rounded-4">
+    <div className="contact-container container mt-5 py-4 px-3 shadow-lg rounded-4 bg-body">
       <div className="row gy-4 align-items-center">
         {/* left column */}
         <div className="col-md-6">

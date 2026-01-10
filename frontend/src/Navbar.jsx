@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-
-const Navbar = () => {
+import { Sun, Moon } from "lucide-react";
+const Navbar = ({ theme, onToggleTheme }) => {
   const { isLoggedIn, logout, user } = useAuth();
   const navigate = useNavigate();
 
@@ -134,6 +134,17 @@ const Navbar = () => {
                   </>
                 )}
               </ul>
+            </li>
+            <li className="nav-item d-flex align-items-center">
+              <button
+                className="bg-transparent border-0 ms-2 p-0"
+                onClick={onToggleTheme}
+                title={
+                  theme === "dark" ? "Włącz tryb jasny" : "Włącz tryb ciemny"
+                }
+              >
+                {theme === "dark" ? <Sun /> : <Moon color="#fff" />}
+              </button>
             </li>
           </ul>
         </div>

@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
@@ -24,11 +25,23 @@ import AdminRoute from "./routes/AdminRoute";
 import UserRoute from "./routes/UserRoute";
 import NotFound from "./pages/NotFound";
 function App() {
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "dark"
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-bs-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
   return (
     <AuthProvider>
       <div className="App">
         <Router>
-          <Navbar />
+          <Navbar theme={theme} onToggleTheme={handleToggleTheme} />
           <main>
             <Routes>
               <Route path="/" element={<Home />}></Route>

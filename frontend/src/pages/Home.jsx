@@ -1,10 +1,8 @@
-import React from "react";
-
 import { Container, Row, Col, Card, Image } from "react-bootstrap";
 
 const Home = () => {
   return (
-    <div className="bg-light">
+    <div className="bg-body">
       <Container className="py-5 text-center">
         <h1 className="display-4">Witaj w Naszym Barbershopie</h1>
         <p className="lead">
@@ -53,7 +51,7 @@ const Home = () => {
         </Row>
       </Container>
 
-      <Container className="py-5 text-center bg-light">
+      <Container className="py-5 text-center bg-body">
         <Row>
           <Col>
             <h2 className="display-6">Poznaj Naszych Barberów</h2>
@@ -124,7 +122,7 @@ const Home = () => {
         </Row>
       </Container>
 
-      <Container className="py-5 text-center bg-light">
+      <Container className="py-5 text-center bg-body">
         <Row>
           <Col>
             <h2 className="display-6">Aktualne Promocje</h2>
