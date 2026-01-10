@@ -8,7 +8,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 class WebConfig {
 
-    static final String LOCALHOST = "http://localhost:3000";
+    static final String FRONTEND_LOCAL = "http://localhost:3000";
+    static final String VERCEL_ORIGIN = "https://yourbarbershop.vercel.app";
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
@@ -16,7 +17,7 @@ class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins(LOCALHOST)
+                        .allowedOrigins(FRONTEND_LOCAL, VERCEL_ORIGIN)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true)
