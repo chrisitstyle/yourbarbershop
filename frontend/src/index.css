@@ -7,7 +7,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  // background-color: #f5f5f5 !important;
+  /* background-color: #f5f5f5 !important; */
 }
 
 code {
@@ -101,7 +101,7 @@ main {
   }
 }
 
-// add distinct border and subtle shadow to navbar and footer in dark mode for better separation
+/* add distinct border and subtle shadow to navbar and footer in dark mode for better separation */
 html[data-bs-theme="dark"] .navbar {
   border-bottom: 2px solid #444;
   box-shadow: 0 2px 8px -2px #0005;

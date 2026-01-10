@@ -1,6 +1,6 @@
 .contactinfo-container {
   background: #fff;
-  //color: #181818;
+  /*color: #181818;*/
   border-radius: 24px;
   padding: 1.5rem 1.3rem 1.2rem 1.3rem;
   margin-bottom: 1.2rem;
@@ -102,7 +102,7 @@
   }
 }
 
-// override contact card colors for dark mode to match site dark theme
+/* override contact card colors for dark mode to match site dark theme */
 html[data-bs-theme="dark"] .contactinfo-container {
   background: #23272b;
   color: #f2f2f2;
