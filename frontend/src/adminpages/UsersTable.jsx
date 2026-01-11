@@ -1,20 +1,22 @@
-import { useState, useMemo, memo } from "react";
+import { useState, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPen,
   faTrashAlt,
   faEnvelope,
-  faChevronLeft,
-  faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
+import { Alert } from "react-bootstrap";
 import { sendCustomEmail } from "../api/emailService";
-import EmailMessageModal from "../components/EmailMessageModal";
 import { useAuth } from "../AuthContext";
 import useUsers from "../hooks/useUsers";
+import useTableData from "../hooks/useTableData";
+import useDeleteModal from "../hooks/useDeleteModal";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { Alert } from "react-bootstrap";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
+import EmailMessageModal from "../components/EmailMessageModal";
+import PaginationControl from "../components/common/PaginationControl";
+import SearchBox from "../components/common/SearchBox";
 
 const userFieldsHeaders = [
   "Identyfikator użytkownika",
@@ -48,7 +50,7 @@ const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
           onClick={() => onEdit(user)}
           style={{ minWidth: "38px" }}
         >
-          <FontAwesomeIcon icon={faPen} style={{ color: "black" }} />
+          <FontAwesomeIcon icon={faPen} />
         </button>
         <button
           className="btn btn-danger btn-sm mx-1"
@@ -65,56 +67,40 @@ const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
 
 const UsersTable = ({ onDeleteUser }) => {
   const navigate = useNavigate();
-  const usersPerPage = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuth();
+  const { users, isLoading, error, refetch } = useUsers(user?.token);
 
+  // email state
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
-
-  const { user } = useAuth();
-  const { users, isLoading, error, refetch } = useUsers(user?.token);
-
-  const safeUsers = Array.isArray(users) ? users : [];
-
-  const filteredUsers = useMemo(
-    () =>
-      safeUsers.filter((user) =>
-        ` ${user.idUser} ${user.firstname} ${user.lastname} ${user.email} ${user.role}`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
-      ),
-    [safeUsers, searchTerm]
-  );
-
-  const totalPages = useMemo(
-    () => Math.ceil(filteredUsers.length / usersPerPage),
-    [filteredUsers.length, usersPerPage]
-  );
-
-  const currentData = useMemo(
-    () =>
-      filteredUsers.slice(
-        (currentPage - 1) * usersPerPage,
-        currentPage * usersPerPage
-      ),
-    [filteredUsers, currentPage, usersPerPage]
-  );
-
-  // handlers
-  const handlePageClick = (page) => setCurrentPage(page);
-
-  const handleEditClick = (user) => {
-    navigate(`/adminpanel/edituser/${user.idUser}`, {
-      state: { userData: user },
-    });
+  const filterUsers = (user, term) => {
+    return ` ${user.idUser} ${user.firstname} ${user.lastname} ${user.email} ${user.role}`
+      .toLowerCase()
+      .includes(term.toLowerCase());
   };
 
+  const safeUsers = Array.isArray(users) ? users : [];
+  const {
+    searchTerm,
+    handleSearchChange,
+    currentData,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+  } = useTableData(safeUsers, filterUsers);
+
+  const {
+    show: showDeleteModal,
+    setShow: setShowDeleteModal,
+    itemToDelete: userToDelete,
+    askDelete: handleAskDeleteUser,
+    confirmDelete,
+  } = useDeleteModal((item) => onDeleteUser(item.idUser), refetch);
+
+  // email handlers
   const handleEmailClick = (user) => {
     setEmailTo(user.email);
     setShowEmailModal(true);
@@ -123,27 +109,15 @@ const UsersTable = ({ onDeleteUser }) => {
   const handleEmailSend = () => {
     sendCustomEmail(emailTo, emailSubject, emailMessage);
     setShowEmailModal(false);
-    resetEmailFields();
-  };
-
-  const resetEmailFields = () => {
     setEmailTo("");
     setEmailSubject("");
     setEmailMessage("");
   };
 
-  const handleAskDeleteUser = (user) => {
-    setUserToDelete(user);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDeleteUser = async () => {
-    if (userToDelete) {
-      await onDeleteUser(userToDelete.idUser);
-      await refetch();
-    }
-    setShowDeleteModal(false);
-    setUserToDelete(null);
+  const handleEditClick = (user) => {
+    navigate(`/adminpanel/edituser/${user.idUser}`, {
+      state: { userData: user },
+    });
   };
 
   if (isLoading) return <LoadingSpinner text="Ładowanie użytkowników..." />;
@@ -151,127 +125,65 @@ const UsersTable = ({ onDeleteUser }) => {
 
   return (
     <>
-      <div className="container text-center">
-        <div className="py-4">
-          <h2>Użytkownicy</h2>
-          {/* search box */}
-          <div className="mb-3 mt-4">
-            <input
-              type="text"
-              placeholder="Szukaj użytkownika..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="form-control mx-auto"
-              style={{ width: "220px" }}
-            />
-          </div>
-          <div className="table-responsive">
-            <table
-              className="table border shadow table-hover mx-auto"
-              style={{ maxWidth: "900px" }}
-            >
-              <thead className="table-dark">
-                <tr>
-                  {userFieldsHeaders.map((header, idx) => (
-                    <th
-                      key={userFields[idx]}
-                      scope="col"
-                      className="text-center align-middle"
-                    >
-                      {header}
-                    </th>
-                  ))}
-                  <th scope="col" className="text-center align-middle">
-                    Akcja
+      <div className="container text-center py-4">
+        <h2>Użytkownicy</h2>
+        <SearchBox
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Szukaj użytkownika..."
+        />
+
+        <div className="table-responsive">
+          <table
+            className="table border shadow table-hover mx-auto"
+            style={{ maxWidth: "900px" }}
+          >
+            <thead className="table-dark">
+              <tr>
+                {userFieldsHeaders.map((header) => (
+                  <th key={header} className="text-center align-middle">
+                    {header}
                   </th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentData.length > 0 ? (
-                  currentData.map((user) => (
-                    <UserRow
-                      key={user.idUser}
-                      user={user}
-                      onEdit={handleEditClick}
-                      onEmail={handleEmailClick}
-                      onDelete={handleAskDeleteUser}
-                    />
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={userFields.length + 1}
-                      className="text-center py-4"
-                    >
-                      Brak wyników do wyświetlenia.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          {/* pagination with arrows */}
-          {totalPages > 1 && (
-            <nav className="pagination justify-content-center mt-4">
-              <ul className="pagination">
-                {/* previous */}
-                <li
-                  className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
-                >
-                  <button
-                    className="page-link"
-                    onClick={() => handlePageClick(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    aria-label="Poprzednia"
-                    style={{ minWidth: "38px" }}
-                  >
-                    <FontAwesomeIcon icon={faChevronLeft} />
-                  </button>
-                </li>
-                {[...Array(totalPages)].map((_, index) => (
-                  <li
-                    key={index + 1}
-                    className={`page-item ${
-                      index + 1 === currentPage ? "active" : ""
-                    }`}
-                  >
-                    <button
-                      className="page-link"
-                      onClick={() => handlePageClick(index + 1)}
-                      style={{ minWidth: "38px" }}
-                    >
-                      {index + 1}
-                    </button>
-                  </li>
                 ))}
-                {/* next */}
-                <li
-                  className={`page-item ${
-                    currentPage === totalPages ? "disabled" : ""
-                  }`}
-                >
-                  <button
-                    className="page-link"
-                    onClick={() => handlePageClick(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    aria-label="Następna"
-                    style={{ minWidth: "38px" }}
+                <th className="text-center align-middle">Akcja</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentData.length > 0 ? (
+                currentData.map((user) => (
+                  <UserRow
+                    key={user.idUser}
+                    user={user}
+                    onEdit={handleEditClick}
+                    onEmail={handleEmailClick}
+                    onDelete={handleAskDeleteUser}
+                  />
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={userFields.length + 1}
+                    className="text-center py-4"
                   >
-                    <FontAwesomeIcon icon={faChevronRight} />
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          )}
+                    Brak wyników.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
+
+        <PaginationControl
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
+
       <ConfirmDeleteModal
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
-        onConfirm={confirmDeleteUser}
+        onConfirm={confirmDelete}
         itemName={
           userToDelete
             ? `${userToDelete.firstname} ${userToDelete.lastname}`
@@ -279,6 +191,7 @@ const UsersTable = ({ onDeleteUser }) => {
         }
         label="użytkownika"
       />
+
       <EmailMessageModal
         show={showEmailModal}
         handleClose={() => setShowEmailModal(false)}
@@ -288,7 +201,11 @@ const UsersTable = ({ onDeleteUser }) => {
         emailMessage={emailMessage}
         setEmailMessage={setEmailMessage}
         handleEmailSend={handleEmailSend}
-        resetEmailFields={resetEmailFields}
+        resetEmailFields={() => {
+          setEmailTo("");
+          setEmailSubject("");
+          setEmailMessage("");
+        }}
       />
     </>
   );

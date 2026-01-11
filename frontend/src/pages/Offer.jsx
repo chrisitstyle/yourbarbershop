@@ -1,37 +1,32 @@
-import { useState, useMemo } from "react";
 import useOffers from "../hooks/useOffers";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { Alert } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faScissors } from "@fortawesome/free-solid-svg-icons";
+import useTableData from "../hooks/useTableData";
+import PaginationControl from "../components/common/PaginationControl";
+import SearchBox from "../components/common/SearchBox";
 
 const fields = ["idOffer", "kind", "cost"];
 
 const Offer = () => {
   const { offers, isLoading, error } = useOffers();
-  const [currentPage, setCurrentPage] = useState(1);
-  const offersPerPage = 10;
 
-  const showPagination = offers.length > offersPerPage;
-  const totalPages = useMemo(
-    () => Math.ceil(offers.length / offersPerPage),
-    [offers.length, offersPerPage]
-  );
+  const filterOffers = (offer, term) => {
+    const searchStr = `${offer.idOffer} ${offer.kind} ${offer.cost}`;
+    return searchStr.toLowerCase().includes(term.toLowerCase());
+  };
 
-  const currentOffers = useMemo(
-    () =>
-      offers.slice(
-        (currentPage - 1) * offersPerPage,
-        currentPage * offersPerPage
-      ),
-    [offers, currentPage, offersPerPage]
-  );
+  const {
+    searchTerm,
+    handleSearchChange,
+    currentData,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+  } = useTableData(offers, filterOffers);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  if (isLoading) {
-    return <LoadingSpinner text="Ładowanie usług..." />;
-  }
+  if (isLoading) return <LoadingSpinner text="Ładowanie usług..." />;
 
   if (error) {
     return (
@@ -61,10 +56,19 @@ const Offer = () => {
         <FontAwesomeIcon icon={faScissors} className="me-2 text-primary" />
         Nasza oferta
       </h1>
-      <p className="lead text-center mb-5">
+      <p className="lead text-center mb-4">
         Zapoznaj się z naszą szeroką ofertą. Nasi fryzjerzy zadbają o Twój
         wygląd i samopoczucie!
       </p>
+
+      {/* search box */}
+      <SearchBox
+        value={searchTerm}
+        onChange={handleSearchChange}
+        placeholder="Szukaj usługi..."
+        width="400px"
+      />
+
       <div className="table-responsive">
         <table
           className="table table-bordered table-hover mx-auto shadow rounded"
@@ -78,62 +82,35 @@ const Offer = () => {
             </tr>
           </thead>
           <tbody>
-            {currentOffers.map((offer) => (
-              <tr key={offer.idOffer}>
-                {fields.map((field) => (
-                  <td key={field} className="text-center align-middle">
-                    {field === "cost" ? `${offer[field]} zł` : offer[field]}
-                  </td>
-                ))}
+            {currentData.length > 0 ? (
+              currentData.map((offer) => (
+                <tr key={offer.idOffer}>
+                  {fields.map((field) => (
+                    <td key={field} className="text-center align-middle">
+                      {field === "cost" ? `${offer[field]} zł` : offer[field]}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={fields.length} className="text-center py-4">
+                  <Alert variant="info" className="mb-0">
+                    Nie znaleziono usług pasujących do wyszukiwania.
+                  </Alert>
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
-      {showPagination && (
-        <ul className="pagination justify-content-center mt-4">
-          <li className={`page-item${currentPage === 1 ? " disabled" : ""}`}>
-            <button
-              className="page-link"
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              aria-label="Poprzednia"
-            >
-              &laquo;
-            </button>
-          </li>
-          {[...Array(totalPages)].map((_, index) => (
-            <li
-              key={index + 1}
-              className={`page-item${
-                index + 1 === currentPage ? " active" : ""
-              }`}
-            >
-              <button
-                className="page-link"
-                onClick={() => paginate(index + 1)}
-                style={{ minWidth: "38px" }}
-              >
-                {index + 1}
-              </button>
-            </li>
-          ))}
-          <li
-            className={`page-item${
-              currentPage === totalPages ? " disabled" : ""
-            }`}
-          >
-            <button
-              className="page-link"
-              onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              aria-label="Następna"
-            >
-              &raquo;
-            </button>
-          </li>
-        </ul>
-      )}
+
+      <PaginationControl
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+
       <p className="lead text-center mt-5">
         Nie zwlekaj - umów się na wizytę już dziś i poczuj się wyjątkowo!
       </p>

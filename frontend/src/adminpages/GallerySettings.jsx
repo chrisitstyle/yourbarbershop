@@ -1,11 +1,14 @@
-import { useEffect, useState, useMemo, memo } from "react";
-import { useSupabaseClient } from "../api/supabaseApi";
-import { Container, Table, Modal, Button, Form } from "react-bootstrap";
-import { CDNURL } from "../api/supabaseApi";
+import { useEffect, useState, memo } from "react";
+import { useSupabaseClient, CDNURL } from "../api/supabaseApi";
+import { Container, Table, Modal, Button, Form, Alert } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
-import { Alert } from "react-bootstrap";
+import useTableData from "../hooks/useTableData";
+import useDeleteModal from "../hooks/useDeleteModal";
+import SearchBox from "../components/common/SearchBox";
+import PaginationControl from "../components/common/PaginationControl";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
+import ButtonSpinner from "../components/common/ButtonSpinner";
 
 const imageFieldsHeaders = ["Nazwa obrazu"];
 const imageFields = ["name"];
@@ -14,8 +17,7 @@ const ImageRow = memo(function ImageRow({
   image,
   onImageClick,
   onDelete,
-  deleteLoading,
-  imageToDelete,
+  isDeleting,
 }) {
   return (
     <tr key={image.name} style={{ cursor: "pointer" }}>
@@ -31,22 +33,20 @@ const ImageRow = memo(function ImageRow({
       ))}
       <td className="align-middle text-center">
         {/* delete button with tooltip */}
-        <button
-          className="btn btn-danger btn-sm"
+        <ButtonSpinner
+          variant="danger"
+          size="sm"
           title="Usuń obraz"
           style={{ minWidth: "38px" }}
           onClick={(e) => {
             e.stopPropagation();
             onDelete(image);
           }}
-          disabled={deleteLoading}
+          loading={isDeleting}
+          loadingText="" // no text during loading, just spinner because of small button size
         >
-          {deleteLoading && imageToDelete?.name === image.name ? (
-            "Usuwanie..."
-          ) : (
-            <FontAwesomeIcon icon={faTrashAlt} />
-          )}
-        </button>
+          <FontAwesomeIcon icon={faTrashAlt} />
+        </ButtonSpinner>
       </td>
     </tr>
   );
@@ -57,11 +57,6 @@ const GallerySettings = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const supabase = useSupabaseClient();
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
-  // modal state for confirming delete
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [imageToDelete, setImageToDelete] = useState(null);
 
   // messages for different scenarios
   const [deleteImageErrorMsg, setDeleteImageErrorMsg] = useState(null);
@@ -70,15 +65,6 @@ const GallerySettings = () => {
   const [uploadImageErrorMsg, setUploadImageErrorMsg] = useState(null);
   const [uploadingImageMsg, setUploadingImageMsg] = useState(null);
   const [uploadingImageTimeout, setUploadingImageTimeout] = useState(null);
-
-  const handleImageClick = (image) => {
-    setSelectedImage(image);
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
 
   // fetch the image list from Supabase storage (filtered by file type)
   async function getImages() {
@@ -109,6 +95,49 @@ const GallerySettings = () => {
       console.error("Error fetching images:", error.message);
     }
   }
+
+  const filterImages = (image, term) => {
+    return image.name.toLowerCase().includes(term.toLowerCase());
+  };
+
+  const {
+    searchTerm,
+    handleSearchChange,
+    currentData,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+  } = useTableData(images, filterImages);
+
+  const performDeleteImage = async (image) => {
+    const { error } = await supabase.storage
+      .from("barbershopimages")
+      .remove([`images/${image.name}`]);
+
+    if (error) {
+      setDeleteImageErrorMsg("Usuwanie obrazu nie powiodło się");
+      console.error("Error removing image:", error.message);
+      throw error;
+    }
+  };
+
+  const {
+    show: showDeleteModal,
+    setShow: setShowDeleteModal,
+    itemToDelete: imageToDelete,
+    askDelete: handleAskDeleteImage,
+    confirmDelete: confirmDeleteImage,
+    isDeleting,
+  } = useDeleteModal(performDeleteImage, getImages);
+
+  const handleImageClick = (image) => {
+    setSelectedImage(image);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
 
   // upload images sequentially, handle UI feedback and reset file input
   const handleUploadImage = async (e) => {
@@ -155,33 +184,6 @@ const GallerySettings = () => {
     }
   };
 
-  const handleAskDeleteImage = (image) => {
-    setImageToDelete(image);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDeleteImage = async () => {
-    if (!imageToDelete) return;
-    setDeleteLoading(true);
-    try {
-      const { error } = await supabase.storage
-        .from("barbershopimages")
-        .remove([`images/${imageToDelete.name}`]);
-      if (error) {
-        setDeleteImageErrorMsg("Usuwanie obrazu nie powiodło się");
-        console.error("Error removing image:", error.message);
-      } else {
-        getImages();
-      }
-    } catch (error) {
-      setDeleteImageErrorMsg("Usuwanie obrazu nie powiodło się");
-      console.error("Error deleting image:", error.message);
-    }
-    setDeleteLoading(false);
-    setShowDeleteModal(false);
-    setImageToDelete(null);
-  };
-
   useEffect(() => {
     getImages();
   }, []);
@@ -192,8 +194,6 @@ const GallerySettings = () => {
       clearTimeout(uploadingImageTimeout);
     };
   }, [uploadingImageTimeout]);
-
-  const memoizedImages = useMemo(() => images, [images]);
 
   return (
     <>
@@ -270,7 +270,14 @@ const GallerySettings = () => {
 
       {/* table with images and their actions */}
       <Container className="text-center mt-4">
-        {memoizedImages.length > 0 ? (
+        {/* search box */}
+        <SearchBox
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Szukaj obrazu..."
+        />
+
+        {currentData.length > 0 ? (
           <div
             className="table-responsive mx-auto"
             style={{ maxWidth: "500px" }}
@@ -293,14 +300,15 @@ const GallerySettings = () => {
                 </tr>
               </thead>
               <tbody>
-                {memoizedImages.map((image) => (
+                {currentData.map((image) => (
                   <ImageRow
                     key={image.name}
                     image={image}
                     onImageClick={handleImageClick}
                     onDelete={handleAskDeleteImage}
-                    deleteLoading={deleteLoading}
-                    imageToDelete={imageToDelete}
+                    isDeleting={
+                      isDeleting && imageToDelete?.name === image.name
+                    }
                   />
                 ))}
               </tbody>
@@ -309,6 +317,13 @@ const GallerySettings = () => {
         ) : (
           <h5 className="mt-5">Nie znaleziono zdjęć</h5>
         )}
+
+        {/* pagination control */}
+        <PaginationControl
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
 
         {/* modal for image preview */}
         <Modal show={showModal} onHide={handleCloseModal} centered>
@@ -336,6 +351,8 @@ const GallerySettings = () => {
             </Button>
           </Modal.Footer>
         </Modal>
+
+        {/* delete confirmation modal */}
         <ConfirmDeleteModal
           show={showDeleteModal}
           onHide={() => setShowDeleteModal(false)}
