@@ -58,15 +58,15 @@ CREATE TABLE IF NOT EXISTS `user` (
   `id_user` int NOT NULL AUTO_INCREMENT,
   `firstname` varchar(200) NOT NULL,
   `lastname` varchar(200) NOT NULL,
-  `e-mail` varchar(200) NOT NULL,
+  `email` varchar(200) NOT NULL,
   `password` varchar(250) NOT NULL,
   `role` varchar(50) NOT NULL,
   PRIMARY KEY (`id_user`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Insert for sample admin and user
-INSERT INTO `user` (`firstname`, `lastname`, `e-mail`, `password`, `role`) VALUES ( 'TestAdmin', 'TestAdmin', 'admin@test.com', '$2a$10$50CMRbm4BFvmQfOcukUjCeFrZIZWGiLr9RYO6ON5zI.xv/a3ltS2S', 'ADMIN');
-INSERT INTO `user` (`firstname`, `lastname`, `e-mail`, `password`, `role`) VALUES ('John', 'Doe', 'johndoe@example.com', '$2a$10$HjId9JiXQUUmmQEwcoJNG.DynNWrKFFvv0kP3WxdlTd6/3vXDgOlG', 'USER');
+INSERT INTO `user` (`firstname`, `lastname`, `email`, `password`, `role`) VALUES ( 'TestAdmin', 'TestAdmin', 'admin@test.com', '$2a$10$50CMRbm4BFvmQfOcukUjCeFrZIZWGiLr9RYO6ON5zI.xv/a3ltS2S', 'ADMIN');
+INSERT INTO `user` (`firstname`, `lastname`, `email`, `password`, `role`) VALUES ('John', 'Doe', 'johndoe@example.com', '$2a$10$HjId9JiXQUUmmQEwcoJNG.DynNWrKFFvv0kP3WxdlTd6/3vXDgOlG', 'USER');
 /* password for both  is "test123"*/
 
 

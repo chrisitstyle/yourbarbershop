@@ -13,7 +13,7 @@ import java.util.List;
 
 @Getter
 @Setter
-@Table(name = "user")
+@Table(name = "\"user\"")
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -24,7 +24,6 @@ public class User implements UserDetails {
     private Long idUser;
     private String firstname;
     private String lastname;
-    @Column(name = "e-mail")
     private String email;
     private String password;
     @Enumerated(EnumType.STRING)
