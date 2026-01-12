@@ -11,6 +11,7 @@ import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.OrderRepository;
 import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.TestEntities;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,13 +34,7 @@ class UserRepositoryTest {
     @Test
     @DisplayName("save method should persist user to the database and assign id")
     void save_persistsUserToDatabase() {
-        User user = User.builder()
-                .email("johndoe@saveexample.com")
-                .firstname("John")
-                .lastname("Doe")
-                .password("passwd")
-                .role(Role.USER)
-                .build();
+        User user = TestEntities.createUser("John", "Doe", "johndoe@saveexample.com", Role.USER);
 
         // when
         User savedUser = userRepository.save(user);
@@ -54,17 +49,11 @@ class UserRepositoryTest {
     @DisplayName("existsByEmail should return true for existing email")
     void existsByEmail_existingEmail_returnsTrue() {
         // given
-        User user = User.builder()
-                .email("daryldixon@example.com")
-                .firstname("Daryl")
-                .lastname("Dixon")
-                .password("pwd")
-                .role(Role.USER)
-                .build();
+        User user = TestEntities.createUser("John", "Doe", "johndoe@existsexample.com", Role.USER);
         userRepository.save(user);
 
         // when
-        boolean result = userRepository.existsByEmail("daryldixon@example.com");
+        boolean result = userRepository.existsByEmail("johndoe@existsexample.com");
         // then
         assertThat(result).isTrue();
     }
@@ -82,20 +71,14 @@ class UserRepositoryTest {
     @DisplayName("findByEmail should return user for existing email")
     void findByEmail_existingEmail_returnsUser() {
         // given
-        User user = User.builder()
-                .email("rick@example.com")
-                .firstname("Rick")
-                .lastname("Grimes")
-                .password("pwd")
-                .role(Role.ADMIN)
-                .build();
+        User user = TestEntities.createUser("John", "Wick", "johnwick@example.com", Role.USER);
         userRepository.save(user);
 
         // when
-        Optional<User> found = userRepository.findByEmail("rick@example.com");
+        Optional<User> found = userRepository.findByEmail("johnwick@example.com");
         // then
         assertThat(found).isPresent();
-        assertThat(found.get().getFirstname()).isEqualTo("Rick");
+        assertThat(found.get().getFirstname()).isEqualTo("John");
     }
 
     @Test
@@ -111,13 +94,7 @@ class UserRepositoryTest {
     @DisplayName("findById should return user with orders")
     void findById_existingId_returnsUserWithOrders() {
         // given
-        User user = User.builder()
-                .email("order@me.com")
-                .firstname("Will")
-                .lastname("Smith")
-                .password("pwd")
-                .role(Role.USER)
-                .build();
+        User user = TestEntities.createUser("John", "Doe", "order@me.com", Role.USER);
 
         User savedUser = userRepository.save(user);
         // when
@@ -132,21 +109,9 @@ class UserRepositoryTest {
     @DisplayName("findAllWithOrders should return all users")
     void findAllWithOrders_returnsAllUsers() {
         // given
-        User user1 = User.builder()
-                .email("john@wick.com")
-                .firstname("John")
-                .lastname("Wick")
-                .password("passwd")
-                .role(Role.USER)
-                .build();
+        User user1 = TestEntities.createUser("John", "Doe", "johndoe@example.com", Role.USER);
 
-        User user2 = User.builder()
-                .email("negan@smith.com")
-                .firstname("Negan")
-                .lastname("Smith")
-                .password("2")
-                .role(Role.ADMIN)
-                .build();
+        User user2 = TestEntities.createUser("Negan", "Smith", "negansmith@example.com", Role.ADMIN);
 
         userRepository.saveAll(List.of(user1, user2));
         // when
@@ -155,33 +120,22 @@ class UserRepositoryTest {
         // then
         assertThat(users).isNotEmpty();
         assertThat(users).extracting(User::getEmail)
-                .contains("john@wick.com", "negan@smith.com");
+                .contains("johndoe@example.com", "negansmith@example.com");
     }
 
     @Test
     @DisplayName("findById returns user with orders and offers")
     void findById_userHasOrderWithOffer_returnsUserWithOrderAndOffer() {
         // given
-        User user = User.builder()
-                .email("jane@doe.com")
-                .firstname("Jane")
-                .lastname("Doe")
-                .password("pwd")
-                .role(Role.USER)
-                .build();
+        User user = TestEntities.createUser("John", "Doe", "johndoe@example.com", Role.USER);
         userRepository.save(user);
 
-        Offer offer = new Offer();
-        offer.setKind("strzyżenie");
-        offer.setCost(BigDecimal.valueOf(35.0));
+        Offer offer = TestEntities.createOffer("strzyżenie", BigDecimal.valueOf(35.0));
         offerRepository.save(offer);
 
-        Order order = new Order();
-        order.setUser(user);
-        order.setOffer(offer);
-        order.setOrderDate(LocalDateTime.now());
-        order.setVisitDate(LocalDateTime.now().plusDays(1));
-        order.setStatus(Status.NOWE);
+        Order order = TestEntities.createOrder(user, offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+                Status.NOWE);
+
         orderRepository.save(order);
 
         user.getUserOrders().add(order);
@@ -200,13 +154,7 @@ class UserRepositoryTest {
     @DisplayName("deleteById should remove user from repository")
     void deleteById_removesUser() {
         // given
-        User user = User.builder()
-                .email("jphn@example.com")
-                .firstname("Delete")
-                .lastname("Me")
-                .password("pwd")
-                .role(Role.USER)
-                .build();
+        User user = TestEntities.createUser("John", "Doe", "johndoe@example.com", Role.USER);
         User savedUser = userRepository.save(user);
         Long userId = savedUser.getIdUser();
         // when

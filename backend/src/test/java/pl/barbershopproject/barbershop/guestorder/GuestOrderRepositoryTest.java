@@ -9,6 +9,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.TestEntities;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -29,8 +30,10 @@ class GuestOrderRepositoryTest {
     @Test
     @DisplayName("save method should persist guest order and assign id")
     void save_persistsGuestOrder_andAssignsId() {
-        Offer offer = createAndSaveOffer();
-        GuestOrder guestOrder = createTestGuestOrder(offer, Status.NOWE);
+        Offer offer = offerRepository.save(TestEntities.createOffer("haircut", BigDecimal.valueOf(50)));
+        GuestOrder guestOrder = TestEntities.createGuestOrder("John","Doe","123456789",
+                "johndoe@example.com", offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+                Status.NOWE);
 
         GuestOrder saved = guestOrderRepository.save(guestOrder);
 
@@ -46,8 +49,10 @@ class GuestOrderRepositoryTest {
     @Test
     @DisplayName("findById should return saved guest order with offer")
     void findById_returnsGuestOrder() {
-        Offer offer = createAndSaveOffer();
-        GuestOrder guestOrder = createTestGuestOrder(offer, Status.ANULOWANE);
+        Offer offer = offerRepository.save(TestEntities.createOffer("haircut", BigDecimal.valueOf(50)));
+        GuestOrder guestOrder = TestEntities.createGuestOrder("John","Doe","123456789",
+                "johndoe@example.com", offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+                Status.ANULOWANE);
 
         GuestOrder saved = guestOrderRepository.save(guestOrder);
 
@@ -65,10 +70,14 @@ class GuestOrderRepositoryTest {
     @Test
     @DisplayName("findAll should return all saved guest orders with offers")
     void findAll_returnsAllGuestOrders() {
-        Offer offer = createAndSaveOffer();
+        Offer offer = offerRepository.save(TestEntities.createOffer("haircut", BigDecimal.valueOf(50)));
 
-        GuestOrder o1 = createTestGuestOrder(offer, Status.NOWE);
-        GuestOrder o2 = createTestGuestOrder(offer, Status.ZREALIZOWANE);
+        GuestOrder o1 = TestEntities.createGuestOrder("John","Doe","123456789",
+                "johndoe@example.com", offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+                Status.NOWE);
+        GuestOrder o2 = TestEntities.createGuestOrder("John","Doe","123456789",
+                "johndoe@example.com", offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+                Status.ZREALIZOWANE);
 
         guestOrderRepository.saveAll(List.of(o1, o2));
 
@@ -90,8 +99,10 @@ class GuestOrderRepositoryTest {
     @Test
     @DisplayName("deleteById should remove guest order from repository")
     void deleteById_removesGuestOrder() {
-        Offer offer = createAndSaveOffer();
-        GuestOrder guestOrder = createTestGuestOrder(offer, Status.NOWE);
+        Offer offer = offerRepository.save(TestEntities.createOffer("haircut", BigDecimal.valueOf(50)));
+        GuestOrder guestOrder = TestEntities.createGuestOrder("John","Doe","123456789",
+                "johndoe@example.com", offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+                Status.NOWE);
 
         GuestOrder saved = guestOrderRepository.save(guestOrder);
         Long guestOrderId = saved.getIdGuestOrder();
@@ -105,10 +116,14 @@ class GuestOrderRepositoryTest {
     @Test
     @DisplayName("findGuestOrdersByStatus should return only guest orders with specific status")
     void findGuestOrdersByStatus_returnsOrdersWithNOWEStatus() {
-        Offer offer = createAndSaveOffer();
+        Offer offer = offerRepository.save(TestEntities.createOffer("haircut", BigDecimal.valueOf(50)));
 
-        GuestOrder o1 = createTestGuestOrder(offer, Status.NOWE);
-        GuestOrder o2 = createTestGuestOrder(offer, Status.ANULOWANE);
+        GuestOrder o1 = TestEntities.createGuestOrder("John","Doe","123456789",
+                "johndoe@example.com", offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+                Status.NOWE);
+        GuestOrder o2 = TestEntities.createGuestOrder("John","Doe","123456789",
+                "johndoe@example.com", offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+                Status.ANULOWANE);
 
         guestOrderRepository.saveAll(List.of(o1, o2));
 
@@ -119,24 +134,4 @@ class GuestOrderRepositoryTest {
                 .allMatch(ord -> ord.getStatus() == Status.NOWE);
     }
 
-    // utils
-    private Offer createAndSaveOffer() {
-        Offer offer = new Offer();
-        offer.setKind("haircut");
-        offer.setCost(BigDecimal.valueOf(50));
-        return offerRepository.save(offer);
-    }
-
-    private GuestOrder createTestGuestOrder(Offer offer, Status status) {
-        GuestOrder guestOrder = new GuestOrder();
-        guestOrder.setFirstname("John");
-        guestOrder.setLastname("Doe");
-        guestOrder.setPhonenumber("123456789");
-        guestOrder.setEmail("johndoe@example.com");
-        guestOrder.setOrderDate(LocalDateTime.now());
-        guestOrder.setVisitDate(LocalDateTime.now().plusDays(1));
-        guestOrder.setOffer(offer);
-        guestOrder.setStatus(status);
-        return guestOrder;
-    }
 }
