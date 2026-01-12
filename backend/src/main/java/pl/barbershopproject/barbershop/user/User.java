@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import pl.barbershopproject.barbershop.order.Order;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,9 +31,11 @@ public class User implements UserDetails {
     private Role role;
 
 
+
     @OneToMany(mappedBy = "user")
     @JsonIgnoreProperties({"user"})
-    private List<Order> userOrders;
+    @Builder.Default
+    private List<Order> userOrders = new ArrayList<>();
 
 
 
