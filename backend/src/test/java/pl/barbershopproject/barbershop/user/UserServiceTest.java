@@ -14,10 +14,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.SelfDeletionException;
-import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
 import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
+import pl.barbershopproject.barbershop.utils.TestEntities;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -49,31 +49,11 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
 
-        userCreationDTO = new UserCreationDTO(
-                "john@doe.com",
-                "test_password",
-                "John",
-                "Doe",
-                "USER"
-        );
-        user = User.builder()
-                .idUser(1L)
-                .email("john@doe.com")
-                .password("encoded_password")
-                .firstname("John")
-                .lastname("Doe")
-                .role(Role.USER)
-                .userOrders(List.of(new Order()))
-                .build();
+        userCreationDTO = TestEntities.createUserCreationDTO();
+        user = TestEntities.createUser();
+        user.setPassword("encoded_password");
 
-        userResponseDTO = new UserResponseDTO(
-                1L,
-                "John",
-                "Doe",
-                "john@doe.com",
-                Role.USER
-        );
-
+        userResponseDTO = TestEntities.createUserResponseDTO();
 
         SecurityContextHolder.setContext(securityContext);
 

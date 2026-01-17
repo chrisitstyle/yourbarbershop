@@ -8,11 +8,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
-import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.TestEntities;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -37,18 +36,8 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        offer = new Offer();
-        offer.setIdOffer(1L);
-        offer.setKind("Test kind");
-        offer.setCost(new BigDecimal("100"));
-
-        user = new User();
-        user.setIdUser(1L);
-        user.setFirstname("John");
-        user.setLastname("Doe");
-        user.setEmail("john@doe.com");
-        user.setPassword("test_password");
-        user.setRole(Role.USER);
+        offer = TestEntities.createOffer();
+        user = TestEntities.createUser();
 
         order = new Order();
         order.setIdOrder(1L);
@@ -61,7 +50,7 @@ class OrderServiceTest {
     }
 
     @Test
-    void addOrder_ShouldSaveOrder(){
+    void addOrder_ShouldSaveOrder() {
 
         when(orderRepository.save(any(Order.class))).thenReturn(order);
 
@@ -84,7 +73,7 @@ class OrderServiceTest {
     }
 
     @Test
-    void getSingleOrder_ShouldReturnOrderDTO_WhenOrderExists(){
+    void getSingleOrder_ShouldReturnOrderDTO_WhenOrderExists() {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
         OrderDTO result = orderService.getSingleOrder(1L);
@@ -94,7 +83,7 @@ class OrderServiceTest {
     }
 
     @Test
-    void getSingleOrder_ShouldThrowException_WhenOrderNotFound(){
+    void getSingleOrder_ShouldThrowException_WhenOrderNotFound() {
         when(orderRepository.findById(2L)).thenReturn(Optional.empty());
 
         assertThrows(NoSuchElementException.class,
@@ -121,7 +110,7 @@ class OrderServiceTest {
     }
 
     @Test
-    void updateOrder_ShouldUpdateExistingOrder(){
+    void updateOrder_ShouldUpdateExistingOrder() {
         updatedOrder = new Order();
         updatedOrder.setUser(user);
         updatedOrder.setOffer(offer);

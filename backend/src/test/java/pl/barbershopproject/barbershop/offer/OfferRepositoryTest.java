@@ -25,26 +25,26 @@ class OfferRepositoryTest {
     @DisplayName("save should persist offer and assign id")
     void save_persistsOffer_andAssignsId() {
         // given
-        Offer offer = TestEntities.createOffer("haircut",BigDecimal.valueOf(50.0));
+        Offer offer = TestEntities.createOffer();
         // when
         Offer savedOffer = offerRepository.save(offer);
         // then
         assertThat(savedOffer.getIdOffer()).isGreaterThan(0);
-        assertThat(savedOffer.getKind()).isEqualTo("haircut");
-        assertThat(savedOffer.getCost()).isEqualByComparingTo("50.0");
+        assertThat(savedOffer.getKind()).isEqualTo("test_kind");
+        assertThat(savedOffer.getCost()).isEqualByComparingTo("120");
     }
 
     @Test
     @DisplayName("findById should return existed offer")
     void findById_returnsOffer() {
         // given
-        Offer offer = TestEntities.createOffer("coloring",BigDecimal.valueOf(120.00));
+        Offer offer = TestEntities.createOffer();
         Offer savedOffer = offerRepository.save(offer);
         // when
         Optional<Offer> found = offerRepository.findById(savedOffer.getIdOffer());
         // then
         assertThat(found).isPresent();
-        assertThat(found.get().getKind()).isEqualTo("coloring");
+        assertThat(found.get().getKind()).isEqualTo("test_kind");
         assertThat(found.get().getCost()).isEqualByComparingTo("120.00");
     }
 
@@ -52,8 +52,8 @@ class OfferRepositoryTest {
     @DisplayName("findAll should return all offers")
     void findAll_returnsAllSavedOffers() {
         // given
-        Offer o1 = TestEntities.createOffer("children cut",BigDecimal.valueOf(30));
-        Offer o2 = TestEntities.createOffer("styling",BigDecimal.valueOf(70));
+        Offer o1 = TestEntities.createOffer("children cut", BigDecimal.valueOf(30));
+        Offer o2 = TestEntities.createOffer("styling", BigDecimal.valueOf(70));
         offerRepository.saveAll(List.of(o1, o2));
         // when
         List<Offer> offers = offerRepository.findAll();
@@ -66,7 +66,7 @@ class OfferRepositoryTest {
     @DisplayName("deleteById should remove offer")
     void deleteById_removesOffer() {
         // given
-        Offer offer = TestEntities.createOffer("braid",BigDecimal.valueOf(90));
+        Offer offer = TestEntities.createOffer();
         Offer savedOffer = offerRepository.save(offer);
         // when
         offerRepository.deleteById(savedOffer.getIdOffer());

@@ -8,13 +8,11 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
-import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
 import pl.barbershopproject.barbershop.util.Status;
 import pl.barbershopproject.barbershop.utils.TestEntities;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -35,29 +33,29 @@ class OrderRepositoryTest {
     @Test
     @DisplayName("save method should persist order and assign id")
     void save_persistsOrder_andAssignsId() {
-        User user = TestEntities.createUser("John", "Doe", "johndoe@example.com", Role.USER);
+        User user = TestEntities.createUser();
         User savedUser = userRepository.save(user);
 
-        Offer offer = TestEntities.createOffer("haircut", BigDecimal.valueOf(100));
+        Offer offer = TestEntities.createOffer();
         Offer savedOffer = offerRepository.save(offer);
 
 
         Order order = TestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(),
                 LocalDateTime.now().plusDays(1), Status.NOWE);
-        Order  savedOrder = orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
 
-        assertThat(savedOrder.getIdOrder()).isGreaterThan(1);
+        assertThat(savedOrder.getIdOrder()).isGreaterThan(0);
         assertThat(savedOrder.getUser().getEmail()).isEqualTo("johndoe@example.com");
-        assertThat(savedOrder.getOffer().getKind()).isEqualTo("haircut");
+        assertThat(savedOrder.getOffer().getKind()).isEqualTo("test_kind");
     }
 
     @Test
     @DisplayName("findById should return saved order with user and offer")
     void findById_returnsOrder() {
-        User user = TestEntities.createUser("John", "Doe", "johndoe@example.com", Role.USER);
+        User user = TestEntities.createUser();
         User savedUser = userRepository.save(user);
 
-        Offer offer = TestEntities.createOffer("haircut", BigDecimal.valueOf(100));
+        Offer offer = TestEntities.createOffer();
         Offer savedOffer = offerRepository.save(offer);
 
         Order order = TestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(),
@@ -68,17 +66,17 @@ class OrderRepositoryTest {
 
         assertThat(found).isPresent();
         assertThat(found.get().getUser().getEmail()).isEqualTo("johndoe@example.com");
-        assertThat(found.get().getOffer().getKind()).isEqualTo("haircut");
+        assertThat(found.get().getOffer().getKind()).isEqualTo("test_kind");
         assertThat(found.get().getStatus()).isEqualTo(Status.ZREALIZOWANE);
     }
 
     @Test
     @DisplayName("findAll should return all saved orders with users and offers")
     void findAll_returnsAllOrders() {
-        User user = TestEntities.createUser("John", "Doe", "johndoe@example.com", Role.USER);
+        User user = TestEntities.createUser();
         User savedUser = userRepository.save(user);
 
-        Offer offer = TestEntities.createOffer("haircut", BigDecimal.valueOf(100));
+        Offer offer = TestEntities.createOffer();
         Offer savedOffer = offerRepository.save(offer);
 
         Order o1 = TestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
@@ -100,10 +98,10 @@ class OrderRepositoryTest {
     @Test
     @DisplayName("deleteById should remove order from repository")
     void deleteById_removesOrder() {
-        User user = TestEntities.createUser("John", "Doe", "johndoe@example.com", Role.USER);
+        User user = TestEntities.createUser();
         User savedUser = userRepository.save(user);
 
-        Offer offer = TestEntities.createOffer("haircut", BigDecimal.valueOf(100));
+        Offer offer = TestEntities.createOffer();
         Offer savedOffer = offerRepository.save(offer);
 
         Order order = TestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(),
@@ -121,10 +119,10 @@ class OrderRepositoryTest {
     @Test
     @DisplayName("findOrdersByStatus should return only orders with specific status")
     void findOrdersByStatus_returnsOrdersWithGivenStatus() {
-        User user = TestEntities.createUser("John", "Doe", "johndoe@example.com", Role.USER);
+        User user = TestEntities.createUser();
         User savedUser = userRepository.save(user);
 
-        Offer offer = TestEntities.createOffer("haircut", BigDecimal.valueOf(100));
+        Offer offer = TestEntities.createOffer();
         Offer savedOffer = offerRepository.save(offer);
 
         Order o1 = TestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),

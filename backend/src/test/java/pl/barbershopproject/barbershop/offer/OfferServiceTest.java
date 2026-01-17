@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.barbershopproject.barbershop.utils.TestEntities;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,31 +30,29 @@ class OfferServiceTest {
 
     @BeforeEach
     void setUp() {
-         offer = new Offer();
-        offer.setIdOffer(1L);
-        offer.setKind("Test kind");
-        offer.setCost(new BigDecimal("100"));
+        offer = TestEntities.createOffer();
 
     }
 
     @Test
-    void addOffer_ShouldReturnOffer(){
+    void addOffer_ShouldReturnOffer() {
 
         when(offerRepository.save(offer)).thenReturn(offer);
 
         Offer savedOffer = offerService.addOffer(offer);
 
         assertNotNull(savedOffer);
-       assertEquals(offer.getIdOffer(), savedOffer.getIdOffer());
-         assertEquals(offer.getKind(), savedOffer.getKind());
+        assertEquals(offer.getIdOffer(), savedOffer.getIdOffer());
+        assertEquals(offer.getKind(), savedOffer.getKind());
         assertEquals(offer.getCost(), savedOffer.getCost());
 
         verify(offerRepository, times(1)).save(offer);
 
 
     }
+
     @Test
-    void getAllOffers_ShouldReturnAllOffers(){
+    void getAllOffers_ShouldReturnAllOffers() {
 
         when(offerRepository.findAll()).thenReturn(List.of(offer));
 
@@ -64,7 +63,7 @@ class OfferServiceTest {
     }
 
     @Test
-    void getSingleOffer_ShouldReturnSingleOffer(){
+    void getSingleOffer_ShouldReturnSingleOffer() {
         long idOffer = 1L;
         when(offerRepository.findById(idOffer)).thenReturn(Optional.of(offer));
 
@@ -94,8 +93,8 @@ class OfferServiceTest {
     }
 
     @Test
-   void updateOffer_ShouldThrowException_WhenOfferDoesNotExist() {
-        Offer updatedOffer = new Offer();
+    void updateOffer_ShouldThrowException_WhenOfferDoesNotExist() {
+        Offer updatedOffer = TestEntities.createOffer();
 
         when(offerRepository.findById(1L)).thenReturn(Optional.empty());
 

@@ -3,14 +3,16 @@ package pl.barbershopproject.barbershop.order;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
 
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 @Table(name = "user_order")

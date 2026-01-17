@@ -52,7 +52,6 @@ public class TestEntities {
 
     /**
      * Returns a UserBuilder pre-filled with default test data (John Doe).
-     * <p>
      * Useful when you need to override only specific fields in a test case.
      *
      * @return UserBuilder with default values set
@@ -64,7 +63,7 @@ public class TestEntities {
                 .firstname("John")
                 .lastname("Doe")
                 .email("johndoe@example.com")
-                .password("passwd")
+                .password("test_password")
                 .role(Role.USER);
     }
 
@@ -123,6 +122,34 @@ public class TestEntities {
     }
 
     /**
+     * Creates a default Offer instance.
+     */
+    public static Offer createOffer() {
+        return offerBuilder().build();
+    }
+
+    /**
+     * Returns an OrderBuilder pre-filled with default test data.
+     * Uses default User and Offer.
+     */
+    public static Order.OrderBuilder orderBuilder() {
+        return Order.builder()
+                .idOrder(10L)
+                .user(createUser())
+                .offer(createOffer())
+                .orderDate(LocalDateTime.of(2026, 1, 16, 15, 0))
+                .visitDate(LocalDateTime.of(2026, 10, 17, 17, 0))
+                .status(Status.NOWE);
+    }
+
+    /**
+     * Creates a default Order instance.
+     */
+    public static Order createOrder() {
+        return orderBuilder().build();
+    }
+
+    /**
      * Creates an Order instance for testing purposes.
      *
      * @param user      the user placing the order
@@ -133,13 +160,36 @@ public class TestEntities {
      * @return new Order instance
      */
     public static Order createOrder(User user, Offer offer, LocalDateTime orderDate, LocalDateTime visitDate, Status status) {
-        Order order = new Order();
-        order.setUser(user);
-        order.setOffer(offer);
-        order.setOrderDate(orderDate);
-        order.setVisitDate(visitDate);
-        order.setStatus(status);
-        return order;
+        return Order.builder()
+                .user(user)
+                .offer(offer)
+                .orderDate(orderDate)
+                .visitDate(visitDate)
+                .status(status)
+                .build();
+    }
+
+    /**
+     * Returns a GuestOrderBuilder pre-filled with default test data.
+     */
+    public static GuestOrder.GuestOrderBuilder guestOrderBuilder() {
+        return GuestOrder.builder()
+                .idGuestOrder(5L)
+                .firstname("GuestJohn")
+                .lastname("GuestDoe")
+                .phonenumber("123456789")
+                .email("guestjohndoe@example.com")
+                .offer(createOffer())
+                .orderDate(LocalDateTime.of(2026, 1, 16, 15, 0))
+                .visitDate(LocalDateTime.of(2026, 10, 17, 17, 0))
+                .status(Status.NOWE);
+    }
+
+    /**
+     * Creates a default GuestOrder instance.
+     */
+    public static GuestOrder createGuestOrder() {
+        return guestOrderBuilder().build();
     }
 
     /**
@@ -159,16 +209,16 @@ public class TestEntities {
                                               String email, Offer offer, LocalDateTime orderDate,
                                               LocalDateTime visitDate, Status status) {
 
-        GuestOrder guestOrder = new GuestOrder();
-        guestOrder.setFirstname(firstname);
-        guestOrder.setLastname(lastname);
-        guestOrder.setPhonenumber(phonenumber);
-        guestOrder.setEmail(email);
-        guestOrder.setOffer(offer);
-        guestOrder.setOrderDate(orderDate);
-        guestOrder.setVisitDate(visitDate);
-        guestOrder.setStatus(status);
-        return guestOrder;
+        return GuestOrder.builder()
+                .firstname(firstname)
+                .lastname(lastname)
+                .phonenumber(phonenumber)
+                .email(email)
+                .offer(offer)
+                .orderDate(orderDate)
+                .visitDate(visitDate)
+                .status(status)
+                .build();
 
     }
 
@@ -205,8 +255,8 @@ public class TestEntities {
      * @return UserResponseDTO instance
      */
     public static UserResponseDTO createUserResponseDTO() {
-        return new UserResponseDTO(1L, "johndoe@example.com", "John",
-                "Doe", Role.USER);
+        return new UserResponseDTO(1L, "John", "Doe",
+                "johndoe@example.com", Role.USER);
     }
 
     /**
@@ -215,12 +265,12 @@ public class TestEntities {
      * @return UserOrdersDTO instance
      */
     public static UserOrdersDTO createUserOrdersDTO() {
-        Offer offer = createOffer(1, "test_kind", BigDecimal.valueOf(120));
+        Offer offer = createOffer();
         return new UserOrdersDTO(
                 10L,
                 offer,
-                LocalDateTime.of(2024, 10, 23, 15, 0),
-                LocalDateTime.of(2024, 10, 24, 17, 0),
+                LocalDateTime.of(2026, 1, 16, 15, 0),
+                LocalDateTime.of(2026, 10, 17, 17, 0),
                 Status.NOWE
 
         );

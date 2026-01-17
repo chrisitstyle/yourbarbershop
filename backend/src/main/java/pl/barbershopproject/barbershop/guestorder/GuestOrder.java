@@ -2,13 +2,15 @@ package pl.barbershopproject.barbershop.guestorder;
 
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
 
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 @Table(name = "guest_order")

@@ -1,6 +1,5 @@
 package pl.barbershopproject.barbershop.guestorder;
 
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,9 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.TestEntities;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -30,30 +28,19 @@ class GuestOrderServiceTest {
     private GuestOrderService guestOrderService;
 
 
-    private final GuestOrder guestOrder = new GuestOrder();
-    private final Offer offer = new Offer();
+    private GuestOrder guestOrder = new GuestOrder();
 
     @BeforeEach
     void setUp() {
 
-        offer.setIdOffer(1L);
-        offer.setKind("Test kind");
-        offer.setCost(new BigDecimal("100"));
-
-        guestOrder.setIdGuestOrder(1L);
-        guestOrder.setFirstname("John Doe");
-        guestOrder.setLastname("Doe");
-        guestOrder.setPhonenumber("123456789");
-        guestOrder.setEmail("johndoe@test.com");
+        Offer offer = TestEntities.createOffer();
+        guestOrder = TestEntities.createGuestOrder();
         guestOrder.setOffer(offer);
-        guestOrder.setOrderDate(LocalDateTime.parse("2025-03-23T10:00:00"));
-        guestOrder.setVisitDate(LocalDateTime.parse("2025-03-24T12:00:00"));
-        guestOrder.setStatus(Status.NOWE);
 
     }
 
     @Test
-    void addGuestOrder_ShouldReturnGuestOrder(){
+    void addGuestOrder_ShouldReturnGuestOrder() {
 
         when(guestOrderRepository.save(guestOrder)).thenReturn(guestOrder);
 
@@ -66,7 +53,7 @@ class GuestOrderServiceTest {
     }
 
     @Test
-    void getAllGuestOrders_ShouldReturnListOfGuestOrders(){
+    void getAllGuestOrders_ShouldReturnListOfGuestOrders() {
 
         when(guestOrderRepository.findAll()).thenReturn(List.of(guestOrder));
 
@@ -111,22 +98,12 @@ class GuestOrderServiceTest {
 
     @Test
     void GuestOrderService_UpdateGuestOrder_ShouldUpdateAndReturnGuestOrder_WhenOrderExists() {
-        GuestOrder updatedGuestOrder = new GuestOrder();
-        updatedGuestOrder.setIdGuestOrder(1L);
-        updatedGuestOrder.setFirstname("Jane");
-        updatedGuestOrder.setLastname("Smith");
-        updatedGuestOrder.setPhonenumber("987654321");
-        updatedGuestOrder.setEmail("jane.smith@example.com");
-        updatedGuestOrder.setOffer(offer);
-        updatedGuestOrder.setVisitDate(LocalDateTime.parse("2025-03-26T10:00:00"));
-        updatedGuestOrder.setStatus(Status.NOWE);
-
+        GuestOrder updatedGuestOrder = TestEntities.createGuestOrder();
 
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
         when(guestOrderRepository.save(any(GuestOrder.class))).thenReturn(guestOrder);
 
         GuestOrder guestOrderResult = guestOrderService.updateGuestOrder(updatedGuestOrder, 1L);
-
 
         assertNotNull(guestOrderResult);
         assertAll(
@@ -146,7 +123,7 @@ class GuestOrderServiceTest {
 
     @Test
     void GuestOrderService_UpdateGuestOrder_ShouldThrowException_WhenOrderDoesNotExist() {
-        GuestOrder updatedGuestOrder = getGuestOrderFromDB();
+        GuestOrder updatedGuestOrder = TestEntities.createGuestOrder();
 
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -156,20 +133,6 @@ class GuestOrderServiceTest {
 
         verify(guestOrderRepository, times(1)).findById(1L);
         verify(guestOrderRepository, never()).save(any(GuestOrder.class));
-    }
-
-    private @NonNull GuestOrder getGuestOrderFromDB() {
-        GuestOrder updatedGuestOrder = new GuestOrder();
-        updatedGuestOrder.setIdGuestOrder(1L);
-        updatedGuestOrder.setFirstname("Jane");
-        updatedGuestOrder.setLastname("Smith");
-        updatedGuestOrder.setPhonenumber("987654321");
-        updatedGuestOrder.setEmail("jane.smith@example.com");
-        updatedGuestOrder.setOffer(offer);
-        updatedGuestOrder.setOrderDate(LocalDateTime.parse("2025-03-25T10:00:00"));
-        updatedGuestOrder.setVisitDate(LocalDateTime.parse("2025-03-26T10:00:00"));
-        updatedGuestOrder.setStatus(Status.NOWE);
-        return updatedGuestOrder;
     }
 
     @Test
