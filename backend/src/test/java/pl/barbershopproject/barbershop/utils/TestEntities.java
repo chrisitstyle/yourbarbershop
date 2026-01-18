@@ -3,6 +3,8 @@ package pl.barbershopproject.barbershop.utils;
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.order.Order;
+import pl.barbershopproject.barbershop.order.dto.OrderDTO;
+import pl.barbershopproject.barbershop.order.dto.UserInOrderDTO;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
@@ -17,6 +19,7 @@ import java.util.List;
 
 /**
  * Utility class providing static factory methods for creating test entities (User, Offer, Order, GuestOrder) and DTOs.
+ * <p>
  * Useful for building entities with minimal boilerplate in JPA/Spring Data test scenarios.
  * It provides both complete object creation and Builders pre-filled with default test data.
  */
@@ -52,6 +55,7 @@ public class TestEntities {
 
     /**
      * Returns a UserBuilder pre-filled with default test data (John Doe).
+     * <p>
      * Useful when you need to override only specific fields in a test case.
      *
      * @return UserBuilder with default values set
@@ -130,6 +134,7 @@ public class TestEntities {
 
     /**
      * Returns an OrderBuilder pre-filled with default test data.
+     * <p>
      * Uses default User and Offer.
      */
     public static Order.OrderBuilder orderBuilder() {
@@ -170,11 +175,41 @@ public class TestEntities {
     }
 
     /**
+     * Creates a UserInOrderDTO with default test data (John Doe).
+     * <p>
+     * This DTO represents the simplified user information embedded within an OrderDTO.
+     *
+     * @return UserInOrderDTO instance
+     */
+    public static UserInOrderDTO createUserInOrderDTO() {
+        return new UserInOrderDTO(1L, "John", "Doe", "johndoe@example.com");
+    }
+
+    /**
+     * Creates a complete OrderDTO with default test data.
+     * <p>
+     * Includes nested UserInOrderDTO and Offer objects,
+     * and status set to NOWE.
+     *
+     * @return OrderDTO instance
+     */
+    public static OrderDTO createOrderDTO() {
+        return new OrderDTO(
+                1L,
+                createUserInOrderDTO(),
+                createOffer(),
+                LocalDateTime.of(2026, 1, 16, 15, 0),
+                LocalDateTime.of(2026, 10, 17, 17, 0),
+                Status.NOWE
+        );
+    }
+
+    /**
      * Returns a GuestOrderBuilder pre-filled with default test data.
      */
     public static GuestOrder.GuestOrderBuilder guestOrderBuilder() {
         return GuestOrder.builder()
-                .idGuestOrder(5L)
+                .idGuestOrder(1L)
                 .firstname("GuestJohn")
                 .lastname("GuestDoe")
                 .phonenumber("123456789")

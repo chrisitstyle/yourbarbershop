@@ -1,10 +1,14 @@
 package pl.barbershopproject.barbershop.email;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
+@Builder
 @Getter
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class EmailMessage {
 
     private String to;
