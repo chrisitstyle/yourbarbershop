@@ -3,6 +3,7 @@ package pl.barbershopproject.barbershop.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -17,6 +18,10 @@ import java.util.NoSuchElementException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<String> handleBadCredentials(BadCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nieprawidłowy email lub hasło");
+    }
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ErrorDTO> handleNotFound(NoSuchElementException ex) {
         return createErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND);

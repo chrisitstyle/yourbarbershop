@@ -27,29 +27,29 @@ public class SecurityWebConfig {
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
+                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                 .requestMatchers("/register", "/login", "/forgot-password", "/reset-password**").permitAll()
                                 // Users endpoints
-                                .requestMatchers(HttpMethod.POST,"/users").hasAuthority(Role.ADMIN.toString())
-                                .requestMatchers(HttpMethod.GET,"/users").hasAuthority(Role.ADMIN.toString())
-                                .requestMatchers(HttpMethod.GET,"/users/{idUser}").authenticated()
-                                .requestMatchers(HttpMethod.PUT,"/users/{idUser}").hasAuthority(Role.ADMIN.toString())
-                                .requestMatchers(HttpMethod.DELETE,"/users/{idUser}").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.POST, "/users").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.GET, "/users").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.GET, "/users/**").authenticated()
+                                .requestMatchers(HttpMethod.PUT, "/users/**").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.DELETE, "/users/**").hasAuthority(Role.ADMIN.toString())
                                 // Offers endpoints
-                                .requestMatchers(HttpMethod.POST,"/offers").hasAuthority(Role.ADMIN.toString())
-                                .requestMatchers(HttpMethod.GET,"/offers","/offers/{idOffer}").permitAll()
-                                .requestMatchers(HttpMethod.PUT,"/offers/{idOffer}").hasAuthority(Role.ADMIN.toString())
-                                .requestMatchers(HttpMethod.DELETE,"/offers/{idOffer}").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.POST, "/offers").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.GET, "/offers", "/offers/**").permitAll()
+                                .requestMatchers(HttpMethod.PUT, "/offers/**").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.DELETE, "/offers/**").hasAuthority(Role.ADMIN.toString())
                                 // Orders endpoints
-                                .requestMatchers(HttpMethod.POST,"/orders").authenticated()
-                                .requestMatchers(HttpMethod.GET,"/orders", "/orders/{idOrder}").hasAuthority(Role.ADMIN.toString())
-                                .requestMatchers(HttpMethod.PUT,"/orders/{idOrder}").hasAuthority(Role.ADMIN.toString())
-                                .requestMatchers(HttpMethod.DELETE,"/orders/{idOrder}").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.POST, "/orders").authenticated()
+                                .requestMatchers(HttpMethod.GET, "/orders", "/orders/**").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.PUT, "/orders/**").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.DELETE, "/orders/**").hasAuthority(Role.ADMIN.toString())
                                 // Guestorders endpoints
-                                .requestMatchers(HttpMethod.POST,"/guestorders").permitAll()
-                                .requestMatchers(HttpMethod.GET,"/guestorders","/guestorders{idGuestOrder}").hasAuthority(Role.ADMIN.toString())
-                                .requestMatchers(HttpMethod.PUT,"/guestorders/{idGuestOrder}").hasAuthority(Role.ADMIN.toString())
-                                .requestMatchers(HttpMethod.DELETE,"/guestorders/{idGuestOrder}").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.POST, "/guestorders").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/guestorders", "/guestorders/**").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.PUT, "/guestorders/**").hasAuthority(Role.ADMIN.toString())
+                                .requestMatchers(HttpMethod.DELETE, "/guestorders/**").hasAuthority(Role.ADMIN.toString())
                                 // Email endpoints
                                 .requestMatchers("/send-email").permitAll()
 
