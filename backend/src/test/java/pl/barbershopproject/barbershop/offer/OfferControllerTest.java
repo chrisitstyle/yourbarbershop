@@ -122,7 +122,8 @@ class OfferControllerTest {
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/offers/99"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(MockMvcResultMatchers.content().string("Offer not found"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Offer not found"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("NOT_FOUND"));
     }
 
     @Test
@@ -138,6 +139,7 @@ class OfferControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidOffer)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.content().string("Invalid offer data"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid offer data"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));
     }
 }

@@ -143,7 +143,8 @@ class OrderControllerTest {
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/orders/99"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(MockMvcResultMatchers.content().string("Order not found"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Order not found"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("NOT_FOUND"));
     }
 
     @Test
@@ -159,6 +160,7 @@ class OrderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidOrder)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.content().string("Invalid date"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid date"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));
     }
 }

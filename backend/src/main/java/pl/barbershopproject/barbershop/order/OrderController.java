@@ -11,7 +11,6 @@ import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequiredArgsConstructor
@@ -55,17 +54,5 @@ class OrderController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrderById(@PathVariable long idOrder) {
         orderService.deleteOrderById(idOrder);
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleNotFound(NoSuchElementException ex) {
-        return ex.getMessage();
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String handleBadRequest(IllegalArgumentException ex) {
-        return ex.getMessage();
     }
 }

@@ -4,18 +4,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
-import pl.barbershopproject.barbershop.exception.SelfDeletionException;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
 import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequiredArgsConstructor
@@ -57,29 +53,5 @@ public class UserController {
     public void deleteUserById(@PathVariable long idUser) {
         userService.deleteUserById(idUser);
 
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleNotFound(NoSuchElementException ex) {
-        return ex.getMessage();
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String handleBadRequest(IllegalArgumentException ex) {
-        return ex.getMessage();
-    }
-
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    @ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
-    public ResponseEntity<String> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(ex.getMessage());
-    }
-
-    @ExceptionHandler({AccessDeniedException.class, SelfDeletionException.class})
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public String handleForbidden(RuntimeException ex) {
-        return ex.getMessage();
     }
 }

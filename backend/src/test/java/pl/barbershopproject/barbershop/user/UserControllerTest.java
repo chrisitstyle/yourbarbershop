@@ -126,7 +126,8 @@ class UserControllerTest {
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users/99"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(MockMvcResultMatchers.content().string("User not found"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("User not found"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("NOT_FOUND"));
     }
 
     @Test
@@ -136,7 +137,8 @@ class UserControllerTest {
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users/98"))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.content().string("Illegal argument"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Illegal argument"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));
     }
 
     @Test
@@ -150,7 +152,8 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userCreationDTO)))
                 .andExpect(MockMvcResultMatchers.status().isUnprocessableContent())
-                .andExpect(MockMvcResultMatchers.content().string("Email exists"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Email exists"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("UNPROCESSABLE_CONTENT"));
     }
 
     @Test
@@ -160,7 +163,8 @@ class UserControllerTest {
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/users/123"))
                 .andExpect(MockMvcResultMatchers.status().isForbidden())
-                .andExpect(MockMvcResultMatchers.content().string("Permission denied"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Permission denied"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("FORBIDDEN"));
     }
 
     @Test
@@ -170,6 +174,8 @@ class UserControllerTest {
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/users/321"))
                 .andExpect(MockMvcResultMatchers.status().isForbidden())
-                .andExpect(MockMvcResultMatchers.content().string("Cannot remove yourself"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Cannot remove yourself"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("FORBIDDEN"));
+
     }
 }

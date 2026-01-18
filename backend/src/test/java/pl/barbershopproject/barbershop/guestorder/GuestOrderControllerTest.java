@@ -142,7 +142,8 @@ class GuestOrderControllerTest {
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders/99"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(MockMvcResultMatchers.content().string("Guest order not found"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Guest order not found"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("NOT_FOUND"));
     }
 
     @Test
@@ -158,7 +159,8 @@ class GuestOrderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidOrder)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.content().string("Invalid phone number"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid phone number"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));
     }
 
 }
