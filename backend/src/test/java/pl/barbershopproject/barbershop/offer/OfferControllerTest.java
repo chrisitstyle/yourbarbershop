@@ -3,6 +3,7 @@ package pl.barbershopproject.barbershop.offer;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -18,7 +19,11 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-@WebMvcTest(OfferController.class)
+@WebMvcTest(controllers = OfferController.class,
+        excludeAutoConfiguration = {
+                OAuth2ClientWebSecurityAutoConfiguration.class
+        }
+)
 @AutoConfigureMockMvc(addFilters = false)
 class OfferControllerTest {
 

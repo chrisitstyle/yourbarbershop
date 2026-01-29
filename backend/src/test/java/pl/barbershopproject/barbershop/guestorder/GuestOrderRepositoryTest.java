@@ -31,7 +31,7 @@ class GuestOrderRepositoryTest {
         Offer offer = offerRepository.save(TestEntities.createOffer());
         GuestOrder guestOrder = TestEntities.createGuestOrder();
         guestOrder.setOffer(offer);
-        guestOrder.setIdGuestOrder(0L);
+        guestOrder.setIdGuestOrder(null);
 
         GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
 
@@ -50,7 +50,7 @@ class GuestOrderRepositoryTest {
         Offer offer = offerRepository.save(TestEntities.createOffer());
         GuestOrder guestOrder = TestEntities.createGuestOrder();
         guestOrder.setOffer(offer);
-        guestOrder.setIdGuestOrder(0L);
+        guestOrder.setIdGuestOrder(null);
         guestOrder.setStatus(Status.ANULOWANE);
 
         GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
@@ -72,11 +72,11 @@ class GuestOrderRepositoryTest {
         Offer offer = offerRepository.save(TestEntities.createOffer());
 
         GuestOrder o1 = TestEntities.createGuestOrder();
-        o1.setIdGuestOrder(0L);
+        o1.setIdGuestOrder(null);
         o1.setOffer(offer);
         o1.setStatus(Status.NOWE);
         GuestOrder o2 = TestEntities.createGuestOrder();
-        o2.setIdGuestOrder(0L);
+        o2.setIdGuestOrder(null);
         o2.setOffer(offer);
         o2.setStatus(Status.ZREALIZOWANE);
 
@@ -102,7 +102,7 @@ class GuestOrderRepositoryTest {
     void deleteById_removesGuestOrder() {
         Offer offer = offerRepository.save(TestEntities.createOffer());
         GuestOrder guestOrder = TestEntities.createGuestOrder();
-        guestOrder.setIdGuestOrder(0L);
+        guestOrder.setIdGuestOrder(null);
         guestOrder.setOffer(offer);
 
         GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
@@ -120,10 +120,10 @@ class GuestOrderRepositoryTest {
         Offer offer = offerRepository.save(TestEntities.createOffer());
 
         GuestOrder o1 = TestEntities.createGuestOrder();
-        o1.setIdGuestOrder(0L);
+        o1.setIdGuestOrder(null);
         o1.setOffer(offer);
         GuestOrder o2 = TestEntities.createGuestOrder();
-        o2.setIdGuestOrder(0L);
+        o2.setIdGuestOrder(null);
         o2.setOffer(offer);
         o2.setStatus(Status.ANULOWANE);
         guestOrderRepository.saveAll(List.of(o1, o2));

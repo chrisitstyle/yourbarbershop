@@ -51,6 +51,7 @@ class UserServiceTest {
 
         userCreationDTO = TestEntities.createUserCreationDTO();
         user = TestEntities.createUser();
+        user.setIdUser(1L);
         user.setPassword("encoded_password");
 
         userResponseDTO = TestEntities.createUserResponseDTO();
@@ -197,6 +198,7 @@ class UserServiceTest {
     private void mockSecurityContext(User user) {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(user);
+        when(authentication.isAuthenticated()).thenReturn(true);
     }
 
 }

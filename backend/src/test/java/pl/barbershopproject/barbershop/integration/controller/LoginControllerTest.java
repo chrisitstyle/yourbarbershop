@@ -87,7 +87,7 @@ class LoginControllerTest extends BaseIntegrationTest {
     void shouldDenyAccessWithoutToken() throws Exception {
         // when then
         mockMvc.perform(get("/users"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @DisplayName("Should return forbidden when regular USER tries to delete admin")
