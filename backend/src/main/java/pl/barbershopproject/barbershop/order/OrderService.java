@@ -29,7 +29,7 @@ class OrderService {
                 .toList();
     }
 
-    public OrderDTO getSingleOrder(long idOrder) {
+    public OrderDTO getSingleOrder(Long idOrder) {
         return orderRepository.findById(idOrder)
                 .map(OrderDTOMapper::toDTO)
                 .orElseThrow(() -> new NoSuchElementException("Zamówienie o ID: " + idOrder + " nie istnieje"));
@@ -47,7 +47,7 @@ class OrderService {
     }
 
     @Transactional
-    public Order updateOrder(Order updatedOrder, long idOrder) {
+    public Order updateOrder(Order updatedOrder, Long idOrder) {
         Order existingOrder = orderRepository.findById(idOrder)
                 .orElseThrow(() -> new NoSuchElementException("Zamówienie o ID: " + idOrder));
 
@@ -61,7 +61,7 @@ class OrderService {
     }
 
     @Transactional
-    public void deleteOrderById(long idOrder) {
+    public void deleteOrderById(Long idOrder) {
         if (!orderRepository.existsById(idOrder)) {
             throw new NoSuchElementException("Zamówienie o ID: " + idOrder + " nie istnieje");
         }

@@ -17,7 +17,7 @@ public class Offer {
 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
-    private long idOffer;
+    private Long idOffer;
     private String kind;
     private BigDecimal cost;
 }

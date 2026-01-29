@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { Alert } from "react-bootstrap";
 import { loginUser } from "../api/authService";
 import ButtonSpinner from "../components/common/ButtonSpinner";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGithub } from "@fortawesome/free-brands-svg-icons";
+import { API_BASE_URL } from "../api/config";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -100,6 +103,26 @@ const Login = () => {
             >
               Zaloguj
             </ButtonSpinner>
+
+            {/* OAUTH2 */}
+            <div className="text-center mt-3">
+              <a
+                href={`${API_BASE_URL}/oauth2/authorization/github`}
+                className="btn btn-dark w-100 py-2 fw-bold position-relative d-flex align-items-center"
+                style={{ borderRadius: "6px" }}
+              >
+                <FontAwesomeIcon
+                  icon={faGithub}
+                  className="position-absolute start-0 ms-3"
+                  size="xl"
+                  style={{ color: "#ffffff" }}
+                />
+
+                <span className="w-100 text-center">Sign in with Github</span>
+              </a>
+            </div>
+            {/* --------------------------- */}
+
             <p className="mt-3 text-center">
               <Link to="/forgotpassword">Zapomniałem hasła</Link>
             </p>

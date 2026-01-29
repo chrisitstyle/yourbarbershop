@@ -135,7 +135,7 @@ class UserServiceTest {
     @Test
     void updateUser_ShouldThrowNoSuchElement_WhenUserNotFound() {
 
-        long nonExistingId = 999L;
+        Long nonExistingId = 999L;
         User updatedUser = createUpdatedUser();
         User adminUser = createAdminUser();
         mockSecurityContext(adminUser);

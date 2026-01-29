@@ -35,20 +35,20 @@ class OfferController {
     }
 
     @GetMapping("/{idOffer}")
-    public Offer getSingleOffer(@PathVariable long idOffer) {
+    public Offer getSingleOffer(@PathVariable Long idOffer) {
         return offerService.getSingleOffer(idOffer);
     }
 
     @PutMapping("/{idOffer}")
     public Offer updateOffer(@Valid @RequestBody Offer updatedOffer,
-                             @PathVariable long idOffer) {
+                             @PathVariable Long idOffer) {
         return offerService.updateOffer(updatedOffer, idOffer);
     }
 
 
     @DeleteMapping("/{idOffer}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteOfferById(@PathVariable long idOffer) {
+    public void deleteOfferById(@PathVariable Long idOffer) {
         offerService.deleteOfferById(idOffer);
     }
 

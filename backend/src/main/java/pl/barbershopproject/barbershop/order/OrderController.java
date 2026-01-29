@@ -40,19 +40,19 @@ class OrderController {
     }
 
     @GetMapping("/{idOrder}")
-    public OrderDTO getSingleOrder(@PathVariable long idOrder) {
+    public OrderDTO getSingleOrder(@PathVariable Long idOrder) {
         return orderService.getSingleOrder(idOrder);
     }
 
     @PutMapping("/{idOrder}")
     public Order updateOrder(@Valid @RequestBody Order updatedOrder,
-                             @PathVariable long idOrder) {
+                             @PathVariable Long idOrder) {
         return orderService.updateOrder(updatedOrder, idOrder);
     }
 
     @DeleteMapping("/{idOrder}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteOrderById(@PathVariable long idOrder) {
+    public void deleteOrderById(@PathVariable Long idOrder) {
         orderService.deleteOrderById(idOrder);
     }
 }

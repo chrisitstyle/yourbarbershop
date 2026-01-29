@@ -18,18 +18,20 @@ class GuestOrderService {
         return guestOrderRepository.save(guestOrder);
     }
 
-    public List<GuestOrder> getAllGuestOrders (){
+    public List<GuestOrder> getAllGuestOrders() {
         return guestOrderRepository.findAll();
     }
-    public GuestOrder getGuestOrder(long idGuestOrder) {
+
+    public GuestOrder getGuestOrder(Long idGuestOrder) {
         return guestOrderRepository.findById(idGuestOrder)
                 .orElseThrow(() -> new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder));
     }
 
-    public List<GuestOrder> getGuestOrdersByStatus(Status status){
+    public List<GuestOrder> getGuestOrdersByStatus(Status status) {
 
         return guestOrderRepository.findGuestOrdersByStatus(status);
     }
+
     @Transactional
     public GuestOrder updateGuestOrder(GuestOrder updatedGuestOrder, Long idGuestOrder) {
         GuestOrder existingOrder = guestOrderRepository.findById(idGuestOrder)
@@ -47,7 +49,7 @@ class GuestOrderService {
     }
 
     @Transactional
-    public void deleteGuestOrderById(long idGuestOrder) {
+    public void deleteGuestOrderById(Long idGuestOrder) {
 
         if (!guestOrderRepository.existsById(idGuestOrder)) {
             throw new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder);

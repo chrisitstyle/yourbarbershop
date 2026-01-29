@@ -5,7 +5,7 @@ import pl.barbershopproject.barbershop.user.Role;
 import java.util.List;
 
 public record UserDTO(
-        long idUser,
+        Long idUser,
         String firstname,
         String lastname,
         String email,

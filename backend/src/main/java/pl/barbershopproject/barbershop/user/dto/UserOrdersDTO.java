@@ -6,7 +6,7 @@ import pl.barbershopproject.barbershop.util.Status;
 import java.time.LocalDateTime;
 
 public record UserOrdersDTO(
-        long idOrder,
+        Long idOrder,
         Offer offer,
         LocalDateTime orderDate,
         LocalDateTime visitDate,

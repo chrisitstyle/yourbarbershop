@@ -1,7 +1,7 @@
 package pl.barbershopproject.barbershop.order.dto;
 
 public record UserInOrderDTO(
-        long idUser,
+        Long idUser,
         String firstname,
         String lastname,
         String email

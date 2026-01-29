@@ -4,13 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import pl.barbershopproject.barbershop.auth.OAuth2LoginSuccessHandler;
 import pl.barbershopproject.barbershop.user.Role;
 
 @Configuration
@@ -20,15 +24,17 @@ public class SecurityWebConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                .requestMatchers("/register", "/login", "/forgot-password", "/reset-password**").permitAll()
+                                .requestMatchers("/register", "/login", "/forgot-password", "/reset-password**", "/oauth2/**", "/login/oauth2/**").permitAll()
                                 // Users endpoints
                                 .requestMatchers(HttpMethod.POST, "/users").hasAuthority(Role.ADMIN.toString())
                                 .requestMatchers(HttpMethod.GET, "/users").hasAuthority(Role.ADMIN.toString())
@@ -60,7 +66,15 @@ public class SecurityWebConfig {
                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth2 -> oauth2
+                        .failureUrl("http://localhost:3000/login?error=social_login_failed")
+
+                        .successHandler(oAuth2LoginSuccessHandler))
+
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                );
 
         return http.build();
     }

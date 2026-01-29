@@ -2,6 +2,7 @@ package pl.barbershopproject.barbershop.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class UserService {
                 .toList();
     }
 
-    public UserDTO getUserById(long idUser) {
+    public UserDTO getUserById(Long idUser) {
         User authUser = getAuthenticatedUser();
         validateUserAccess(authUser, idUser);
 
@@ -53,7 +54,7 @@ public class UserService {
     }
 
     @Transactional
-    public User updateUser(User updatedUser, long idUser) {
+    public User updateUser(User updatedUser, Long idUser) {
         User authUser = getAuthenticatedUser();
         validateUserAccess(authUser, idUser);
         User existingUser = userRepository.findById(idUser)
@@ -64,9 +65,12 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUserById(long idUser) {
+    public void deleteUserById(Long idUser) {
         User authUser = getAuthenticatedUser();
-        if (authUser.getIdUser() == idUser) {
+        if (authUser == null) {
+            throw new AccessDeniedException("Brak zalogowanego użytkownika");
+        }
+        if (authUser.getIdUser().equals(idUser)) {
             throw new SelfDeletionException("Nie można usunąć własnego konta");
         }
 
@@ -79,11 +83,20 @@ public class UserService {
 
 
     private User getAuthenticatedUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof User)) {
+            throw new AccessDeniedException("Użytkownik nie jest poprawnie uwierzytelniony");
+        }
+        return (User) authentication.getPrincipal();
     }
 
-    private void validateUserAccess(User authUser, long targetUserId) {
-        if (authUser.getIdUser() != targetUserId && !authUser.getRole().equals(Role.ADMIN)) {
+    private void validateUserAccess(User authUser, Long targetUserId) {
+        if (authUser == null) {
+            throw new AccessDeniedException("Brak kontekstu użytkownika");
+        }
+
+        if (!authUser.getIdUser().equals(targetUserId) && authUser.getRole() != Role.ADMIN) {
             throw new AccessDeniedException("Brak uprawnień");
         }
     }

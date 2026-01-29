@@ -39,18 +39,18 @@ public class UserController {
     }
 
     @GetMapping("/{idUser}")
-    public UserDTO getSingleUser(@PathVariable long idUser) {
+    public UserDTO getSingleUser(@PathVariable Long idUser) {
         return userService.getUserById(idUser);
     }
 
     @PutMapping("/{idUser}")
-    public User updateUser(@Valid @RequestBody User updatedUser, @PathVariable long idUser) {
+    public User updateUser(@Valid @RequestBody User updatedUser, @PathVariable Long idUser) {
         return userService.updateUser(updatedUser, idUser);
     }
 
     @DeleteMapping("/{idUser}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUserById(@PathVariable long idUser) {
+    public void deleteUserById(@PathVariable Long idUser) {
         userService.deleteUserById(idUser);
 
     }

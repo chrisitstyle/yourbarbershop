@@ -22,13 +22,13 @@ class OfferService {
     public List<Offer> getAllOffers(){
         return offerRepository.findAll();
     }
-    public Offer getSingleOffer(long idOffer) {
+    public Offer getSingleOffer(Long idOffer) {
         return offerRepository.findById(idOffer)
                 .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje"));
     }
 
     @Transactional
-    public Offer updateOffer(Offer updatedOffer, long idOffer) {
+    public Offer updateOffer(Offer updatedOffer, Long idOffer) {
         Offer existingOffer = offerRepository.findById(idOffer).orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje"));
         existingOffer.setKind(updatedOffer.getKind());
         existingOffer.setCost(updatedOffer.getCost());
@@ -36,7 +36,7 @@ class OfferService {
     }
 
     @Transactional
-    public void deleteOfferById(long idOffer) {
+    public void deleteOfferById(Long idOffer) {
         if (!offerRepository.existsById(idOffer)) {
             throw new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje");
         }

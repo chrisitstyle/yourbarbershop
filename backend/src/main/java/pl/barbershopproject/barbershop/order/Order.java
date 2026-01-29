@@ -21,7 +21,7 @@ public class Order {
 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
-    private long idOrder;
+    private Long idOrder;
     @ManyToOne
     @JoinColumn(name = "id_user")
     @JsonIgnoreProperties({"userOrders","enabled","authorities","accountNonLocked","credentialsNonExpired","accountNonExpired", "password","role"})

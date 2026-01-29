@@ -24,9 +24,10 @@ import ResetPasswordForm from "./pages/ResetPasswordForm.jsx";
 import AdminRoute from "./routes/AdminRoute";
 import UserRoute from "./routes/UserRoute";
 import NotFound from "./pages/NotFound";
+import OAuth2Redirect from "./OAuth2Redirect.jsx";
 function App() {
   const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") || "light"
+    () => localStorage.getItem("theme") || "light",
   );
 
   useEffect(() => {
@@ -44,6 +45,7 @@ function App() {
           <Navbar theme={theme} onToggleTheme={handleToggleTheme} />
           <main>
             <Routes>
+              <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
               <Route path="/" element={<Home />}></Route>
               <Route path="/login" element={<Login />}></Route>
               <Route

@@ -38,19 +38,19 @@ class GuestOrderController {
     }
 
     @GetMapping("/{idGuestOrder}")
-    public GuestOrder getGuestOrder(@PathVariable long idGuestOrder) {
+    public GuestOrder getGuestOrder(@PathVariable Long idGuestOrder) {
         return guestOrderService.getGuestOrder(idGuestOrder);
     }
 
     @PutMapping("/{idGuestOrder}")
     public GuestOrder updateGuestOrder(@Valid @RequestBody GuestOrder updatedGuestOrder,
-                                       @PathVariable long idGuestOrder) {
+                                       @PathVariable Long idGuestOrder) {
         return guestOrderService.updateGuestOrder(updatedGuestOrder, idGuestOrder);
     }
 
     @DeleteMapping("/{idGuestOrder}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteGuestOrderById(@PathVariable long idGuestOrder) {
+    public void deleteGuestOrderById(@PathVariable Long idGuestOrder) {
         guestOrderService.deleteGuestOrderById(idGuestOrder);
     }
 }

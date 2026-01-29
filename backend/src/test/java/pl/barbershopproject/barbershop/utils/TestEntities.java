@@ -116,7 +116,7 @@ public class TestEntities {
      * @param cost    the cost of the offer
      * @return new Offer instance
      */
-    public static Offer createOffer(long idOffer, String kind, BigDecimal cost) {
+    public static Offer createOffer(Long idOffer, String kind, BigDecimal cost) {
 
         return Offer.builder()
                 .idOffer(idOffer)

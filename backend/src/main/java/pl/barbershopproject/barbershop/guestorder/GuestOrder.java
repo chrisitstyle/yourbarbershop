@@ -19,7 +19,7 @@ public class GuestOrder {
 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
-    private long idGuestOrder;
+    private Long idGuestOrder;
     private String firstname;
     private String lastname;
     private String phonenumber;
