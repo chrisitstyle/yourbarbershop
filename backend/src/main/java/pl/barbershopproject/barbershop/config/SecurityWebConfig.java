@@ -14,7 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import pl.barbershopproject.barbershop.auth.OAuth2LoginSuccessHandler;
+import pl.barbershopproject.barbershop.auth.oauth2.OAuth2LoginSuccessHandler;
 import pl.barbershopproject.barbershop.user.Role;
 
 @Configuration

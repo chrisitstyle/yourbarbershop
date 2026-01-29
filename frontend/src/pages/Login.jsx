@@ -7,6 +7,7 @@ import ButtonSpinner from "../components/common/ButtonSpinner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { API_BASE_URL } from "../api/config";
+import GoogleIcon from "../components/common/GoogleIcon";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -106,6 +107,7 @@ const Login = () => {
 
             {/* OAUTH2 */}
             <div className="text-center mt-3">
+              {/* GITHUB BUTTON */}
               <a
                 href={`${API_BASE_URL}/oauth2/authorization/github`}
                 className="btn btn-dark w-100 py-2 fw-bold position-relative d-flex align-items-center"
@@ -119,6 +121,21 @@ const Login = () => {
                 />
 
                 <span className="w-100 text-center">Sign in with Github</span>
+              </a>
+              {/* GOOGLE BUTTON */}
+              <a
+                href={`${API_BASE_URL}/oauth2/authorization/google`}
+                className="btn btn-light w-100 py-2 fw-bold position-relative d-flex align-items-center mt-2"
+                style={{
+                  borderRadius: "6px",
+                  border: "1px solid #dadce0",
+                  color: "#3c4043",
+                  backgroundColor: "#ffffff",
+                }}
+              >
+                <GoogleIcon className="position-absolute start-0 ms-3" />
+
+                <span className="w-100 text-center">Sign in with Google</span>
               </a>
             </div>
             {/* --------------------------- */}
