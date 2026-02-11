@@ -46,5 +46,5 @@ CREATE TABLE PASSWORD_RESET_TOKEN (
 );
 
 INSERT INTO OFFER (KIND, COST) VALUES ('dreadlocks', 25.50);
-INSERT INTO "user" (FIRSTNAME, LASTNAME, EMAIL, PASSWORD, ROLE) VALUES ('TestAdmin', 'TestAdmin', 'admin@test.com', 'test123', 'ADMIN');
-INSERT INTO "user" (FIRSTNAME, LASTNAME, EMAIL, PASSWORD, ROLE) VALUES ('John', 'Doe', 'johndoe@example.com', 'test123', 'USER');
+INSERT INTO "user" (FIRSTNAME, LASTNAME, EMAIL, PASSWORD, ROLE) VALUES ('TestAdmin', 'TestAdmin', 'admin@test.com', 'test1234', 'ADMIN');
+INSERT INTO "user" (FIRSTNAME, LASTNAME, EMAIL, PASSWORD, ROLE) VALUES ('John', 'Doe', 'johndoe@example.com', 'test1234', 'USER');

@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS `user` (
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Insert for sample admin and user
-INSERT INTO `user` (`firstname`, `lastname`, `email`, `password`, `role`) VALUES ( 'TestAdmin', 'TestAdmin', 'admin@test.com', '$2a$10$50CMRbm4BFvmQfOcukUjCeFrZIZWGiLr9RYO6ON5zI.xv/a3ltS2S', 'ADMIN');
-INSERT INTO `user` (`firstname`, `lastname`, `email`, `password`, `role`) VALUES ('John', 'Doe', 'johndoe@example.com', '$2a$10$HjId9JiXQUUmmQEwcoJNG.DynNWrKFFvv0kP3WxdlTd6/3vXDgOlG', 'USER');
-/* password for both  is "test123"*/
+INSERT INTO `user` (`firstname`, `lastname`, `email`, `password`, `role`) VALUES ( 'TestAdmin', 'TestAdmin', 'admin@test.com', '$2a$10$3tg0XIJRF9oeMv.gqElnR.XmmZD4W7FJR.3R8Ms1GZf4T.H694sJi', 'ADMIN');
+INSERT INTO `user` (`firstname`, `lastname`, `email`, `password`, `role`) VALUES ('John', 'Doe', 'johndoe@example.com', '$2a$10$3tg0XIJRF9oeMv.gqElnR.XmmZD4W7FJR.3R8Ms1GZf4T.H694sJi', 'USER');
+/* password for both  is "test1234"*/
 
 -- Dumping structure for table barbershop-with-roles.guest_order
 CREATE TABLE IF NOT EXISTS `guest_order` (

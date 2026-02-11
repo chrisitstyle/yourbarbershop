@@ -79,8 +79,8 @@ SOURCE backend/src/main/resources/data/barbershop-with-roles_dump.sql;
 
 > **Note**: The SQL dump includes sample users for testing:
 >
-> - **Admin**: `admin@test.com` / `test123`
-> - **User (Customer)**: `johndoe@example.com` / `test123`
+> - **Admin**: `admin@test.com` / `test1234`
+> - **User (Customer)**: `johndoe@example.com` / `test1234`
 
 3. **Configure Supabase**
 

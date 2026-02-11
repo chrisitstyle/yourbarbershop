@@ -1,13 +1,12 @@
 package pl.barbershopproject.barbershop.auth;
 
 
-import pl.barbershopproject.barbershop.validation.ValidationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import pl.barbershopproject.barbershop.user.User;
 
 @RestController
 @RequiredArgsConstructor
@@ -15,17 +14,15 @@ public class AuthController {
 
     private final AuthService authService;
 
-    private final ValidationService<User> validator;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register (@RequestBody User user){
-        validator.validate(user);
-        return  ResponseEntity.ok(authService.register(user));
+    public ResponseEntity<AuthResponse> register(@RequestBody @Valid RegisterRequest request) {
+        return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login (@RequestBody AuthRequest request){
-        return  ResponseEntity.ok(authService.authenticate(request));
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthRequest request) {
+        return ResponseEntity.ok(authService.authenticate(request));
     }
 
     @PostMapping("/forgot-password")

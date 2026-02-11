@@ -8,14 +8,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.barbershopproject.barbershop.config.JwtService;
+import pl.barbershopproject.barbershop.email.EmailSenderService;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.InvalidPasswordTokenException;
 import pl.barbershopproject.barbershop.passwordreset.PasswordResetToken;
+import pl.barbershopproject.barbershop.passwordreset.PasswordResetTokenRepository;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
-import pl.barbershopproject.barbershop.passwordreset.PasswordResetTokenRepository;
 import pl.barbershopproject.barbershop.user.UserRepository;
-import pl.barbershopproject.barbershop.email.EmailSenderService;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -30,28 +30,27 @@ public class AuthService {
     private final EmailSenderService emailSenderService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
 
-    public AuthResponse register(User user) {
+    public AuthResponse register(RegisterRequest request) {
 
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new EmailAlreadyExistsException("Użytkownik o podanym adresie e-mail już istnieje");
         }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        if (user.getRole() == null) {
-            user.setRole(Role.USER);
-        }
+        var user = User.builder()
+                .firstname(request.firstname())
+                .lastname(request.lastname())
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
+                .role(Role.USER)
+                .build();
         userRepository.save(user);
         var token = jwtService.generateToken(user);
 
         // Zwracanie id, roli i tokena użytkownika
-        return AuthResponse.builder()
-                .token(token)
-                .id(user.getIdUser())
-                .role(user.getRole())
-                .build();
+        return new AuthResponse(token, user.getIdUser(), user.getRole());
     }
 
     public AuthResponse authenticate(AuthRequest request) {
-        return authenticate(request.getEmail(), request.getPassword());
+        return authenticate(request.email(), request.password());
     }
 
     public AuthResponse authenticate(@NotNull String email, @NotNull String password) {
@@ -60,12 +59,9 @@ public class AuthService {
         var token = jwtService.generateToken(user);
 
         // Zwracanie id, roli i tokena użytkownika
-        return AuthResponse.builder()
-                .token(token)
-                .id(user.getIdUser())
-                .role(user.getRole())
-                .build();
+        return new AuthResponse(token, user.getIdUser(), user.getRole());
     }
+
     public void forgotPassword(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         String token = UUID.randomUUID().toString();

@@ -44,7 +44,7 @@ class LoginControllerTest extends BaseIntegrationTest {
         // given
         ObjectNode loginData = objectMapper.createObjectNode()
                 .put("email", "admin@test.com")
-                .put("password", "test123");
+                .put("password", "test1234");
 
         // when
         MvcResult loginResult = mockMvc.perform(post("/login")
@@ -96,7 +96,7 @@ class LoginControllerTest extends BaseIntegrationTest {
         // given
         ObjectNode loginData = objectMapper.createObjectNode()
                 .put("email", "johndoe@example.com")
-                .put("password", "test123");
+                .put("password", "test1234");
 
         MvcResult loginResult = mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)

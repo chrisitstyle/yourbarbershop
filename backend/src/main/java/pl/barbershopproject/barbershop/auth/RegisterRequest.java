@@ -4,9 +4,15 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record AuthRequest(
+public record RegisterRequest(
+        @NotBlank(message = "Imię jest wymagane")
+        String firstname,
+
+        @NotBlank(message = "Nazwisko jest wymagane")
+        String lastname,
+
         @NotBlank(message = "Email jest wymagany")
-        @Email(message = "Niepoprawny format adresu email")
+        @Email(message = "Nieprawidłowy format adresu email")
         String email,
 
         @NotBlank(message = "Hasło jest wymagane")
