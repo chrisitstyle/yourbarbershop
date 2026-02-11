@@ -1,20 +1,23 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../api/authService";
 import ButtonSpinner from "../components/common/ButtonSpinner";
+import useAutoDismiss from "../hooks/useAutoDismiss";
 
 const Register = () => {
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [registerError, setRegisterError] = useState("");
+
+  const [registerErrors, setRegisterErrors] = useAutoDismiss([], 6000);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setRegisterErrors([]);
 
     try {
       const response = await registerUser({
@@ -26,11 +29,22 @@ const Register = () => {
 
       if (response.status === 200) {
         navigate("/login?registrationSuccess=true");
-      } else {
-        setRegisterError("Błąd przy zakładaniu konta");
       }
     } catch (error) {
-      setRegisterError("Błąd przy zakładaniu konta");
+      if (error.response && error.response.data) {
+        const data = error.response.data;
+
+        if (typeof data === "object") {
+          const messages = Object.values(data);
+          setRegisterErrors(messages);
+        } else {
+          setRegisterErrors([data]);
+        }
+      } else {
+        setRegisterErrors([
+          "Wystąpił nieoczekiwany błąd przy zakładaniu konta.",
+        ]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -44,9 +58,13 @@ const Register = () => {
             <h4 className=" display-6 text-center">Rejestracja konta</h4>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                {registerError && (
+                {registerErrors.length > 0 && (
                   <div className="alert alert-danger text-center" role="alert">
-                    {registerError}
+                    <ul className="mb-0 list-unstyled">
+                      {registerErrors.map((err, index) => (
+                        <li key={index}>{err}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
                 <label htmlFor="inputfirstname" className="form-label">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { Alert } from "react-bootstrap";
@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { API_BASE_URL } from "../api/config";
 import GoogleIcon from "../components/common/GoogleIcon";
+import useAutoDismiss from "../hooks/useAutoDismiss";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,26 +16,49 @@ const Login = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const registrationSuccess = searchParams.get("registrationSuccess");
-  const [loginError, setLoginError] = useState(null);
+
+  const [successMessage, setSuccessMessage] = useAutoDismiss(null, 5000);
+  const [loginErrors, setLoginErrors] = useAutoDismiss(null, 6000);
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+
+    // if ?registrationSuccess=true is in the URL
+    if (searchParams.get("registrationSuccess")) {
+      // set the message in state (this triggers the timer from useAutoDismiss)
+      setSuccessMessage("Konto zostało pomyślnie zarejestrowane. Zaloguj się.");
+
+      // clean up the URL so the parameter doesn't linger in the address bar
+      // replace: true ensures the user cannot navigate back to the URL with the parameter
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location, setSuccessMessage, navigate]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setLoginErrors(null);
 
     try {
       const userData = await loginUser(email, password);
-
       localStorage.setItem("token", userData.token);
-
       login(userData);
-
       navigate("/");
     } catch (error) {
-      setLoginError("Błąd logowania");
+      if (error.response && error.response.data) {
+        const data = error.response.data;
+        if (typeof data === "object") {
+          setLoginErrors(Object.values(data));
+        } else {
+          setLoginErrors([data]);
+        }
+      } else {
+        setLoginErrors(["Wystąpił błąd logowania. Spróbuj ponownie."]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -47,24 +71,27 @@ const Login = () => {
           <h4 className="display-6 text-center">Logowanie</h4>
           <form onSubmit={handleLogin}>
             <div className="mb-3">
-              {registrationSuccess && (
+              {successMessage && (
                 <Alert
                   variant="success"
-                  onClose={() => {}}
+                  onClose={() => setSuccessMessage(null)}
                   dismissible
                   className="text-center"
                 >
-                  Konto zostało pomyślnie zarejestrowane. Zaloguj się.
+                  {successMessage}
                 </Alert>
               )}
-              {loginError && (
+              {loginErrors && loginErrors.length > 0 && (
                 <Alert
                   variant="danger"
-                  onClose={() => setLoginError(null)}
+                  onClose={() => setLoginErrors(null)}
                   dismissible
-                  className="text-center"
                 >
-                  {loginError}
+                  <ul className="mb-0 ps-3 list-unstyled centered text-center">
+                    {loginErrors.map((err, index) => (
+                      <li key={index}>{err}</li>
+                    ))}
+                  </ul>
                 </Alert>
               )}
 
