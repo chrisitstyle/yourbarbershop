@@ -8,12 +8,14 @@ import {
   faArrowCircleRight,
 } from "@fortawesome/free-solid-svg-icons";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import { useTranslation } from "react-i18next";
 
 const Gallery = () => {
   const [images, setImages] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const supabase = useSupabaseClient();
+  const { t } = useTranslation();
 
   const handleImageClick = (image) => {
     setSelectedImage(image);
@@ -60,12 +62,8 @@ const Gallery = () => {
 
   return (
     <Container className="text-center mt-4">
-      <h2 className="display-6">Nasze portfolio</h2>
-      <p className="lead">
-        Odkryj artystyczną i kreatywną pracę naszych utalentowanych barberów.
-        Każde zdjęcie prezentuje precyzję i umiejętności, jakie wkładamy w każdą
-        przemianę naszego klienta.
-      </p>
+      <h2 className="display-6">{t("gallery.title")}</h2>
+      <p className="lead">{t("gallery.lead")}</p>
       {images.length > 0 ? (
         <Carousel
           nextIcon={
@@ -102,7 +100,7 @@ const Gallery = () => {
           ))}
         </Carousel>
       ) : (
-        <LoadingSpinner text="Ładowanie galerii..." />
+        <LoadingSpinner text={t("gallery.loading")} />
       )}
       {/* Modal */}
       <Modal show={showModal} onHide={handleCloseModal}>
@@ -121,7 +119,7 @@ const Gallery = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
-            Zamknij
+            {t("common.close")}
           </Button>
         </Modal.Footer>
       </Modal>

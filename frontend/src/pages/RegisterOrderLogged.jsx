@@ -8,6 +8,7 @@ import useOffers from "../hooks/useOffers";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { API_BASE_URL } from "../api/config";
+import { useTranslation } from "react-i18next";
 
 const RegisterOrderLogged = () => {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ const RegisterOrderLogged = () => {
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const { offers, isLoading: isLoadingOffers, error } = useOffers();
 
@@ -52,7 +54,7 @@ const RegisterOrderLogged = () => {
           visitDate: formatSelectedDateTime(
             selectedDate,
             selectedHour,
-            selectedMinute
+            selectedMinute,
           ),
           status: "NOWE",
         },
@@ -61,9 +63,9 @@ const RegisterOrderLogged = () => {
           headers: {
             Authorization: `Bearer ${user.token}`,
           },
-        }
+        },
       );
-      navigate(`/profile/${user.id}?registrationOrderSuccess=true"`);
+      navigate(`/profile/${user.id}?registrationOrderSuccess=true`);
     } catch (error) {
       setShowErrorAlert(true);
     } finally {
@@ -72,7 +74,7 @@ const RegisterOrderLogged = () => {
   };
 
   if (isLoadingOffers) {
-    return <LoadingSpinner text="Ładowanie ofert..." />;
+    return <LoadingSpinner text={t("orders.loadingServices")} />;
   }
 
   return (
@@ -80,19 +82,21 @@ const RegisterOrderLogged = () => {
       <div className="container mt-2">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
-            <h4 className="display-6 text-center">Umów wizytę</h4>
+            <h4 className="display-6 text-center">
+              {t("orders.registerTitle")}
+            </h4>
             <Alert
               variant="danger"
               show={showErrorAlert}
               onClose={() => setShowErrorAlert(false)}
               dismissible
             >
-              Błąd podczas umawiania wizyty. Spróbuj ponownie.
+              {t("orders.errorMessage")}
             </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="selectoffer" className="form-label">
-                  Wybierz usługę
+                  {t("orders.selectService")}
                 </label>
                 <select
                   className="form-select"
@@ -104,14 +108,14 @@ const RegisterOrderLogged = () => {
                   <option value="" disabled></option>
                   {offers.map((offer) => (
                     <option key={offer.idOffer} value={offer.idOffer}>
-                      {offer.kind} - {offer.cost} zł
+                      {offer.kind} - {offer.cost} {t("common.currency")}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="mb-3">
                 <label htmlFor="selectdate" className="form-label">
-                  Wybierz datę
+                  {t("orders.selectDate")}
                 </label>
                 <input
                   type="date"
@@ -125,7 +129,7 @@ const RegisterOrderLogged = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="selecttime" className="form-label">
-                  Wybierz godzinę i minutę
+                  {t("orders.selectTimeFull")}
                 </label>
                 <div className="d-flex">
                   <select
@@ -161,9 +165,9 @@ const RegisterOrderLogged = () => {
                 variant="dark"
                 className="mx-auto d-block"
                 loading={isLoading}
-                loadingText="Rezerwacja..."
+                loadingText={t("orders.registeringOrder")}
               >
-                Umów wizytę
+                {t("orders.registerBtn")}
               </ButtonSpinner>
             </form>
           </div>

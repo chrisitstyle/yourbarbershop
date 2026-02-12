@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Alert } from "react-bootstrap";
 import { userForgotPasswordRequest } from "../api/userService";
 import ButtonSpinner from "../components/common/ButtonSpinner";
+import { useTranslation } from "react-i18next";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [alert, setAlert] = useState({ message: "", variant: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
@@ -14,13 +16,12 @@ const ForgotPassword = () => {
     try {
       await userForgotPasswordRequest(email);
       setAlert({
-        message:
-          "Link do resetowania hasła został wysłany na podany adres email.",
+        message: t("auth.resetLinkSent"),
         variant: "success",
       });
     } catch (err) {
       setAlert({
-        message: "Wystąpił błąd podczas wysyłania żądania.",
+        message: t("auth.requestError"),
         variant: "danger",
       });
     } finally {
@@ -46,11 +47,13 @@ const ForgotPassword = () => {
               {alert.message}
             </Alert>
           )}
-          <h4 className="display-6 text-center">Resetowanie hasła</h4>
+          <h4 className="display-6 text-center">
+            {t("auth.forgotPasswordHeader")}
+          </h4>
           <form onSubmit={handleForgotPassword}>
             <div className="mb-3">
               <label htmlFor="inputEmail" className="form-label">
-                Adres e-mail
+                {t("auth.email")}
               </label>
               <input
                 type="email"
@@ -68,9 +71,9 @@ const ForgotPassword = () => {
               variant="dark"
               className="mx-auto d-block"
               loading={isLoading}
-              loadingText="Wysyłanie..."
+              loadingText={t("auth.sending")}
             >
-              Wyślij
+              {t("auth.send")}
             </ButtonSpinner>
           </form>
         </div>

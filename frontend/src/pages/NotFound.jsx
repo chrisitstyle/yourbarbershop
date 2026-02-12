@@ -1,12 +1,17 @@
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+
 export default function NotFound() {
+  const { t } = useTranslation();
+
   return (
     <div style={{ textAlign: "center", padding: "4rem" }}>
       <h1>404</h1>
-      <h2>Nie znaleziono strony</h2>
-      <p>Przepraszamy, taka podstrona nie istnieje.</p>
-      <a href="/" className="btn btn-primary mt-4">
-        Wróć na stronę główną
-      </a>
+      <h2>{t("notfound.subtitle")}</h2>
+      <p>{t("notfound.text")}</p>
+      <Link to="/" className="btn btn-dark mt-4">
+        {t("notfound.backHome")}
+      </Link>
     </div>
   );
 }

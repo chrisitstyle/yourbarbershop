@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { updateGuestOrder } from "../api/guestOrderService";
@@ -6,11 +6,14 @@ import { format } from "date-fns-tz";
 import { formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
 import { getOffers } from "../api/offerService";
+import { useTranslation } from "react-i18next";
+
 const EditGuestOrder = () => {
   const { user } = useAuth();
   const location = useLocation();
   const guestOrderData = location.state?.guestOrderData;
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [offers, setOffers] = useState([]);
   const [selectedOffer, setSelectedOffer] = useState("");
@@ -27,7 +30,7 @@ const EditGuestOrder = () => {
         setOffers(offersData);
         setSelectedOffer(guestOrderData?.offer?.idOffer || "");
         setSelectedDate(
-          format(new Date(guestOrderData?.visitDate), "yyyy-MM-dd")
+          format(new Date(guestOrderData?.visitDate), "yyyy-MM-dd"),
         );
         const hours = new Date(guestOrderData?.visitDate).getHours();
         const minutes = new Date(guestOrderData?.visitDate).getMinutes();
@@ -69,11 +72,11 @@ const EditGuestOrder = () => {
           visitDate: formatSelectedDateTime(
             selectedDate,
             selectedHour,
-            selectedMinute
+            selectedMinute,
           ),
           status: statusToSend,
         },
-        user.token
+        user.token,
       );
 
       navigate("/adminpanel");
@@ -88,7 +91,9 @@ const EditGuestOrder = () => {
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
             <h4 className="text-center">
-              Edycja wizyty o id {guestOrderData.idGuestOrder}
+              {t("admin.guestOrders.editTitle", {
+                id: guestOrderData.idGuestOrder,
+              })}
             </h4>
             <Alert
               variant="danger"
@@ -96,12 +101,12 @@ const EditGuestOrder = () => {
               onClose={() => setEditGuestOrderError(false)}
               dismissible
             >
-              Błąd podczas edytowania wizyty. Spróbuj ponownie.
+              {t("admin.messages.editError")}
             </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="selectOffer" className="form-label">
-                  Wybierz usługę
+                  {t("orders.selectService")}
                 </label>
                 <select
                   className="form-select"
@@ -111,20 +116,20 @@ const EditGuestOrder = () => {
                   required
                 >
                   <option value={guestOrderData.offer?.idOffer || "brak"}>
-                    {guestOrderData.offer?.kind || "brak"} -{" "}
-                    {guestOrderData.offer?.cost || "brak"} zł
+                    {guestOrderData.offer?.kind || t("admin.common.none")} -{" "}
+                    {guestOrderData.offer?.cost || "0"} {t("common.currency")}
                   </option>
 
                   {offers.map((offer) => (
                     <option key={offer.idOffer} value={offer.idOffer}>
-                      {offer.kind} - {offer.cost} zł
+                      {offer.kind} - {offer.cost} {t("common.currency")}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="mb-3">
                 <label htmlFor="selectdate" className="form-label">
-                  Wybierz datę
+                  {t("orders.selectDate")}
                 </label>
                 <input
                   type="date"
@@ -138,7 +143,7 @@ const EditGuestOrder = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="selecttime" className="form-label">
-                  Wybierz godzinę i minutę
+                  {t("orders.selectTimeFull")}
                 </label>
                 <div className="d-flex">
                   <select
@@ -171,7 +176,7 @@ const EditGuestOrder = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="selectstatus" className="form-label">
-                  Wybierz status
+                  {t("admin.common.status")}
                 </label>
                 <select
                   className="form-select"
@@ -192,12 +197,12 @@ const EditGuestOrder = () => {
                         <option key={status} value={status}>
                           {status}
                         </option>
-                      )
+                      ),
                   )}
                 </select>
               </div>
               <button type="submit" className="btn btn-dark mx-auto d-block">
-                Zapisz zmiany
+                {t("admin.common.save")}
               </button>
             </form>
           </div>

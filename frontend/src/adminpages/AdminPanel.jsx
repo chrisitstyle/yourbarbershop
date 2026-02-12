@@ -20,10 +20,12 @@ import {
   faCalendarCheck,
   faImages,
 } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "react-i18next";
 
 const AdminPanel = () => {
   const { user } = useAuth();
   const [selectedTable, setSelectedTable] = useState(null);
+  const { t } = useTranslation();
 
   // table/form visibility states
   const [showUserTable, setShowUserTable] = useState(false);
@@ -51,10 +53,10 @@ const AdminPanel = () => {
     try {
       await offerService.addOffer(newOffer, user.token);
       handleToggleTable("offers");
-      setAddOfferSuccessfulMsg("Pomyślnie dodano nową usługę.");
+      setAddOfferSuccessfulMsg(t("admin.messages.addOfferSuccess"));
     } catch (error) {
       console.error("Error adding offer:", error);
-      setAddOfferErrorMsg("Wystąpił błąd podczas dodawania usługi.");
+      setAddOfferErrorMsg(t("admin.messages.addOfferError"));
     }
   };
 
@@ -63,17 +65,17 @@ const AdminPanel = () => {
       await offerService.deleteOffer(idOffer, user.token);
     } catch (error) {
       console.error("Error deleting offer:", error);
-      setDeleteOfferErrorMsg("Nie udało się usunąć usługi.");
+      setDeleteOfferErrorMsg(t("admin.messages.deleteOfferError"));
     }
   };
 
   const handleAddUser = async (newUser) => {
     try {
       await userService.addUser(newUser);
-      setAddUserSuccessfulMsg("Pomyślnie dodano nowego użytkownika.");
+      setAddUserSuccessfulMsg(t("admin.messages.addUserSuccess"));
       handleToggleTable("users");
     } catch (error) {
-      setAddUserErrorMsg("Wystąpił błąd podczas dodawania użytkownika.");
+      setAddUserErrorMsg(t("admin.messages.addUserError"));
       console.error("Error adding user:", error);
     }
   };
@@ -82,7 +84,7 @@ const AdminPanel = () => {
     try {
       await userService.deleteUser(idUser, user.token);
     } catch (error) {
-      setDeleteUserErrorMsg("Wystąpił błąd podczas usuwania użytkownika.");
+      setDeleteUserErrorMsg(t("admin.messages.deleteUserError"));
       console.error("Error deleting user:", error);
     }
   };
@@ -91,7 +93,7 @@ const AdminPanel = () => {
     try {
       await orderService.deleteOrder(idOrder, user.token);
     } catch (error) {
-      setDeleteOrderErrorMsg("Wystąpił błąd podczas usuwania wizyty.");
+      setDeleteOrderErrorMsg(t("admin.messages.deleteOrderError"));
       console.error("Error deleting order:", error);
     }
   };
@@ -100,9 +102,7 @@ const AdminPanel = () => {
     try {
       await guestOrderService.deleteGuestOrder(idGuestOrder, user.token);
     } catch (error) {
-      setDeleteGuestOrderErrorMsg(
-        "Wystąpił błąd podczas usuwania wizyty gościa."
-      );
+      setDeleteGuestOrderErrorMsg(t("admin.messages.deleteGuestOrderError"));
       console.error("Error deleting order:", error);
     }
   };
@@ -142,11 +142,8 @@ const AdminPanel = () => {
   return (
     <div className="admin-panel-wrapper py-4 px-2">
       <div className="text-center mb-4">
-        <h2 className="fw-bold">Panel administratora</h2>
-        <p className="text-muted mb-0">
-          Zarządzaj głównymi funkcjami: użytkownikami, usługami, wizytami oraz
-          galerią.
-        </p>
+        <h2 className="fw-bold">{t("admin.panelTitle")}</h2>
+        <p className="text-muted mb-0">{t("admin.panelDesc")}</p>
       </div>
       <div className="d-flex flex-wrap justify-content-center gap-3 mb-4">
         <div className="dropdown">
@@ -154,7 +151,7 @@ const AdminPanel = () => {
             title={
               <span>
                 <FontAwesomeIcon icon={faScissors} className="me-2" />
-                Usługi
+                {t("admin.menu.offers")}
               </span>
             }
           />
@@ -166,7 +163,7 @@ const AdminPanel = () => {
                 handleToggleTable("offers");
               }}
             >
-              Pokaż usługi
+              {t("admin.actions.showOffers")}
             </button>
             <button
               type="button"
@@ -181,7 +178,7 @@ const AdminPanel = () => {
                 setShowGallerySettings(false);
               }}
             >
-              Dodaj usługę
+              {t("admin.actions.addOffer")}
             </button>
           </div>
         </div>
@@ -190,7 +187,7 @@ const AdminPanel = () => {
             title={
               <span>
                 <FontAwesomeIcon icon={faUser} className="me-2" />
-                Użytkownicy
+                {t("admin.menu.users")}
               </span>
             }
           />
@@ -202,7 +199,7 @@ const AdminPanel = () => {
                 handleToggleTable("users");
               }}
             >
-              Pokaż użytkowników
+              {t("admin.actions.showUsers")}
             </button>
             <button
               type="button"
@@ -217,7 +214,7 @@ const AdminPanel = () => {
                 setShowGallerySettings(false);
               }}
             >
-              Dodaj użytkownika
+              {t("admin.actions.addUser")}
             </button>
           </div>
         </div>
@@ -226,7 +223,7 @@ const AdminPanel = () => {
             title={
               <span>
                 <FontAwesomeIcon icon={faCalendarCheck} className="me-2" />
-                Wizyty
+                {t("admin.menu.orders")}
               </span>
             }
           />
@@ -238,7 +235,7 @@ const AdminPanel = () => {
                 handleToggleTable("orders");
               }}
             >
-              Pokaż wizyty użytkowników
+              {t("admin.actions.showUserOrders")}
             </button>
             <button
               type="button"
@@ -247,7 +244,7 @@ const AdminPanel = () => {
                 handleToggleTable("guestorders");
               }}
             >
-              Pokaż wizyty gości
+              {t("admin.actions.showGuestOrders")}
             </button>
           </div>
         </div>
@@ -256,7 +253,7 @@ const AdminPanel = () => {
             title={
               <span>
                 <FontAwesomeIcon icon={faImages} className="me-2" />
-                Galeria
+                {t("admin.menu.gallery")}
               </span>
             }
           />
@@ -268,7 +265,7 @@ const AdminPanel = () => {
                 handleToggleTable("gallerysettings");
               }}
             >
-              Ustawienia galerii
+              {t("admin.actions.gallerySettings")}
             </button>
           </div>
         </div>

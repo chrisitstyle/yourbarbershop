@@ -1,4 +1,5 @@
 import { Modal, Button } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 const ConfirmDeleteModal = ({
   show,
@@ -7,20 +8,22 @@ const ConfirmDeleteModal = ({
   itemName,
   label = "usługę",
 }) => {
+  const { t } = useTranslation();
+
   return (
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton>
-        <Modal.Title>Potwierdzenie usunięcia</Modal.Title>
+        <Modal.Title>{t("admin.deleteModal.title")}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        Czy na pewno chcesz usunąć {label}: <strong>{itemName}</strong>?
+        {t("admin.deleteModal.message", { label: label, itemName: itemName })}
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>
-          Anuluj
+          {t("admin.deleteModal.cancel")}
         </Button>
         <Button variant="danger" onClick={onConfirm}>
-          Usuń
+          {t("admin.common.delete")}
         </Button>
       </Modal.Footer>
     </Modal>

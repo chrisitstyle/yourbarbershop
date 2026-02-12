@@ -12,16 +12,18 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import { useTranslation } from "react-i18next";
+
 const guestOrderFieldsHeaders = [
-  "Identyfikator zamówienia",
-  "Imię",
-  "Nazwisko",
-  "Numer telefonu",
-  "Usługa",
-  "Koszt",
-  "Data zamówienia",
-  "Data wizyty",
-  "Status",
+  "admin.guestOrders.id",
+  "admin.guestOrders.firstname",
+  "admin.guestOrders.lastname",
+  "admin.guestOrders.phone",
+  "admin.guestOrders.service",
+  "admin.guestOrders.cost",
+  "admin.guestOrders.orderDate",
+  "admin.guestOrders.visitDate",
+  "admin.guestOrders.status",
 ];
 
 const guestOrderFields = [
@@ -42,11 +44,13 @@ const GuestOrderRow = memo(function GuestOrderRow({
   onDelete,
   isDeleting,
 }) {
+  const { t } = useTranslation();
   return (
     <tr>
       {guestOrderFields.map((field) => (
         <td key={field} className="align-middle text-center">
           {getNestedValue(guestOrder, field)}
+          {field === "offer.cost" ? ` ${t("common.currency")}` : ""}
         </td>
       ))}
       <td className="align-middle text-center">
@@ -54,7 +58,7 @@ const GuestOrderRow = memo(function GuestOrderRow({
           <button
             className="btn btn-warning btn-sm me-2"
             style={{ minWidth: "40px" }}
-            title="Edytuj"
+            title={t("admin.common.edit")}
             onClick={() => onEdit(guestOrder)}
           >
             <FontAwesomeIcon icon={faPen} />
@@ -62,7 +66,7 @@ const GuestOrderRow = memo(function GuestOrderRow({
           <button
             className="btn btn-danger btn-sm"
             style={{ minWidth: "40px" }}
-            title="Usuń"
+            title={t("admin.common.delete")}
             onClick={() => onDelete(guestOrder)}
             disabled={isDeleting}
           >
@@ -77,9 +81,10 @@ const GuestOrderRow = memo(function GuestOrderRow({
 const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
   const { user } = useAuth();
   const { guestOrders, isLoading, error, refetch } = useGuestOrders(
-    user?.token
+    user?.token,
   );
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const filterGuestOrders = (order, term) => {
     const searchStr = ` ${order.idGuestOrder} ${order.firstname} ${
@@ -114,17 +119,18 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
     });
   };
 
-  if (isLoading) return <LoadingSpinner text="Ładowanie wizyt gości..." />;
+  if (isLoading)
+    return <LoadingSpinner text={t("admin.guestOrders.loading")} />;
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <div className="container my-5 py-4 text-center">
-      <h2 className="mb-4">Wizyty gości</h2>
+      <h2 className="mb-4">{t("admin.guestOrders.title")}</h2>
 
       <SearchBox
         value={searchTerm}
         onChange={handleSearchChange}
-        placeholder="Szukaj wizyty..."
+        placeholder={t("admin.guestOrders.searchPlaceholder")}
       />
 
       <div className="table-responsive">
@@ -136,10 +142,12 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
             <tr>
               {guestOrderFieldsHeaders.map((header) => (
                 <th key={header} className="text-center align-middle">
-                  {header}
+                  {t(header)}
                 </th>
               ))}
-              <th className="text-center align-middle">Akcja</th>
+              <th className="text-center align-middle">
+                {t("admin.common.action")}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -163,7 +171,7 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
                   className="text-center py-4"
                 >
                   <Alert variant="info" className="mb-0">
-                    Brak wyników.
+                    {t("admin.common.noResults")}
                   </Alert>
                 </td>
               </tr>
@@ -184,12 +192,12 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
         onConfirm={confirmDelete}
         itemName={
           guestOrderToDelete
-            ? `${guestOrderToDelete.offer?.kind ?? "brak"} (${
+            ? `${guestOrderToDelete.offer?.kind ?? t("admin.common.none")} (${
                 guestOrderToDelete.idGuestOrder
               })`
             : ""
         }
-        label="wizytę gościa"
+        label={t("admin.guestOrders.deleteLabel")}
       />
     </div>
   );

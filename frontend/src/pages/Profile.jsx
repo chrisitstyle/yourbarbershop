@@ -8,14 +8,15 @@ import useTableData from "../hooks/useTableData";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
 import { getNestedValue } from "../utils/tableHelpers";
+import { useTranslation } from "react-i18next";
 
 const visitHeaders = [
-  "Identyfikator wizyty",
-  "Usługa",
-  "Koszt",
-  "Data złożenia wizyty",
-  "Data wizyty",
-  "Status",
+  "profile.table.id",
+  "profile.table.service",
+  "profile.table.cost",
+  "profile.table.orderDate",
+  "profile.table.visitDate",
+  "profile.table.status",
 ];
 
 const visitFields = [
@@ -33,11 +34,12 @@ const Profile = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const registrationOrderSuccess = searchParams.get("registrationOrderSuccess");
+  const { t } = useTranslation();
 
   const { userDetails, isLoading, error } = useUserDetails(id, user?.token);
 
   const [showSuccessAlert, setShowSuccessAlert] = useState(
-    Boolean(registrationOrderSuccess)
+    Boolean(registrationOrderSuccess),
   );
 
   useEffect(() => {
@@ -66,7 +68,7 @@ const Profile = () => {
     setCurrentPage,
   } = useTableData(safeOrders, filterVisits);
 
-  if (isLoading) return <LoadingSpinner text="Ładowanie profilu..." />;
+  if (isLoading) return <LoadingSpinner text={t("profile.loading")} />;
 
   if (error) {
     return (
@@ -85,28 +87,30 @@ const Profile = () => {
             className="text-center mx-auto"
             style={{ maxWidth: 440 }}
           >
-            Twoja wizyta została zarejestrowana
+            {t("profile.successOrder")}
           </Alert>
         )}
 
-        <h2 className="mb-3">Twój profil</h2>
+        <h2 className="mb-3">{t("profile.title")}</h2>
         <div
           className="mb-2"
           style={{ fontWeight: "500", fontSize: "1.06rem" }}
         >
-          {`Jesteś zalogowany jako `}
-          <span className="fw-bold">{userDetails?.email ?? "Brak danych"}</span>
+          {t("profile.loggedInAs") + " "}
+          <span className="fw-bold">
+            {userDetails?.email ?? t("profile.noData")}
+          </span>
         </div>
         <div className="mb-4" style={{ color: "#666" }}>
-          {(userDetails?.firstname ?? "Użytkownik") +
-            ", poniżej znajdują się wszystkie dotychczasowe wizyty"}
+          {(userDetails?.firstname ?? t("profile.defaultUser")) +
+            t("profile.visitInfo")}
         </div>
 
         {/* search box */}
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
-          placeholder="Szukaj wizyty..."
+          placeholder={t("profile.searchPlaceholder")}
         />
 
         {/* table */}
@@ -123,7 +127,7 @@ const Profile = () => {
                     scope="col"
                     className="text-center align-middle"
                   >
-                    {header}
+                    {t(header)}
                   </th>
                 ))}
               </tr>
@@ -135,6 +139,9 @@ const Profile = () => {
                     {visitFields.map((field) => (
                       <td key={field} className="align-middle text-center">
                         {getNestedValue(order, field)}
+                        {field === "offer.cost"
+                          ? ` ${t("common.currency")}`
+                          : ""}
                       </td>
                     ))}
                   </tr>
@@ -143,7 +150,7 @@ const Profile = () => {
                 <tr>
                   <td colSpan={visitFields.length} className="text-center py-4">
                     <Alert variant="info" className="mb-0">
-                      Brak wyników do wyświetlenia.
+                      {t("profile.noResults")}
                     </Alert>
                   </td>
                 </tr>

@@ -8,8 +8,11 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "./styles/contact.css";
+import { useTranslation } from "react-i18next";
 
 const Contact = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="contact-container container mt-5 py-4 px-3 shadow-lg rounded-4 bg-body">
       <div className="row gy-4 align-items-center">
@@ -19,9 +22,7 @@ const Contact = () => {
 
           {/* social media*/}
           <div>
-            <div className="mb-1 fw-medium">
-              Jesteśmy dostępni również w mediach społecznościowych:
-            </div>
+            <div className="mb-1 fw-medium">{t("contact.page.socials")}</div>
             <div className="social-icons mt-2">
               <a
                 href="https://www.facebook.com"
@@ -74,10 +75,10 @@ const Contact = () => {
 
         {/* right column */}
         <div className="col-md-6">
-          <h4 className="mb-3">Znajdź nas na mapie</h4>
+          <h4 className="mb-3">{t("contact.page.mapTitle")}</h4>
           <div className="map-responsive rounded-4 overflow-hidden shadow-sm">
             <iframe
-              title="Mapa"
+              title={t("contact.page.mapIframeTitle")}
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2393.1580454650143!2d18.128182213203868!3d53.143258072115295!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470313b103a9ea1d%3A0x2a29c87a5d2749d5!2sPolitechnika%20Bydgoska%20im.%20Jana%20i%20J%C4%99drzeja%20%C5%9Aniadeckich!5e0!3m2!1spl!2spl!4v1767884619059!5m2!1spl!2spl"
               width="100%"
               height="300"

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import ButtonSpinner from "../components/common/ButtonSpinner";
+import { useTranslation } from "react-i18next";
 
 const AddUser = ({ onSubmit }) => {
   const [firstname, setFirstName] = useState("");
@@ -8,6 +9,7 @@ const AddUser = ({ onSubmit }) => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("USER");
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,11 +41,11 @@ const AddUser = ({ onSubmit }) => {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3 ">
-            <h4 className="text-center">Dodawanie użytkownika</h4>
+            <h4 className="text-center">{t("admin.users.addTitle")}</h4>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="inputfirstname" className="form-label">
-                  Imię
+                  {t("auth.firstname")}
                 </label>
                 <input
                   type="text"
@@ -56,7 +58,7 @@ const AddUser = ({ onSubmit }) => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputlastname" className="form-label">
-                  Nazwisko
+                  {t("auth.lastname")}
                 </label>
                 <input
                   type="text"
@@ -69,7 +71,7 @@ const AddUser = ({ onSubmit }) => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputemail" className="form-label">
-                  Email
+                  {t("auth.email")}
                 </label>
                 <input
                   type="email"
@@ -82,7 +84,7 @@ const AddUser = ({ onSubmit }) => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputpassword" className="form-label">
-                  Hasło
+                  {t("auth.password")}
                 </label>
                 <input
                   type="password"
@@ -95,7 +97,7 @@ const AddUser = ({ onSubmit }) => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputrole" className="form-label">
-                  Rola
+                  {t("admin.users.role")}
                 </label>
                 <select
                   className="form-select"
@@ -105,7 +107,7 @@ const AddUser = ({ onSubmit }) => {
                   required
                 >
                   <option value="ADMIN">Admin</option>
-                  <option value="USER">Użytkownik</option>
+                  <option value="USER">{t("admin.users.roleUser")}</option>
                 </select>
               </div>
 
@@ -114,9 +116,9 @@ const AddUser = ({ onSubmit }) => {
                 variant="dark"
                 className="mx-auto d-block"
                 loading={isLoading}
-                loadingText="Dodawanie..."
+                loadingText={t("admin.common.adding")}
               >
-                Dodaj użytkownika
+                {t("admin.users.addBtn")}
               </ButtonSpinner>
             </form>
           </div>

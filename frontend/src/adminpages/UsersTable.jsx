@@ -17,17 +17,19 @@ import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import EmailMessageModal from "../components/EmailMessageModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import { useTranslation } from "react-i18next";
 
 const userFieldsHeaders = [
-  "Identyfikator użytkownika",
-  "Imię",
-  "Nazwisko",
-  "E-mail",
-  "Rola",
+  "admin.users.id",
+  "admin.users.firstname",
+  "admin.users.lastname",
+  "admin.users.email",
+  "admin.users.role",
 ];
 const userFields = ["idUser", "firstname", "lastname", "email", "role"];
 
 const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
+  const { t } = useTranslation();
   return (
     <tr>
       {userFields.map((field) => (
@@ -38,7 +40,7 @@ const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
       <td className="align-middle text-center">
         <button
           className="btn btn-primary btn-sm mx-1"
-          title="Wyślij e-mail"
+          title={t("admin.common.sendEmail")}
           onClick={() => onEmail(user)}
           style={{ minWidth: "38px" }}
         >
@@ -46,7 +48,7 @@ const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
         </button>
         <button
           className="btn btn-warning btn-sm mx-1"
-          title="Edytuj"
+          title={t("admin.common.edit")}
           onClick={() => onEdit(user)}
           style={{ minWidth: "38px" }}
         >
@@ -54,7 +56,7 @@ const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
         </button>
         <button
           className="btn btn-danger btn-sm mx-1"
-          title="Usuń"
+          title={t("admin.common.delete")}
           onClick={() => onDelete(user)}
           style={{ minWidth: "38px" }}
         >
@@ -69,6 +71,7 @@ const UsersTable = ({ onDeleteUser }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { users, isLoading, error, refetch } = useUsers(user?.token);
+  const { t } = useTranslation();
 
   // email state
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -120,17 +123,17 @@ const UsersTable = ({ onDeleteUser }) => {
     });
   };
 
-  if (isLoading) return <LoadingSpinner text="Ładowanie użytkowników..." />;
+  if (isLoading) return <LoadingSpinner text={t("admin.users.loading")} />;
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <>
       <div className="container text-center py-4">
-        <h2>Użytkownicy</h2>
+        <h2>{t("admin.users.title")}</h2>
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
-          placeholder="Szukaj użytkownika..."
+          placeholder={t("admin.users.searchPlaceholder")}
         />
 
         <div className="table-responsive">
@@ -142,10 +145,12 @@ const UsersTable = ({ onDeleteUser }) => {
               <tr>
                 {userFieldsHeaders.map((header) => (
                   <th key={header} className="text-center align-middle">
-                    {header}
+                    {t(header)}
                   </th>
                 ))}
-                <th className="text-center align-middle">Akcja</th>
+                <th className="text-center align-middle">
+                  {t("admin.common.action")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -165,7 +170,7 @@ const UsersTable = ({ onDeleteUser }) => {
                     colSpan={userFields.length + 1}
                     className="text-center py-4"
                   >
-                    Brak wyników.
+                    {t("admin.common.noResults")}
                   </td>
                 </tr>
               )}
@@ -189,7 +194,7 @@ const UsersTable = ({ onDeleteUser }) => {
             ? `${userToDelete.firstname} ${userToDelete.lastname}`
             : ""
         }
-        label="użytkownika"
+        label={t("admin.users.deleteLabel")}
       />
 
       <EmailMessageModal

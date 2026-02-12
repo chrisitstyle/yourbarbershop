@@ -1,4 +1,5 @@
 import { Modal, Button, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 const EmailMessageModal = ({
   show,
@@ -11,11 +12,12 @@ const EmailMessageModal = ({
   handleEmailSend,
   resetEmailFields,
 }) => {
+  const { t } = useTranslation();
   const isFormValid = emailSubject.trim() && emailMessage.trim();
 
   const renderTooltip = (props) => (
     <Tooltip id="tooltip-email-to" {...props}>
-      Adres e-mail odbiorcy, nie można edytować
+      {t("admin.emailModal.recipientTooltip")}
     </Tooltip>
   );
 
@@ -32,14 +34,14 @@ const EmailMessageModal = ({
       keyboard={true}
     >
       <Modal.Header closeButton>
-        <Modal.Title>Wyślij e-mail</Modal.Title>
+        <Modal.Title>{t("admin.emailModal.title")}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>
           <Form.Group controlId="formEmailTo">
             <Form.Label>
               <OverlayTrigger placement="right" overlay={renderTooltip}>
-                <span>Do</span>
+                <span>{t("admin.emailModal.to")}</span>
               </OverlayTrigger>
             </Form.Label>
             <Form.Control
@@ -52,11 +54,12 @@ const EmailMessageModal = ({
           </Form.Group>
           <Form.Group controlId="formEmailSubject" className="mt-3">
             <Form.Label>
-              Temat <span className="text-danger">*</span>
+              {t("admin.emailModal.subject")}{" "}
+              <span className="text-danger">*</span>
             </Form.Label>
             <Form.Control
               type="text"
-              placeholder="Temat"
+              placeholder={t("admin.emailModal.subjectPlaceholder")}
               required
               autoFocus
               maxLength={120}
@@ -66,11 +69,12 @@ const EmailMessageModal = ({
           </Form.Group>
           <Form.Group controlId="formEmailMessage" className="mt-3">
             <Form.Label>
-              Wiadomość <span className="text-danger">*</span>
+              {t("admin.emailModal.message")}{" "}
+              <span className="text-danger">*</span>
             </Form.Label>
             <Form.Control
               as="textarea"
-              placeholder="Wiadomość"
+              placeholder={t("admin.emailModal.messagePlaceholder")}
               rows={6}
               style={{ minHeight: "120px", resize: "vertical" }}
               value={emailMessage}
@@ -78,7 +82,7 @@ const EmailMessageModal = ({
               maxLength={1200}
               onChange={(e) => setEmailMessage(e.target.value)}
             />
-            <Form.Text muted>Maks. 1200 znaków</Form.Text>
+            <Form.Text muted>{t("admin.emailModal.maxChars")}</Form.Text>
           </Form.Group>
         </Form>
       </Modal.Body>
@@ -90,14 +94,14 @@ const EmailMessageModal = ({
             resetEmailFields();
           }}
         >
-          Zamknij
+          {t("common.close")}
         </Button>
         <Button
           variant="primary"
           onClick={handleEmailSend}
           disabled={!isFormValid}
         >
-          Wyślij
+          {t("admin.emailModal.send")}
         </Button>
       </Modal.Footer>
       <style>

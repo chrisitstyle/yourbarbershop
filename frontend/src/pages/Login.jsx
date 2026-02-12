@@ -9,6 +9,7 @@ import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { API_BASE_URL } from "../api/config";
 import GoogleIcon from "../components/common/GoogleIcon";
 import useAutoDismiss from "../hooks/useAutoDismiss";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -23,6 +24,7 @@ const Login = () => {
 
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -30,13 +32,13 @@ const Login = () => {
     // if ?registrationSuccess=true is in the URL
     if (searchParams.get("registrationSuccess")) {
       // set the message in state (this triggers the timer from useAutoDismiss)
-      setSuccessMessage("Konto zostało pomyślnie zarejestrowane. Zaloguj się.");
+      setSuccessMessage(t("auth.successRegister"));
 
       // clean up the URL so the parameter doesn't linger in the address bar
       // replace: true ensures the user cannot navigate back to the URL with the parameter
       navigate(location.pathname, { replace: true });
     }
-  }, [location, setSuccessMessage, navigate]);
+  }, [location, setSuccessMessage, navigate, t]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -57,7 +59,7 @@ const Login = () => {
           setLoginErrors([data]);
         }
       } else {
-        setLoginErrors(["Wystąpił błąd logowania. Spróbuj ponownie."]);
+        setLoginErrors([t("validation.genericError")]);
       }
     } finally {
       setIsLoading(false);
@@ -68,7 +70,7 @@ const Login = () => {
     <div className="container mt-5">
       <div className="row justify-content-center">
         <div className="col-md-4 border p-3 ">
-          <h4 className="display-6 text-center">Logowanie</h4>
+          <h4 className="display-6 text-center">{t("auth.loginHeader")}</h4>
           <form onSubmit={handleLogin}>
             <div className="mb-3">
               {successMessage && (
@@ -96,7 +98,7 @@ const Login = () => {
               )}
 
               <label htmlFor="inputEmail" className="form-label">
-                Adres e-mail
+                {t("auth.email")}
               </label>
               <input
                 type="email"
@@ -110,7 +112,7 @@ const Login = () => {
             </div>
             <div className="mb-3">
               <label htmlFor="inputPassword" className="form-label">
-                Hasło
+                {t("auth.password")}
               </label>
               <input
                 type="password"
@@ -127,9 +129,9 @@ const Login = () => {
               variant="dark"
               className="mx-auto d-block"
               loading={isLoading}
-              loadingText="Logowanie..."
+              loadingText={t("auth.loggingIn")}
             >
-              Zaloguj
+              {t("auth.loginBtn")}
             </ButtonSpinner>
 
             {/* OAUTH2 */}
@@ -147,7 +149,9 @@ const Login = () => {
                   style={{ color: "#ffffff" }}
                 />
 
-                <span className="w-100 text-center">Sign in with Github</span>
+                <span className="w-100 text-center">
+                  {t("auth.githubSign")}
+                </span>
               </a>
               {/* GOOGLE BUTTON */}
               <a
@@ -162,16 +166,19 @@ const Login = () => {
               >
                 <GoogleIcon className="position-absolute start-0 ms-3" />
 
-                <span className="w-100 text-center">Sign in with Google</span>
+                <span className="w-100 text-center">
+                  {t("auth.googleSign")}
+                </span>
               </a>
             </div>
             {/* --------------------------- */}
 
             <p className="mt-3 text-center">
-              <Link to="/forgotpassword">Zapomniałem hasła</Link>
+              <Link to="/forgotpassword">{t("auth.forgotPassword")}</Link>
             </p>
             <p className=" mt-3 text-center">
-              Nie masz konta? <Link to="/register">Zarejestruj się</Link>
+              {t("auth.noAccount")}{" "}
+              <Link to="/register">{t("auth.registerLink")}</Link>
             </p>
           </form>
         </div>

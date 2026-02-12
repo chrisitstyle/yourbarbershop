@@ -12,17 +12,18 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import { useTranslation } from "react-i18next";
 
 const orderFieldsHeaders = [
-  "Identyfikator wizyty",
-  "Imię",
-  "Nazwisko",
-  "Email",
-  "Usługa",
-  "Koszt",
-  "Data zamówienia",
-  "Data wizyty",
-  "Status",
+  "admin.orders.id",
+  "admin.orders.firstname",
+  "admin.orders.lastname",
+  "admin.orders.email",
+  "admin.orders.service",
+  "admin.orders.cost",
+  "admin.orders.orderDate",
+  "admin.orders.visitDate",
+  "admin.orders.status",
 ];
 
 const orderFields = [
@@ -43,11 +44,13 @@ const OrderRow = memo(function OrderRow({
   onDelete,
   isDeleting,
 }) {
+  const { t } = useTranslation();
   return (
     <tr>
       {orderFields.map((field) => (
         <td key={field} className="align-middle text-center">
           {getNestedValue(order, field)}
+          {field === "offer.cost" ? ` ${t("common.currency")}` : ""}
         </td>
       ))}
       <td className="align-middle text-center">
@@ -55,7 +58,7 @@ const OrderRow = memo(function OrderRow({
           <button
             className="btn btn-warning btn-sm me-2"
             style={{ minWidth: "40px" }}
-            title="Edytuj"
+            title={t("admin.common.edit")}
             onClick={() => onEdit(order)}
           >
             <FontAwesomeIcon icon={faPen} />
@@ -63,7 +66,7 @@ const OrderRow = memo(function OrderRow({
           <button
             className="btn btn-danger btn-sm"
             style={{ minWidth: "40px" }}
-            title="Usuń"
+            title={t("admin.common.delete")}
             onClick={() => onDelete(order)}
             disabled={isDeleting}
           >
@@ -79,6 +82,7 @@ const OrdersTable = ({ onDeleteOrder }) => {
   const { user } = useAuth();
   const { orders, isLoading, error, refetch } = useOrders(user?.token);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const filterOrders = (order, term) => {
     const searchStr = ` ${order.idOrder} ${order.user?.firstname} ${order.user?.lastname} ${order.user?.username} ${order.offer?.kind} ${order.offer?.cost} ${order.orderDate} ${order.visitDate} ${order.status}`;
@@ -112,18 +116,18 @@ const OrdersTable = ({ onDeleteOrder }) => {
     });
   };
 
-  if (isLoading) return <LoadingSpinner text="Ładowanie zamówień..." />;
+  if (isLoading) return <LoadingSpinner text={t("admin.orders.loading")} />;
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <div className="container my-5 py-4 text-center">
-      <h2 className="mb-4">Wizyty użytkowników</h2>
+      <h2 className="mb-4">{t("admin.orders.title")}</h2>
 
       {/* search box*/}
       <SearchBox
         value={searchTerm}
         onChange={handleSearchChange}
-        placeholder="Szukaj wizyty..."
+        placeholder={t("admin.orders.searchPlaceholder")}
       />
 
       {/* table */}
@@ -136,10 +140,12 @@ const OrdersTable = ({ onDeleteOrder }) => {
             <tr>
               {orderFieldsHeaders.map((header) => (
                 <th key={header} className="text-center align-middle">
-                  {header}
+                  {t(header)}
                 </th>
               ))}
-              <th className="text-center align-middle">Akcja</th>
+              <th className="text-center align-middle">
+                {t("admin.common.action")}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -162,7 +168,7 @@ const OrdersTable = ({ onDeleteOrder }) => {
                   className="text-center py-4"
                 >
                   <Alert variant="info" className="mb-0">
-                    Brak wyników.
+                    {t("admin.common.noResults")}
                   </Alert>
                 </td>
               </tr>
@@ -184,12 +190,12 @@ const OrdersTable = ({ onDeleteOrder }) => {
         onConfirm={confirmDelete}
         itemName={
           orderToDelete
-            ? `${orderToDelete.offer?.kind || "brak"} (${
+            ? `${orderToDelete.offer?.kind || t("admin.common.none")} (${
                 orderToDelete.idOrder
               })`
             : ""
         }
-        label="wizytę"
+        label={t("admin.orders.deleteLabel")}
       />
     </div>
   );

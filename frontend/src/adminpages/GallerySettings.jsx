@@ -9,8 +9,9 @@ import SearchBox from "../components/common/SearchBox";
 import PaginationControl from "../components/common/PaginationControl";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import ButtonSpinner from "../components/common/ButtonSpinner";
+import { useTranslation } from "react-i18next";
 
-const imageFieldsHeaders = ["Nazwa obrazu"];
+const imageFieldsHeaders = ["admin.gallery.imageName"];
 const imageFields = ["name"];
 
 const ImageRow = memo(function ImageRow({
@@ -19,13 +20,14 @@ const ImageRow = memo(function ImageRow({
   onDelete,
   isDeleting,
 }) {
+  const { t } = useTranslation();
   return (
     <tr key={image.name} style={{ cursor: "pointer" }}>
       {imageFields.map((field) => (
         <td
           key={field}
           onClick={() => onImageClick(image)}
-          title="Pokaż podgląd obrazu"
+          title={t("admin.gallery.showPreview")}
           className="align-middle text-center"
         >
           {image[field]}
@@ -36,7 +38,7 @@ const ImageRow = memo(function ImageRow({
         <ButtonSpinner
           variant="danger"
           size="sm"
-          title="Usuń obraz"
+          title={t("admin.gallery.deleteImage")}
           style={{ minWidth: "38px" }}
           onClick={(e) => {
             e.stopPropagation();
@@ -57,6 +59,7 @@ const GallerySettings = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const supabase = useSupabaseClient();
+  const { t } = useTranslation();
 
   // messages for different scenarios
   const [deleteImageErrorMsg, setDeleteImageErrorMsg] = useState(null);
@@ -115,7 +118,7 @@ const GallerySettings = () => {
       .remove([`images/${image.name}`]);
 
     if (error) {
-      setDeleteImageErrorMsg("Usuwanie obrazu nie powiodło się");
+      setDeleteImageErrorMsg(t("admin.gallery.messages.deleteError"));
       console.error("Error removing image:", error.message);
       throw error;
     }
@@ -146,7 +149,7 @@ const GallerySettings = () => {
     const files = inputElement.files;
 
     if (!files || files.length === 0) {
-      setUploadImageErrorMsg("Nie wybrano pliku");
+      setUploadImageErrorMsg(t("admin.gallery.messages.noFileSelected"));
       return;
     }
 
@@ -155,19 +158,23 @@ const GallerySettings = () => {
     try {
       // upload each file, show status message
       for (const file of files) {
-        setUploadingImageMsg(`Przesyłanie pliku ${file.name}...`);
+        setUploadingImageMsg(
+          t("admin.gallery.messages.uploadingFile", { name: file.name }),
+        );
         const { data, error } = await supabase.storage
           .from("barbershopimages")
           .upload("images/" + encodeURIComponent(file.name), file);
 
         if (!data) {
           uploadSuccessful = false;
-          setUploadImageErrorMsg(`Błąd podczas przesyłania pliku ${file.name}`);
+          setUploadImageErrorMsg(
+            t("admin.gallery.messages.uploadErrorFile", { name: file.name }),
+          );
           break;
         }
       }
       if (uploadSuccessful) {
-        setUploadImageSuccessfulMsg("Pomyślnie przesłano pliki!");
+        setUploadImageSuccessfulMsg(t("admin.gallery.messages.uploadSuccess"));
         inputElement.value = null;
         setUploadingImageMsg(null);
 
@@ -179,7 +186,7 @@ const GallerySettings = () => {
       }
     } catch (error) {
       setUploadImageSuccessfulMsg(null);
-      setUploadImageErrorMsg("Wystąpił błąd podczas przesyłania pliku");
+      setUploadImageErrorMsg(t("admin.gallery.messages.uploadError"));
       console.error("File upload error:", error.message);
     }
   };
@@ -197,7 +204,7 @@ const GallerySettings = () => {
 
   return (
     <>
-      <h2 className="text-center mt-4">Ustawienia galerii</h2>
+      <h2 className="text-center mt-4">{t("admin.gallery.title")}</h2>
       {/* feedback during upload */}
       {uploadingImageMsg && (
         <Alert
@@ -226,7 +233,7 @@ const GallerySettings = () => {
             className="mb-3"
             variant="primary"
             onClick={handleUploadImage}
-            title="Wgraj obraz(y)"
+            title={t("admin.gallery.uploadBtnTooltip")}
             style={{ minWidth: "40px" }}
           >
             <FontAwesomeIcon icon={faPlus} style={{ color: "white" }} />
@@ -274,7 +281,7 @@ const GallerySettings = () => {
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
-          placeholder="Szukaj obrazu..."
+          placeholder={t("admin.gallery.searchPlaceholder")}
         />
 
         {currentData.length > 0 ? (
@@ -291,11 +298,11 @@ const GallerySettings = () => {
                       scope="col"
                       className="text-center align-middle"
                     >
-                      {header}
+                      {t(header)}
                     </th>
                   ))}
                   <th scope="col" className="text-center align-middle">
-                    Akcja
+                    {t("admin.common.action")}
                   </th>
                 </tr>
               </thead>
@@ -315,7 +322,7 @@ const GallerySettings = () => {
             </Table>
           </div>
         ) : (
-          <h5 className="mt-5">Nie znaleziono zdjęć</h5>
+          <h5 className="mt-5">{t("admin.gallery.noImagesFound")}</h5>
         )}
 
         {/* pagination control */}
@@ -332,7 +339,7 @@ const GallerySettings = () => {
               {selectedImage.name &&
                 selectedImage.name.slice(
                   0,
-                  selectedImage.name.lastIndexOf(".")
+                  selectedImage.name.lastIndexOf("."),
                 )}
             </Modal.Title>
           </Modal.Header>
@@ -347,7 +354,7 @@ const GallerySettings = () => {
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleCloseModal}>
-              Zamknij
+              {t("common.close")}
             </Button>
           </Modal.Footer>
         </Modal>
@@ -358,7 +365,7 @@ const GallerySettings = () => {
           onHide={() => setShowDeleteModal(false)}
           onConfirm={confirmDeleteImage}
           itemName={imageToDelete?.name}
-          label="obraz"
+          label={t("admin.gallery.deleteLabel")}
         />
       </Container>
     </>

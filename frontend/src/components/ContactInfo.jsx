@@ -6,8 +6,10 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "./styles/contactinfo.css";
+import { useTranslation } from "react-i18next";
 
 const ContactInfo = () => {
+  const { t } = useTranslation();
   const isOpen = (() => {
     const day = new Date().getDay();
     const hour = new Date().getHours();
@@ -19,12 +21,12 @@ const ContactInfo = () => {
 
   return (
     <div className="contactinfo-container bg-body">
-      <h2 className="mb-3">Dane kontaktowe</h2>
+      <h2 className="mb-3">{t("contact.info.title")}</h2>
       <div className="contactinfo-grid">
         <div className="contactinfo-item">
           <FontAwesomeIcon icon={faPhone} className="contactinfo-icon" />
           <div>
-            <div className="contactinfo-label">Telefon</div>
+            <div className="contactinfo-label">{t("contact.info.phone")}</div>
             <a href="tel:+48123123123" className="contactinfo-value">
               +48 123 123 123
             </a>
@@ -33,7 +35,7 @@ const ContactInfo = () => {
         <div className="contactinfo-item">
           <FontAwesomeIcon icon={faEnvelope} className="contactinfo-icon" />
           <div>
-            <div className="contactinfo-label">Email</div>
+            <div className="contactinfo-label">{t("contact.info.email")}</div>
             <a
               href="mailto:kontakt@yourbarbershop.com"
               className="contactinfo-value"
@@ -45,11 +47,12 @@ const ContactInfo = () => {
         <div className="contactinfo-item">
           <FontAwesomeIcon icon={faLocationDot} className="contactinfo-icon" />
           <div>
-            <div className="contactinfo-label">Adres</div>
+            <div className="contactinfo-label">{t("contact.info.address")}</div>
             <div className="contactinfo-value">
               ul. Testowa 123
               <br />
-              85-796 Bydgoszcz, Polska
+              85-796 Bydgoszcz
+              {t("contact.info.country")}
             </div>
           </div>
         </div>
@@ -57,21 +60,29 @@ const ContactInfo = () => {
       <div className="contactinfo-hours mt-4">
         <div className="contactinfo-hours-header">
           <FontAwesomeIcon icon={faClock} className="contactinfo-icon" />
-          <span className="contactinfo-label">Godziny otwarcia</span>
-          {isOpen && <span className="contactinfo-badge">Otwarte teraz</span>}
+          <span className="contactinfo-label">
+            {t("contact.info.hoursTitle")}
+          </span>
+          {isOpen && (
+            <span className="contactinfo-badge">
+              {t("contact.info.openNow")}
+            </span>
+          )}
         </div>
         <div className="contactinfo-hours-table">
           <div>
-            <span>Poniedziałek - Piątek:</span>{" "}
+            <span>{t("contact.info.monFri")}</span>{" "}
             <span className="contactinfo-hours-time">8:00 - 19:30</span>
           </div>
           <div>
-            <span>Sobota:</span>{" "}
+            <span>{t("contact.info.sat")}</span>{" "}
             <span className="contactinfo-hours-time">10:00 - 14:00</span>
           </div>
           <div>
-            <span>Niedziela:</span>{" "}
-            <span className="contactinfo-hours-time closed">Zamknięte</span>
+            <span>{t("contact.info.sun")}</span>{" "}
+            <span className="contactinfo-hours-time closed">
+              {t("contact.info.closed")}
+            </span>
           </div>
         </div>
       </div>

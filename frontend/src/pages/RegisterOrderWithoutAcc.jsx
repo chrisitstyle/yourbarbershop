@@ -8,6 +8,7 @@ import { getCurrentDateTime, formatSelectedDateTime } from "../api/dataParser";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import { API_BASE_URL } from "../api/config";
+import { useTranslation } from "react-i18next";
 
 const RegisterOrderWithoutAcc = () => {
   const [firstname, setFirstName] = useState("");
@@ -27,6 +28,8 @@ const RegisterOrderWithoutAcc = () => {
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [isLoadingOffers, setIsLoadingOffers] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -59,7 +62,7 @@ const RegisterOrderWithoutAcc = () => {
     const selectedOfferId = e.target.value;
 
     const selectedOfferData = offers.find(
-      (offer) => offer.idOffer === parseInt(selectedOfferId)
+      (offer) => offer.idOffer === parseInt(selectedOfferId),
     );
     if (selectedOfferData) {
       setSelectedOffer(selectedOfferId);
@@ -95,7 +98,7 @@ const RegisterOrderWithoutAcc = () => {
         visitDate: formatSelectedDateTime(
           selectedDate,
           selectedHour,
-          selectedMinute
+          selectedMinute,
         ),
         status: "NOWE",
       });
@@ -108,7 +111,7 @@ const RegisterOrderWithoutAcc = () => {
         selectedHour,
         selectedMinute,
         selectedOfferName,
-        selectedOfferCost
+        selectedOfferCost,
       );
       setShowAlert(true);
     } catch (error) {
@@ -119,7 +122,7 @@ const RegisterOrderWithoutAcc = () => {
   };
 
   if (isLoadingOffers) {
-    return <LoadingSpinner text="Ładowanie dostępnych usług..." />;
+    return <LoadingSpinner text={t("orders.loadingServices")} />;
   }
 
   return (
@@ -127,27 +130,29 @@ const RegisterOrderWithoutAcc = () => {
       <div className="container mt-2">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
-            <h4 className="display-6 text-center">Umów wizytę</h4>
+            <h4 className="display-6 text-center">
+              {t("orders.registerTitle")}
+            </h4>
             <Alert
               variant="success"
               show={showAlert}
-              onClose={() => setShowAlert(false)}
+              onHide={() => setShowAlert(false)}
               dismissible
             >
-              Udało się umówić wizytę!
+              {t("orders.successMessage")}
             </Alert>
             <Alert
               variant="danger"
               show={showErrorAlert}
-              onClose={() => setShowErrorAlert(false)}
+              onHide={() => setShowErrorAlert(false)}
               dismissible
             >
-              Błąd podczas umawiania wizyty. Spróbuj ponownie.
+              {t("orders.errorMessage")}
             </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-2">
                 <label htmlFor="inputfirstname" className="form-label">
-                  Imię
+                  {t("auth.firstname")}
                 </label>
                 <input
                   type="text"
@@ -161,7 +166,7 @@ const RegisterOrderWithoutAcc = () => {
               </div>
               <div className="mb-2">
                 <label htmlFor="inputlastname" className="form-label">
-                  Nazwisko
+                  {t("auth.lastname")}
                 </label>
                 <input
                   type="text"
@@ -175,7 +180,7 @@ const RegisterOrderWithoutAcc = () => {
               </div>
               <div className="mb-2">
                 <label htmlFor="inputphonenumber" className="form-label">
-                  Numer telefonu
+                  {t("orders.phoneNumber")}
                 </label>
                 <input
                   type="text"
@@ -189,7 +194,7 @@ const RegisterOrderWithoutAcc = () => {
               </div>
               <div className="mb-2">
                 <label htmlFor="inputemail" className="form-label">
-                  Adres e-mail
+                  {t("auth.email")}
                 </label>
                 <input
                   type="text"
@@ -203,7 +208,7 @@ const RegisterOrderWithoutAcc = () => {
               </div>
               <div className="mb-2">
                 <label htmlFor="selectoffer" className="form-label">
-                  Wybierz usługę
+                  {t("orders.selectService")}
                 </label>
                 <select
                   className="form-select"
@@ -216,14 +221,14 @@ const RegisterOrderWithoutAcc = () => {
                   <option value="" disabled></option>
                   {offers.map((offer) => (
                     <option key={offer.idOffer} value={offer.idOffer}>
-                      {offer.kind} - {offer.cost} zł
+                      {offer.kind} - {offer.cost} {t("common.currency")}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="mb-2">
                 <label htmlFor="selectdate" className="form-label">
-                  Wybierz datę
+                  {t("orders.selectDate")}
                 </label>
                 <input
                   type="date"
@@ -238,7 +243,7 @@ const RegisterOrderWithoutAcc = () => {
               </div>
               <div className="mb-2">
                 <label htmlFor="selecttime" className="form-label">
-                  Wybierz godzinę
+                  {t("orders.selectTime")}
                 </label>
                 <div className="d-flex">
                   <select
@@ -276,12 +281,13 @@ const RegisterOrderWithoutAcc = () => {
                 variant="dark"
                 className="mx-auto d-block"
                 loading={isLoading}
-                loadingText="Rezerwowanie wizyty..."
+                loadingText={t("orders.registeringOrder")}
               >
-                Umów wizytę
+                {t("orders.registerBtn")}
               </ButtonSpinner>
               <p className="mt-2 text-center">
-                Nie masz konta? <Link to="/register">Zarejestruj się</Link>
+                {t("auth.noAccount")}{" "}
+                <Link to="/register">{t("auth.registerLink")}</Link>
               </p>
             </form>
           </div>

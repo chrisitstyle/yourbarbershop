@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../api/authService";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import useAutoDismiss from "../hooks/useAutoDismiss";
+import { useTranslation } from "react-i18next";
 
 const Register = () => {
   const [firstname, setFirstName] = useState("");
@@ -13,6 +14,7 @@ const Register = () => {
   const [registerErrors, setRegisterErrors] = useAutoDismiss([], 6000);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,9 +43,7 @@ const Register = () => {
           setRegisterErrors([data]);
         }
       } else {
-        setRegisterErrors([
-          "Wystąpił nieoczekiwany błąd przy zakładaniu konta.",
-        ]);
+        setRegisterErrors([t("validation.genericError")]);
       }
     } finally {
       setIsLoading(false);
@@ -55,7 +55,9 @@ const Register = () => {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3 ">
-            <h4 className=" display-6 text-center">Rejestracja konta</h4>
+            <h4 className=" display-6 text-center">
+              {t("auth.registerHeader")}
+            </h4>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 {registerErrors.length > 0 && (
@@ -68,7 +70,7 @@ const Register = () => {
                   </div>
                 )}
                 <label htmlFor="inputfirstname" className="form-label">
-                  Imie
+                  {t("auth.firstname")}
                 </label>
                 <input
                   type="text"
@@ -81,7 +83,7 @@ const Register = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputlastname" className="form-label">
-                  Nazwisko
+                  {t("auth.lastname")}
                 </label>
                 <input
                   type="text"
@@ -94,7 +96,7 @@ const Register = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputemail" className="form-label">
-                  Email
+                  {t("auth.email")}
                 </label>
                 <input
                   type="email"
@@ -107,7 +109,7 @@ const Register = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputpassword" className="form-label">
-                  Hasło
+                  {t("auth.password")}
                 </label>
                 <input
                   type="password"
@@ -124,12 +126,13 @@ const Register = () => {
                 variant="dark"
                 className="mx-auto d-block"
                 loading={isLoading}
-                loadingText="Rejestracja..."
+                loadingText={t("auth.registering")}
               >
-                Załóż konto
+                {t("auth.registerBtn")}
               </ButtonSpinner>
               <p className="mt-3 text-center">
-                Masz konto? <Link to="/login">Zaloguj się</Link>
+                {t("auth.hasAccount")}{" "}
+                <Link to="/login">{t("auth.loginLink")}</Link>
               </p>
             </form>
           </div>

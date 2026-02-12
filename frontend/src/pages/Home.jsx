@@ -1,50 +1,44 @@
 import { Container, Row, Col, Card, Image } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 const Home = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="bg-body">
       <Container className="py-5 text-center">
-        <h1 className="display-4">Witaj w Naszym Barbershopie</h1>
-        <p className="lead">
-          Doświadcz najlepszych usług w dziedzinie pielęgnacji i obsługi
-          klienta.
-        </p>
+        <h1 className="display-4">{t("home.hero.title")}</h1>
+        <p className="lead">{t("home.hero.lead")}</p>
       </Container>
 
       <Container className="py-5">
         <Row className="text-center">
           <Col>
-            <h2 className="display-6">Nasze Usługi</h2>
+            <h2 className="display-6">{t("home.services.title")}</h2>
           </Col>
         </Row>
         <Row className="mt-4 text-center">
           <Col md={4}>
             <Card className="mb-4">
               <Card.Body>
-                <h3 className="card-title">Strzyżenie</h3>
-                <p className="card-text">
-                  Profesjonalne i stylowe usługi strzyżenia.
-                </p>
+                <h3 className="card-title">{t("home.services.haircut")}</h3>
+                <p className="card-text">{t("home.services.haircutDesc")}</p>
               </Card.Body>
             </Card>
           </Col>
           <Col md={4}>
             <Card className="mb-4">
               <Card.Body>
-                <h3 className="card-title">Stylizacja brody</h3>
-                <p className="card-text">
-                  Usługi wysokiej jakości w zakresie stylizacji brody.
-                </p>
+                <h3 className="card-title">{t("home.services.beard")}</h3>
+                <p className="card-text">{t("home.services.beardDesc")}</p>
               </Card.Body>
             </Card>
           </Col>
           <Col md={4}>
             <Card className="mb-4">
               <Card.Body>
-                <h3 className="card-title">Zabiegi na twarz</h3>
-                <p className="card-text">
-                  Relaksujące i odmładzające zabiegi na twarz.
-                </p>
+                <h3 className="card-title">{t("home.services.facial")}</h3>
+                <p className="card-text">{t("home.services.facialDesc")}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -54,7 +48,7 @@ const Home = () => {
       <Container className="py-5 text-center bg-body">
         <Row>
           <Col>
-            <h2 className="display-6">Poznaj Naszych Barberów</h2>
+            <h2 className="display-6">{t("home.barbers.title")}</h2>
           </Col>
         </Row>
         <Row className="mt-4">
@@ -72,10 +66,7 @@ const Home = () => {
               />
               <Card.Body>
                 <Card.Title>Marcin Wolny</Card.Title>
-                <Card.Text>
-                  Doświadczony barber specjalizujący się w nowoczesnych i
-                  dostojnych stylizacjach.
-                </Card.Text>
+                <Card.Text>{t("home.barbers.marcinBio")}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
@@ -93,9 +84,7 @@ const Home = () => {
               />
               <Card.Body>
                 <Card.Title>Monika Kowalska</Card.Title>
-                <Card.Text>
-                  Ekspertka w dziedzinie pielęgnacji twarzy.
-                </Card.Text>
+                <Card.Text>{t("home.barbers.monikaBio")}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
@@ -112,10 +101,7 @@ const Home = () => {
               />
               <Card.Body>
                 <Card.Title>Oskar Kozłowski</Card.Title>
-                <Card.Text>
-                  Specjalizuje się w klasycznych strzyżeniach męskich i
-                  brodowych.
-                </Card.Text>
+                <Card.Text>{t("home.barbers.oskarBio")}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
@@ -125,33 +111,31 @@ const Home = () => {
       <Container className="py-5 text-center bg-body">
         <Row>
           <Col>
-            <h2 className="display-6">Aktualne Promocje</h2>
+            <h2 className="display-6">{t("home.promotions.title")}</h2>
           </Col>
         </Row>
         <Row className="mt-4">
           <Col md={4}>
             <Card className="mb-4">
               <Card.Body>
-                <Card.Title>Strzyżenie + zabieg na twarz</Card.Title>
-                <Card.Text>Teraz tylko za 99 złotych!</Card.Text>
+                <Card.Title>{t("home.promotions.combo")}</Card.Title>
+                <Card.Text>{t("home.promotions.comboPrice")}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
           <Col md={4}>
             <Card className="mb-4">
               <Card.Body>
-                <Card.Title>Rabat dla stałych klientów</Card.Title>
-                <Card.Text>Zyskaj 10% zniżki po pięciu wizytach!</Card.Text>
+                <Card.Title>{t("home.promotions.discount")}</Card.Title>
+                <Card.Text>{t("home.promotions.discountDesc")}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
           <Col md={4}>
             <Card className="mb-4">
               <Card.Body>
-                <Card.Title>Promocja na produkty do pielęgnacji</Card.Title>
-                <Card.Text>
-                  Kup dwa produkty, a trzeci otrzymasz gratis!
-                </Card.Text>
+                <Card.Title>{t("home.promotions.products")}</Card.Title>
+                <Card.Text>{t("home.promotions.productsDesc")}</Card.Text>
               </Card.Body>
             </Card>
           </Col>

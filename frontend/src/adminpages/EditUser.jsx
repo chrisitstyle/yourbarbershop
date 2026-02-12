@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { Alert } from "react-bootstrap";
 import { updateUser } from "../api/userService";
+import { useTranslation } from "react-i18next";
 
 const EditUser = () => {
   const { user } = useAuth();
@@ -10,6 +11,7 @@ const EditUser = () => {
   const userData = location.state?.userData;
   const navigate = useNavigate();
   const [editUserError, setEditUserError] = useState(false);
+  const { t } = useTranslation();
 
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
@@ -49,7 +51,7 @@ const EditUser = () => {
           email,
           role: selectedRole,
         },
-        user.token
+        user.token,
       );
 
       if (response.status === 200) {
@@ -67,19 +69,19 @@ const EditUser = () => {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3 ">
-            <h4 className="text-center">Edycja użytkownika</h4>
+            <h4 className="text-center">{t("admin.users.editTitle")}</h4>
             <Alert
               variant="danger"
               show={editUserError}
               onClose={() => setEditUserError(false)}
               dismissible
             >
-              Błąd podczas edytowania użytkownika. Spróbuj ponownie.
+              {t("admin.messages.editError")}
             </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="inputfirstname" className="form-label">
-                  Imię
+                  {t("auth.firstname")}
                 </label>
                 <input
                   type="text"
@@ -92,7 +94,7 @@ const EditUser = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputlastname" className="form-label">
-                  Nazwisko
+                  {t("auth.lastname")}
                 </label>
                 <input
                   type="text"
@@ -105,7 +107,7 @@ const EditUser = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputemail" className="form-label">
-                  Email
+                  {t("auth.email")}
                 </label>
                 <input
                   type="email"
@@ -119,7 +121,7 @@ const EditUser = () => {
 
               <div className="mb-3">
                 <label htmlFor="inputrole" className="form-label">
-                  Rola
+                  {t("admin.users.role")}
                 </label>
                 <select
                   className="form-select"
@@ -130,14 +132,14 @@ const EditUser = () => {
                 >
                   {roles.map((r) => (
                     <option key={r} value={r}>
-                      {r}
+                      {r === "USER" ? t("admin.users.roleUser") : r}
                     </option>
                   ))}
                 </select>
               </div>
 
               <button type="submit" className="btn btn-dark mx-auto d-block">
-                Zapisz zmiany
+                {t("admin.common.save")}
               </button>
             </form>
           </div>

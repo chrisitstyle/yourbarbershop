@@ -1,9 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { Sun, Moon } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./components/common/LanguageSwitcher";
+
 const Navbar = ({ theme, onToggleTheme }) => {
   const { isLoggedIn, logout, user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -36,17 +40,17 @@ const Navbar = ({ theme, onToggleTheme }) => {
           <ul className="navbar-nav">
             <li className="nav-item">
               <Link className="nav-link active custom-nav-link" to="/gallery">
-                Galeria
+                {t("nav.gallery")}
               </Link>
             </li>
             <li className="nav-item">
               <Link className="nav-link active custom-nav-link" to="/offers">
-                Nasza oferta
+                {t("nav.offers")}
               </Link>
             </li>
             <li className="nav-item">
               <Link className="nav-link active custom-nav-link" to="/contact">
-                Kontakt
+                {t("nav.contact")}
               </Link>
             </li>
 
@@ -61,14 +65,14 @@ const Navbar = ({ theme, onToggleTheme }) => {
                       : "/registerorderwithoutaccount"
                   }
                 >
-                  Umów wizytę
+                  {t("nav.bookVisit")}
                 </Link>
               </li>
             )}
           </ul>
 
           {/* Account navigation right */}
-          <ul className="navbar-nav ms-auto">
+          <ul className="navbar-nav ms-auto align-items-center">
             <li className="nav-item dropdown">
               <a
                 className="nav-link dropdown-toggle custom-nav-link"
@@ -76,7 +80,7 @@ const Navbar = ({ theme, onToggleTheme }) => {
                 data-bs-toggle="dropdown"
                 tabIndex={0}
               >
-                Konto
+                {t("nav.account")}
               </a>
               <ul className="dropdown-menu dropdown-menu-end">
                 {isLoggedIn ? (
@@ -87,7 +91,7 @@ const Navbar = ({ theme, onToggleTheme }) => {
                           className="dropdown-item custom-nav-link"
                           to="/adminpanel"
                         >
-                          Panel administratora
+                          {t("nav.adminPanel")}
                         </Link>
                       </li>
                     )}
@@ -97,7 +101,7 @@ const Navbar = ({ theme, onToggleTheme }) => {
                           className="dropdown-item custom-nav-link"
                           to={`/profile/${user?.id}`}
                         >
-                          Twój profil
+                          {t("nav.profile")}
                         </Link>
                       </li>
                     )}
@@ -109,7 +113,7 @@ const Navbar = ({ theme, onToggleTheme }) => {
                         className="dropdown-item custom-nav-link"
                         onClick={handleLogout}
                       >
-                        Wyloguj się
+                        {t("nav.logout")}
                       </button>
                     </li>
                   </>
@@ -120,7 +124,7 @@ const Navbar = ({ theme, onToggleTheme }) => {
                         className="dropdown-item custom-nav-link"
                         to="/login"
                       >
-                        Zaloguj się
+                        {t("nav.login")}
                       </Link>
                     </li>
                     <li>
@@ -128,19 +132,24 @@ const Navbar = ({ theme, onToggleTheme }) => {
                         className="dropdown-item custom-nav-link"
                         to="/register"
                       >
-                        Utwórz konto
+                        {t("nav.register")}
                       </Link>
                     </li>
                   </>
                 )}
               </ul>
             </li>
+
+            <li className="nav-item ms-3 me-2">
+              <LanguageSwitcher />
+            </li>
+
             <li className="nav-item d-flex align-items-center">
               <button
                 className="bg-transparent border-0 ms-2 p-0"
                 onClick={onToggleTheme}
                 title={
-                  theme === "dark" ? "Włącz tryb jasny" : "Włącz tryb ciemny"
+                  theme === "dark" ? t("nav.switchLight") : t("nav.switchDark")
                 }
               >
                 {theme === "dark" ? <Sun /> : <Moon color="#fff" />}

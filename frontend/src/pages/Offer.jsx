@@ -6,11 +6,13 @@ import { faScissors } from "@fortawesome/free-solid-svg-icons";
 import useTableData from "../hooks/useTableData";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import { useTranslation } from "react-i18next";
 
 const fields = ["idOffer", "kind", "cost"];
 
 const Offer = () => {
   const { offers, isLoading, error } = useOffers();
+  const { t } = useTranslation();
 
   const filterOffers = (offer, term) => {
     const searchStr = `${offer.idOffer} ${offer.kind} ${offer.cost}`;
@@ -26,7 +28,7 @@ const Offer = () => {
     setCurrentPage,
   } = useTableData(offers, filterOffers);
 
-  if (isLoading) return <LoadingSpinner text="Ładowanie usług..." />;
+  if (isLoading) return <LoadingSpinner text={t("offers.loading")} />;
 
   if (error) {
     return (
@@ -41,10 +43,10 @@ const Offer = () => {
       <div className="container my-5 py-4">
         <h1 className="display-6 text-center mb-4">
           <FontAwesomeIcon icon={faScissors} className="me-2 text-primary" />
-          Nasza oferta
+          {t("offers.title")}
         </h1>
         <Alert variant="info" className="text-center">
-          Brak usług w systemie.
+          {t("offers.empty")}
         </Alert>
       </div>
     );
@@ -54,18 +56,15 @@ const Offer = () => {
     <div className="container my-5 py-4">
       <h1 className="display-6 text-center mb-4">
         <FontAwesomeIcon icon={faScissors} className="me-2 text-primary" />
-        Nasza oferta
+        {t("offers.title")}
       </h1>
-      <p className="lead text-center mb-4">
-        Zapoznaj się z naszą szeroką ofertą. Nasi fryzjerzy zadbają o Twój
-        wygląd i samopoczucie!
-      </p>
+      <p className="lead text-center mb-4">{t("offers.lead")}</p>
 
       {/* search box */}
       <SearchBox
         value={searchTerm}
         onChange={handleSearchChange}
-        placeholder="Szukaj usługi..."
+        placeholder={t("offers.searchPlaceholder")}
         width="400px"
       />
 
@@ -76,9 +75,15 @@ const Offer = () => {
         >
           <thead className="table-dark">
             <tr>
-              <th className="text-center align-middle">Numer usługi</th>
-              <th className="text-center align-middle">Rodzaj usługi</th>
-              <th className="text-center align-middle">Cena</th>
+              <th className="text-center align-middle">
+                {t("offers.tableId")}
+              </th>
+              <th className="text-center align-middle">
+                {t("offers.tableKind")}
+              </th>
+              <th className="text-center align-middle">
+                {t("offers.tablePrice")}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -87,7 +92,9 @@ const Offer = () => {
                 <tr key={offer.idOffer}>
                   {fields.map((field) => (
                     <td key={field} className="text-center align-middle">
-                      {field === "cost" ? `${offer[field]} zł` : offer[field]}
+                      {field === "cost"
+                        ? `${offer[field]} ${t("common.currency")}`
+                        : offer[field]}
                     </td>
                   ))}
                 </tr>
@@ -96,7 +103,7 @@ const Offer = () => {
               <tr>
                 <td colSpan={fields.length} className="text-center py-4">
                   <Alert variant="info" className="mb-0">
-                    Nie znaleziono usług pasujących do wyszukiwania.
+                    {t("offers.noResults")}
                   </Alert>
                 </td>
               </tr>
@@ -111,9 +118,7 @@ const Offer = () => {
         onPageChange={setCurrentPage}
       />
 
-      <p className="lead text-center mt-5">
-        Nie zwlekaj - umów się na wizytę już dziś i poczuj się wyjątkowo!
-      </p>
+      <p className="lead text-center mt-5">{t("offers.footerLead")}</p>
     </div>
   );
 };

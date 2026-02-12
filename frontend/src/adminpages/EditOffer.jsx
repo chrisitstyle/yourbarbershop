@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { updateOffer } from "../api/offerService";
 import { Alert } from "react-bootstrap";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import { useTranslation } from "react-i18next";
 
 const EditOffer = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const offerData = location.state?.offerData;
+  const { t } = useTranslation();
 
   const [kind, setKind] = useState("");
   const [cost, setCost] = useState("");
@@ -41,13 +43,13 @@ const EditOffer = () => {
   };
 
   if (isInitialLoading) {
-    return <LoadingSpinner text="Ładowanie danych usługi..." />;
+    return <LoadingSpinner text={t("admin.common.loadingData")} />;
   }
 
   if (!offerData) {
     return (
       <div className="container mt-5 text-center">
-        <Alert variant="warning">Nie znaleziono danych usługi. </Alert>
+        <Alert variant="warning">{t("admin.common.noData")} </Alert>
       </div>
     );
   }
@@ -57,19 +59,19 @@ const EditOffer = () => {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
-            <h2 className="text-center">Edytowanie usługi</h2>
+            <h2 className="text-center">{t("admin.offers.editTitle")}</h2>
             <Alert
               variant="danger"
               show={editOfferError}
               onClose={() => setEditOfferError(false)}
               dismissible
             >
-              Błąd podczas edytowania usługi. Spróbuj ponownie.
+              {t("admin.messages.editError")}
             </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="inputkind" className="form-label">
-                  Rodzaj
+                  {t("admin.offers.kind")}
                 </label>
                 <input
                   type="text"
@@ -84,7 +86,7 @@ const EditOffer = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputcost" className="form-label">
-                  Cena
+                  {t("admin.offers.cost")}
                 </label>
                 <input
                   type="text"
@@ -102,9 +104,9 @@ const EditOffer = () => {
                 variant="dark"
                 className="mx-auto d-block"
                 loading={isLoading}
-                loadingText="Zapisywanie..."
+                loadingText={t("admin.common.saving")}
               >
-                Zapisz zmiany
+                {t("admin.common.save")}
               </ButtonSpinner>
             </form>
           </div>

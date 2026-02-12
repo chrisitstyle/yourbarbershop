@@ -3,12 +3,15 @@ import { useLocation } from "react-router-dom";
 import { userResetPasswordRequest } from "../api/userService";
 import { Alert } from "react-bootstrap";
 import ButtonSpinner from "../components/common/ButtonSpinner";
+import { useTranslation } from "react-i18next";
+
 const ChangePasswordForm = () => {
   const [newPassword, setNewPassword] = useState("");
   const [alert, setAlert] = useState({ message: "", variant: "" });
   const location = useLocation();
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -17,11 +20,11 @@ const ChangePasswordForm = () => {
       setToken(token);
     } else {
       setAlert({
-        message: "Brak tokena resetowania hasła w URL.",
+        message: t("auth.missingToken"),
         variant: "danger",
       });
     }
-  }, [location]);
+  }, [location, t]);
 
   const handleResetPasswordForm = async (e) => {
     e.preventDefault();
@@ -29,13 +32,13 @@ const ChangePasswordForm = () => {
     try {
       await userResetPasswordRequest(token, newPassword);
       setAlert({
-        message: "Hasło zostało pomyślnie zmienione.",
+        message: t("auth.passwordChangedSuccess"),
         variant: "success",
       });
       setNewPassword("");
     } catch (err) {
       setAlert({
-        message: "Wystąpił błąd podczas zmiany hasła.",
+        message: t("auth.passwordChangedError"),
         variant: "danger",
       });
     } finally {
@@ -61,11 +64,13 @@ const ChangePasswordForm = () => {
               {alert.message}
             </Alert>
           )}
-          <h4 className="display-6 text-center">Zmiana hasła</h4>
+          <h4 className="display-6 text-center">
+            {t("auth.changePasswordHeader")}
+          </h4>
           <form onSubmit={handleResetPasswordForm}>
             <div className="mb-3">
               <label htmlFor="inputPassword" className="form-label">
-                Nowe hasło
+                {t("auth.newPassword")}
               </label>
               <input
                 type="password"
@@ -83,9 +88,9 @@ const ChangePasswordForm = () => {
               variant="dark"
               className="mx-auto d-block"
               loading={isLoading}
-              loadingText="Zapisywanie..."
+              loadingText={t("auth.saving")}
             >
-              Zmień hasło
+              {t("auth.changePasswordBtn")}
             </ButtonSpinner>
           </form>
         </div>

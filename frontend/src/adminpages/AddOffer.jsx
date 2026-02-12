@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ButtonSpinner from "../components/common/ButtonSpinner";
+import { useTranslation } from "react-i18next";
 
 const AddOffer = ({ onAddOffer }) => {
   const [kind, setKind] = useState("");
   const [cost, setCost] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,11 +31,11 @@ const AddOffer = ({ onAddOffer }) => {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3 ">
-            <h4 className="text-center">Dodawanie usługi</h4>
+            <h4 className="text-center">{t("admin.offers.addTitle")}</h4>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="inputkind" className="form-label">
-                  Rodzaj
+                  {t("admin.offers.kind")}
                 </label>
                 <input
                   type="text"
@@ -46,7 +48,7 @@ const AddOffer = ({ onAddOffer }) => {
               </div>
               <div className="mb-3">
                 <label htmlFor="inputcost" className="form-label">
-                  Cena
+                  {t("admin.offers.cost")}
                 </label>
                 <input
                   type="text"
@@ -62,9 +64,9 @@ const AddOffer = ({ onAddOffer }) => {
                 variant="dark"
                 className="mx-auto d-block"
                 loading={isLoading}
-                loadingText="Dodawanie..."
+                loadingText={t("admin.common.adding")}
               >
-                Dodaj
+                {t("admin.common.add")}
               </ButtonSpinner>
             </form>
           </div>

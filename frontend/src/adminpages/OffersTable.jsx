@@ -10,23 +10,31 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import { useTranslation } from "react-i18next";
 
-const offerFieldsHeaders = ["Identyfikator usługi", "Usługa", "Koszt"];
+const offerFieldsHeaders = [
+  "admin.offers.id",
+  "admin.offers.service",
+  "admin.offers.cost",
+];
 const offerFields = ["idOffer", "kind", "cost"];
 
 const OfferRow = memo(function OfferRow({ offer, onEdit, onDelete }) {
+  const { t } = useTranslation();
   return (
     <tr>
       {offerFields.map((field) => (
         <td key={field} className="align-middle text-center">
-          {field === "cost" ? `${offer[field]} zł` : offer[field]}
+          {field === "cost"
+            ? `${offer[field]} ${t("common.currency")}`
+            : offer[field]}
         </td>
       ))}
       <td className="align-middle text-center">
         <button
           className="btn btn-warning btn-sm me-2"
           style={{ minWidth: "40px" }}
-          title="Edytuj"
+          title={t("admin.common.edit")}
           onClick={() => onEdit(offer)}
         >
           <FontAwesomeIcon icon={faPen} />
@@ -34,7 +42,7 @@ const OfferRow = memo(function OfferRow({ offer, onEdit, onDelete }) {
         <button
           className="btn btn-danger btn-sm"
           style={{ minWidth: "40px" }}
-          title="Usuń"
+          title={t("admin.common.delete")}
           onClick={() => onDelete(offer)}
         >
           <FontAwesomeIcon icon={faTrashAlt} />
@@ -47,6 +55,7 @@ const OfferRow = memo(function OfferRow({ offer, onEdit, onDelete }) {
 const OffersTable = ({ onDeleteOffer }) => {
   const { offers, isLoading, error, refetch } = useOffers();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const filterOffers = (offer, term) => {
     return ` ${offer.idOffer} ${offer.kind} ${offer.cost}`
@@ -77,17 +86,17 @@ const OffersTable = ({ onDeleteOffer }) => {
     });
   };
 
-  if (isLoading) return <LoadingSpinner text="Ładowanie usług..." />;
+  if (isLoading) return <LoadingSpinner text={t("admin.offers.loading")} />;
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <div className="container my-5 py-4 text-center">
       <div>
-        <h2 className="mb-4">Usługi</h2>
+        <h2 className="mb-4">{t("admin.offers.title")}</h2>
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
-          placeholder="Szukaj usługi..."
+          placeholder={t("admin.offers.searchPlaceholder")}
         />
         <div className="table-responsive">
           <table
@@ -102,11 +111,11 @@ const OffersTable = ({ onDeleteOffer }) => {
                     scope="col"
                     className="text-center align-middle"
                   >
-                    {header}
+                    {t(header)}
                   </th>
                 ))}
                 <th scope="col" className="text-center align-middle">
-                  Akcja
+                  {t("admin.common.action")}
                 </th>
               </tr>
             </thead>
@@ -127,7 +136,7 @@ const OffersTable = ({ onDeleteOffer }) => {
                     className="text-center py-4"
                   >
                     <Alert variant="info" className="mb-0">
-                      Brak wyników.
+                      {t("admin.common.noResults")}
                     </Alert>
                   </td>
                 </tr>
@@ -148,7 +157,7 @@ const OffersTable = ({ onDeleteOffer }) => {
         onHide={() => setShowDeleteModal(false)}
         onConfirm={confirmDelete}
         itemName={offerToDelete?.kind}
-        label="usługę"
+        label={t("admin.offers.deleteLabel")}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { updateOrder } from "../api/orderService";
@@ -8,12 +8,14 @@ import { formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import { useTranslation } from "react-i18next";
 
 const EditOrder = () => {
   const { user } = useAuth();
   const location = useLocation();
   const orderData = location.state?.orderData;
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [offers, setOffers] = useState([]);
   const [selectedOffer, setSelectedOffer] = useState("");
@@ -76,11 +78,11 @@ const EditOrder = () => {
           visitDate: formatSelectedDateTime(
             selectedDate,
             selectedHour,
-            selectedMinute
+            selectedMinute,
           ),
           status: selectedStatus,
         },
-        user.token
+        user.token,
       );
 
       navigate("/adminpanel");
@@ -91,18 +93,16 @@ const EditOrder = () => {
     }
   };
 
-  // Sprawdź najpierw czy mamy orderData
   if (!orderData) {
     return (
       <div className="container mt-5 text-center">
-        <Alert variant="warning">Nie znaleziono danych wizyty. </Alert>
+        <Alert variant="warning">{t("admin.common.noData")} </Alert>
       </div>
     );
   }
 
-  // Potem sprawdź czy ładujemy oferty
   if (isLoadingOffers) {
-    return <LoadingSpinner text="Ładowanie danych wizyty..." />;
+    return <LoadingSpinner text={t("admin.common.loadingData")} />;
   }
 
   return (
@@ -111,7 +111,7 @@ const EditOrder = () => {
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3">
             <h4 className="text-center">
-              Edycja wizyty o id {orderData.idOrder}
+              {t("admin.orders.editTitle", { id: orderData.idOrder })}
             </h4>
             <Alert
               variant="danger"
@@ -119,12 +119,12 @@ const EditOrder = () => {
               onClose={() => setEditOrderError(false)}
               dismissible
             >
-              Błąd podczas edytowania wizyty. Spróbuj ponownie.
+              {t("admin.messages.editError")}
             </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="selectOffer" className="form-label">
-                  Wybierz usługę
+                  {t("orders.selectService")}
                 </label>
                 <select
                   className="form-select"
@@ -135,18 +135,18 @@ const EditOrder = () => {
                   disabled={isLoading}
                 >
                   <option value="" disabled>
-                    Wybierz usługę
+                    {t("orders.selectService")}
                   </option>
                   {offers.map((offer) => (
                     <option key={offer.idOffer} value={offer.idOffer}>
-                      {offer.kind} - {offer.cost} zł
+                      {offer.kind} - {offer.cost} {t("common.currency")}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="mb-3">
                 <label htmlFor="selectdate" className="form-label">
-                  Wybierz datę
+                  {t("orders.selectDate")}
                 </label>
                 <input
                   type="date"
@@ -160,7 +160,7 @@ const EditOrder = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="selecttime" className="form-label">
-                  Wybierz godzinę i minutę
+                  {t("orders.selectTimeFull")}
                 </label>
                 <div className="d-flex">
                   <select
@@ -195,7 +195,7 @@ const EditOrder = () => {
               </div>
               <div className="mb-3">
                 <label htmlFor="selectstatus" className="form-label">
-                  Wybierz status
+                  {t("admin.common.status")}
                 </label>
                 <select
                   className="form-select"
@@ -218,9 +218,9 @@ const EditOrder = () => {
                 variant="dark"
                 className="mx-auto d-block"
                 loading={isLoading}
-                loadingText="Zapisywanie..."
+                loadingText={t("admin.common.saving")}
               >
-                Zapisz zmiany
+                {t("admin.common.save")}
               </ButtonSpinner>
             </form>
           </div>
