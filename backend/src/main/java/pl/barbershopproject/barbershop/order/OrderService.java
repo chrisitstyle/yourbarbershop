@@ -1,6 +1,8 @@
 package pl.barbershopproject.barbershop.order;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ class OrderService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
+    @CacheEvict(value = "orders", allEntries = true)
     public Order addOrder(Order order) {
         Order savedOrder = orderRepository.save(order);
 
@@ -36,18 +39,21 @@ class OrderService {
 
     }
 
+    @Cacheable(value = "orders", key = "'all'")
     public List<OrderDTO> getAllOrders() {
         return orderRepository.findAll().stream()
                 .map(OrderDTOMapper::toDTO)
                 .toList();
     }
 
+    @Cacheable(value = "orders", key = "#idOrder")
     public OrderDTO getSingleOrder(Long idOrder) {
         return orderRepository.findById(idOrder)
                 .map(OrderDTOMapper::toDTO)
                 .orElseThrow(() -> new NoSuchElementException("Zamówienie o ID: " + idOrder + " nie istnieje"));
     }
 
+    @Cacheable(value = "orders", key = "'status_' + #status.toUpperCase()")
     public List<OrderDTO> getOrdersByStatus(String status) {
         try {
             Status enumStatus = Status.valueOf(status.toUpperCase());
@@ -60,6 +66,7 @@ class OrderService {
     }
 
     @Transactional
+    @CacheEvict(value = "orders", allEntries = true)
     public Order updateOrder(Order updatedOrder, Long idOrder) {
         Order existingOrder = orderRepository.findById(idOrder)
                 .orElseThrow(() -> new NoSuchElementException("Zamówienie o ID: " + idOrder));
@@ -74,6 +81,7 @@ class OrderService {
     }
 
     @Transactional
+    @CacheEvict(value = "orders", allEntries = true)
     public void deleteOrderById(Long idOrder) {
         if (!orderRepository.existsById(idOrder)) {
             throw new NoSuchElementException("Zamówienie o ID: " + idOrder + " nie istnieje");
