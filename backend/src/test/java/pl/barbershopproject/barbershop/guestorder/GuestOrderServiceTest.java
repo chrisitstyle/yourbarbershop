@@ -6,7 +6,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.offer.OfferRepository;
+import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.util.Status;
 import pl.barbershopproject.barbershop.utils.TestEntities;
 
@@ -24,16 +27,21 @@ class GuestOrderServiceTest {
     @Mock
     private GuestOrderRepository guestOrderRepository;
 
+    @Mock
+    private OfferRepository offerRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
     @InjectMocks
     private GuestOrderService guestOrderService;
 
-
-    private GuestOrder guestOrder = new GuestOrder();
+    private GuestOrder guestOrder;
+    private Offer offer;
 
     @BeforeEach
     void setUp() {
 
-        Offer offer = TestEntities.createOffer();
+        offer = TestEntities.createOffer();
         guestOrder = TestEntities.createGuestOrder();
         guestOrder.setOffer(offer);
 
@@ -42,6 +50,7 @@ class GuestOrderServiceTest {
     @Test
     void addGuestOrder_ShouldReturnGuestOrder() {
 
+        when(offerRepository.findById(offer.getIdOffer())).thenReturn(Optional.of(offer));
         when(guestOrderRepository.save(guestOrder)).thenReturn(guestOrder);
 
         GuestOrder guestOrderResult = guestOrderService.addGuestOrder(guestOrder);
@@ -49,6 +58,8 @@ class GuestOrderServiceTest {
         assertNotNull(guestOrderResult);
         assertEquals(guestOrder, guestOrderResult);
         verify(guestOrderRepository, times(1)).save(guestOrder);
+        verify(offerRepository, times(1)).findById(offer.getIdOffer());
+        verify(eventPublisher, times(1)).publishEvent(any(OrderCreatedEvent.class));
 
     }
 

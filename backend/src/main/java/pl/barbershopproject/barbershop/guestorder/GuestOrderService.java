@@ -1,8 +1,12 @@
 package pl.barbershopproject.barbershop.guestorder;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.offer.OfferRepository;
+import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.util.List;
@@ -13,9 +17,28 @@ import java.util.NoSuchElementException;
 class GuestOrderService {
 
     private final GuestOrderRepository guestOrderRepository;
-
+    private final OfferRepository offerRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    @Transactional
     public GuestOrder addGuestOrder(GuestOrder guestOrder) {
-        return guestOrderRepository.save(guestOrder);
+        Long offerId = guestOrder.getOffer().getIdOffer();
+        Offer offerFromDB = offerRepository.findById(offerId)
+                .orElseThrow(() -> new NoSuchElementException("Nie znaleziono oferty: " + offerId));
+
+        guestOrder.setOffer(offerFromDB);
+
+        GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
+
+
+        eventPublisher.publishEvent(new OrderCreatedEvent(
+                savedGuestOrder.getEmail(),
+                savedGuestOrder.getFirstname(),
+                savedGuestOrder.getVisitDate(),
+                savedGuestOrder.getOffer().getKind(),
+                savedGuestOrder.getOffer().getCost()
+        ));
+
+        return savedGuestOrder;
     }
 
     public List<GuestOrder> getAllGuestOrders() {

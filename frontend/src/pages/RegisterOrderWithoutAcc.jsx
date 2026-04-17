@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import Alert from "react-bootstrap/Alert";
 import axios from "axios";
 import { getOffers } from "../api/offerService";
-import { sendConfirmationEmail } from "../api/emailService";
 import { getCurrentDateTime, formatSelectedDateTime } from "../api/dataParser";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ButtonSpinner from "../components/common/ButtonSpinner";
@@ -17,9 +16,6 @@ const RegisterOrderWithoutAcc = () => {
   const [email, setEmail] = useState("");
   const [offers, setOffers] = useState([]);
   const [selectedOffer, setSelectedOffer] = useState("");
-
-  const [selectedOfferName, setSelectedOfferName] = useState("");
-  const [selectedOfferCost, setSelectedOfferCost] = useState(0);
 
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
@@ -60,15 +56,7 @@ const RegisterOrderWithoutAcc = () => {
 
   const handleOfferChange = (e) => {
     const selectedOfferId = e.target.value;
-
-    const selectedOfferData = offers.find(
-      (offer) => offer.idOffer === parseInt(selectedOfferId),
-    );
-    if (selectedOfferData) {
-      setSelectedOffer(selectedOfferId);
-      setSelectedOfferName(selectedOfferData.kind);
-      setSelectedOfferCost(selectedOfferData.cost);
-    }
+    setSelectedOffer(selectedOfferId);
   };
 
   const handleHourChange = (e) => {
@@ -103,16 +91,6 @@ const RegisterOrderWithoutAcc = () => {
         status: "NOWE",
       });
       setInitialState();
-      await sendConfirmationEmail(
-        email,
-        firstname,
-        lastname,
-        selectedDate,
-        selectedHour,
-        selectedMinute,
-        selectedOfferName,
-        selectedOfferCost,
-      );
       setShowAlert(true);
     } catch (error) {
       setShowErrorAlert(true);

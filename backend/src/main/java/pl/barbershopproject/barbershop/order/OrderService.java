@@ -1,9 +1,11 @@
 package pl.barbershopproject.barbershop.order;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
+import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
 import pl.barbershopproject.barbershop.util.Status;
 
@@ -16,10 +18,21 @@ import java.util.NoSuchElementException;
 class OrderService {
 
     private final OrderRepository orderRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-
+    @Transactional
     public Order addOrder(Order order) {
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        eventPublisher.publishEvent(new OrderCreatedEvent(
+                savedOrder.getUser().getEmail(),
+                savedOrder.getUser().getFirstname(),
+                savedOrder.getVisitDate(),
+                savedOrder.getOffer().getKind(),
+                savedOrder.getOffer().getCost()
+        ));
+
+        return savedOrder;
 
     }
 
@@ -41,7 +54,7 @@ class OrderService {
             return orderRepository.findOrdersByStatus(enumStatus).stream()
                     .map(OrderDTOMapper::toDTO)
                     .toList();
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             throw new IllegalArgumentException("Dostępne statusy: " + List.of(Status.values()));
         }
     }
