@@ -3,6 +3,7 @@ package pl.barbershopproject.barbershop.offer;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Builder
@@ -13,7 +14,7 @@ import java.math.BigDecimal;
 @Table(name = "offer")
 @Entity
 
-public class Offer {
+public class Offer implements Serializable {
 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id

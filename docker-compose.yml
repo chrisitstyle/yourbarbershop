@@ -26,10 +26,32 @@ services:
       database:
       # wait for the database to be healthy before starting the backend
         condition: service_healthy
+      valkey:
+        condition: service_healthy
     environment:
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      VALKEY_HOST: ${VALKEY_HOST:-valkey}
+      VALKEY_PORT: ${VALKEY_PORT:-6379}
     networks:
       - app-network
+
+
+  
+  valkey:
+    image: valkey/valkey:8.0-alpine
+    container_name: barbershop-valkey
+    ports:
+      - "6379:6379"
+    volumes:
+      - barbershop-valkey_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 
   database:
     image: mysql:8.0
@@ -56,3 +78,4 @@ networks:
 
 volumes:
   barbershop-with-roles_db_data:
+  barbershop-valkey_data:
