@@ -15,11 +15,13 @@ The application provides comprehensive management tools:
 - **Photo Gallery** - Showcase barber portfolio and work examples stored in Supabase
 - **Password Recovery** - Secure password reset functionality
 - **Guest Orders** - Allow non-registered customers to book appointments
+- **Email Notifications System** - Automated appointment confirmations sent directly to customers' email addresses
+- **Integration Testing** - Robust testing suite ensuring system reliability using **Testcontainers**.
 
 ## 📋 Roadmap
 
 - [x] Password reset functionality
-- [ ] Email notifications system
+- [x] Email notifications system
 - [ ] Customizable user avatars
 - [ ] SMS appointment reminders
 - [ ] Analytics dashboard
@@ -30,10 +32,11 @@ The application provides comprehensive management tools:
 
 - **Java 25** - LTS version
 - **Spring Boot 4.0.0**
+- **Valkey (Redis)** - High-performance data structure store used for efficient caching
+- **OAuth2 & JWT** - Secure authentication with external providers and JSON Web Tokens
 - **Gradle** - Build automation tool
 - **MySQL** - Relational database management
 - **Lombok** - Reduce boilerplate code
-- **JWT** - JSON Web Tokens for authentication
 
 ### Frontend
 
@@ -43,6 +46,7 @@ The application provides comprehensive management tools:
 
 ### Infrastructure
 
+- **Testcontainers** - Used for spinning up real Docker containers (MySQL, Redis/Valkey) during integration tests to ensure environment parity
 - **Supabase** - Cloud storage for barber portfolio images and photo gallery
 - **Docker** - Containerization for easy deployment
 
@@ -53,19 +57,20 @@ The application provides comprehensive management tools:
 - Java 25 JDK
 - Node.js
 - MySQL 8.0+
+- Valkey server (Docker files provide)
 - Supabase account (for photo storage)
 - Docker (optional)
 
 ### Installation
 
-1. **Clone the repository**
+**1. Clone the repository**
 
 ```bash
 git clone https://github.com/chrisitstyle/yourbarbershop.git
 cd yourbarbershop
 ```
 
-2. **Set up the database**
+**2. Set up the database**
 
 ```bash
 # Create MySQL database
@@ -82,7 +87,7 @@ SOURCE backend/src/main/resources/data/barbershop-with-roles_dump.sql;
 > - **Admin**: `admin@test.com` / `test1234`
 > - **User (Customer)**: `johndoe@example.com` / `test1234`
 
-3. **Configure Supabase**
+**3. Configure Supabase**
 
 ```bash
 # Create a Supabase project at https://supabase.com
@@ -90,7 +95,35 @@ SOURCE backend/src/main/resources/data/barbershop-with-roles_dump.sql;
 # Copy your Supabase Project URL, Public API Key, and CDN URL from storage
 ```
 
-4. **Configure environment variables**
+**4. Configure OAuth2 Providers (Google & GitHub)**
+
+To enable social login, you need to create OAuth applications on both platforms and get your Client IDs and Secrets:
+
+**For Google OAuth:**
+
+- Go to the [Google Cloud Console](https://console.cloud.google.com).
+
+- Create a new project and navigate to APIs & Services > Credentials.
+
+- Click Create Credentials > OAuth client ID (Choose "Web application").
+
+- Add the following to Authorized redirect URIs: `http://localhost:8080/login/oauth2/code/google`
+
+- Copy the generated Client ID and Client Secret.
+
+**For GitHub OAuth:**
+
+- Go to your GitHub account Settings > Developer settings > OAuth Apps.
+
+- Click New OAuth App.
+
+- Set the Homepage URL to your frontend (e.g., `http://localhost:3000`).
+
+- Set the Authorization callback URL to: `http://localhost:8080/login/oauth2/code/github`
+
+- Copy the Client ID and generate a Client Secret. <br> <br>
+
+**5. Configure environment variables**
 
 **Backend configuration** - Create `backend/.env` file:
 
@@ -100,9 +133,21 @@ MAIL_PASSWORD=your-app-password
 JWT_SECRET_KEY=your-secret-key
 MYSQL_USERNAME=yor-mysql-username
 MYSQL_PASSWORD=your-mysql-password
+
+# OAuth2 Configuration
+
+GOOGLE_CLIENT_ID=your-google-id
+GOOGLE_CLIENT_SECRET=your-google-secret
+GITHUB_CLIENT_ID=your-github-id
+GITHUB_CLIENT_SECRET=your-github-secret
+
+# Valkey/Redis Configuration
+VALKEY_HOST=localhost (default)
+VALKEY_PORT=6379 (default)
+
 ```
 
-> **Important**: For `MAIL_PASSWORD`, you need to generate a Google App Password at [myaccount.google. com/apppasswords](https://myaccount.google.com/apppasswords). Regular Gmail passwords won't work for security reasons.
+> **Important**: For `MAIL_PASSWORD`, you need to generate a Google App Password at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords). Regular Gmail passwords won't work for security reasons.
 
 **Frontend configuration** - Create `frontend/.env` file:
 
@@ -127,7 +172,7 @@ spring.mail.password=${MAIL_PASSWORD}
 
 > **Security Note**: Never commit `.env` files to version control. Make sure they are included in `.gitignore`.
 
-5. **Run the backend**
+**6. Run the backend**
 
 ```bash
 cd backend
@@ -140,7 +185,7 @@ cd backend
 > - Navigate to `BarbershopApplication.java`
 > - Right-click and select "Run" or click the green play button
 
-6. **Install and run the frontend**
+**7. Install and run the frontend**
 
 ```bash
 cd frontend
@@ -158,7 +203,44 @@ The application should now be running:
 
 ### Docker Deployment
 
-You can use Docker Compose to run the entire application stack:
+You can use Docker Compose to run the entire application stack. First, create a .env file in the root directory of the project (use the provided **.env_example** as a template):
+
+```bash
+# ENVS FOR DOCKER
+
+# Frontend
+VITE_SUPABASE_PROJECTURL=YourProjectURL
+VITE_SUPABASE_PUBLICAPIKEY=ValueOfAPIKEY
+VITE_SUPABASE_CDNURL=CDNURL_FROM_STORAGE
+
+# Backend
+SPRING_DATASOURCE_URL=jdbc:mysql://database:3306/barbershop-with-roles
+SPRING_DATASOURCE_USERNAME=db-username
+SPRING_DATASOURCE_PASSWORD=db-password
+JWT_SECRET_KEY=generate-your-secret-key
+
+# Database
+MYSQL_ROOT_PASSWORD=your-root-password
+MYSQL_DATABASE=barbershop-with-roles
+
+# Mail
+MAIL_USERNAME=email-address
+MAIL_PASSWORD=your-generated-password
+
+# Github OAuth
+GITHUB_CLIENT_ID=github-client-id
+GITHUB_CLIENT_SECRET=github-client-secret
+
+# Google OAuth
+GOOGLE_CLIENT_ID=google-client-id
+GOOGLE_CLIENT_SECRET=google-client-secret
+
+### Redis/Valkey ###
+VALKEY_HOST=valkey # (default for docker is valkey, default for springboot is localhost)
+VALKEY_PORT=6379 # (default both)
+```
+
+Then run:
 
 ```bash
 docker-compose up -d
@@ -170,11 +252,14 @@ docker-compose up -d
 # Build and start all containers
 make up
 
+# Build and start all containers WITHOUT using cache (fresh build)
+make up-nc
+
 # Stop and remove all containers
 make down
 ```
 
-The `make up` command will automatically rebuild containers and remove old volumes before starting.
+The `make up` command will automatically rebuild containers and remove old volumes before starting. Use `make up-nc` when you want to force Docker to ignore cached layers and build everything from scratch.
 
 ## 📁 Project Structure
 
