@@ -24,7 +24,7 @@ services:
       - .env
     depends_on:
       database:
-      # wait for the database to be healthy before starting the backend
+        # wait for the database to be healthy before starting the backend
         condition: service_healthy
       valkey:
         condition: service_healthy
@@ -32,11 +32,10 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       VALKEY_HOST: ${VALKEY_HOST:-valkey}
       VALKEY_PORT: ${VALKEY_PORT:-6379}
+      SPRING_PROFILES_ACTIVE: dev
     networks:
       - app-network
 
-
-  
   valkey:
     image: valkey/valkey:8.0-alpine
     container_name: barbershop-valkey
@@ -52,7 +51,6 @@ services:
       timeout: 5s
       retries: 5
 
-
   database:
     image: mysql:8.0
     container_name: barbershop-db
@@ -63,11 +61,15 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     volumes:
       - barbershop-with-roles_db_data:/var/lib/mysql
-      - ./backend/src/main/resources/data/barbershop-with-roles_dump.sql:/docker-entrypoint-initdb.d/init.sql
+    #      - ./backend/src/main/resources/data/barbershop-with-roles_dump.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD}"]
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD}",
+        ]
       interval: 5s
       timeout: 10s
       retries: 10

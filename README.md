@@ -16,6 +16,7 @@ The application provides comprehensive management tools:
 - **Password Recovery** - Secure password reset functionality
 - **Guest Orders** - Allow non-registered customers to book appointments
 - **Email Notifications System** - Automated appointment confirmations sent directly to customers' email addresses
+- **Automated Database Migrations** - Robust schema management and versioning with **Flyway**.
 - **Integration Testing** - Robust testing suite ensuring system reliability using **Testcontainers**.
 
 ## 📋 Roadmap
@@ -32,6 +33,7 @@ The application provides comprehensive management tools:
 
 - **Java 25** - LTS version
 - **Spring Boot 4.0.0**
+- **Flyway** - Database migrations and schema versioning
 - **Valkey (Redis)** - High-performance data structure store used for efficient caching
 - **OAuth2 & JWT** - Secure authentication with external providers and JSON Web Tokens
 - **Gradle** - Build automation tool
@@ -46,9 +48,9 @@ The application provides comprehensive management tools:
 
 ### Infrastructure
 
+- **Docker** - Containerization for easy deployment using custom multi-stage builds (_DockerFileBackend_, _DockerFileFrontend_)
 - **Testcontainers** - Used for spinning up real Docker containers (MySQL, Redis/Valkey) during integration tests to ensure environment parity
 - **Supabase** - Cloud storage for barber portfolio images and photo gallery
-- **Docker** - Containerization for easy deployment
 
 ## 🚀 Getting Started
 
@@ -70,22 +72,29 @@ git clone https://github.com/chrisitstyle/yourbarbershop.git
 cd yourbarbershop
 ```
 
-**2. Set up the database**
+**2.Database Initialization**
+
+YourBarbershop uses **Flyway** for automatic database setup. You no longer need to manually import SQL dumps.
+
+- **Automated (Docker):** Simply run `make up` / `make up-nc` or `docker-compose up`. Flyway will automatically create the schema and populate sample data.
+
+- **Manual:** Create an empty database named `barbershop-with-roles`. On application startup, Flyway will detect the empty database and run all migrations found in `src/main/resources/db/migration`.
 
 ```bash
 # Create MySQL database
 mysql -u root -p
 CREATE DATABASE barbershop_with_roles;
-
-# Import the database schema and sample data
-USE barbershop_with_roles;
-SOURCE backend/src/main/resources/data/barbershop-with-roles_dump.sql;
 ```
 
 > **Note**: The SQL dump includes sample users for testing:
 >
 > - **Admin**: `admin@test.com` / `test1234`
 > - **User (Customer)**: `johndoe@example.com` / `test1234`
+
+**Note on Profiles:**
+
+- **Default Profile:** Runs core migrations (schema).
+- **Dev Profile:** Additionally runs repeatable migrations from db/migration/dev to populate the database with sample users and orders for testing.
 
 **3. Configure Supabase**
 
@@ -172,11 +181,15 @@ spring.mail.password=${MAIL_PASSWORD}
 
 > **Security Note**: Never commit `.env` files to version control. Make sure they are included in `.gitignore`.
 
-**6. Run the backend**
+**6. Run the application**
 
 ```bash
+# Using Makefile (recommended)
+make up / make up-nc
+
+# Manual Backend
 cd backend
-./gradlew bootRun
+./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
 > **Alternative**: If the Gradle command doesn't work, you can run the backend through IntelliJ IDEA:
@@ -266,21 +279,34 @@ The `make up` command will automatically rebuild containers and remove old volum
 ```
 yourbarbershop/
 ├── backend/
-│   ├── src/main/java/              # Backend Java source code
+│   ├── src/main/java/                 # Backend Java source code
 │   ├── src/main/resources/
-│   │   ├── data/                   # Database dump files
-│   │   └── application.properties  # Configuration
-│   ├── .env                        # Backend environment variables (not in git)
-│   └── build.gradle                # Gradle build configuration
+│   │   ├── data/                      # Database dump files
+│   │   ├── db/migration/              # Flyway migration scripts
+│   │   │   ├── dev/                   # Sample data for development
+│   │   │   └── V1__...                # Core schema
+│   │   ├── application.properties     # Configuration
+│   │   └── application-dev.properties # Dev Profile Configuration
+│   ├── .env                           # Backend environment variables (not in git)
+│   └── build.gradle                   # Gradle build configuration
 ├── frontend/
-│   ├── src/                        # React application source
-│   ├── .env                        # Frontend environment variables (not in git)
-│   └── package.json
-├── docker-compose.yml              # Docker configuration
-└── Makefile                        # Docker shortcuts
+│   ├── src/                           # React application source
+│   ├── .env                           # Frontend environment variables (not in git)
+│   └── package.json                   # Frontend dependencies and npm scripts
+├── DockerFileBackend                  # Custom Dockerfile for Spring Boot backend
+├── DockerFileFrontend                 # Custom Dockerfile for React frontend
+├── docker-compose.yml                 # Docker orchestration configuration
+├── .env                               # Docker environment variables (not in git)
+└── Makefile                           # Docker shortcuts and commands
 ```
 
-## 🗄️ Database Schema
+## 🗄️ Database Management (Flyway)
+
+The database schema is managed through versioned migration files.
+
+- **Versioned Migrations (V\_\_):** Used for permanent schema changes (tables, columns).
+
+- **Repeatable Migrations (R\_\_):** Used for sample data and views, ensuring the dev environment is always up-to-date without version conflicts. <br><br>
 
 The application uses MySQL with the following main tables:
 
