@@ -11,6 +11,7 @@ The application provides comprehensive management tools:
 - **Service Catalog** - Create and manage service offerings with pricing
 - **Order Processing** - Track service orders and customer history
 - **Secure Authentication** - JWT-based authorization with password hashing
+- **Bot Protection** - Integrated Google reCAPTCHA v2 to secure registration and password recovery flows.
 - **Role-Based Access Control** - Two roles: administrators and users (customers)
 - **Photo Gallery** - Showcase barber portfolio and work examples stored in Supabase
 - **Password Recovery** - Secure password reset functionality
@@ -23,6 +24,7 @@ The application provides comprehensive management tools:
 
 - [x] Password reset functionality
 - [x] Email notifications system
+- [x] reCAPTCHA Bot Protection
 - [ ] Customizable user avatars
 - [ ] SMS appointment reminders
 - [ ] Analytics dashboard
@@ -36,6 +38,7 @@ The application provides comprehensive management tools:
 - **Flyway** - Database migrations and schema versioning
 - **Valkey (Redis)** - High-performance data structure store used for efficient caching
 - **OAuth2 & JWT** - Secure authentication with external providers and JSON Web Tokens
+- **Google reCAPTCHA API** - Server-side validation of user interactions
 - **Gradle** - Build automation tool
 - **MySQL** - Relational database management
 - **Lombok** - Reduce boilerplate code
@@ -45,6 +48,7 @@ The application provides comprehensive management tools:
 - **React** - Modern UI library
 - **Bootstrap** - Responsive design framework
 - **Vite** - Fast build tool and development server
+- **React Google reCAPTCHA** - Component for easy reCAPTCHA integration
 
 ### Infrastructure
 
@@ -61,6 +65,7 @@ The application provides comprehensive management tools:
 - MySQL 8.0+
 - Valkey server (Docker files provide)
 - Supabase account (for photo storage)
+- Google reCAPTCHA Keys (Site Key and Secret Key)
 - Docker (optional)
 
 ### Installation
@@ -132,7 +137,16 @@ To enable social login, you need to create OAuth applications on both platforms 
 
 - Copy the Client ID and generate a Client Secret. <br> <br>
 
-**5. Configure environment variables**
+**5. Configure Google reCAPTCHA v2**
+
+To enable bot protection, you need to generate API keys from Google:
+
+- Go to [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin).
+- Register a new site, select **reCAPTCHA v2** ("I'm not a robot" checkbox).
+- Add _localhost_ to the list of allowed domains.
+- Copy your **Site Key** and **Secret Key**.
+
+**6. Configure environment variables**
 
 **Backend configuration** - Create `backend/.env` file:
 
@@ -154,16 +168,20 @@ GITHUB_CLIENT_SECRET=your-github-secret
 VALKEY_HOST=localhost (default)
 VALKEY_PORT=6379 (default)
 
+# Google reCAPTCHA Secret Key
+GOOGLE_RECAPTCHA_SECRET=your-recaptcha-secret-key
 ```
 
 > **Important**: For `MAIL_PASSWORD`, you need to generate a Google App Password at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords). Regular Gmail passwords won't work for security reasons.
 
 **Frontend configuration** - Create `frontend/.env` file:
 
-```env
+```properties
 VITE_SUPABASE_PROJECTURL=YourProjectURL
 VITE_SUPABASE_PUBLICAPIKEY=ValueOfAPIKEY
 VITE_SUPABASE_CDNURL=CDNURL_FROM_STORAGE
+VITE_API_URL=Spring_URL
+VITE_RECAPTCHA_SITE_KEY=your-recaptcha-site-key
 ```
 
 Update `backend/src/main/resources/application.properties` to use these environment variables:
@@ -181,7 +199,7 @@ spring.mail.password=${MAIL_PASSWORD}
 
 > **Security Note**: Never commit `.env` files to version control. Make sure they are included in `.gitignore`.
 
-**6. Run the application**
+**7. Run the application**
 
 ```bash
 # Using Makefile (recommended)
@@ -198,15 +216,16 @@ cd backend
 > - Navigate to `BarbershopApplication.java`
 > - Right-click and select "Run" or click the green play button
 
-**7. Install and run the frontend**
+**8. Install and run the frontend**
 
 ```bash
 cd frontend
-npm install
-npm start
+
+pnpm install
+pnpm start
 
 # Or run in development mode with Vite
-npm run dev
+pnpm run dev
 ```
 
 The application should now be running:
@@ -225,12 +244,15 @@ You can use Docker Compose to run the entire application stack. First, create a 
 VITE_SUPABASE_PROJECTURL=YourProjectURL
 VITE_SUPABASE_PUBLICAPIKEY=ValueOfAPIKEY
 VITE_SUPABASE_CDNURL=CDNURL_FROM_STORAGE
+VITE_API_URL=SPRING_API_URL
+VITE_RECAPTCHA_SITE_KEY=your-recaptcha-site-key-frontend
 
 # Backend
 SPRING_DATASOURCE_URL=jdbc:mysql://database:3306/barbershop-with-roles
 SPRING_DATASOURCE_USERNAME=db-username
 SPRING_DATASOURCE_PASSWORD=db-password
 JWT_SECRET_KEY=generate-your-secret-key
+GOOGLE_RECAPTCHA_SECRET=your-recaptcha-secret-key-backend
 
 # Database
 MYSQL_ROOT_PASSWORD=your-root-password

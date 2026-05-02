@@ -1,25 +1,48 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Alert } from "react-bootstrap";
 import { userForgotPasswordRequest } from "../api/userService";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import { useTranslation } from "react-i18next";
-
+import ReCAPTCHA from "react-google-recaptcha";
+import { RECAPTCHA_SITE_KEY } from "../api/config";
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [alert, setAlert] = useState({ message: "", variant: "" });
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslation();
 
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const recaptchaRef = useRef(null);
+
+  const handleCaptchaChange = (token) => {
+    setCaptchaToken(token);
+  };
+
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
+    if (!captchaToken) {
+      setAlert({
+        message: t("auth.captchaRequired") || "Proszę rozwiązać CAPTCHA!",
+        variant: "danger",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      await userForgotPasswordRequest(email);
+      await userForgotPasswordRequest(email, captchaToken);
       setAlert({
         message: t("auth.resetLinkSent"),
         variant: "success",
       });
     } catch (err) {
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+        setCaptchaToken(null);
+      }
+
       setAlert({
         message: t("auth.requestError"),
         variant: "danger",
@@ -66,12 +89,22 @@ const ForgotPassword = () => {
                 disabled={isLoading}
               />
             </div>
+
+            <div className="mb-3 d-flex justify-content-center">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={RECAPTCHA_SITE_KEY}
+                onChange={handleCaptchaChange}
+              />
+            </div>
+
             <ButtonSpinner
               type="submit"
               variant="dark"
               className="mx-auto d-block"
               loading={isLoading}
               loadingText={t("auth.sending")}
+              disabled={!captchaToken || isLoading}
             >
               {t("auth.send")}
             </ButtonSpinner>

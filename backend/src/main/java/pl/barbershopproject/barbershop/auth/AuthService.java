@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import pl.barbershopproject.barbershop.auth.captcha.CaptchaService;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.email.EmailSenderService;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
@@ -18,6 +19,7 @@ import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
 
 import java.time.Instant;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -29,8 +31,11 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final EmailSenderService emailSenderService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final CaptchaService captchaService;
 
     public AuthResponse register(RegisterRequest request) {
+
+        captchaService.verify(request.captchaToken());
 
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new EmailAlreadyExistsException("Użytkownik o podanym adresie e-mail już istnieje");
@@ -45,7 +50,7 @@ public class AuthService {
         userRepository.save(user);
         var token = jwtService.generateToken(user);
 
-        // Zwracanie id, roli i tokena użytkownika
+        // return id, role and user token
         return new AuthResponse(token, user.getIdUser(), user.getRole());
     }
 
@@ -58,12 +63,15 @@ public class AuthService {
         var user = userRepository.findByEmail(email).orElseThrow();
         var token = jwtService.generateToken(user);
 
-        // Zwracanie id, roli i tokena użytkownika
+        // return id, role and user token
         return new AuthResponse(token, user.getIdUser(), user.getRole());
     }
 
-    public void forgotPassword(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+    public void forgotPassword(ForgotPasswordRequest request) {
+
+        captchaService.verify(request.captchaToken());
+
+        User user = userRepository.findByEmail(request.email()).orElseThrow(() -> new NoSuchElementException("User not found"));
         String token = UUID.randomUUID().toString();
         PasswordResetToken passwordResetToken = new PasswordResetToken();
         passwordResetToken.setToken(token);
@@ -72,7 +80,7 @@ public class AuthService {
         passwordResetTokenRepository.save(passwordResetToken);
 
         String resetLink = "http://localhost:3000/resetpassword?token=" + token;
-        emailSenderService.sendEmail(email, "Reset your password link", resetLink + " \n\n Link expire after 30 minutes");
+        emailSenderService.sendEmail(request.email(), "Reset your password link", resetLink + " \n\n Link expire after 30 minutes");
     }
 
     public void resetPassword(String token, String newPassword) {

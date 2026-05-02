@@ -2,10 +2,8 @@ package pl.barbershopproject.barbershop.user;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.Order;
@@ -20,7 +18,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(SpringExtension.class)
 @DataJpaTest
 class UserRepositoryTest {
 
@@ -36,7 +33,7 @@ class UserRepositoryTest {
     void save_persistsUserToDatabase() {
         User user = TestEntities.createUser();
         user.setEmail("johndoe@saveexample.com");
-
+        user.setIdUser(null);
         // when
         User savedUser = userRepository.save(user);
         // then
@@ -52,6 +49,7 @@ class UserRepositoryTest {
         // given
         User user = TestEntities.createUser();
         user.setEmail("johndoe@existsexample.com");
+        user.setIdUser(null);
         userRepository.save(user);
 
         // when
@@ -75,6 +73,7 @@ class UserRepositoryTest {
         // given
         User user = TestEntities.createUser();
         user.setEmail("johnwick@example.com");
+        user.setIdUser(null);
         userRepository.save(user);
 
         // when
@@ -99,7 +98,7 @@ class UserRepositoryTest {
         // given
         User user = TestEntities.createUser();
         user.setEmail("order@me.com");
-
+        user.setIdUser(null);
         User savedUser = userRepository.save(user);
         // when
         Optional<User> found = userRepository.findById(savedUser.getIdUser());
@@ -114,8 +113,10 @@ class UserRepositoryTest {
     void findAllWithOrders_returnsAllUsers() {
         // given
         User user1 = TestEntities.createUser();
+        user1.setIdUser(null);
 
         User user2 = TestEntities.createUser("Negan", "Smith", "negansmith@example.com", Role.ADMIN);
+        user2.setIdUser(null);
 
         userRepository.saveAll(List.of(user1, user2));
         // when
@@ -132,6 +133,7 @@ class UserRepositoryTest {
     void findById_userHasOrderWithOffer_returnsUserWithOrderAndOffer() {
         // given
         User user = TestEntities.createUser();
+        user.setIdUser(null);
         userRepository.save(user);
 
         Offer offer = TestEntities.createOffer("strzyżenie", BigDecimal.valueOf(35.0));
@@ -159,6 +161,7 @@ class UserRepositoryTest {
     void deleteById_removesUser() {
         // given
         User user = TestEntities.createUser();
+        user.setIdUser(null);
         User savedUser = userRepository.save(user);
         Long userId = savedUser.getIdUser();
         // when
