@@ -16,6 +16,16 @@ export const formatSelectedDateTime = (date, hour, minute) => {
   });
 };
 
+export const formatShortDate = (date, locale = "pl-PL") => {
+  if (!date) return null;
+  return new Date(date).toLocaleDateString(locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 export const getCurrentDateTime = () => {
   const currentDateTimeUTC = toZonedTime(new Date(), "Europe/Warsaw");
   return format(currentDateTimeUTC, "yyyy-MM-dd'T'HH:mm:ss");

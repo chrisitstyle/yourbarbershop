@@ -30,7 +30,7 @@ const orderFields = [
   "idOrder",
   "user.firstname",
   "user.lastname",
-  "user.username",
+  "user.email",
   "offer.kind",
   "offer.cost",
   "orderDate",

@@ -19,6 +19,7 @@ const guestOrderFieldsHeaders = [
   "admin.guestOrders.firstname",
   "admin.guestOrders.lastname",
   "admin.guestOrders.phone",
+  "admin.guestOrders.email",
   "admin.guestOrders.service",
   "admin.guestOrders.cost",
   "admin.guestOrders.orderDate",
@@ -31,6 +32,7 @@ const guestOrderFields = [
   "firstname",
   "lastname",
   "phonenumber",
+  "email",
   "offer.kind",
   "offer.cost",
   "orderDate",
@@ -136,7 +138,7 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
       <div className="table-responsive">
         <table
           className="table table-bordered table-hover shadow rounded mx-auto"
-          style={{ maxWidth: "1100px" }}
+          style={{ maxWidth: "1200px" }}
         >
           <thead className="table-dark">
             <tr>

@@ -355,7 +355,7 @@ const AdminPanel = () => {
       </div>
       <div
         className="admin-panel-content mx-auto"
-        style={{ maxWidth: "1100px" }}
+        style={{ maxWidth: "1400px" }}
       >
         {showAddOfferForm && (
           <div className="fade-in card shadow p-4 mb-5">
