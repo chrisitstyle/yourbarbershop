@@ -1,15 +1,13 @@
 package pl.barbershopproject.barbershop.auth.captcha;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import pl.barbershopproject.barbershop.exception.InvalidCaptchaException;
 
 @Service
-@RequiredArgsConstructor
 @Getter
 @Setter
 public class CaptchaService {
@@ -20,8 +18,11 @@ public class CaptchaService {
     @Value("${google.recaptcha.verify-url}")
     private String recaptchaVerifyUrl;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
+    CaptchaService(RestClient restClient) {
+        this.restClient = restClient;
+    }
 
     public void verify(String captchaToken) {
         if (captchaToken == null || captchaToken.isBlank()) {
@@ -29,7 +30,11 @@ public class CaptchaService {
         }
 
         String url = recaptchaVerifyUrl + "?secret=" + recaptchaSecret + "&response=" + captchaToken;
-        CaptchaResponse response = restTemplate.postForObject(url, null, CaptchaResponse.class);
+
+        CaptchaResponse response = restClient.post()
+                .uri(url)
+                .retrieve()
+                .body(CaptchaResponse.class);
 
         if (response == null || !response.isSuccess()) {
             throw new InvalidCaptchaException("Weryfikacja CAPTCHA nie powiodła się.");

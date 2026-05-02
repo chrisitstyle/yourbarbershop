@@ -3,32 +3,39 @@ package pl.barbershopproject.barbershop.captcha;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import pl.barbershopproject.barbershop.auth.captcha.CaptchaClientConfig;
 import pl.barbershopproject.barbershop.auth.captcha.CaptchaResponse;
 import pl.barbershopproject.barbershop.auth.captcha.CaptchaService;
 import pl.barbershopproject.barbershop.exception.InvalidCaptchaException;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-@ExtendWith(MockitoExtension.class)
+@RestClientTest(CaptchaService.class)
+@Import(CaptchaClientConfig.class)
 class CaptchaServiceTest {
 
-    @Mock
-    private RestTemplate restTemplate;
-
-    @InjectMocks
+    @Autowired
     private CaptchaService captchaService;
+
+    @Autowired
+    private MockRestServiceServer mockServer;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private final String SECRET = "test-secret";
     private final String VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
@@ -37,6 +44,8 @@ class CaptchaServiceTest {
     void setUp() {
         captchaService.setRecaptchaSecret(SECRET);
         captchaService.setRecaptchaVerifyUrl(VERIFY_URL);
+        // reset mocked server before each test
+        mockServer.reset();
     }
 
     @ParameterizedTest
@@ -44,7 +53,6 @@ class CaptchaServiceTest {
     @ValueSource(strings = {"  ", "\t", "\n"})
     @DisplayName("Should throw InvalidCaptchaException when token is null, empty or blank")
     void verify_throwsExceptionWhenTokenIsInvalid(String invalidToken) {
-        // then
         assertThrows(InvalidCaptchaException.class, () -> captchaService.verify(invalidToken));
     }
 
@@ -58,11 +66,18 @@ class CaptchaServiceTest {
         CaptchaResponse successResponse = new CaptchaResponse();
         successResponse.setSuccess(true);
 
-        when(restTemplate.postForObject(eq(expectedUrl), any(), eq(CaptchaResponse.class)))
-                .thenReturn(successResponse);
+        // Google response 200
+        mockServer.expect(requestTo(expectedUrl))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess(
+                        objectMapper.writeValueAsString(successResponse),
+                        MediaType.APPLICATION_JSON
+                ));
 
         // when, then
         assertDoesNotThrow(() -> captchaService.verify(token));
+
+        mockServer.verify();
     }
 
     @Test
@@ -70,25 +85,20 @@ class CaptchaServiceTest {
     void verify_throwsExceptionWhenCaptchaFails() {
         // given
         String token = "invalid-token";
+        String expectedUrl = VERIFY_URL + "?secret=" + SECRET + "&response=" + token;
+
         CaptchaResponse failureResponse = new CaptchaResponse();
         failureResponse.setSuccess(false);
 
-        when(restTemplate.postForObject(any(String.class), any(), eq(CaptchaResponse.class)))
-                .thenReturn(failureResponse);
+        // Google return false
+        mockServer.expect(requestTo(expectedUrl))
+                .andRespond(withSuccess(
+                        objectMapper.writeValueAsString(failureResponse),
+                        MediaType.APPLICATION_JSON
+                ));
 
         // when, then
         assertThrows(InvalidCaptchaException.class, () -> captchaService.verify(token));
-    }
-
-    @Test
-    @DisplayName("Should throw InvalidCaptchaException when response from Google is null")
-    void verify_throwsExceptionWhenResponseIsNull() {
-        // given
-        String token = "any-token";
-        when(restTemplate.postForObject(any(String.class), any(), eq(CaptchaResponse.class)))
-                .thenReturn(null);
-
-        // when, then
-        assertThrows(InvalidCaptchaException.class, () -> captchaService.verify(token));
+        mockServer.verify();
     }
 }
