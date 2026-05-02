@@ -17,6 +17,10 @@ public record RegisterRequest(
 
         @NotBlank(message = "Hasło jest wymagane")
         @Size(min = 8, max = 32, message = "Hasło musi mieć od {min} do {max} znaków")
-        String password
+        String password,
+
+        @NotBlank(message = "CAPTCHA jest wymagana")
+        String captchaToken
+
 ) {
 }

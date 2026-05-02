@@ -1,25 +1,39 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../api/authService";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import useAutoDismiss from "../hooks/useAutoDismiss";
 import { useTranslation } from "react-i18next";
-
+import ReCAPTCHA from "react-google-recaptcha";
+import { RECAPTCHA_SITE_KEY } from "../api/config";
 const Register = () => {
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const recaptchaRef = useRef(null);
+
   const [registerErrors, setRegisterErrors] = useAutoDismiss([], 6000);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  const handleCaptchaChange = (token) => {
+    setCaptchaToken(token);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setRegisterErrors([]);
+
+    if (!captchaToken) {
+      alert("Proszę rozwiązać CAPTCHA!");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await registerUser({
@@ -27,12 +41,18 @@ const Register = () => {
         lastname,
         email,
         password,
+        captchaToken,
       });
 
       if (response.status === 200) {
         navigate("/login?registrationSuccess=true");
       }
     } catch (error) {
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+        setCaptchaToken(null);
+      }
+
       if (error.response && error.response.data) {
         const data = error.response.data;
 
@@ -121,12 +141,21 @@ const Register = () => {
                 />
               </div>
 
+              <div className="mb-3 d-flex justify-content-center">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={handleCaptchaChange}
+                />
+              </div>
+
               <ButtonSpinner
                 type="submit"
                 variant="dark"
                 className="mx-auto d-block"
                 loading={isLoading}
                 loadingText={t("auth.registering")}
+                disabled={!captchaToken}
               >
                 {t("auth.registerBtn")}
               </ButtonSpinner>

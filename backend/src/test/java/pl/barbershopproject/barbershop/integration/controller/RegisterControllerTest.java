@@ -37,7 +37,8 @@ class RegisterControllerTest extends BaseIntegrationTest {
                 .put("lastname", "User")
                 .put("email", "newuser@example.com")
                 .put("password", "test_password")
-                .put("role", "USER");
+                .put("role", "USER")
+                .put("captchaToken", "test-token-value");
 
         // when then
         MvcResult registerResult = mockMvc.perform(post("/register")

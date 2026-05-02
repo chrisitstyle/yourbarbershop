@@ -133,6 +133,17 @@ public class TestEntities {
     }
 
     /**
+     * Creates an Offer instance specifically for JPA testing (NO ID set).
+     * Hibernate requires ID to be null for a successful INSERT.
+     */
+    public static Offer createUnsavedOffer() {
+        return Offer.builder()
+                .kind("test_kind")
+                .cost(BigDecimal.valueOf(150))
+                .build(); // id remains null
+    }
+
+    /**
      * Returns an OrderBuilder pre-filled with default test data.
      * <p>
      * Uses default User and Offer.
@@ -255,6 +266,22 @@ public class TestEntities {
                 .status(status)
                 .build();
 
+    }
+
+    /**
+     * Creates a GuestOrder instance specifically for JPA testing (NO ID set).
+     * Hibernate requires ID to be null for a successful INSERT.
+     */
+    public static GuestOrder createUnsavedGuestOrder() {
+        return GuestOrder.builder()
+                .firstname("GuestJohn")
+                .lastname("GuestDoe")
+                .phonenumber("123456789")
+                .email("guestjohndoe@example.com")
+                .orderDate(LocalDateTime.of(2026, 1, 16, 15, 0))
+                .visitDate(LocalDateTime.of(2026, 10, 17, 17, 0))
+                .status(Status.NOWE)
+                .build(); // ID and Offer remain null (must be set manually)
     }
 
     /**

@@ -34,9 +34,11 @@ class OrderRepositoryTest {
     @DisplayName("save method should persist order and assign id")
     void save_persistsOrder_andAssignsId() {
         User user = TestEntities.createUser();
+        user.setIdUser(null);
         User savedUser = userRepository.save(user);
 
         Offer offer = TestEntities.createOffer();
+        offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
 
 
@@ -53,9 +55,11 @@ class OrderRepositoryTest {
     @DisplayName("findById should return saved order with user and offer")
     void findById_returnsOrder() {
         User user = TestEntities.createUser();
+        user.setIdUser(null);
         User savedUser = userRepository.save(user);
 
         Offer offer = TestEntities.createOffer();
+        offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
 
         Order order = TestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(),
@@ -74,9 +78,11 @@ class OrderRepositoryTest {
     @DisplayName("findAll should return all saved orders with users and offers")
     void findAll_returnsAllOrders() {
         User user = TestEntities.createUser();
+        user.setIdUser(null);
         User savedUser = userRepository.save(user);
 
         Offer offer = TestEntities.createOffer();
+        offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
 
         Order o1 = TestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
@@ -99,9 +105,11 @@ class OrderRepositoryTest {
     @DisplayName("deleteById should remove order from repository")
     void deleteById_removesOrder() {
         User user = TestEntities.createUser();
+        user.setIdUser(null);
         User savedUser = userRepository.save(user);
 
         Offer offer = TestEntities.createOffer();
+        offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
 
         Order order = TestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(),
@@ -120,9 +128,11 @@ class OrderRepositoryTest {
     @DisplayName("findOrdersByStatus should return only orders with specific status")
     void findOrdersByStatus_returnsOrdersWithGivenStatus() {
         User user = TestEntities.createUser();
+        user.setIdUser(null);
         User savedUser = userRepository.save(user);
 
         Offer offer = TestEntities.createOffer();
+        offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
 
         Order o1 = TestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),

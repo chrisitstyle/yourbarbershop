@@ -1,10 +1,14 @@
 package pl.barbershopproject.barbershop.auth;
 
 import jakarta.validation.constraints.Email;
-import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
 
-@Data
-public class ForgotPasswordRequest {
-    @Email(message = "Niepoprawny format adresu email")
-    private String email;
+public record ForgotPasswordRequest(
+        @NotBlank(message = "Email nie może być pusty")
+        @Email(message = "Niepoprawny format adresu email")
+        String email,
+
+        @NotBlank(message = "CAPTCHA jest wymagana")
+        String captchaToken
+) {
 }

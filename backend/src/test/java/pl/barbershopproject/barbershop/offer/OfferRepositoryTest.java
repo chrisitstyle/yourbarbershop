@@ -2,10 +2,8 @@ package pl.barbershopproject.barbershop.offer;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import pl.barbershopproject.barbershop.utils.TestEntities;
 
 import java.math.BigDecimal;
@@ -14,7 +12,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(SpringExtension.class)
+
 @DataJpaTest
 class OfferRepositoryTest {
 
@@ -26,6 +24,7 @@ class OfferRepositoryTest {
     void save_persistsOffer_andAssignsId() {
         // given
         Offer offer = TestEntities.createOffer();
+        offer.setIdOffer(null);
         // when
         Offer savedOffer = offerRepository.save(offer);
         // then
@@ -39,6 +38,7 @@ class OfferRepositoryTest {
     void findById_returnsOffer() {
         // given
         Offer offer = TestEntities.createOffer();
+        offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
         // when
         Optional<Offer> found = offerRepository.findById(savedOffer.getIdOffer());
@@ -67,6 +67,7 @@ class OfferRepositoryTest {
     void deleteById_removesOffer() {
         // given
         Offer offer = TestEntities.createOffer();
+        offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
         // when
         offerRepository.deleteById(savedOffer.getIdOffer());

@@ -35,7 +35,7 @@ export const updateUser = async (userId, newData, token) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     return response;
@@ -58,10 +58,11 @@ export const deleteUser = async (idUser, userToken) => {
   }
 };
 
-export const userForgotPasswordRequest = async (email) => {
+export const userForgotPasswordRequest = async (email, captchaToken) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/forgot-password`, {
       email,
+      captchaToken,
     });
     return response.data;
   } catch (error) {
