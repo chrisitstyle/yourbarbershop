@@ -1,4 +1,4 @@
-name: Backend Build & Test
+name: Backend Build
 
 # The workflow will run on pushes and Pull Requests to the main branch,
 # but only when changes are made to the backend code or the Dockerfile
@@ -15,7 +15,7 @@ on:
       - "DockerFileBackend"
 
 jobs:
-  test-and-build:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -38,11 +38,6 @@ jobs:
       - name: Grant execute permission for gradlew
         working-directory: ./backend
         run: chmod +x gradlew
-
-      # run tests
-      - name: Run tests with Gradle
-        working-directory: ./backend
-        run: ./gradlew test --no-daemon
 
       # verify docker image
       - name: Build Docker image

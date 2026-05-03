@@ -6,6 +6,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -29,10 +30,19 @@ public abstract class BaseIntegrationTest {
             .withPassword("test")
             .withInitScript("barbershop-with-roles_dump_integration_tests.sql");
 
+    // Valkey container
+    @SuppressWarnings("resource")
+    @Container
+    static final GenericContainer<?> valkeyContainer = new GenericContainer<>("valkey/valkey:8")
+            .withExposedPorts(6379);
+
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", mysqlContainer::getJdbcUrl);
         registry.add("spring.datasource.username", mysqlContainer::getUsername);
         registry.add("spring.datasource.password", mysqlContainer::getPassword);
+
+        registry.add("spring.data.redis.host", valkeyContainer::getHost);
+        registry.add("spring.data.redis.port", () -> valkeyContainer.getMappedPort(6379));
     }
 }
