@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,6 +39,8 @@ class EmailControllerTest {
     private JwtAuthFilter jwtAuthFilter;
     @MockitoBean
     private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    @MockitoBean
+    private StringRedisTemplate stringRedisTemplate;
 
     @Test
     void sendEmail_ReturnsOk_WhenServiceSucceeds() throws Exception {
