@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
+import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.utils.TestEntities;
 import tools.jackson.databind.ObjectMapper;
@@ -44,18 +45,19 @@ class OrderControllerTest {
     @Test
     void addOrder_ReturnsCreatedString() throws Exception {
         // given
-        Order order = TestEntities.createOrder();
+        OrderCreationDTO inputDto = TestEntities.createOrderCreationDTO();
 
         Order savedOrder = TestEntities.orderBuilder()
                 .idOrder(10L)
                 .build();
 
-        Mockito.when(orderService.addOrder(Mockito.any(Order.class))).thenReturn(savedOrder);
+        Mockito.when(orderService.addOrder(Mockito.any(OrderCreationDTO.class), Mockito.any()))
+                .thenReturn(savedOrder);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/orders")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(order)))
+                        .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
                 .andExpect(MockMvcResultMatchers.content().string("Wizyta została dodana. ID Wizyty: 10"));
@@ -157,15 +159,15 @@ class OrderControllerTest {
     @Test
     void addOrder_ReturnsBadRequest_WhenIllegalArgumentException() throws Exception {
         // given
-        Order invalidOrder = TestEntities.createOrder();
+        OrderCreationDTO invalidDto = TestEntities.createOrderCreationDTO();
 
-        Mockito.when(orderService.addOrder(Mockito.any(Order.class)))
+        Mockito.when(orderService.addOrder(Mockito.any(OrderCreationDTO.class), Mockito.any()))
                 .thenThrow(new IllegalArgumentException("Invalid date"));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/orders")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidOrder)))
+                        .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid date"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));

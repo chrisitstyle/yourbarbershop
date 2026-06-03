@@ -8,6 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.offer.OfferRepository;
+import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.user.User;
@@ -25,12 +27,15 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
-
     @Mock
     private OrderRepository orderRepository;
 
     @Mock
+    private OfferRepository offerRepository;
+
+    @Mock
     private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private OrderService orderService;
 
@@ -51,19 +56,21 @@ class OrderServiceTest {
         order.setOrderDate(LocalDateTime.parse("2025-03-23T10:00:00"));
         order.setVisitDate(LocalDateTime.parse("2025-03-24T12:00:00"));
         order.setStatus(Status.NOWE);
-
     }
 
     @Test
     void addOrder_ShouldSaveOrder() {
+        OrderCreationDTO dto = TestEntities.createOrderCreationDTO();
 
+        when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.of(offer));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
 
-        Order result = orderService.addOrder(order);
+        Order result = orderService.addOrder(dto, user);
 
         assertNotNull(result);
         assertEquals(order.getIdOrder(), result.getIdOrder());
-        verify(orderRepository, times(1)).save(order);
+        verify(offerRepository, times(1)).findById(dto.idOffer());
+        verify(orderRepository, times(1)).save(any(Order.class));
         verify(eventPublisher).publishEvent(any(OrderCreatedEvent.class));
     }
 
@@ -169,6 +176,4 @@ class OrderServiceTest {
 
         verify(orderRepository, never()).deleteById(anyLong());
     }
-
-
 }

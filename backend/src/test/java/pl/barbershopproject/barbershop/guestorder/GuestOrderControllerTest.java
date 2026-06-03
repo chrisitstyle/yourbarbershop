@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.util.Status;
 import pl.barbershopproject.barbershop.utils.TestEntities;
 import tools.jackson.databind.ObjectMapper;
@@ -40,20 +41,19 @@ class GuestOrderControllerTest {
     @MockitoBean
     private StringRedisTemplate stringRedisTemplate;
 
-
     @Test
     void addGuestOrder_ReturnsCreated() throws Exception {
         // given
-        GuestOrder inputOrder = TestEntities.createGuestOrder();
+        GuestOrderCreationDTO inputDto = TestEntities.createGuestOrderCreationDTO();
         GuestOrder savedOrder = TestEntities.createGuestOrder();
 
-        Mockito.when(guestOrderService.addGuestOrder(Mockito.any(GuestOrder.class)))
+        Mockito.when(guestOrderService.addGuestOrder(Mockito.any(GuestOrderCreationDTO.class)))
                 .thenReturn(savedOrder);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/guestorders")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputOrder)))
+                        .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.idGuestOrder").value(1L))
@@ -156,18 +156,17 @@ class GuestOrderControllerTest {
     @Test
     void addGuestOrder_ReturnsBadRequest_WhenIllegalArgumentException() throws Exception {
         // given
-        GuestOrder invalidOrder = TestEntities.createGuestOrder();
+        GuestOrderCreationDTO invalidDto = TestEntities.createGuestOrderCreationDTO();
 
-        Mockito.when(guestOrderService.addGuestOrder(Mockito.any(GuestOrder.class)))
+        Mockito.when(guestOrderService.addGuestOrder(Mockito.any(GuestOrderCreationDTO.class)))
                 .thenThrow(new IllegalArgumentException("Invalid phone number"));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/guestorders")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidOrder)))
+                        .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid phone number"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));
     }
-
 }
