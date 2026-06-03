@@ -1,13 +1,12 @@
 import { useState } from "react";
-import axios from "axios";
 import { useAuth } from "../AuthContext";
 import { useNavigate } from "react-router-dom";
-import { getCurrentDateTime, formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
 import useOffers from "../hooks/useOffers";
+import { formatSelectedDateTime } from "../api/dataParser";
+import { createOrder } from "../api/orderService";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { API_BASE_URL } from "../api/config";
 import { useTranslation } from "react-i18next";
 
 const RegisterOrderLogged = () => {
@@ -41,30 +40,17 @@ const RegisterOrderLogged = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/orders`,
-        {
-          user: {
-            idUser: user.id,
-          },
-          offer: {
-            idOffer: selectedOffer,
-          },
-          orderDate: getCurrentDateTime(),
-          visitDate: formatSelectedDateTime(
-            selectedDate,
-            selectedHour,
-            selectedMinute,
-          ),
-          status: "NOWE",
-        },
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        },
-      );
+      const orderCreationData = {
+        idOffer: Number(selectedOffer),
+        visitDate: formatSelectedDateTime(
+          selectedDate,
+          selectedHour,
+          selectedMinute,
+        ),
+      };
+
+      await createOrder(orderCreationData, user.token);
+
       navigate(`/profile/${user.id}?registrationOrderSuccess=true`);
     } catch (error) {
       setShowErrorAlert(true);

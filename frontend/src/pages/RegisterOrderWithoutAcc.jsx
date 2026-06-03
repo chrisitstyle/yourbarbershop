@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Alert from "react-bootstrap/Alert";
-import axios from "axios";
 import { getOffers } from "../api/offerService";
-import { getCurrentDateTime, formatSelectedDateTime } from "../api/dataParser";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ButtonSpinner from "../components/common/ButtonSpinner";
-import { API_BASE_URL } from "../api/config";
 import { useTranslation } from "react-i18next";
+import { formatSelectedDateTime } from "../api/dataParser";
+import { createGuestOrder } from "../api/guestOrderService";
 
 const RegisterOrderWithoutAcc = () => {
   const [firstname, setFirstName] = useState("");
@@ -72,24 +71,21 @@ const RegisterOrderWithoutAcc = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/guestorders`, {
+      const guestOrderCreationData = {
         firstname,
         lastname,
         phonenumber,
         email,
-
-        offer: {
-          idOffer: selectedOffer,
-        },
-
-        orderDate: getCurrentDateTime(),
+        idOffer: Number(selectedOffer),
         visitDate: formatSelectedDateTime(
           selectedDate,
           selectedHour,
           selectedMinute,
         ),
-        status: "NOWE",
-      });
+      };
+
+      await createGuestOrder(guestOrderCreationData);
+
       setInitialState();
       setShowAlert(true);
     } catch (error) {

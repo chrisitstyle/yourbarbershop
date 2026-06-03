@@ -1,6 +1,26 @@
 import axios from "axios";
 import { API_BASE_URL } from "./config.js";
 
+export const createOrder = async (orderCreationData, userToken) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/orders`,
+      orderCreationData,
+      {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error creating order:", error);
+    throw error;
+  }
+};
+
 export const getOrders = async (userToken) => {
   try {
     const result = await axios.get(`${API_BASE_URL}/orders`, {
@@ -26,7 +46,7 @@ export const updateOrder = async (orderId, newData, token) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     return response.data;
@@ -53,6 +73,7 @@ const orderService = {
   getOrders,
   updateOrder,
   deleteOrder,
+  createOrder,
 };
 
 export default orderService;

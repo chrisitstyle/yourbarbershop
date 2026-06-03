@@ -1,6 +1,20 @@
 import axios from "axios";
 import { API_BASE_URL } from "./config.js";
 
+export const createGuestOrder = async (guestOrderCreationData) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/guestorders`,
+      guestOrderCreationData,
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error creating guest order:", error);
+    throw error;
+  }
+};
+
 export const getGuestOrders = async (userToken) => {
   try {
     const result = await axios.get(`${API_BASE_URL}/guestorders`, {
@@ -26,7 +40,7 @@ export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
         headers: {
           Authorization: `Bearer ${userToken}`,
         },
-      }
+      },
     );
 
     return response.data;
@@ -51,6 +65,7 @@ export const deleteGuestOrder = async (idGuestOrder, userToken) => {
 };
 
 const guestOrderService = {
+  createGuestOrder,
   getGuestOrders,
   updateGuestOrder,
   deleteGuestOrder,
