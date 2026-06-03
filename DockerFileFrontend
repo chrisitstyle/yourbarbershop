@@ -3,7 +3,7 @@ WORKDIR /frontend
 
 # copy lockfiles first to leverage docker layer caching for deps
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+RUN npm install -g pnpm@9.15.4 && pnpm install --frozen-lockfile
 
 # copy app sources after deps to avoid reinstalling on every code change
 COPY frontend/ ./

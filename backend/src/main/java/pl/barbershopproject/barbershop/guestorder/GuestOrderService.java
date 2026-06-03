@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
+import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
@@ -20,15 +22,13 @@ class GuestOrderService {
     private final OfferRepository offerRepository;
     private final ApplicationEventPublisher eventPublisher;
     @Transactional
-    public GuestOrder addGuestOrder(GuestOrder guestOrder) {
-        Long offerId = guestOrder.getOffer().getIdOffer();
-        Offer offerFromDB = offerRepository.findById(offerId)
-                .orElseThrow(() -> new NoSuchElementException("Nie znaleziono oferty: " + offerId));
+    public GuestOrder addGuestOrder(GuestOrderCreationDTO guestOrderCreationDTO) {
+        Offer offer = offerRepository.findById(guestOrderCreationDTO.idOffer())
+                .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + guestOrderCreationDTO.idOffer() + " nie istnieje"));
 
-        guestOrder.setOffer(offerFromDB);
+        GuestOrder guestOrderToSave = GuestOrderCreationDTOMapper.toEntity(guestOrderCreationDTO, offer);
 
-        GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
-
+        GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrderToSave);
 
         eventPublisher.publishEvent(new OrderCreatedEvent(
                 savedGuestOrder.getEmail(),

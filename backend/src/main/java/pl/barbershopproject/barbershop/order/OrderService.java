@@ -6,9 +6,14 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.offer.OfferRepository;
+import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
+import pl.barbershopproject.barbershop.order.mapper.OrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
+import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.util.List;
@@ -20,12 +25,18 @@ import java.util.NoSuchElementException;
 class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OfferRepository offerRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     @CacheEvict(value = "orders", allEntries = true)
-    public Order addOrder(Order order) {
-        Order savedOrder = orderRepository.save(order);
+    public Order addOrder(OrderCreationDTO orderCreationDTO, User user) {
+        Offer offer = offerRepository.findById(orderCreationDTO.idOffer())
+                .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + orderCreationDTO.idOffer() + " nie istnieje"));
+
+        Order orderToSave = OrderCreationDTOMapper.toEntity(orderCreationDTO, user,  offer);
+
+        Order savedOrder = orderRepository.save(orderToSave);
 
         eventPublisher.publishEvent(new OrderCreatedEvent(
                 savedOrder.getUser().getEmail(),

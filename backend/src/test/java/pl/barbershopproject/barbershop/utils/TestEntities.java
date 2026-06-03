@@ -1,8 +1,10 @@
 package pl.barbershopproject.barbershop.utils;
 
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.order.Order;
+import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.dto.UserInOrderDTO;
 import pl.barbershopproject.barbershop.user.Role;
@@ -216,6 +218,20 @@ public class TestEntities {
     }
 
     /**
+     * Creates an OrderCreationDTO with default test data.
+     * <p>
+     * Useful for testing order creation endpoint and service.
+     *
+     * @return OrderCreationDTO instance
+     */
+    public static OrderCreationDTO createOrderCreationDTO() {
+        return new OrderCreationDTO(
+                1L,
+                LocalDateTime.of(2026, 10, 17, 17, 0)
+        );
+    }
+
+    /**
      * Returns a GuestOrderBuilder pre-filled with default test data.
      */
     public static GuestOrder.GuestOrderBuilder guestOrderBuilder() {
@@ -284,6 +300,23 @@ public class TestEntities {
                 .build(); // ID and Offer remain null (must be set manually)
     }
 
+    /**
+     * Creates a GuestOrderCreationDTO with default test data.
+     * <p>
+     * Useful for testing guest order creation endpoint and service.
+     *
+     * @return GuestOrderCreationDTO instance
+     */
+    public static GuestOrderCreationDTO createGuestOrderCreationDTO() {
+        return new GuestOrderCreationDTO(
+                "GuestJohn",
+                "GuestDoe",
+                "123456789",
+                "guestjohndoe@example.com",
+                1L,
+                LocalDateTime.of(2026, 10, 17, 17, 0)
+        );
+    }
     /**
      * Creates a default UserDTO with a sample list of orders.
      *

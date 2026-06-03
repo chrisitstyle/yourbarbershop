@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.net.URI;
@@ -19,8 +20,8 @@ class GuestOrderController {
     private final GuestOrderService guestOrderService;
 
     @PostMapping
-    public ResponseEntity<GuestOrder> addGuestOrder(@Valid @RequestBody GuestOrder guestOrder) {
-        GuestOrder savedGuestOrder = guestOrderService.addGuestOrder(guestOrder);
+    public ResponseEntity<GuestOrder> addGuestOrder(@Valid @RequestBody GuestOrderCreationDTO guestOrderCreationDTO) {
+        GuestOrder savedGuestOrder = guestOrderService.addGuestOrder(guestOrderCreationDTO);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")

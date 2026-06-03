@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
@@ -50,15 +51,17 @@ class GuestOrderServiceTest {
     @Test
     void addGuestOrder_ShouldReturnGuestOrder() {
 
-        when(offerRepository.findById(offer.getIdOffer())).thenReturn(Optional.of(offer));
-        when(guestOrderRepository.save(guestOrder)).thenReturn(guestOrder);
+        GuestOrderCreationDTO dto = TestEntities.createGuestOrderCreationDTO();
 
-        GuestOrder guestOrderResult = guestOrderService.addGuestOrder(guestOrder);
+        when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.of(offer));
+        when(guestOrderRepository.save(any(GuestOrder.class))).thenReturn(guestOrder);
+
+        GuestOrder guestOrderResult = guestOrderService.addGuestOrder(dto);
 
         assertNotNull(guestOrderResult);
         assertEquals(guestOrder, guestOrderResult);
-        verify(guestOrderRepository, times(1)).save(guestOrder);
-        verify(offerRepository, times(1)).findById(offer.getIdOffer());
+        verify(guestOrderRepository, times(1)).save(any(GuestOrder.class));
+        verify(offerRepository, times(1)).findById(dto.idOffer());
         verify(eventPublisher, times(1)).publishEvent(any(OrderCreatedEvent.class));
 
     }
