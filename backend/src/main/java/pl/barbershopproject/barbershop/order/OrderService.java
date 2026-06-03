@@ -6,6 +6,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
@@ -21,11 +22,11 @@ import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
-
 class OrderService {
 
     private final OrderRepository orderRepository;
     private final OfferRepository offerRepository;
+    private final AppointmentAvailabilityService appointmentAvailabilityService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -34,7 +35,9 @@ class OrderService {
         Offer offer = offerRepository.findById(orderCreationDTO.idOffer())
                 .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + orderCreationDTO.idOffer() + " nie istnieje"));
 
-        Order orderToSave = OrderCreationDTOMapper.toEntity(orderCreationDTO, user,  offer);
+        Order orderToSave = OrderCreationDTOMapper.toEntity(orderCreationDTO, user, offer);
+
+        appointmentAvailabilityService.reserveSlot(orderToSave.getVisitDate());
 
         Order savedOrder = orderRepository.save(orderToSave);
 
@@ -47,7 +50,6 @@ class OrderService {
         ));
 
         return savedOrder;
-
     }
 
     @Cacheable(value = "orders", key = "'all'")
@@ -82,11 +84,22 @@ class OrderService {
         Order existingOrder = orderRepository.findById(idOrder)
                 .orElseThrow(() -> new NoSuchElementException("Zamówienie o ID: " + idOrder));
 
+        Status targetStatus = updatedOrder.getStatus() != null
+                ? updatedOrder.getStatus()
+                : existingOrder.getStatus();
+
+        appointmentAvailabilityService.updateSlotReservation(
+                existingOrder.getVisitDate(),
+                existingOrder.getStatus(),
+                updatedOrder.getVisitDate(),
+                targetStatus
+        );
+
         existingOrder.setUser(updatedOrder.getUser());
         existingOrder.setOffer(updatedOrder.getOffer());
         existingOrder.setOrderDate(updatedOrder.getOrderDate());
         existingOrder.setVisitDate(updatedOrder.getVisitDate());
-        existingOrder.setStatus(updatedOrder.getStatus());
+        existingOrder.setStatus(targetStatus);
 
         return orderRepository.save(existingOrder);
     }
@@ -94,10 +107,12 @@ class OrderService {
     @Transactional
     @CacheEvict(value = "orders", allEntries = true)
     public void deleteOrderById(Long idOrder) {
-        if (!orderRepository.existsById(idOrder)) {
-            throw new NoSuchElementException("Zamówienie o ID: " + idOrder + " nie istnieje");
-        }
-        orderRepository.deleteById(idOrder);
+        Order order = orderRepository.findById(idOrder)
+                .orElseThrow(() -> new NoSuchElementException("Zamówienie o ID: " + idOrder + " nie istnieje"));
+
+        appointmentAvailabilityService.releaseIfReserved(order.getVisitDate(), order.getStatus());
+
+        orderRepository.delete(order);
     }
 
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.offer.Offer;
@@ -20,6 +21,7 @@ class GuestOrderService {
 
     private final GuestOrderRepository guestOrderRepository;
     private final OfferRepository offerRepository;
+    private final AppointmentAvailabilityService appointmentAvailabilityService;
     private final ApplicationEventPublisher eventPublisher;
     @Transactional
     public GuestOrder addGuestOrder(GuestOrderCreationDTO guestOrderCreationDTO) {
@@ -27,6 +29,8 @@ class GuestOrderService {
                 .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + guestOrderCreationDTO.idOffer() + " nie istnieje"));
 
         GuestOrder guestOrderToSave = GuestOrderCreationDTOMapper.toEntity(guestOrderCreationDTO, offer);
+
+        appointmentAvailabilityService.reserveSlot(guestOrderToSave.getVisitDate());
 
         GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrderToSave);
 
@@ -60,24 +64,36 @@ class GuestOrderService {
         GuestOrder existingOrder = guestOrderRepository.findById(idGuestOrder)
                 .orElseThrow(() -> new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder));
 
+        Status targetStatus = updatedGuestOrder.getStatus() != null
+                ? updatedGuestOrder.getStatus()
+                : existingOrder.getStatus();
+
+        appointmentAvailabilityService.updateSlotReservation(
+                existingOrder.getVisitDate(),
+                existingOrder.getStatus(),
+                updatedGuestOrder.getVisitDate(),
+                targetStatus
+        );
+
         existingOrder.setFirstname(updatedGuestOrder.getFirstname());
         existingOrder.setLastname(updatedGuestOrder.getLastname());
         existingOrder.setPhonenumber(updatedGuestOrder.getPhonenumber());
         existingOrder.setEmail(updatedGuestOrder.getEmail());
         existingOrder.setOffer(updatedGuestOrder.getOffer());
         existingOrder.setVisitDate(updatedGuestOrder.getVisitDate());
-        existingOrder.setStatus(updatedGuestOrder.getStatus());
+        existingOrder.setStatus(targetStatus);
 
         return guestOrderRepository.save(existingOrder);
     }
 
     @Transactional
     public void deleteGuestOrderById(Long idGuestOrder) {
+        GuestOrder guestOrder = guestOrderRepository.findById(idGuestOrder)
+                .orElseThrow(() -> new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder));
 
-        if (!guestOrderRepository.existsById(idGuestOrder)) {
-            throw new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder);
-        }
-        guestOrderRepository.deleteById(idGuestOrder);
+        appointmentAvailabilityService.releaseIfReserved(guestOrder.getVisitDate(), guestOrder.getStatus());
+
+        guestOrderRepository.delete(guestOrder);
     }
 
 

@@ -65,6 +65,11 @@ public class GlobalExceptionHandler {
         return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(AppointmentSlotTakenException.class)
+    public ResponseEntity<ErrorDTO> handleAppointmentSlotTaken(AppointmentSlotTakenException ex) {
+        return createErrorResponse(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
     /**
      * Helper method to construct a standard {@link ResponseEntity} containing an {@link ErrorDTO}.
      *

@@ -7,6 +7,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
+import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
@@ -34,13 +36,15 @@ class OrderServiceTest {
     private OfferRepository offerRepository;
 
     @Mock
+    private AppointmentAvailabilityService appointmentAvailabilityService;
+
+    @Mock
     private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private OrderService orderService;
 
     private Order order;
-    private Order updatedOrder;
     private User user;
     private Offer offer;
 
@@ -63,15 +67,60 @@ class OrderServiceTest {
         OrderCreationDTO dto = TestEntities.createOrderCreationDTO();
 
         when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.of(offer));
-        when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Order result = orderService.addOrder(dto, user);
 
         assertNotNull(result);
-        assertEquals(order.getIdOrder(), result.getIdOrder());
+        assertEquals(dto.visitDate(), result.getVisitDate());
+        assertEquals(user, result.getUser());
+        assertEquals(offer, result.getOffer());
+        assertEquals(Status.NOWE, result.getStatus());
+
         verify(offerRepository, times(1)).findById(dto.idOffer());
+        verify(appointmentAvailabilityService, times(1)).reserveSlot(dto.visitDate());
         verify(orderRepository, times(1)).save(any(Order.class));
-        verify(eventPublisher).publishEvent(any(OrderCreatedEvent.class));
+        verify(eventPublisher, times(1)).publishEvent(any(OrderCreatedEvent.class));
+    }
+
+    @Test
+    void addOrder_ShouldThrowException_WhenOfferDoesNotExist() {
+        OrderCreationDTO dto = TestEntities.createOrderCreationDTO();
+
+        when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> orderService.addOrder(dto, user)
+        );
+
+        assertEquals("Oferta o ID: " + dto.idOffer() + " nie istnieje", exception.getMessage());
+
+        verify(offerRepository, times(1)).findById(dto.idOffer());
+        verify(appointmentAvailabilityService, never()).reserveSlot(any());
+        verify(orderRepository, never()).save(any(Order.class));
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void addOrder_ShouldThrowException_WhenAppointmentSlotIsTaken() {
+        OrderCreationDTO orderCreationDTO = TestEntities.createOrderCreationDTO();
+
+        when(offerRepository.findById(orderCreationDTO.idOffer())).thenReturn(Optional.of(offer));
+        doThrow(new AppointmentSlotTakenException(orderCreationDTO.visitDate()))
+                .when(appointmentAvailabilityService)
+                .reserveSlot(orderCreationDTO.visitDate());
+
+        assertThrows(
+                AppointmentSlotTakenException.class,
+                () -> orderService.addOrder(orderCreationDTO, user)
+        );
+
+        verify(offerRepository, times(1)).findById(orderCreationDTO.idOffer());
+        verify(appointmentAvailabilityService, times(1)).reserveSlot(orderCreationDTO.visitDate());
+        verify(orderRepository, never()).save(any(Order.class));
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -82,6 +131,7 @@ class OrderServiceTest {
 
         assertEquals(1, result.size());
         assertEquals(order.getIdOrder(), result.getFirst().idOrder());
+
         verify(orderRepository, times(1)).findAll();
     }
 
@@ -93,46 +143,81 @@ class OrderServiceTest {
 
         assertNotNull(result);
         assertEquals(order.getIdOrder(), result.idOrder());
+
+        verify(orderRepository, times(1)).findById(1L);
     }
 
     @Test
     void getSingleOrder_ShouldThrowException_WhenOrderNotFound() {
         when(orderRepository.findById(2L)).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class,
-                () -> orderService.getSingleOrder(2L));
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> orderService.getSingleOrder(2L)
+        );
+
+        assertEquals("Zamówienie o ID: 2 nie istnieje", exception.getMessage());
+
+        verify(orderRepository, times(1)).findById(2L);
     }
 
     @Test
     void getOrdersByStatus_ShouldReturnFilteredOrders() {
-        List<Order> orders = List.of(order);
-        when(orderRepository.findOrdersByStatus(Status.NOWE)).thenReturn(orders);
+        when(orderRepository.findOrdersByStatus(Status.NOWE))
+                .thenReturn(List.of(order));
 
         List<OrderDTO> result = orderService.getOrdersByStatus("NOWE");
 
         assertEquals(1, result.size());
         assertEquals(Status.NOWE, result.getFirst().status());
+
+        verify(orderRepository, times(1)).findOrdersByStatus(Status.NOWE);
+    }
+
+    @Test
+    void getOrdersByStatus_ShouldReturnFilteredOrders_WhenStatusHasLowerCaseLetters() {
+        when(orderRepository.findOrdersByStatus(Status.NOWE))
+                .thenReturn(List.of(order));
+
+        List<OrderDTO> result = orderService.getOrdersByStatus("nowe");
+
+        assertEquals(1, result.size());
+        assertEquals(Status.NOWE, result.getFirst().status());
+
+        verify(orderRepository, times(1)).findOrdersByStatus(Status.NOWE);
     }
 
     @Test
     void getOrdersByStatus_ShouldThrowException_ForInvalidStatus() {
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> orderService.getOrdersByStatus("invalid"));
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> orderService.getOrdersByStatus("invalid")
+        );
 
         assertTrue(exception.getMessage().contains("Dostępne statusy"));
+
+        verify(orderRepository, never()).findOrdersByStatus(any());
     }
 
     @Test
     void updateOrder_ShouldUpdateExistingOrder() {
-        updatedOrder = new Order();
+        Order updatedOrder = new Order();
+
+        LocalDateTime currentVisitDate = order.getVisitDate();
+        Status currentStatus = order.getStatus();
+
+        LocalDateTime targetVisitDate = LocalDateTime.parse("2025-03-26T10:00:00");
+        Status targetStatus = Status.NOWE;
+
         updatedOrder.setUser(user);
         updatedOrder.setOffer(offer);
         updatedOrder.setOrderDate(LocalDateTime.parse("2025-03-25T10:00:00"));
-        updatedOrder.setVisitDate(LocalDateTime.parse("2025-03-26T10:00:00"));
-        updatedOrder.setStatus(Status.NOWE);
+        updatedOrder.setVisitDate(targetVisitDate);
+        updatedOrder.setStatus(targetStatus);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-        when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Order updatedOrderResult = orderService.updateOrder(updatedOrder, 1L);
 
@@ -141,39 +226,101 @@ class OrderServiceTest {
                 () -> assertEquals(updatedOrder.getUser(), updatedOrderResult.getUser()),
                 () -> assertEquals(updatedOrder.getOffer(), updatedOrderResult.getOffer()),
                 () -> assertEquals(updatedOrder.getOrderDate(), updatedOrderResult.getOrderDate()),
-                () -> assertEquals(updatedOrder.getVisitDate(), updatedOrderResult.getVisitDate()),
-                () -> assertEquals(updatedOrder.getStatus(), updatedOrderResult.getStatus())
+                () -> assertEquals(targetVisitDate, updatedOrderResult.getVisitDate()),
+                () -> assertEquals(targetStatus, updatedOrderResult.getStatus())
         );
 
         verify(orderRepository, times(1)).findById(1L);
+        verify(appointmentAvailabilityService, times(1)).updateSlotReservation(
+                currentVisitDate,
+                currentStatus,
+                targetVisitDate,
+                targetStatus
+        );
+        verify(orderRepository, times(1)).save(order);
+    }
+
+    @Test
+    void updateOrder_ShouldUseCurrentStatus_WhenUpdatedStatusIsNull() {
+        Order updatedOrder = new Order();
+
+        LocalDateTime currentVisitDate = order.getVisitDate();
+        Status currentStatus = order.getStatus();
+        LocalDateTime targetVisitDate = LocalDateTime.parse("2025-03-26T10:00:00");
+
+        updatedOrder.setUser(user);
+        updatedOrder.setOffer(offer);
+        updatedOrder.setOrderDate(LocalDateTime.parse("2025-03-25T10:00:00"));
+        updatedOrder.setVisitDate(targetVisitDate);
+        updatedOrder.setStatus(null);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Order updatedOrderResult = orderService.updateOrder(updatedOrder, 1L);
+
+        assertNotNull(updatedOrderResult);
+        assertEquals(targetVisitDate, updatedOrderResult.getVisitDate());
+        assertEquals(currentStatus, updatedOrderResult.getStatus());
+
+        verify(orderRepository, times(1)).findById(1L);
+        verify(appointmentAvailabilityService, times(1)).updateSlotReservation(
+                currentVisitDate,
+                currentStatus,
+                targetVisitDate,
+                currentStatus
+        );
         verify(orderRepository, times(1)).save(order);
     }
 
     @Test
     void updateOrder_ShouldThrowException_WhenOrderNotFound() {
+        Order updatedOrder = new Order();
+        updatedOrder.setVisitDate(LocalDateTime.parse("2025-03-26T10:00:00"));
+        updatedOrder.setStatus(Status.NOWE);
 
         when(orderRepository.findById(2L)).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class,
-                () -> orderService.updateOrder(updatedOrder, 2L));
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> orderService.updateOrder(updatedOrder, 2L)
+        );
+
+        assertEquals("Zamówienie o ID: 2", exception.getMessage());
+
+        verify(orderRepository, times(1)).findById(2L);
+        verify(appointmentAvailabilityService, never()).updateSlotReservation(any(), any(), any(), any());
+        verify(orderRepository, never()).save(any(Order.class));
     }
 
     @Test
     void deleteOrderById_ShouldDeleteExistingOrder() {
-        when(orderRepository.existsById(1L)).thenReturn(true);
+        LocalDateTime visitDate = order.getVisitDate();
+        Status status = order.getStatus();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
         orderService.deleteOrderById(1L);
 
-        verify(orderRepository).deleteById(1L);
+        verify(orderRepository, times(1)).findById(1L);
+        verify(appointmentAvailabilityService, times(1)).releaseIfReserved(visitDate, status);
+        verify(orderRepository, times(1)).delete(order);
     }
 
     @Test
     void deleteOrderById_ShouldThrowException_WhenOrderNotExists() {
-        when(orderRepository.existsById(2L)).thenReturn(false);
+        when(orderRepository.findById(2L)).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class,
-                () -> orderService.deleteOrderById(2L));
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> orderService.deleteOrderById(2L)
+        );
 
-        verify(orderRepository, never()).deleteById(anyLong());
+        assertEquals("Zamówienie o ID: 2 nie istnieje", exception.getMessage());
+
+        verify(orderRepository, times(1)).findById(2L);
+        verify(appointmentAvailabilityService, never()).releaseIfReserved(any(), any());
+        verify(orderRepository, never()).delete(any(Order.class));
     }
 }
