@@ -1,0 +1,106 @@
+package pl.barbershopproject.barbershop.appointment;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
+import pl.barbershopproject.barbershop.util.Status;
+
+import java.time.LocalDateTime;
+import java.util.Objects;
+
+@Service
+@RequiredArgsConstructor
+public class AppointmentAvailabilityService {
+
+    private final AppointmentSlotRepository appointmentSlotRepository;
+
+    /**
+     * Reserves an appointment slot for the given visit date.
+     * Throws AppointmentSlotTakenException if the slot is already taken.
+     */
+    @Transactional
+    public void reserveSlot(LocalDateTime visitDate) {
+        validateVisitDate(visitDate);
+
+        try {
+            appointmentSlotRepository.saveAndFlush(
+                    AppointmentSlot.builder()
+                            .visitDate(visitDate)
+                            .build()
+            );
+        } catch (DataIntegrityViolationException _) {
+            throw new AppointmentSlotTakenException(visitDate);
+        }
+    }
+
+    /**
+     * Updates the appointment slot reservation when the visit date or status changes.
+     * Reserves a new slot, releases the old one, or does nothing if no slot change is required.
+     */
+    @Transactional
+    public void updateSlotReservation(
+            LocalDateTime currentVisitDate,
+            Status currentStatus,
+            LocalDateTime targetVisitDate,
+            Status targetStatus
+    ) {
+        boolean currentReservesSlot = reservesSlot(currentStatus);
+        boolean targetReservesSlot = reservesSlot(targetStatus);
+
+        if (!currentReservesSlot && !targetReservesSlot) {
+            return;
+        }
+
+        if (!currentReservesSlot) {
+            reserveSlot(targetVisitDate);
+            return;
+        }
+
+        if (!targetReservesSlot) {
+            release(currentVisitDate);
+            return;
+        }
+
+        if (!Objects.equals(currentVisitDate, targetVisitDate)) {
+            reserveSlot(targetVisitDate);
+            release(currentVisitDate);
+        }
+    }
+
+    /**
+     * Releases the appointment slot if the given status represents an active reservation.
+     */
+    @Transactional
+    public void releaseIfReserved(LocalDateTime visitDate, Status status) {
+        if (reservesSlot(status)) {
+            release(visitDate);
+        }
+    }
+
+    /**
+     * Removes the appointment slot for the given visit date.
+     */
+    private void release(LocalDateTime visitDate) {
+        if (visitDate != null) {
+            appointmentSlotRepository.deleteByVisitDate(visitDate);
+        }
+    }
+
+    /**
+     * Checks whether the given appointment status should reserve a slot.
+     */
+    private boolean reservesSlot(Status status) {
+        return status != Status.ANULOWANE;
+    }
+
+    /**
+     * Validates that the visit date is present.
+     */
+    private void validateVisitDate(LocalDateTime visitDate) {
+        if (visitDate == null) {
+            throw new IllegalArgumentException("Termin wizyty jest wymagany");
+        }
+    }
+}

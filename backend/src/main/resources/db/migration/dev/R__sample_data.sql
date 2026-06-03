@@ -67,7 +67,7 @@ INSERT INTO `user_order` (`id_user`, `id_offer`, `order_date`, `visit_date`, `st
 (5, 4,  '2026-04-12 09:00:00', '2026-04-22 10:30:00', 'NOWE'),
 (6, 1,  '2026-04-13 15:45:00', '2026-04-23 16:00:00', 'NOWE'),
 (7, 8,  '2026-04-14 12:00:00', '2026-04-24 11:00:00', 'ANULOWANE'),
-(8, 5,  '2026-04-15 14:20:00', '2026-04-25 13:00:00', 'NOWE'),
+(8, 5,  '2026-04-15 14:20:00', '2026-04-25 13:30:00', 'NOWE'),
 (9, 6,  '2026-04-16 08:15:00', '2026-04-26 09:00:00', 'NOWE'),
 (10, 7, '2026-04-17 19:00:00', '2026-04-27 17:30:00', 'NOWE'),
 (11, 10, '2026-04-18 10:10:00', '2026-04-28 12:30:00', 'NOWE'),
@@ -96,3 +96,20 @@ INSERT INTO `guest_order` (`firstname`, `lastname`, `phonenumber`, `email`, `id_
 ('Penelope', 'Anderson', '555-0113', 'penn.a@example.com', 11, '2026-04-22 12:00:00', '2026-05-02 11:30:00', 'NOWE'),
 ('Chloe', 'Thomas', '555-0114', 'chloe.t@example.com', 14, '2026-04-23 14:30:00', '2026-05-03 12:30:00', 'NOWE'),
 ('Layla', 'Taylor', '555-0115', 'layla.t@example.com', 6, '2026-04-24 16:30:00', '2026-05-04 13:30:00', 'NOWE');
+
+
+DELETE FROM `appointment_slot`;
+
+INSERT INTO `appointment_slot` (`visit_date`)
+SELECT DISTINCT `visit_date`
+FROM (
+SELECT `visit_date`
+FROM `user_order`
+WHERE `status` <> 'ANULOWANE'
+
+UNION ALL
+
+SELECT `visit_date`
+FROM `guest_order`
+WHERE `status` <> 'ANULOWANE'
+) AS active_orders;

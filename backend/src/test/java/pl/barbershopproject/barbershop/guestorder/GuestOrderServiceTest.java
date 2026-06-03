@@ -7,6 +7,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
+import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
@@ -14,6 +16,7 @@ import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.util.Status;
 import pl.barbershopproject.barbershop.utils.TestEntities;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -24,7 +27,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class GuestOrderServiceTest {
 
-
     @Mock
     private GuestOrderRepository guestOrderRepository;
 
@@ -32,7 +34,11 @@ class GuestOrderServiceTest {
     private OfferRepository offerRepository;
 
     @Mock
+    private AppointmentAvailabilityService appointmentAvailabilityService;
+
+    @Mock
     private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private GuestOrderService guestOrderService;
 
@@ -41,40 +47,81 @@ class GuestOrderServiceTest {
 
     @BeforeEach
     void setUp() {
-
         offer = TestEntities.createOffer();
+
         guestOrder = TestEntities.createGuestOrder();
         guestOrder.setOffer(offer);
-
     }
 
     @Test
     void addGuestOrder_ShouldReturnGuestOrder() {
-
         GuestOrderCreationDTO dto = TestEntities.createGuestOrderCreationDTO();
 
         when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.of(offer));
-        when(guestOrderRepository.save(any(GuestOrder.class))).thenReturn(guestOrder);
+        when(guestOrderRepository.save(any(GuestOrder.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         GuestOrder guestOrderResult = guestOrderService.addGuestOrder(dto);
 
         assertNotNull(guestOrderResult);
-        assertEquals(guestOrder, guestOrderResult);
-        verify(guestOrderRepository, times(1)).save(any(GuestOrder.class));
-        verify(offerRepository, times(1)).findById(dto.idOffer());
-        verify(eventPublisher, times(1)).publishEvent(any(OrderCreatedEvent.class));
+        assertEquals(dto.visitDate(), guestOrderResult.getVisitDate());
+        assertEquals(offer, guestOrderResult.getOffer());
+        assertEquals(Status.NOWE, guestOrderResult.getStatus());
 
+        verify(offerRepository, times(1)).findById(dto.idOffer());
+        verify(appointmentAvailabilityService, times(1)).reserveSlot(dto.visitDate());
+        verify(guestOrderRepository, times(1)).save(any(GuestOrder.class));
+        verify(eventPublisher, times(1)).publishEvent(any(OrderCreatedEvent.class));
+    }
+
+    @Test
+    void addGuestOrder_ShouldThrowException_WhenOfferDoesNotExist() {
+        GuestOrderCreationDTO guestOrderCreationDTO = TestEntities.createGuestOrderCreationDTO();
+
+        when(offerRepository.findById(guestOrderCreationDTO.idOffer())).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> guestOrderService.addGuestOrder(guestOrderCreationDTO)
+        );
+
+        assertEquals("Oferta o ID: " + guestOrderCreationDTO.idOffer() + " nie istnieje", exception.getMessage());
+
+        verify(offerRepository, times(1)).findById(guestOrderCreationDTO.idOffer());
+        verify(appointmentAvailabilityService, never()).reserveSlot(any());
+        verify(guestOrderRepository, never()).save(any(GuestOrder.class));
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void addGuestOrder_ShouldThrowException_WhenAppointmentSlotIsTaken() {
+        GuestOrderCreationDTO dto = TestEntities.createGuestOrderCreationDTO();
+
+        when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.of(offer));
+        doThrow(new AppointmentSlotTakenException(dto.visitDate()))
+                .when(appointmentAvailabilityService)
+                .reserveSlot(dto.visitDate());
+
+        assertThrows(
+                AppointmentSlotTakenException.class,
+                () -> guestOrderService.addGuestOrder(dto)
+        );
+
+        verify(offerRepository, times(1)).findById(dto.idOffer());
+        verify(appointmentAvailabilityService, times(1)).reserveSlot(dto.visitDate());
+        verify(guestOrderRepository, never()).save(any(GuestOrder.class));
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
     void getAllGuestOrders_ShouldReturnListOfGuestOrders() {
-
         when(guestOrderRepository.findAll()).thenReturn(List.of(guestOrder));
 
         List<GuestOrder> guestOrderResult = guestOrderService.getAllGuestOrders();
 
-
+        assertEquals(1, guestOrderResult.size());
         assertEquals(guestOrder, guestOrderResult.getFirst());
+
         verify(guestOrderRepository, times(1)).findAll();
     }
 
@@ -85,6 +132,8 @@ class GuestOrderServiceTest {
         GuestOrder guestOrderResult = guestOrderService.getGuestOrder(1L);
 
         assertNotNull(guestOrderResult);
+        assertEquals(guestOrder, guestOrderResult);
+
         verify(guestOrderRepository, times(1)).findById(1L);
     }
 
@@ -92,30 +141,47 @@ class GuestOrderServiceTest {
     void getGuestOrder_ShouldThrowException_WhenOrderDoesNotExist() {
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class, () -> guestOrderService.getGuestOrder(1L));
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> guestOrderService.getGuestOrder(1L)
+        );
+
+        assertEquals("Nie znaleziono zamówienia o ID: 1", exception.getMessage());
 
         verify(guestOrderRepository, times(1)).findById(1L);
     }
 
     @Test
     void getGuestOrdersByStatus_ShouldReturnGuestOrders_WhenStatusExists() {
+        when(guestOrderRepository.findGuestOrdersByStatus(Status.NOWE))
+                .thenReturn(List.of(guestOrder));
 
-        when(guestOrderRepository.findGuestOrdersByStatus(Status.NOWE)).thenReturn(List.of(guestOrder));
-
-        List<GuestOrder> guestOrdersByStatusResult = guestOrderService.getGuestOrdersByStatus(Status.NOWE);
+        List<GuestOrder> guestOrdersByStatusResult =
+                guestOrderService.getGuestOrdersByStatus(Status.NOWE);
 
         assertNotNull(guestOrdersByStatusResult);
         assertEquals(1, guestOrdersByStatusResult.size());
+        assertEquals(guestOrder, guestOrdersByStatusResult.getFirst());
 
         verify(guestOrderRepository, times(1)).findGuestOrdersByStatus(Status.NOWE);
     }
 
     @Test
-    void GuestOrderService_UpdateGuestOrder_ShouldUpdateAndReturnGuestOrder_WhenOrderExists() {
+    void updateGuestOrder_ShouldUpdateAndReturnGuestOrder_WhenOrderExists() {
         GuestOrder updatedGuestOrder = TestEntities.createGuestOrder();
 
+        LocalDateTime currentVisitDate = guestOrder.getVisitDate();
+        Status currentStatus = guestOrder.getStatus();
+
+        LocalDateTime targetVisitDate = currentVisitDate.plusDays(1);
+        Status targetStatus = Status.NOWE;
+
+        updatedGuestOrder.setVisitDate(targetVisitDate);
+        updatedGuestOrder.setStatus(targetStatus);
+
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
-        when(guestOrderRepository.save(any(GuestOrder.class))).thenReturn(guestOrder);
+        when(guestOrderRepository.save(any(GuestOrder.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         GuestOrder guestOrderResult = guestOrderService.updateGuestOrder(updatedGuestOrder, 1L);
 
@@ -126,49 +192,97 @@ class GuestOrderServiceTest {
                 () -> assertEquals(updatedGuestOrder.getPhonenumber(), guestOrderResult.getPhonenumber()),
                 () -> assertEquals(updatedGuestOrder.getEmail(), guestOrderResult.getEmail()),
                 () -> assertEquals(updatedGuestOrder.getOffer(), guestOrderResult.getOffer()),
-                () -> assertEquals(updatedGuestOrder.getVisitDate(), guestOrderResult.getVisitDate()),
-                () -> assertEquals(updatedGuestOrder.getStatus(), guestOrderResult.getStatus())
+                () -> assertEquals(targetVisitDate, guestOrderResult.getVisitDate()),
+                () -> assertEquals(targetStatus, guestOrderResult.getStatus())
         );
 
         verify(guestOrderRepository, times(1)).findById(1L);
+        verify(appointmentAvailabilityService, times(1)).updateSlotReservation(
+                currentVisitDate,
+                currentStatus,
+                targetVisitDate,
+                targetStatus
+        );
         verify(guestOrderRepository, times(1)).save(guestOrder);
-
     }
 
     @Test
-    void GuestOrderService_UpdateGuestOrder_ShouldThrowException_WhenOrderDoesNotExist() {
+    void updateGuestOrder_ShouldUseCurrentStatus_WhenUpdatedStatusIsNull() {
+        GuestOrder updatedGuestOrder = TestEntities.createGuestOrder();
+
+        LocalDateTime currentVisitDate = guestOrder.getVisitDate();
+        Status currentStatus = guestOrder.getStatus();
+
+        LocalDateTime targetVisitDate = currentVisitDate.plusDays(1);
+
+        updatedGuestOrder.setVisitDate(targetVisitDate);
+        updatedGuestOrder.setStatus(null);
+
+        when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
+        when(guestOrderRepository.save(any(GuestOrder.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        GuestOrder guestOrderResult = guestOrderService.updateGuestOrder(updatedGuestOrder, 1L);
+
+        assertNotNull(guestOrderResult);
+        assertEquals(targetVisitDate, guestOrderResult.getVisitDate());
+        assertEquals(currentStatus, guestOrderResult.getStatus());
+
+        verify(guestOrderRepository, times(1)).findById(1L);
+        verify(appointmentAvailabilityService, times(1)).updateSlotReservation(
+                currentVisitDate,
+                currentStatus,
+                targetVisitDate,
+                currentStatus
+        );
+        verify(guestOrderRepository, times(1)).save(guestOrder);
+    }
+
+    @Test
+    void updateGuestOrder_ShouldThrowException_WhenOrderDoesNotExist() {
         GuestOrder updatedGuestOrder = TestEntities.createGuestOrder();
 
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
 
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> guestOrderService.updateGuestOrder(updatedGuestOrder, 1L));
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> guestOrderService.updateGuestOrder(updatedGuestOrder, 1L)
+        );
 
         assertEquals("Nie znaleziono zamówienia o ID: 1", exception.getMessage());
 
         verify(guestOrderRepository, times(1)).findById(1L);
+        verify(appointmentAvailabilityService, never()).updateSlotReservation(any(), any(), any(), any());
         verify(guestOrderRepository, never()).save(any(GuestOrder.class));
     }
 
     @Test
-    void GuestOrderService_deleteGuestOrderById_ShouldDeleteGuestOrder_WhenGuestOrderExists() {
-        when(guestOrderRepository.existsById(1L)).thenReturn(true);
+    void deleteGuestOrderById_ShouldDeleteGuestOrder_WhenGuestOrderExists() {
+        LocalDateTime visitDate = guestOrder.getVisitDate();
+        Status status = guestOrder.getStatus();
+
+        when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
 
         guestOrderService.deleteGuestOrderById(1L);
 
-        verify(guestOrderRepository, times(1)).existsById(1L);
-        verify(guestOrderRepository, times(1)).deleteById(1L);
+        verify(guestOrderRepository, times(1)).findById(1L);
+        verify(appointmentAvailabilityService, times(1)).releaseIfReserved(visitDate, status);
+        verify(guestOrderRepository, times(1)).delete(guestOrder);
     }
 
     @Test
-    void GuestOrderService_deleteGuestOrderById_ShouldThrowException_WhenGuestOrderDoesNotExist() {
-        when(guestOrderRepository.existsById(1L)).thenReturn(false);
+    void deleteGuestOrderById_ShouldThrowException_WhenGuestOrderDoesNotExist() {
+        when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
 
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> guestOrderService.deleteGuestOrderById(1L));
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> guestOrderService.deleteGuestOrderById(1L)
+        );
 
         assertEquals("Nie znaleziono zamówienia o ID: 1", exception.getMessage());
 
-        verify(guestOrderRepository, times(1)).existsById(1L);
-        verify(guestOrderRepository, never()).deleteById(1L);
+        verify(guestOrderRepository, times(1)).findById(1L);
+        verify(appointmentAvailabilityService, never()).releaseIfReserved(any(), any());
+        verify(guestOrderRepository, never()).delete(any(GuestOrder.class));
     }
-
 }

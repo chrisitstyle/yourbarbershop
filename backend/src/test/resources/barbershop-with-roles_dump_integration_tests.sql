@@ -82,6 +82,18 @@ CREATE TABLE IF NOT EXISTS `user_order` (
   CONSTRAINT `fk_customer_order_user` FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE IF NOT EXISTS `appointment_slot` (
+`id_appointment_slot` bigint NOT NULL AUTO_INCREMENT,
+`visit_date` datetime NOT NULL,
+PRIMARY KEY (`id_appointment_slot`),
+    UNIQUE KEY `uq_appointment_slot_visit_date` (`visit_date`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE UNIQUE INDEX `idx_user_email` ON `user` (`email`);
+CREATE UNIQUE INDEX `idx_token` ON `password_reset_token` (`token`);
+
+CREATE INDEX `idx_user_order_status` ON `user_order` (`status`);
+CREATE INDEX `idx_guest_order_status` ON `guest_order` (`status`);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
