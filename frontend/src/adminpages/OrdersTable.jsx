@@ -6,12 +6,14 @@ import { Alert } from "react-bootstrap";
 import { useAuth } from "../AuthContext";
 import useOrders from "../hooks/useOrders";
 import useTableData from "../hooks/useTableData";
+import useSortableData from "../hooks/useSortableData";
 import useDeleteModal from "../hooks/useDeleteModal";
 import { getNestedValue } from "../utils/tableHelpers";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import SortableTableHeader from "../components/SortableTableHeader";
 import { useTranslation } from "react-i18next";
 
 const orderFieldsHeaders = [
@@ -45,6 +47,7 @@ const OrderRow = memo(function OrderRow({
   isDeleting,
 }) {
   const { t } = useTranslation();
+
   return (
     <tr>
       {orderFields.map((field) => (
@@ -85,9 +88,21 @@ const OrdersTable = ({ onDeleteOrder }) => {
   const { t } = useTranslation();
 
   const filterOrders = (order, term) => {
-    const searchStr = ` ${order.idOrder} ${order.user?.firstname} ${order.user?.lastname} ${order.user?.username} ${order.offer?.kind} ${order.offer?.cost} ${order.orderDate} ${order.visitDate} ${order.status}`;
+    const searchStr = ` ${order.idOrder} ${order.user?.firstname || ""} ${
+      order.user?.lastname || ""
+    } ${order.user?.email || ""} ${order.offer?.kind || ""} ${
+      order.offer?.cost || ""
+    } ${order.orderDate} ${order.visitDate} ${order.status}`;
+
     return searchStr.toLowerCase().includes(term.toLowerCase());
   };
+
+  const safeOrders = Array.isArray(orders) ? orders : [];
+
+  const { sortedData, sortConfig, handleSort } = useSortableData(safeOrders, {
+    field: "visitDate",
+    direction: "desc",
+  });
 
   const {
     searchTerm,
@@ -96,7 +111,12 @@ const OrdersTable = ({ onDeleteOrder }) => {
     currentPage,
     totalPages,
     setCurrentPage,
-  } = useTableData(orders, filterOrders);
+  } = useTableData(sortedData, filterOrders);
+
+  const handleHeaderSort = (field) => {
+    handleSort(field);
+    setCurrentPage(1);
+  };
 
   const {
     show: showDeleteModal,
@@ -117,6 +137,7 @@ const OrdersTable = ({ onDeleteOrder }) => {
   };
 
   if (isLoading) return <LoadingSpinner text={t("admin.orders.loading")} />;
+
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
@@ -136,18 +157,17 @@ const OrdersTable = ({ onDeleteOrder }) => {
           className="table table-bordered table-hover shadow rounded mx-auto"
           style={{ maxWidth: "1100px" }}
         >
-          <thead className="table-dark">
-            <tr>
-              {orderFieldsHeaders.map((header) => (
-                <th key={header} className="text-center align-middle">
-                  {t(header)}
-                </th>
-              ))}
-              <th className="text-center align-middle">
-                {t("admin.common.action")}
-              </th>
-            </tr>
-          </thead>
+          <SortableTableHeader
+            headers={orderFieldsHeaders}
+            fields={orderFields}
+            sortConfig={sortConfig}
+            onSort={handleHeaderSort}
+          >
+            <th className="text-center align-middle">
+              {t("admin.common.action")}
+            </th>
+          </SortableTableHeader>
+
           <tbody>
             {currentData.length > 0 ? (
               currentData.map((order) => (

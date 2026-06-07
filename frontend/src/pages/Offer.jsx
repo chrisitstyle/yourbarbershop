@@ -1,4 +1,5 @@
 import useOffers from "../hooks/useOffers";
+import useSortableData from "../hooks/useSortableData";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { Alert } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -6,7 +7,14 @@ import { faScissors } from "@fortawesome/free-solid-svg-icons";
 import useTableData from "../hooks/useTableData";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import SortableTableHeader from "../components/SortableTableHeader";
 import { useTranslation } from "react-i18next";
+
+const offerHeaders = [
+  "offers.tableId",
+  "offers.tableKind",
+  "offers.tablePrice",
+];
 
 const fields = ["idOffer", "kind", "cost"];
 
@@ -19,6 +27,13 @@ const Offer = () => {
     return searchStr.toLowerCase().includes(term.toLowerCase());
   };
 
+  const safeOffers = Array.isArray(offers) ? offers : [];
+
+  const { sortedData, sortConfig, handleSort } = useSortableData(safeOffers, {
+    field: "idOffer",
+    direction: "asc",
+  });
+
   const {
     searchTerm,
     handleSearchChange,
@@ -26,7 +41,12 @@ const Offer = () => {
     currentPage,
     totalPages,
     setCurrentPage,
-  } = useTableData(offers, filterOffers);
+  } = useTableData(sortedData, filterOffers);
+
+  const handleHeaderSort = (field) => {
+    handleSort(field);
+    setCurrentPage(1);
+  };
 
   if (isLoading) return <LoadingSpinner text={t("offers.loading")} />;
 
@@ -38,7 +58,7 @@ const Offer = () => {
     );
   }
 
-  if (offers.length === 0) {
+  if (safeOffers.length === 0) {
     return (
       <div className="container my-5 py-4">
         <h1 className="display-6 text-center mb-4">
@@ -73,19 +93,13 @@ const Offer = () => {
           className="table table-bordered table-hover mx-auto shadow rounded"
           style={{ maxWidth: "700px" }}
         >
-          <thead className="table-dark">
-            <tr>
-              <th className="text-center align-middle">
-                {t("offers.tableId")}
-              </th>
-              <th className="text-center align-middle">
-                {t("offers.tableKind")}
-              </th>
-              <th className="text-center align-middle">
-                {t("offers.tablePrice")}
-              </th>
-            </tr>
-          </thead>
+          <SortableTableHeader
+            headers={offerHeaders}
+            fields={fields}
+            sortConfig={sortConfig}
+            onSort={handleHeaderSort}
+          />
+
           <tbody>
             {currentData.length > 0 ? (
               currentData.map((offer) => (

@@ -5,11 +5,13 @@ import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { Alert } from "react-bootstrap";
 import useOffers from "../hooks/useOffers";
 import useTableData from "../hooks/useTableData";
+import useSortableData from "../hooks/useSortableData";
 import useDeleteModal from "../hooks/useDeleteModal";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import SortableTableHeader from "../components/SortableTableHeader";
 import { useTranslation } from "react-i18next";
 
 const offerFieldsHeaders = [
@@ -17,10 +19,12 @@ const offerFieldsHeaders = [
   "admin.offers.service",
   "admin.offers.cost",
 ];
+
 const offerFields = ["idOffer", "kind", "cost"];
 
 const OfferRow = memo(function OfferRow({ offer, onEdit, onDelete }) {
   const { t } = useTranslation();
+
   return (
     <tr>
       {offerFields.map((field) => (
@@ -63,6 +67,13 @@ const OffersTable = ({ onDeleteOffer }) => {
       .includes(term.toLowerCase());
   };
 
+  const safeOffers = Array.isArray(offers) ? offers : [];
+
+  const { sortedData, sortConfig, handleSort } = useSortableData(safeOffers, {
+    field: "idOffer",
+    direction: "asc",
+  });
+
   const {
     searchTerm,
     handleSearchChange,
@@ -70,7 +81,12 @@ const OffersTable = ({ onDeleteOffer }) => {
     currentPage,
     totalPages,
     setCurrentPage,
-  } = useTableData(offers, filterOffers);
+  } = useTableData(sortedData, filterOffers);
+
+  const handleHeaderSort = (field) => {
+    handleSort(field);
+    setCurrentPage(1);
+  };
 
   const {
     show: showDeleteModal,
@@ -87,38 +103,36 @@ const OffersTable = ({ onDeleteOffer }) => {
   };
 
   if (isLoading) return <LoadingSpinner text={t("admin.offers.loading")} />;
+
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <div className="container my-5 py-4 text-center">
       <div>
         <h2 className="mb-4">{t("admin.offers.title")}</h2>
+
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
           placeholder={t("admin.offers.searchPlaceholder")}
         />
+
         <div className="table-responsive">
           <table
             className="table table-bordered table-hover shadow rounded mx-auto"
             style={{ maxWidth: "900px" }}
           >
-            <thead className="table-dark">
-              <tr>
-                {offerFieldsHeaders.map((header) => (
-                  <th
-                    key={header}
-                    scope="col"
-                    className="text-center align-middle"
-                  >
-                    {t(header)}
-                  </th>
-                ))}
-                <th scope="col" className="text-center align-middle">
-                  {t("admin.common.action")}
-                </th>
-              </tr>
-            </thead>
+            <SortableTableHeader
+              headers={offerFieldsHeaders}
+              fields={offerFields}
+              sortConfig={sortConfig}
+              onSort={handleHeaderSort}
+            >
+              <th scope="col" className="text-center align-middle">
+                {t("admin.common.action")}
+              </th>
+            </SortableTableHeader>
+
             <tbody>
               {currentData.length > 0 ? (
                 currentData.map((offer) => (

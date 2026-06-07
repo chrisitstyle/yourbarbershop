@@ -5,8 +5,10 @@ import { Alert } from "react-bootstrap";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import useUserDetails from "../hooks/useUserDetails";
 import useTableData from "../hooks/useTableData";
+import useSortableData from "../hooks/useSortableData";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import SortableTableHeader from "../components/SortableTableHeader";
 import { getNestedValue } from "../utils/tableHelpers";
 import { useTranslation } from "react-i18next";
 
@@ -59,6 +61,12 @@ const Profile = () => {
   };
 
   const safeOrders = userDetails?.userOrders || [];
+
+  const { sortedData, sortConfig, handleSort } = useSortableData(safeOrders, {
+    field: "visitDate",
+    direction: "desc",
+  });
+
   const {
     searchTerm,
     handleSearchChange,
@@ -66,7 +74,12 @@ const Profile = () => {
     currentPage,
     totalPages,
     setCurrentPage,
-  } = useTableData(safeOrders, filterVisits);
+  } = useTableData(sortedData, filterVisits);
+
+  const handleHeaderSort = (field) => {
+    handleSort(field);
+    setCurrentPage(1);
+  };
 
   if (isLoading) return <LoadingSpinner text={t("profile.loading")} />;
 
@@ -119,19 +132,13 @@ const Profile = () => {
             className="table table-bordered table-hover shadow rounded mx-auto"
             style={{ maxWidth: "900px" }}
           >
-            <thead className="table-dark">
-              <tr>
-                {visitHeaders.map((header) => (
-                  <th
-                    key={header}
-                    scope="col"
-                    className="text-center align-middle"
-                  >
-                    {t(header)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+            <SortableTableHeader
+              headers={visitHeaders}
+              fields={visitFields}
+              sortConfig={sortConfig}
+              onSort={handleHeaderSort}
+            />
+
             <tbody>
               {currentData.length > 0 ? (
                 currentData.map((order) => (

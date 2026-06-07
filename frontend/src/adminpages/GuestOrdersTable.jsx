@@ -5,6 +5,7 @@ import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../AuthContext";
 import useGuestOrders from "../hooks/useGuestOrders";
 import useTableData from "../hooks/useTableData";
+import useSortableData from "../hooks/useSortableData";
 import useDeleteModal from "../hooks/useDeleteModal";
 import { getNestedValue } from "../utils/tableHelpers";
 import { Alert } from "react-bootstrap";
@@ -12,6 +13,7 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import SortableTableHeader from "../components/SortableTableHeader";
 import { useTranslation } from "react-i18next";
 
 const guestOrderFieldsHeaders = [
@@ -47,6 +49,7 @@ const GuestOrderRow = memo(function GuestOrderRow({
   isDeleting,
 }) {
   const { t } = useTranslation();
+
   return (
     <tr>
       {guestOrderFields.map((field) => (
@@ -94,8 +97,19 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
     } ${order.email} ${order.offer?.kind || ""} ${order.offer?.cost || ""} ${
       order.phonenumber || ""
     } ${order.orderDate} ${order.visitDate} ${order.status}`;
+
     return searchStr.toLowerCase().includes(term.toLowerCase());
   };
+
+  const safeGuestOrders = Array.isArray(guestOrders) ? guestOrders : [];
+
+  const { sortedData, sortConfig, handleSort } = useSortableData(
+    safeGuestOrders,
+    {
+      field: "visitDate",
+      direction: "desc",
+    },
+  );
 
   const {
     searchTerm,
@@ -104,7 +118,12 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
     currentPage,
     totalPages,
     setCurrentPage,
-  } = useTableData(guestOrders, filterGuestOrders);
+  } = useTableData(sortedData, filterGuestOrders);
+
+  const handleHeaderSort = (field) => {
+    handleSort(field);
+    setCurrentPage(1);
+  };
 
   const {
     show: showDeleteModal,
@@ -123,6 +142,7 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
 
   if (isLoading)
     return <LoadingSpinner text={t("admin.guestOrders.loading")} />;
+
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
@@ -140,18 +160,17 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
           className="table table-bordered table-hover shadow rounded mx-auto"
           style={{ maxWidth: "1200px" }}
         >
-          <thead className="table-dark">
-            <tr>
-              {guestOrderFieldsHeaders.map((header) => (
-                <th key={header} className="text-center align-middle">
-                  {t(header)}
-                </th>
-              ))}
-              <th className="text-center align-middle">
-                {t("admin.common.action")}
-              </th>
-            </tr>
-          </thead>
+          <SortableTableHeader
+            headers={guestOrderFieldsHeaders}
+            fields={guestOrderFields}
+            sortConfig={sortConfig}
+            onSort={handleHeaderSort}
+          >
+            <th className="text-center align-middle">
+              {t("admin.common.action")}
+            </th>
+          </SortableTableHeader>
+
           <tbody>
             {currentData.length > 0 ? (
               currentData.map((guestOrder) => (

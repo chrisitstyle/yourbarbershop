@@ -11,12 +11,14 @@ import { sendCustomEmail } from "../api/emailService";
 import { useAuth } from "../AuthContext";
 import useUsers from "../hooks/useUsers";
 import useTableData from "../hooks/useTableData";
+import useSortableData from "../hooks/useSortableData";
 import useDeleteModal from "../hooks/useDeleteModal";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import EmailMessageModal from "../components/EmailMessageModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
+import SortableTableHeader from "../components/SortableTableHeader";
 import { useTranslation } from "react-i18next";
 
 const userFieldsHeaders = [
@@ -26,10 +28,12 @@ const userFieldsHeaders = [
   "admin.users.email",
   "admin.users.role",
 ];
+
 const userFields = ["idUser", "firstname", "lastname", "email", "role"];
 
 const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
   const { t } = useTranslation();
+
   return (
     <tr>
       {userFields.map((field) => (
@@ -69,8 +73,8 @@ const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
 
 const UsersTable = ({ onDeleteUser }) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { users, isLoading, error, refetch } = useUsers(user?.token);
+  const { user: authUser } = useAuth();
+  const { users, isLoading, error, refetch } = useUsers(authUser?.token);
   const { t } = useTranslation();
 
   // email state
@@ -86,6 +90,12 @@ const UsersTable = ({ onDeleteUser }) => {
   };
 
   const safeUsers = Array.isArray(users) ? users : [];
+
+  const { sortedData, sortConfig, handleSort } = useSortableData(safeUsers, {
+    field: "idUser",
+    direction: "asc",
+  });
+
   const {
     searchTerm,
     handleSearchChange,
@@ -93,7 +103,12 @@ const UsersTable = ({ onDeleteUser }) => {
     currentPage,
     totalPages,
     setCurrentPage,
-  } = useTableData(safeUsers, filterUsers);
+  } = useTableData(sortedData, filterUsers);
+
+  const handleHeaderSort = (field) => {
+    handleSort(field);
+    setCurrentPage(1);
+  };
 
   const {
     show: showDeleteModal,
@@ -124,12 +139,14 @@ const UsersTable = ({ onDeleteUser }) => {
   };
 
   if (isLoading) return <LoadingSpinner text={t("admin.users.loading")} />;
+
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
     <>
       <div className="container text-center py-4">
         <h2>{t("admin.users.title")}</h2>
+
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
@@ -141,18 +158,17 @@ const UsersTable = ({ onDeleteUser }) => {
             className="table border shadow table-hover mx-auto"
             style={{ maxWidth: "900px" }}
           >
-            <thead className="table-dark">
-              <tr>
-                {userFieldsHeaders.map((header) => (
-                  <th key={header} className="text-center align-middle">
-                    {t(header)}
-                  </th>
-                ))}
-                <th className="text-center align-middle">
-                  {t("admin.common.action")}
-                </th>
-              </tr>
-            </thead>
+            <SortableTableHeader
+              headers={userFieldsHeaders}
+              fields={userFields}
+              sortConfig={sortConfig}
+              onSort={handleHeaderSort}
+            >
+              <th className="text-center align-middle">
+                {t("admin.common.action")}
+              </th>
+            </SortableTableHeader>
+
             <tbody>
               {currentData.length > 0 ? (
                 currentData.map((user) => (
