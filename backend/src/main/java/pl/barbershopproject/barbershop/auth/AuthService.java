@@ -19,7 +19,6 @@ import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
 
 import java.time.Instant;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -68,19 +67,27 @@ public class AuthService {
     }
 
     public void forgotPassword(ForgotPasswordRequest request) {
-
         captchaService.verify(request.captchaToken());
 
-        User user = userRepository.findByEmail(request.email()).orElseThrow(() -> new NoSuchElementException("User not found"));
-        String token = UUID.randomUUID().toString();
-        PasswordResetToken passwordResetToken = new PasswordResetToken();
-        passwordResetToken.setToken(token);
-        passwordResetToken.setUser(user);
-        passwordResetToken.setExpiryDate(Instant.now().plusSeconds(1800)); // 30 minutes expiry
-        passwordResetTokenRepository.save(passwordResetToken);
+        userRepository.findByEmail(request.email()).ifPresent(user -> {
+            String token = UUID.randomUUID().toString();
 
-        String resetLink = "http://localhost:3000/resetpassword?token=" + token;
-        emailSenderService.sendEmail(request.email(), "Reset your password link", resetLink + " \n\n Link expire after 30 minutes");
+            PasswordResetToken passwordResetToken = new PasswordResetToken();
+
+            passwordResetToken.setToken(token);
+            passwordResetToken.setUser(user);
+            passwordResetToken.setExpiryDate(Instant.now().plusSeconds(1800)); // 30 minutes expiry
+
+            passwordResetTokenRepository.save(passwordResetToken);
+
+            String resetLink = "http://localhost:3000/resetpassword?token=" + token;
+
+            emailSenderService.sendEmail(
+                    user.getEmail(),
+                    "Reset your password link",
+                    resetLink + " \n\n Link expire after 30 minutes"
+            );
+        });
     }
 
     public void resetPassword(String token, String newPassword) {
