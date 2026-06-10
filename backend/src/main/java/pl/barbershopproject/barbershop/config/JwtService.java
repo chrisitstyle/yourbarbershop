@@ -23,6 +23,9 @@ public class JwtService {
     @Value("${JWT_SECRET_KEY}")
     private String secretKey;
 
+    @Value("${JWT_EXPIRATION_HOURS:8}")
+    private long expirationHours;
+
     private SecretKey getSignKey() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
     }
@@ -40,7 +43,7 @@ public class JwtService {
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         final Instant now = Instant.now();
-        final Instant expiry = now.plus(8, ChronoUnit.HOURS);
+        final Instant expiry = now.plus(expirationHours, ChronoUnit.HOURS);
 
         return Jwts.builder()
                 .claims(extraClaims)

@@ -154,6 +154,7 @@ To enable bot protection, you need to generate API keys from Google:
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 JWT_SECRET_KEY=your-secret-key
+JWT_EXPIRATION_HOURS=token-expiration-time-in-hours
 MYSQL_USERNAME=yor-mysql-username
 MYSQL_PASSWORD=your-mysql-password
 
@@ -171,6 +172,8 @@ VALKEY_PORT=6379 (default)
 # Google reCAPTCHA Secret Key
 GOOGLE_RECAPTCHA_SECRET=your-recaptcha-secret-key
 ```
+
+> **Note**: `JWT_EXPIRATION_HOURS` is optional. If it is not set, the backend uses the default value from `JwtService` - 8 hours.
 
 > **Important**: For `MAIL_PASSWORD`, you need to generate a Google App Password at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords). Regular Gmail passwords won't work for security reasons.
 
@@ -252,6 +255,7 @@ SPRING_DATASOURCE_URL=jdbc:mysql://database:3306/barbershop-with-roles
 SPRING_DATASOURCE_USERNAME=db-username
 SPRING_DATASOURCE_PASSWORD=db-password
 JWT_SECRET_KEY=generate-your-secret-key
+JWT_EXPIRATION_HOURS=token-expiration-time-in-hours
 GOOGLE_RECAPTCHA_SECRET=your-recaptcha-secret-key-backend
 
 # Database
