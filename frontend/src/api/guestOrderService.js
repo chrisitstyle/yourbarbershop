@@ -1,12 +1,12 @@
-import axios from "axios";
 import { API_BASE_URL } from "./config.js";
+import { apiRequest, getAuthorizationHeaders } from "./httpClient.js";
 
 export const createGuestOrder = async (guestOrderCreationData) => {
   try {
-    const response = await axios.post(
-      `${API_BASE_URL}/guestorders`,
-      guestOrderCreationData,
-    );
+    const response = await apiRequest(`${API_BASE_URL}/guestorders`, {
+      method: "POST",
+      data: guestOrderCreationData,
+    });
 
     return response.data;
   } catch (error) {
@@ -17,13 +17,12 @@ export const createGuestOrder = async (guestOrderCreationData) => {
 
 export const getGuestOrders = async (userToken) => {
   try {
-    const result = await axios.get(`${API_BASE_URL}/guestorders`, {
-      withCredentials: true,
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
+    const response = await apiRequest(`${API_BASE_URL}/guestorders`, {
+      credentials: "include",
+      headers: getAuthorizationHeaders(userToken),
     });
-    return result.data;
+
+    return response.data;
   } catch (error) {
     console.error("Error loading guest orders:", error);
     throw error;
@@ -32,14 +31,13 @@ export const getGuestOrders = async (userToken) => {
 
 export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
   try {
-    const response = await axios.put(
+    const response = await apiRequest(
       `${API_BASE_URL}/guestorders/${idGuestOrder}`,
-      data,
       {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
+        method: "PUT",
+        credentials: "include",
+        headers: getAuthorizationHeaders(userToken),
+        data,
       },
     );
 
@@ -52,14 +50,13 @@ export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
 
 export const deleteGuestOrder = async (idGuestOrder, userToken) => {
   try {
-    await axios.delete(`${API_BASE_URL}/guestorders/${idGuestOrder}`, {
-      withCredentials: true,
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
+    await apiRequest(`${API_BASE_URL}/guestorders/${idGuestOrder}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: getAuthorizationHeaders(userToken),
     });
   } catch (error) {
-    console.error("Error deleting guestorder:", error);
+    console.error("Error deleting guest order:", error);
     throw error;
   }
 };

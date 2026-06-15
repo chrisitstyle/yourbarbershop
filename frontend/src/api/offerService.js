@@ -1,13 +1,13 @@
-import axios from "axios";
 import { API_BASE_URL } from "./config.js";
+import { apiRequest, getAuthorizationHeaders } from "./httpClient.js";
 
 export const addOffer = async (newOffer, userToken) => {
   try {
-    await axios.post(`${API_BASE_URL}/offers`, newOffer, {
-      withCredentials: true,
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
+    await apiRequest(`${API_BASE_URL}/offers`, {
+      method: "POST",
+      credentials: "include",
+      headers: getAuthorizationHeaders(userToken),
+      data: newOffer,
     });
   } catch (error) {
     console.error("Error adding offer:", error);
@@ -17,39 +17,32 @@ export const addOffer = async (newOffer, userToken) => {
 
 export const getOffers = async () => {
   try {
-    const result = await axios.get(`${API_BASE_URL}/offers`);
-    return result.data;
+    const response = await apiRequest(`${API_BASE_URL}/offers`);
+
+    return response.data;
   } catch (error) {
     console.error("Error loading offers:", error);
     throw error;
   }
 };
 
-export const updateOffer = async (offerId, newData, token) => {
-  try {
-    const response = await axios.put(
-      `${API_BASE_URL}/offers/${offerId}`,
-      newData,
-      {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+export const updateOffer = async (offerId, newData, userToken) => {
+  const response = await apiRequest(`${API_BASE_URL}/offers/${offerId}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: getAuthorizationHeaders(userToken),
+    data: newData,
+  });
 
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  return response.data;
 };
+
 export const deleteOffer = async (idOffer, userToken) => {
   try {
-    await axios.delete(`${API_BASE_URL}/offers/${idOffer}`, {
-      withCredentials: true,
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
+    await apiRequest(`${API_BASE_URL}/offers/${idOffer}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: getAuthorizationHeaders(userToken),
     });
   } catch (error) {
     console.error("Error deleting offer:", error);

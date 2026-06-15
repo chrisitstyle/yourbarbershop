@@ -1,9 +1,12 @@
-import axios from "axios";
 import { API_BASE_URL } from "./config.js";
+import { apiRequest, getAuthorizationHeaders } from "./httpClient.js";
 
 export const addUser = async (newUser) => {
   try {
-    await axios.post(`${API_BASE_URL}/register`, newUser);
+    await apiRequest(`${API_BASE_URL}/register`, {
+      method: "POST",
+      data: newUser,
+    });
   } catch (error) {
     console.error("Error adding user:", error);
     throw error;
@@ -12,45 +15,35 @@ export const addUser = async (newUser) => {
 
 export const getUsers = async (userToken) => {
   try {
-    const result = await axios.get(`${API_BASE_URL}/users`, {
-      withCredentials: true,
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
+    const response = await apiRequest(`${API_BASE_URL}/users`, {
+      credentials: "include",
+      headers: getAuthorizationHeaders(userToken),
     });
-    return result.data;
+
+    return response.data;
   } catch (error) {
-    console.error("Error loading users: ", error);
+    console.error("Error loading users:", error);
     throw error;
   }
 };
 
-export const updateUser = async (userId, newData, token) => {
-  try {
-    const response = await axios.put(
-      `${API_BASE_URL}/users/${userId}`,
-      newData,
-      {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+export const updateUser = async (userId, newData, userToken) => {
+  const response = await apiRequest(`${API_BASE_URL}/users/${userId}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: getAuthorizationHeaders(userToken),
+    data: newData,
+  });
 
-    return response;
-  } catch (error) {
-    throw error;
-  }
+  return response.data;
 };
 
 export const deleteUser = async (idUser, userToken) => {
   try {
-    await axios.delete(`${API_BASE_URL}/users/${idUser}`, {
-      withCredentials: true,
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
+    await apiRequest(`${API_BASE_URL}/users/${idUser}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: getAuthorizationHeaders(userToken),
     });
   } catch (error) {
     console.error("Error deleting user:", error);
@@ -60,23 +53,32 @@ export const deleteUser = async (idUser, userToken) => {
 
 export const userForgotPasswordRequest = async (email, captchaToken) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/forgot-password`, {
-      email,
-      captchaToken,
+    const response = await apiRequest(`${API_BASE_URL}/forgot-password`, {
+      method: "POST",
+      data: {
+        email,
+        captchaToken,
+      },
     });
+
     return response.data;
   } catch (error) {
     console.error("Error sending forgot password request:", error);
+
     throw error;
   }
 };
 
 export const userResetPasswordRequest = async (token, newPassword) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/reset-password`, {
-      token,
-      newPassword,
+    const response = await apiRequest(`${API_BASE_URL}/reset-password`, {
+      method: "POST",
+      data: {
+        token,
+        newPassword,
+      },
     });
+
     return response.data;
   } catch (error) {
     console.error("Error resetting password:", error);
