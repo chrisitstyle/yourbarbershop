@@ -53,6 +53,9 @@
     ]
   },
   "devDependencies": {
+    "@testing-library/dom": "^10",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.2",
     "vite": "^7.3.1"
   }
