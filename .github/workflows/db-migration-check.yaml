@@ -31,8 +31,81 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate-migrations:
-    name: Validate database migrations
+  validate-pr-migrations:
+    name: Validate PR migrations against main
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: barbershop
+          MYSQL_USER: user
+          MYSQL_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: rootpassword
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -prootpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+          --health-start-period=20s
+
+    steps:
+      # Checkout the exact commit from the target branch, usually main
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+
+      # Checkout the exact commit submitted in the pull request
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr
+          persist-credentials: false
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: "25"
+          distribution: "temurin"
+          cache: "gradle"
+
+      - name: Grant execute permissions for Gradle wrappers
+        run: |
+          chmod +x base/backend/gradlew
+          chmod +x pr/backend/gradlew
+
+      # Create the database schema exactly as it exists on main
+      - name: Apply migrations from base branch
+        working-directory: ./base/backend
+        run: |
+          ./gradlew flywayMigrate --no-daemon \
+            -Dflyway.url=jdbc:mysql://127.0.0.1:3306/barbershop \
+            -Dflyway.user=user \
+            -Dflyway.password=password \
+            -Dflyway.validateOnMigrate=true
+
+      # Validate the existing migration history and apply only new PR migrations
+      - name: Apply migrations from pull request
+        working-directory: ./pr/backend
+        run: |
+          ./gradlew flywayMigrate --no-daemon \
+            -Dflyway.url=jdbc:mysql://127.0.0.1:3306/barbershop \
+            -Dflyway.user=user \
+            -Dflyway.password=password \
+            -Dflyway.validateOnMigrate=true
+
+  validate-current-migrations:
+    name: Validate current migrations on clean database
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -50,11 +123,14 @@ jobs:
           --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -prootpassword"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=10
+          --health-start-period=20s
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -73,4 +149,5 @@ jobs:
           ./gradlew flywayMigrate --no-daemon \
             -Dflyway.url=jdbc:mysql://127.0.0.1:3306/barbershop \
             -Dflyway.user=user \
-            -Dflyway.password=password
+            -Dflyway.password=password \
+            -Dflyway.validateOnMigrate=true
