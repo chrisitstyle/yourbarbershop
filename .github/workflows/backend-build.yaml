@@ -1,7 +1,7 @@
 name: Backend Build
 
-# The workflow will run on pushes and pull requests to the main branch,
-# but only when changes are made to the backend code or the Dockerfile
+# Run on pushes and pull requests to main,
+# but only when backend-related files change
 on:
   push:
     branches: ["main"]
@@ -17,11 +17,14 @@ on:
       - "DockerFileBackend"
       - ".github/workflows/backend-build.yaml"
 
+# Grant the workflow only the permissions it needs
 permissions:
   contents: read
 
+# Cancel an older running build when a newer commit
+# appears on the same branch or pull request
 concurrency:
-  group: backend-build-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -46,16 +49,16 @@ jobs:
           cp .env_example .env
           cp backend/.env_example backend/.env
 
-      # Grant execute permissions to the Gradle wrapper
+      # Grant execute permission to the Gradle wrapper
       - name: Grant execute permission for Gradle wrapper
         working-directory: ./backend
         run: chmod +x gradlew
 
-      # Compile the backend and run tests and other verification tasks
+      # Compile the backend and run all verification tasks
       - name: Run backend checks
         working-directory: ./backend
         run: ./gradlew check --no-daemon
 
-      # Build the Docker image only when backend checks pass
+      # Build the image only when all checks pass
       - name: Build Docker image
         run: docker build -f DockerFileBackend -t barbershop-backend:${{ github.sha }} .
