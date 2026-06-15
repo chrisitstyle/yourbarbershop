@@ -1,18 +1,14 @@
-import axios from "axios";
 import { API_BASE_URL } from "./config.js";
+import { apiRequest, getAuthorizationHeaders } from "./httpClient.js";
 
 export const createOrder = async (orderCreationData, userToken) => {
   try {
-    const response = await axios.post(
-      `${API_BASE_URL}/orders`,
-      orderCreationData,
-      {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
-      },
-    );
+    const response = await apiRequest(`${API_BASE_URL}/orders`, {
+      method: "POST",
+      credentials: "include",
+      headers: getAuthorizationHeaders(userToken),
+      data: orderCreationData,
+    });
 
     return response.data;
   } catch (error) {
@@ -23,45 +19,35 @@ export const createOrder = async (orderCreationData, userToken) => {
 
 export const getOrders = async (userToken) => {
   try {
-    const result = await axios.get(`${API_BASE_URL}/orders`, {
-      withCredentials: true,
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
+    const response = await apiRequest(`${API_BASE_URL}/orders`, {
+      credentials: "include",
+      headers: getAuthorizationHeaders(userToken),
     });
-    return result.data;
+
+    return response.data;
   } catch (error) {
     console.error("Error loading orders:", error);
     throw error;
   }
 };
 
-export const updateOrder = async (orderId, newData, token) => {
-  try {
-    const response = await axios.put(
-      `${API_BASE_URL}/orders/${orderId}`,
-      newData,
-      {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+export const updateOrder = async (orderId, newData, userToken) => {
+  const response = await apiRequest(`${API_BASE_URL}/orders/${orderId}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: getAuthorizationHeaders(userToken),
+    data: newData,
+  });
 
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  return response.data;
 };
 
 export const deleteOrder = async (idOrder, userToken) => {
   try {
-    await axios.delete(`${API_BASE_URL}/orders/${idOrder}`, {
-      withCredentials: true,
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
+    await apiRequest(`${API_BASE_URL}/orders/${idOrder}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: getAuthorizationHeaders(userToken),
     });
   } catch (error) {
     console.error("Error deleting order:", error);
@@ -70,10 +56,10 @@ export const deleteOrder = async (idOrder, userToken) => {
 };
 
 const orderService = {
+  createOrder,
   getOrders,
   updateOrder,
   deleteOrder,
-  createOrder,
 };
 
 export default orderService;

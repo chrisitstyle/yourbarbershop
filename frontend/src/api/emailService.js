@@ -1,15 +1,19 @@
-import axios from "axios";
-import { API_BASE_URL } from "../api/config.js";
+import { API_BASE_URL } from "./config.js";
+import { apiRequest } from "./httpClient.js";
 
 export const sendCustomEmail = async (to, subject, message) => {
   try {
-    await axios.post(`${API_BASE_URL}/send-email`, {
-      to,
-      subject,
-      message,
+    await apiRequest(`${API_BASE_URL}/send-email`, {
+      method: "POST",
+      data: {
+        to,
+        subject,
+        message,
+      },
     });
   } catch (error) {
     console.error("Błąd wysyłania e-maila:", error);
+    throw error;
   }
 };
 
