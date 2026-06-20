@@ -35,16 +35,6 @@ public class EmailLoginCodeService {
     private static final String ATTEMPTS_KEY_PREFIX = "auth:email-login-attempts:";
     private static final String REQUEST_COOLDOWN_KEY_PREFIX = "auth:email-login-request-cooldown:";
 
-    private static final String LOGIN_CODE_EMAIL_SUBJECT =
-            "YourBarbershop one-time login code";
-
-    private static final String LOGIN_CODE_EMAIL_BODY_TEMPLATE = """
-            Your login code: %s
-            
-            The code expires in 10 minutes.
-            If you did not request this code, you can ignore this email.
-            """;
-
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
@@ -92,10 +82,13 @@ public class EmailLoginCodeService {
 
         stringRedisTemplate.delete(buildAttemptsKey(email));
 
-        emailSenderService.sendEmail(
+        int expirationMinutes = (int) CODE_TTL.toMinutes();
+
+        emailSenderService.sendHtmlEmail(
                 user.getEmail(),
-                LOGIN_CODE_EMAIL_SUBJECT,
-                LOGIN_CODE_EMAIL_BODY_TEMPLATE.formatted(code)
+                LoginCodeEmailTemplate.subject(),
+                LoginCodeEmailTemplate.plainText(code, expirationMinutes),
+                LoginCodeEmailTemplate.html(code, expirationMinutes)
         );
     }
 
@@ -182,6 +175,7 @@ public class EmailLoginCodeService {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(email.getBytes(StandardCharsets.UTF_8));
+
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException ex) {
             throw new IllegalStateException("SHA-256 algorithm is not available", ex);
