@@ -3,11 +3,13 @@ package pl.barbershopproject.barbershop.auth;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.barbershopproject.barbershop.auth.captcha.CaptchaService;
+import pl.barbershopproject.barbershop.auth.event.UserRegisteredEvent;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.email.EmailSenderService;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
@@ -31,6 +33,7 @@ public class AuthService {
     private final EmailSenderService emailSenderService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final CaptchaService captchaService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AuthResponse register(RegisterRequest request) {
 
@@ -47,6 +50,10 @@ public class AuthService {
                 .role(Role.USER)
                 .build();
         userRepository.save(user);
+
+        eventPublisher.publishEvent(
+                new UserRegisteredEvent(user.getEmail(), user.getFirstname())
+        );
         var token = jwtService.generateToken(user);
 
         // return id, role and user token
