@@ -42,6 +42,11 @@ public class GlobalExceptionHandler {
         return createErrorResponse(ex.getMessage(), HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
+    @ExceptionHandler(InvalidEmailLoginCodeException.class)
+    public ResponseEntity<ErrorDTO> handleInvalidEmailLoginCode(InvalidEmailLoginCodeException ex) {
+        return createErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler({AccessDeniedException.class, SelfDeletionException.class})
     public ResponseEntity<ErrorDTO> handleForbidden(RuntimeException ex) {
         return createErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN);

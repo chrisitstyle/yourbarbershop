@@ -11,6 +11,7 @@ The application provides comprehensive management tools:
 - **Service Catalog** - Create and manage service offerings with pricing
 - **Order Processing** - Track service orders and customer history
 - **Secure Authentication** - JWT-based authorization with password hashing
+- **Passwordless Email OTP Login** - Users can sign in with a short-lived one-time code delivered by email
 - **Bot Protection** - Integrated Google reCAPTCHA v2 to secure registration and password recovery flows.
 - **Role-Based Access Control** - Two roles: administrators and users (customers)
 - **Photo Gallery** - Showcase barber portfolio and work examples stored in Supabase
@@ -25,6 +26,7 @@ The application provides comprehensive management tools:
 - [x] Password reset functionality
 - [x] Email notifications system
 - [x] reCAPTCHA Bot Protection
+- [x] Passwordless email OTP login
 - [ ] Customizable user avatars
 - [ ] SMS appointment reminders
 - [ ] Analytics dashboard
@@ -36,7 +38,7 @@ The application provides comprehensive management tools:
 - **Java 25** - LTS version
 - **Spring Boot 4.0.0**
 - **Flyway** - Database migrations and schema versioning
-- **Valkey (Redis)** - High-performance data structure store used for efficient caching
+- **Valkey (Redis)** - High-performance data structure store used for efficient caching and short-lived email login OTP data
 - **OAuth2 & JWT** - Secure authentication with external providers and JSON Web Tokens
 - **Google reCAPTCHA API** - Server-side validation of user interactions
 - **Gradle** - Build automation tool
@@ -175,6 +177,8 @@ GOOGLE_RECAPTCHA_SECRET=your-recaptcha-secret-key
 
 > **Note**: `JWT_EXPIRATION_HOURS` is optional. If it is not set, the backend uses the default value from `JwtService` - 8 hours.
 
+> **Note**: Passwordless email OTP login uses the existing mail configuration (`MAIL_USERNAME`, `MAIL_PASSWORD`) and Valkey/Redis configuration (`VALKEY_HOST`, `VALKEY_PORT`). No additional environment variables are required for this feature.
+
 > **Important**: For `MAIL_PASSWORD`, you need to generate a Google App Password at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords). Regular Gmail passwords won't work for security reasons.
 
 **Frontend configuration** - Create `frontend/.env` file:
@@ -201,6 +205,31 @@ spring.mail.password=${MAIL_PASSWORD}
 ```
 
 > **Security Note**: Never commit `.env` files to version control. Make sure they are included in `.gitignore`.
+
+### Authentication features
+
+YourBarbershop supports multiple authentication flows:
+
+- **Email and password login** - traditional login with a hashed password and JWT response.
+- **OAuth2 login** - social login through Google and GitHub.
+- **Passwordless email OTP login** - users can request a one-time login code delivered to their email address.
+
+The email OTP login flow uses two public endpoints:
+
+```http
+POST /login/email-code/request
+POST /login/email-code/verify
+```
+
+How it works:
+
+1. The user enters their email address on the login page and requests a code.
+2. The backend generates a 6-digit one-time code and sends it by email.
+3. Only a hashed version of the code is stored in Valkey/Redis with a short TTL.
+4. The user enters the code in the login form.
+5. After successful verification, the backend deletes the code and returns the same JWT-based `AuthResponse` as standard login.
+
+The OTP flow also includes request cooldowns and verification attempt limits to reduce abuse. The request endpoint returns a generic success message so it does not reveal whether an email address exists in the database.
 
 **7. Run the application**
 
@@ -279,6 +308,8 @@ VALKEY_HOST=valkey # (default for docker is valkey, default for springboot is lo
 VALKEY_PORT=6379 # (default both)
 ```
 
+> **Note**: Passwordless email OTP login uses the configured mail provider to send one-time login codes and Valkey/Redis to store short-lived hashed codes, cooldowns, and attempt counters.
+
 Then run:
 
 ```bash
@@ -341,6 +372,8 @@ The application uses MySQL with the following main tables:
 - **user_order** - Orders placed by registered users
 - **guest_order** - Orders placed by guest customers
 - **password_reset_token** - Password recovery tokens
+
+Email login OTP codes are stored in Valkey/Redis with TTL and are not persisted in MySQL.
 
 Portfolio images are stored in Supabase cloud storage.
 
