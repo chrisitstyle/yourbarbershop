@@ -9,9 +9,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.barbershopproject.barbershop.auth.captcha.CaptchaService;
+import pl.barbershopproject.barbershop.auth.event.PasswordResetRequestedEvent;
 import pl.barbershopproject.barbershop.auth.event.UserRegisteredEvent;
 import pl.barbershopproject.barbershop.config.JwtService;
-import pl.barbershopproject.barbershop.email.EmailSenderService;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.InvalidPasswordTokenException;
 import pl.barbershopproject.barbershop.passwordreset.PasswordResetToken;
@@ -26,14 +26,15 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    private static final int PASSWORD_RESET_EXPIRATION_MINUTES = 30;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final EmailSenderService emailSenderService;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final CaptchaService captchaService;
     private final ApplicationEventPublisher eventPublisher;
+
 
     public AuthResponse register(RegisterRequest request) {
 
@@ -83,16 +84,21 @@ public class AuthService {
 
             passwordResetToken.setToken(token);
             passwordResetToken.setUser(user);
-            passwordResetToken.setExpiryDate(Instant.now().plusSeconds(1800)); // 30 minutes expiry
+            passwordResetToken.setExpiryDate(
+                    Instant.now().plusSeconds(PASSWORD_RESET_EXPIRATION_MINUTES * 60L)
+            );
 
             passwordResetTokenRepository.save(passwordResetToken);
 
             String resetLink = "http://localhost:3000/resetpassword?token=" + token;
 
-            emailSenderService.sendEmail(
-                    user.getEmail(),
-                    "Reset your password link",
-                    resetLink + " \n\n Link expire after 30 minutes"
+            eventPublisher.publishEvent(
+                    new PasswordResetRequestedEvent(
+                            user.getEmail(),
+                            user.getFirstname(),
+                            resetLink,
+                            PASSWORD_RESET_EXPIRATION_MINUTES
+                    )
             );
         });
     }
