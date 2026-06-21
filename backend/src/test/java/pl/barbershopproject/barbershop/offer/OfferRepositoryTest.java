@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -23,7 +23,7 @@ class OfferRepositoryTest {
     @DisplayName("save should persist offer and assign id")
     void save_persistsOffer_andAssignsId() {
         // given
-        Offer offer = TestEntities.createOffer();
+        Offer offer = OfferTestEntities.createOffer();
         offer.setIdOffer(null);
         // when
         Offer savedOffer = offerRepository.save(offer);
@@ -37,7 +37,7 @@ class OfferRepositoryTest {
     @DisplayName("findById should return existed offer")
     void findById_returnsOffer() {
         // given
-        Offer offer = TestEntities.createOffer();
+        Offer offer = OfferTestEntities.createOffer();
         offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
         // when
@@ -52,8 +52,8 @@ class OfferRepositoryTest {
     @DisplayName("findAll should return all offers")
     void findAll_returnsAllSavedOffers() {
         // given
-        Offer o1 = TestEntities.createOffer("children cut", BigDecimal.valueOf(30));
-        Offer o2 = TestEntities.createOffer("styling", BigDecimal.valueOf(70));
+        Offer o1 = OfferTestEntities.createOffer("children cut", BigDecimal.valueOf(30));
+        Offer o2 = OfferTestEntities.createOffer("styling", BigDecimal.valueOf(70));
         offerRepository.saveAll(List.of(o1, o2));
         // when
         List<Offer> offers = offerRepository.findAll();
@@ -66,7 +66,7 @@ class OfferRepositoryTest {
     @DisplayName("deleteById should remove offer")
     void deleteById_removesOffer() {
         // given
-        Offer offer = TestEntities.createOffer();
+        Offer offer = OfferTestEntities.createOffer();
         offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
         // when

@@ -16,7 +16,7 @@ import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -45,9 +45,9 @@ class OrderControllerTest {
     @Test
     void addOrder_ReturnsCreatedString() throws Exception {
         // given
-        OrderCreationDTO inputDto = TestEntities.createOrderCreationDTO();
+        OrderCreationDTO inputDto = OrderTestEntities.createOrderCreationDTO();
 
-        Order savedOrder = TestEntities.orderBuilder()
+        Order savedOrder = OrderTestEntities.orderBuilder()
                 .idOrder(10L)
                 .build();
 
@@ -66,7 +66,7 @@ class OrderControllerTest {
     @Test
     void getAllOrders_ReturnsAllOrders_WhenNoStatusParam() throws Exception {
         // given
-        OrderDTO orderDTO = TestEntities.createOrderDTO();
+        OrderDTO orderDTO = OrderTestEntities.createOrderDTO();
 
         Mockito.when(orderService.getAllOrders()).thenReturn(List.of(orderDTO));
 
@@ -83,7 +83,7 @@ class OrderControllerTest {
     @Test
     void getAllOrders_ReturnsFilteredOrders_WhenStatusParamProvided() throws Exception {
         // given
-        OrderDTO orderDTO = TestEntities.createOrderDTO();
+        OrderDTO orderDTO = OrderTestEntities.createOrderDTO();
         String statusParam = "NOWE";
 
         Mockito.when(orderService.getOrdersByStatus(statusParam)).thenReturn(List.of(orderDTO));
@@ -101,7 +101,7 @@ class OrderControllerTest {
     @Test
     void getSingleOrder_ReturnsOrderDTO() throws Exception {
         // given
-        OrderDTO orderDTO = TestEntities.createOrderDTO();
+        OrderDTO orderDTO = OrderTestEntities.createOrderDTO();
 
         Mockito.when(orderService.getSingleOrder(1L)).thenReturn(orderDTO);
 
@@ -116,9 +116,9 @@ class OrderControllerTest {
     @Test
     void updateOrder_ReturnsUpdatedOrder() throws Exception {
         // given
-        Order inputOrder = TestEntities.createOrder();
+        Order inputOrder = OrderTestEntities.createOrder();
 
-        Order updatedOrder = TestEntities.orderBuilder()
+        Order updatedOrder = OrderTestEntities.orderBuilder()
                 .idOrder(10L)
                 .build();
 
@@ -159,7 +159,7 @@ class OrderControllerTest {
     @Test
     void addOrder_ReturnsBadRequest_WhenIllegalArgumentException() throws Exception {
         // given
-        OrderCreationDTO invalidDto = TestEntities.createOrderCreationDTO();
+        OrderCreationDTO invalidDto = OrderTestEntities.createOrderCreationDTO();
 
         Mockito.when(orderService.addOrder(Mockito.any(OrderCreationDTO.class), Mockito.any()))
                 .thenThrow(new IllegalArgumentException("Invalid date"));

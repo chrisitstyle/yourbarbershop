@@ -14,7 +14,8 @@ import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.util.Status;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -47,15 +48,15 @@ class GuestOrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        offer = TestEntities.createOffer();
+        offer = OfferTestEntities.createOffer();
 
-        guestOrder = TestEntities.createGuestOrder();
+        guestOrder = GuestOrderTestEntities.createGuestOrder();
         guestOrder.setOffer(offer);
     }
 
     @Test
     void addGuestOrder_ShouldReturnGuestOrder() {
-        GuestOrderCreationDTO dto = TestEntities.createGuestOrderCreationDTO();
+        GuestOrderCreationDTO dto = GuestOrderTestEntities.createGuestOrderCreationDTO();
 
         when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.of(offer));
         when(guestOrderRepository.save(any(GuestOrder.class)))
@@ -76,7 +77,7 @@ class GuestOrderServiceTest {
 
     @Test
     void addGuestOrder_ShouldThrowException_WhenOfferDoesNotExist() {
-        GuestOrderCreationDTO guestOrderCreationDTO = TestEntities.createGuestOrderCreationDTO();
+        GuestOrderCreationDTO guestOrderCreationDTO = GuestOrderTestEntities.createGuestOrderCreationDTO();
 
         when(offerRepository.findById(guestOrderCreationDTO.idOffer())).thenReturn(Optional.empty());
 
@@ -95,7 +96,7 @@ class GuestOrderServiceTest {
 
     @Test
     void addGuestOrder_ShouldThrowException_WhenAppointmentSlotIsTaken() {
-        GuestOrderCreationDTO dto = TestEntities.createGuestOrderCreationDTO();
+        GuestOrderCreationDTO dto = GuestOrderTestEntities.createGuestOrderCreationDTO();
 
         when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.of(offer));
         doThrow(new AppointmentSlotTakenException(dto.visitDate()))
@@ -168,7 +169,7 @@ class GuestOrderServiceTest {
 
     @Test
     void updateGuestOrder_ShouldUpdateAndReturnGuestOrder_WhenOrderExists() {
-        GuestOrder updatedGuestOrder = TestEntities.createGuestOrder();
+        GuestOrder updatedGuestOrder = GuestOrderTestEntities.createGuestOrder();
 
         LocalDateTime currentVisitDate = guestOrder.getVisitDate();
         Status currentStatus = guestOrder.getStatus();
@@ -208,7 +209,7 @@ class GuestOrderServiceTest {
 
     @Test
     void updateGuestOrder_ShouldUseCurrentStatus_WhenUpdatedStatusIsNull() {
-        GuestOrder updatedGuestOrder = TestEntities.createGuestOrder();
+        GuestOrder updatedGuestOrder = GuestOrderTestEntities.createGuestOrder();
 
         LocalDateTime currentVisitDate = guestOrder.getVisitDate();
         Status currentStatus = guestOrder.getStatus();
@@ -240,7 +241,7 @@ class GuestOrderServiceTest {
 
     @Test
     void updateGuestOrder_ShouldThrowException_WhenOrderDoesNotExist() {
-        GuestOrder updatedGuestOrder = TestEntities.createGuestOrder();
+        GuestOrder updatedGuestOrder = GuestOrderTestEntities.createGuestOrder();
 
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
 

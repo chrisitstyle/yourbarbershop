@@ -20,7 +20,7 @@ import pl.barbershopproject.barbershop.exception.SelfDeletionException;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
 import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -49,8 +49,8 @@ class UserControllerTest {
     @Test
     void addUser_ReturnsCreated() throws Exception {
 
-        UserCreationDTO userCreationDTO = TestEntities.createUserCreationDTO();
-        UserResponseDTO userResponseDTO = TestEntities.createUserResponseDTO();
+        UserCreationDTO userCreationDTO = UserTestEntities.createUserCreationDTO();
+        UserResponseDTO userResponseDTO = UserTestEntities.createUserResponseDTO();
 
 
         Mockito.when(userService.addUser(Mockito.any(UserCreationDTO.class))).thenReturn(userResponseDTO);
@@ -65,7 +65,7 @@ class UserControllerTest {
     @Test
     void getAllUsers_ReturnsAllUsers() throws Exception {
 
-        UserDTO user = TestEntities.createUserDTO();
+        UserDTO user = UserTestEntities.createUserDTO();
 
         List<UserDTO> usersList = List.of(user);
 
@@ -84,7 +84,7 @@ class UserControllerTest {
     @Test
     void getSingleUser_ReturnsUser() throws Exception {
 
-        UserDTO user = TestEntities.createUserDTO();
+        UserDTO user = UserTestEntities.createUserDTO();
 
         Mockito.when(userService.getUserById(1L)).thenReturn(user);
 
@@ -100,8 +100,8 @@ class UserControllerTest {
     @Test
     void updateUser_ReturnsUpdatedUser() throws Exception {
 
-        User updatedUser = TestEntities.createUser();
-        User returnedUser = TestEntities.userBuilder()
+        User updatedUser = UserTestEntities.createUser();
+        User returnedUser = UserTestEntities.userBuilder()
                 .role(Role.ADMIN)
                 .build();
 
@@ -150,7 +150,7 @@ class UserControllerTest {
 
     @Test
     void addUser_ReturnsUnprocessableEntity_WhenEmailAlreadyExistsException() throws Exception {
-        UserCreationDTO userCreationDTO = TestEntities.createUserCreationDTO();
+        UserCreationDTO userCreationDTO = UserTestEntities.createUserCreationDTO();
 
         Mockito.when(userService.addUser(Mockito.any(UserCreationDTO.class)))
                 .thenThrow(new EmailAlreadyExistsException("Email exists"));

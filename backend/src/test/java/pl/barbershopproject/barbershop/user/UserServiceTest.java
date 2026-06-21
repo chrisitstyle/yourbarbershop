@@ -17,7 +17,7 @@ import pl.barbershopproject.barbershop.exception.SelfDeletionException;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
 import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -49,12 +49,12 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
 
-        userCreationDTO = TestEntities.createUserCreationDTO();
-        user = TestEntities.createUser();
+        userCreationDTO = UserTestEntities.createUserCreationDTO();
+        user = UserTestEntities.createUser();
         user.setIdUser(1L);
         user.setPassword("encoded_password");
 
-        userResponseDTO = TestEntities.createUserResponseDTO();
+        userResponseDTO = UserTestEntities.createUserResponseDTO();
 
         SecurityContextHolder.setContext(securityContext);
 

@@ -7,7 +7,8 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.util.Status;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,9 +26,9 @@ class GuestOrderRepositoryTest {
     @Test
     @DisplayName("save method should persist guest order and assign id")
     void save_persistsGuestOrder_andAssignsId() {
-        Offer offer = offerRepository.save(TestEntities.createUnsavedOffer());
+        Offer offer = offerRepository.save(OfferTestEntities.createUnsavedOffer());
 
-        GuestOrder guestOrder = TestEntities.createUnsavedGuestOrder();
+        GuestOrder guestOrder = GuestOrderTestEntities.createUnsavedGuestOrder();
         guestOrder.setOffer(offer);
 
         GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
@@ -44,8 +45,8 @@ class GuestOrderRepositoryTest {
     @Test
     @DisplayName("findById should return saved guest order with offer")
     void findById_returnsGuestOrder() {
-        Offer offer = offerRepository.save(TestEntities.createUnsavedOffer());
-        GuestOrder guestOrder = TestEntities.createUnsavedGuestOrder();
+        Offer offer = offerRepository.save(OfferTestEntities.createUnsavedOffer());
+        GuestOrder guestOrder = GuestOrderTestEntities.createUnsavedGuestOrder();
         guestOrder.setOffer(offer);
         guestOrder.setIdGuestOrder(null);
         guestOrder.setStatus(Status.ANULOWANE);
@@ -66,13 +67,13 @@ class GuestOrderRepositoryTest {
     @Test
     @DisplayName("findAll should return all saved guest orders with offers")
     void findAll_returnsAllGuestOrders() {
-        Offer offer = offerRepository.save(TestEntities.createUnsavedOffer());
+        Offer offer = offerRepository.save(OfferTestEntities.createUnsavedOffer());
 
-        GuestOrder o1 = TestEntities.createUnsavedGuestOrder();
+        GuestOrder o1 = GuestOrderTestEntities.createUnsavedGuestOrder();
         o1.setOffer(offer);
         o1.setStatus(Status.NOWE);
 
-        GuestOrder o2 = TestEntities.createGuestOrder();
+        GuestOrder o2 = GuestOrderTestEntities.createGuestOrder();
         o2.setIdGuestOrder(null);
         o2.setOffer(offer);
         o2.setStatus(Status.ZREALIZOWANE);
@@ -97,8 +98,8 @@ class GuestOrderRepositoryTest {
     @Test
     @DisplayName("deleteById should remove guest order from repository")
     void deleteById_removesGuestOrder() {
-        Offer offer = offerRepository.save(TestEntities.createUnsavedOffer());
-        GuestOrder guestOrder = TestEntities.createUnsavedGuestOrder();
+        Offer offer = offerRepository.save(OfferTestEntities.createUnsavedOffer());
+        GuestOrder guestOrder = GuestOrderTestEntities.createUnsavedGuestOrder();
         guestOrder.setOffer(offer);
 
         GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
@@ -114,13 +115,13 @@ class GuestOrderRepositoryTest {
     @DisplayName("findGuestOrdersByStatus should return only guest orders with specific status")
     void findGuestOrdersByStatus_returnsOrdersWithNOWEStatus() {
 
-        Offer offer = offerRepository.save(TestEntities.createUnsavedOffer());
+        Offer offer = offerRepository.save(OfferTestEntities.createUnsavedOffer());
 
-        GuestOrder o1 = TestEntities.createUnsavedGuestOrder();
+        GuestOrder o1 = GuestOrderTestEntities.createUnsavedGuestOrder();
         o1.setOffer(offer);
         o1.setStatus(Status.NOWE);
 
-        GuestOrder o2 = TestEntities.createUnsavedGuestOrder();
+        GuestOrder o2 = GuestOrderTestEntities.createUnsavedGuestOrder();
         o2.setOffer(offer);
         o2.setStatus(Status.ANULOWANE);
 

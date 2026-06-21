@@ -16,7 +16,7 @@ import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.util.Status;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -44,8 +44,8 @@ class GuestOrderControllerTest {
     @Test
     void addGuestOrder_ReturnsCreated() throws Exception {
         // given
-        GuestOrderCreationDTO inputDto = TestEntities.createGuestOrderCreationDTO();
-        GuestOrder savedOrder = TestEntities.createGuestOrder();
+        GuestOrderCreationDTO inputDto = GuestOrderTestEntities.createGuestOrderCreationDTO();
+        GuestOrder savedOrder = GuestOrderTestEntities.createGuestOrder();
 
         Mockito.when(guestOrderService.addGuestOrder(Mockito.any(GuestOrderCreationDTO.class)))
                 .thenReturn(savedOrder);
@@ -64,7 +64,7 @@ class GuestOrderControllerTest {
     @Test
     void getAllGuestOrders_ReturnsAll_WhenNoStatusParam() throws Exception {
         // given
-        GuestOrder guestOrder = TestEntities.createGuestOrder();
+        GuestOrder guestOrder = GuestOrderTestEntities.createGuestOrder();
         Mockito.when(guestOrderService.getAllGuestOrders()).thenReturn(List.of(guestOrder));
 
         // when then
@@ -79,7 +79,7 @@ class GuestOrderControllerTest {
     @Test
     void getAllGuestOrders_ReturnsFiltered_WhenStatusParamProvided() throws Exception {
         // given
-        GuestOrder guestOrder = TestEntities.createGuestOrder();
+        GuestOrder guestOrder = GuestOrderTestEntities.createGuestOrder();
         Status statusParam = Status.NOWE;
 
         Mockito.when(guestOrderService.getGuestOrdersByStatus(statusParam))
@@ -98,7 +98,7 @@ class GuestOrderControllerTest {
     @Test
     void getGuestOrder_ReturnsOrder_WhenExists() throws Exception {
         // given
-        GuestOrder guestOrder = TestEntities.createGuestOrder();
+        GuestOrder guestOrder = GuestOrderTestEntities.createGuestOrder();
 
         Mockito.when(guestOrderService.getGuestOrder(1L)).thenReturn(guestOrder);
 
@@ -112,9 +112,9 @@ class GuestOrderControllerTest {
     @Test
     void updateGuestOrder_ReturnsUpdatedOrder() throws Exception {
         // given
-        GuestOrder inputOrder = TestEntities.createGuestOrder();
+        GuestOrder inputOrder = GuestOrderTestEntities.createGuestOrder();
 
-        GuestOrder updatedOrder = TestEntities.guestOrderBuilder()
+        GuestOrder updatedOrder = GuestOrderTestEntities.guestOrderBuilder()
                 .firstname("updated_firstname")
                 .build();
 
@@ -156,7 +156,7 @@ class GuestOrderControllerTest {
     @Test
     void addGuestOrder_ReturnsBadRequest_WhenIllegalArgumentException() throws Exception {
         // given
-        GuestOrderCreationDTO invalidDto = TestEntities.createGuestOrderCreationDTO();
+        GuestOrderCreationDTO invalidDto = GuestOrderTestEntities.createGuestOrderCreationDTO();
 
         Mockito.when(guestOrderService.addGuestOrder(Mockito.any(GuestOrderCreationDTO.class)))
                 .thenThrow(new IllegalArgumentException("Invalid phone number"));

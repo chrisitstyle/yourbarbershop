@@ -1,0 +1,115 @@
+package pl.barbershopproject.barbershop.utils.testentities;
+
+import pl.barbershopproject.barbershop.guestorder.GuestOrder;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
+import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.util.Status;
+
+import java.time.LocalDateTime;
+
+import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createOffer;
+
+/**
+ * Utility class providing factory methods for guest order-related test objects.
+ * <p>
+ * This class helps create {@link GuestOrder} entities and related DTOs with
+ * consistent default test data. It is useful in unit, integration and repository
+ * tests where guest order setup would otherwise be repeated.
+ * </p>
+ */
+public final class GuestOrderTestEntities {
+
+    /**
+     * Private constructor to block instantiation of utility class.
+     */
+    private GuestOrderTestEntities() {
+    }
+
+    /**
+     * Returns a GuestOrderBuilder pre-filled with default test data.
+     */
+    public static GuestOrder.GuestOrderBuilder guestOrderBuilder() {
+        return GuestOrder.builder()
+                .idGuestOrder(1L)
+                .firstname("GuestJohn")
+                .lastname("GuestDoe")
+                .phonenumber("123456789")
+                .email("guestjohndoe@example.com")
+                .offer(createOffer())
+                .orderDate(LocalDateTime.of(2026, 1, 16, 15, 0))
+                .visitDate(LocalDateTime.of(2026, 10, 17, 17, 0))
+                .status(Status.NOWE);
+    }
+
+    /**
+     * Creates a default GuestOrder instance.
+     */
+    public static GuestOrder createGuestOrder() {
+        return guestOrderBuilder().build();
+    }
+
+    /**
+     * Creates a GuestOrder instance for testing purposes.
+     *
+     * @param firstname   guest's first name
+     * @param lastname    guest's last name
+     * @param phonenumber guest's phone number
+     * @param email       guest's email address
+     * @param offer       offer associated with the guest order
+     * @param orderDate   date the guest order was placed
+     * @param visitDate   scheduled visit date
+     * @param status      guest order status
+     * @return new GuestOrder instance
+     */
+    public static GuestOrder createGuestOrder(String firstname, String lastname, String phonenumber,
+                                              String email, Offer offer, LocalDateTime orderDate,
+                                              LocalDateTime visitDate, Status status) {
+
+        return GuestOrder.builder()
+                .firstname(firstname)
+                .lastname(lastname)
+                .phonenumber(phonenumber)
+                .email(email)
+                .offer(offer)
+                .orderDate(orderDate)
+                .visitDate(visitDate)
+                .status(status)
+                .build();
+
+    }
+
+    /**
+     * Creates a GuestOrder instance specifically for JPA testing (NO ID set).
+     * Hibernate requires ID to be null for a successful INSERT.
+     */
+    public static GuestOrder createUnsavedGuestOrder() {
+        return GuestOrder.builder()
+                .firstname("GuestJohn")
+                .lastname("GuestDoe")
+                .phonenumber("123456789")
+                .email("guestjohndoe@example.com")
+                .orderDate(LocalDateTime.of(2026, 1, 16, 15, 0))
+                .visitDate(LocalDateTime.of(2026, 10, 17, 17, 0))
+                .status(Status.NOWE)
+                .build();
+    }
+
+    /**
+     * Creates a GuestOrderCreationDTO with default test data.
+     * <p>
+     * Useful for testing guest order creation endpoint and service.
+     *
+     * @return GuestOrderCreationDTO instance
+     */
+    public static GuestOrderCreationDTO createGuestOrderCreationDTO() {
+        return new GuestOrderCreationDTO(
+                "GuestJohn",
+                "GuestDoe",
+                "123456789",
+                "guestjohndoe@example.com",
+                1L,
+                LocalDateTime.of(2026, 10, 17, 17, 0)
+        );
+    }
+
+}

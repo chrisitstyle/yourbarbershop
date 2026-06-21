@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
@@ -44,10 +44,10 @@ class OfferControllerTest {
     @Test
     void addOffer_ReturnsSavedOffer() throws Exception {
 
-        Offer offer = TestEntities.createOffer();
+        Offer offer = OfferTestEntities.createOffer();
         offer.setIdOffer(0L);
 
-        Offer savedOffer = TestEntities.createOffer();
+        Offer savedOffer = OfferTestEntities.createOffer();
 
         Mockito.when(offerService.addOffer(Mockito.any(Offer.class))).thenReturn(savedOffer);
 
@@ -64,7 +64,7 @@ class OfferControllerTest {
 
     @Test
     void getAllOffers_ReturnsAllOffers() throws Exception {
-        Offer offer = TestEntities.createOffer();
+        Offer offer = OfferTestEntities.createOffer();
         List<Offer> offersList = List.of(offer);
 
         Mockito.when(offerService.getAllOffers()).thenReturn(offersList);
@@ -81,7 +81,7 @@ class OfferControllerTest {
 
     @Test
     void getOfferById_ReturnsOffer() throws Exception {
-        Offer offer = TestEntities.createOffer();
+        Offer offer = OfferTestEntities.createOffer();
 
         Mockito.when(offerService.getSingleOffer(1L)).thenReturn(offer);
 
@@ -95,8 +95,8 @@ class OfferControllerTest {
 
     @Test
     void updateOffer_ReturnsUpdatedOffer() throws Exception {
-        Offer offer = TestEntities.createOffer();
-        Offer updatedOffer = TestEntities.createOffer();
+        Offer offer = OfferTestEntities.createOffer();
+        Offer updatedOffer = OfferTestEntities.createOffer();
         updatedOffer.setKind("updated_kind");
 
         Mockito.when(offerService.updateOffer(Mockito.any(Offer.class), Mockito.eq(1L)))
@@ -137,7 +137,7 @@ class OfferControllerTest {
     @Test
     void addOffer_ReturnsBadRequest_WhenIllegalArgumentException() throws Exception {
         // given
-        Offer invalidOffer = TestEntities.createOffer();
+        Offer invalidOffer = OfferTestEntities.createOffer();
 
         Mockito.when(offerService.addOffer(Mockito.any(Offer.class)))
                 .thenThrow(new IllegalArgumentException("Invalid offer data"));

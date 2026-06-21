@@ -9,7 +9,9 @@ import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.OrderRepository;
 import pl.barbershopproject.barbershop.util.Status;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,7 +33,7 @@ class UserRepositoryTest {
     @Test
     @DisplayName("save method should persist user to the database and assign id")
     void save_persistsUserToDatabase() {
-        User user = TestEntities.createUser();
+        User user = UserTestEntities.createUser();
         user.setEmail("johndoe@saveexample.com");
         user.setIdUser(null);
         // when
@@ -47,7 +49,7 @@ class UserRepositoryTest {
     @DisplayName("existsByEmail should return true for existing email")
     void existsByEmail_existingEmail_returnsTrue() {
         // given
-        User user = TestEntities.createUser();
+        User user = UserTestEntities.createUser();
         user.setEmail("johndoe@existsexample.com");
         user.setIdUser(null);
         userRepository.save(user);
@@ -71,7 +73,7 @@ class UserRepositoryTest {
     @DisplayName("findByEmail should return user for existing email")
     void findByEmail_existingEmail_returnsUser() {
         // given
-        User user = TestEntities.createUser();
+        User user = UserTestEntities.createUser();
         user.setEmail("johnwick@example.com");
         user.setIdUser(null);
         userRepository.save(user);
@@ -96,7 +98,7 @@ class UserRepositoryTest {
     @DisplayName("findById should return user with orders")
     void findById_existingId_returnsUserWithOrders() {
         // given
-        User user = TestEntities.createUser();
+        User user = UserTestEntities.createUser();
         user.setEmail("order@me.com");
         user.setIdUser(null);
         User savedUser = userRepository.save(user);
@@ -112,10 +114,10 @@ class UserRepositoryTest {
     @DisplayName("findAllWithOrders should return all users")
     void findAllWithOrders_returnsAllUsers() {
         // given
-        User user1 = TestEntities.createUser();
+        User user1 = UserTestEntities.createUser();
         user1.setIdUser(null);
 
-        User user2 = TestEntities.createUser("Negan", "Smith", "negansmith@example.com", Role.ADMIN);
+        User user2 = UserTestEntities.createUser("Negan", "Smith", "negansmith@example.com", Role.ADMIN);
         user2.setIdUser(null);
 
         userRepository.saveAll(List.of(user1, user2));
@@ -132,14 +134,14 @@ class UserRepositoryTest {
     @DisplayName("findById returns user with orders and offers")
     void findById_userHasOrderWithOffer_returnsUserWithOrderAndOffer() {
         // given
-        User user = TestEntities.createUser();
+        User user = UserTestEntities.createUser();
         user.setIdUser(null);
         userRepository.save(user);
 
-        Offer offer = TestEntities.createOffer("strzyżenie", BigDecimal.valueOf(35.0));
+        Offer offer = OfferTestEntities.createOffer("strzyżenie", BigDecimal.valueOf(35.0));
         offerRepository.save(offer);
 
-        Order order = TestEntities.createOrder(user, offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+        Order order = OrderTestEntities.createOrder(user, offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
                 Status.NOWE);
 
         orderRepository.save(order);
@@ -160,7 +162,7 @@ class UserRepositoryTest {
     @DisplayName("deleteById should remove user from repository")
     void deleteById_removesUser() {
         // given
-        User user = TestEntities.createUser();
+        User user = UserTestEntities.createUser();
         user.setIdUser(null);
         User savedUser = userRepository.save(user);
         Long userId = savedUser.getIdUser();

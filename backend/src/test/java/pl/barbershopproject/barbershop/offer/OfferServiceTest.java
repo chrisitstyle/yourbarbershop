@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,7 +31,7 @@ class OfferServiceTest {
 
     @BeforeEach
     void setUp() {
-        offer = TestEntities.createOffer();
+        offer = OfferTestEntities.createOffer();
 
     }
 
@@ -94,7 +95,7 @@ class OfferServiceTest {
 
     @Test
     void updateOffer_ShouldThrowException_WhenOfferDoesNotExist() {
-        Offer updatedOffer = TestEntities.createOffer();
+        Offer updatedOffer = OfferTestEntities.createOffer();
 
         when(offerRepository.findById(1L)).thenReturn(Optional.empty());
 

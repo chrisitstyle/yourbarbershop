@@ -16,7 +16,9 @@ import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities;
+import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,8 +52,8 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        offer = TestEntities.createOffer();
-        user = TestEntities.createUser();
+        offer = OfferTestEntities.createOffer();
+        user = UserTestEntities.createUser();
 
         order = new Order();
         order.setIdOrder(1L);
@@ -64,7 +66,7 @@ class OrderServiceTest {
 
     @Test
     void addOrder_ShouldSaveOrder() {
-        OrderCreationDTO dto = TestEntities.createOrderCreationDTO();
+        OrderCreationDTO dto = OrderTestEntities.createOrderCreationDTO();
 
         when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.of(offer));
         when(orderRepository.save(any(Order.class)))
@@ -86,7 +88,7 @@ class OrderServiceTest {
 
     @Test
     void addOrder_ShouldThrowException_WhenOfferDoesNotExist() {
-        OrderCreationDTO dto = TestEntities.createOrderCreationDTO();
+        OrderCreationDTO dto = OrderTestEntities.createOrderCreationDTO();
 
         when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.empty());
 
@@ -105,7 +107,7 @@ class OrderServiceTest {
 
     @Test
     void addOrder_ShouldThrowException_WhenAppointmentSlotIsTaken() {
-        OrderCreationDTO orderCreationDTO = TestEntities.createOrderCreationDTO();
+        OrderCreationDTO orderCreationDTO = OrderTestEntities.createOrderCreationDTO();
 
         when(offerRepository.findById(orderCreationDTO.idOffer())).thenReturn(Optional.of(offer));
         doThrow(new AppointmentSlotTakenException(orderCreationDTO.visitDate()))
