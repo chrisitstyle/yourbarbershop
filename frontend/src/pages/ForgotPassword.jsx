@@ -13,6 +13,7 @@ import { RECAPTCHA_SITE_KEY } from "../api/config";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const [alert, setAlert] = useState({ message: "", variant: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -26,12 +27,20 @@ const ForgotPassword = () => {
     setCaptchaToken(token);
   };
 
+  const resetCaptcha = () => {
+    if (recaptchaRef.current) {
+      recaptchaRef.current.reset();
+    }
+
+    setCaptchaToken(null);
+  };
+
   const handleForgotPassword = async (e) => {
     e.preventDefault();
 
     if (!captchaToken) {
       setAlert({
-        message: t("auth.captchaRequired") || "Proszę rozwiązać CAPTCHA!",
+        message: t("auth.captchaRequired"),
         variant: "danger",
       });
 
@@ -39,17 +48,51 @@ const ForgotPassword = () => {
     }
 
     setIsLoading(true);
+    setAlert({ message: "", variant: "" });
 
     try {
       await userForgotPasswordRequest(email, captchaToken);
 
+      setSubmittedEmail(email);
       setEmail("");
       setEmailSent(true);
+      resetCaptcha();
     } catch (err) {
-      if (recaptchaRef.current) {
-        recaptchaRef.current.reset();
-        setCaptchaToken(null);
-      }
+      resetCaptcha();
+
+      setAlert({
+        message: t("auth.requestError"),
+        variant: "danger",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendResetLink = async () => {
+    if (!captchaToken) {
+      setAlert({
+        message: t("auth.captchaRequired"),
+        variant: "danger",
+      });
+
+      return;
+    }
+
+    setIsLoading(true);
+    setAlert({ message: "", variant: "" });
+
+    try {
+      await userForgotPasswordRequest(submittedEmail, captchaToken);
+
+      setAlert({
+        message: t("auth.resetLinkResent"),
+        variant: "success",
+      });
+
+      resetCaptcha();
+    } catch (err) {
+      resetCaptcha();
 
       setAlert({
         message: t("auth.requestError"),
@@ -69,13 +112,50 @@ const ForgotPassword = () => {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3 text-center">
-            <Alert variant="success" className="text-center">
-              {t("auth.resetLinkSent")}
-            </Alert>
+            {alert.message ? (
+              <Alert
+                variant={alert.variant}
+                onClose={handleCloseAlert}
+                dismissible
+                className="text-center"
+              >
+                {alert.message}
+              </Alert>
+            ) : (
+              <Alert variant="success" className="text-center">
+                {t("auth.resetLinkSent")}
+              </Alert>
+            )}
 
             <p className="mb-3">{t("auth.checkEmailForResetLink")}</p>
 
-            <Link to="/login" className="btn btn-dark">
+            <div className="border-top pt-3 mt-3">
+              <p className="mb-3 fw-semibold">
+                {t("auth.resetLinkNotArrived")}
+              </p>
+
+              <div className="mb-3 d-flex justify-content-center">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={handleCaptchaChange}
+                />
+              </div>
+
+              <ButtonSpinner
+                type="button"
+                variant="dark"
+                className="mx-auto d-block"
+                loading={isLoading}
+                loadingText={t("auth.resendingResetLink")}
+                disabled={!captchaToken || isLoading}
+                onClick={handleResendResetLink}
+              >
+                {t("auth.resendResetLink")}
+              </ButtonSpinner>
+            </div>
+
+            <Link to="/login" className="btn btn-dark mt-3">
               {t("auth.loginBtn")}
             </Link>
           </div>
@@ -115,6 +195,7 @@ const ForgotPassword = () => {
                 id="inputEmail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 aria-describedby="emailHelp"
                 required
                 disabled={isLoading}
