@@ -201,6 +201,8 @@ const resources = {
         sending: "Wysyłanie...",
         resetLinkSent:
           "Link do resetowania hasła został wysłany na podany adres email.",
+        checkEmailForResetLink:
+          "Sprawdź skrzynkę mailową i kliknij link do resetowania hasła.",
         requestError: "Wystąpił błąd podczas wysyłania żądania.",
         missingToken: "Brak tokena resetowania hasła w URL.",
         passwordChangedSuccess: "Hasło zostało pomyślnie zmienione.",
@@ -324,7 +326,6 @@ const resources = {
         close: "Zamknij",
         currency: "zł",
       },
-      // Dodaj tutaj więcej sekcji...
     },
   },
   // EN
@@ -525,6 +526,8 @@ const resources = {
         sending: "Sending...",
         resetLinkSent:
           "Password reset link has been sent to your email address.",
+        checkEmailForResetLink:
+          "Check your email inbox and follow the password reset link.",
         requestError: "An error occurred while sending the request.",
         missingToken: "Password reset token is missing in the URL.",
         passwordChangedSuccess: "Password has been successfully changed.",

@@ -1,16 +1,28 @@
 import { useEffect, useState } from "react";
+
 import { Link, useNavigate, useLocation } from "react-router-dom";
+
 import { useAuth } from "../AuthContext";
+
 import { Alert } from "react-bootstrap";
+
 import { loginUser } from "../api/authService";
+
 import ButtonSpinner from "../components/common/ButtonSpinner";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
+
 import { API_BASE_URL } from "../api/config";
+
 import GoogleIcon from "../components/common/GoogleIcon";
+
 import useAutoDismiss from "../hooks/useAutoDismiss";
+
 import { useTranslation } from "react-i18next";
+
 import EmailCodeLoginForm from "../components/auth/EmailCodeLoginForm";
 
 const LOGIN_MODE = {
@@ -21,17 +33,35 @@ const LOGIN_MODE = {
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [loginMode, setLoginMode] = useState(LOGIN_MODE.PASSWORD);
+
   const [successMessage, setSuccessMessage] = useAutoDismiss(null, 5000);
+
   const [loginErrors, setLoginErrors] = useAutoDismiss(null, 6000);
+
   const [isLoading, setIsLoading] = useState(false);
 
   const location = useLocation();
+
   const navigate = useNavigate();
+
   const { login } = useAuth();
+
   const { t } = useTranslation();
 
   useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+
+      navigate(location.pathname, {
+        replace: true,
+        state: null,
+      });
+
+      return;
+    }
+
     const searchParams = new URLSearchParams(location.search);
 
     // if ?registrationSuccess=true is in the URL
@@ -41,9 +71,18 @@ const Login = () => {
 
       // clean up the URL so the parameter doesn't linger in the address bar
       // replace: true ensures the user cannot navigate back to the URL with the parameter
-      navigate(location.pathname, { replace: true });
+      navigate(location.pathname, {
+        replace: true,
+      });
     }
-  }, [location, setSuccessMessage, navigate, t]);
+  }, [
+    location.pathname,
+    location.search,
+    location.state,
+    setSuccessMessage,
+    navigate,
+    t,
+  ]);
 
   const getErrorMessages = (error) => {
     if (error.response && error.response.data) {
@@ -63,12 +102,14 @@ const Login = () => {
     event.preventDefault();
 
     setIsLoading(true);
+
     setLoginErrors(null);
 
     try {
       const userData = await loginUser(email, password);
 
       login(userData);
+
       navigate("/");
     } catch (error) {
       setLoginErrors(getErrorMessages(error));
@@ -79,14 +120,19 @@ const Login = () => {
 
   const switchToEmailCodeLogin = () => {
     setLoginErrors(null);
+
     setSuccessMessage(null);
+
     setPassword("");
+
     setLoginMode(LOGIN_MODE.EMAIL_CODE);
   };
 
   const switchToPasswordLogin = () => {
     setLoginErrors(null);
+
     setSuccessMessage(null);
+
     setLoginMode(LOGIN_MODE.PASSWORD);
   };
 
@@ -121,6 +167,7 @@ const Login = () => {
         <label htmlFor="login" className="form-label">
           {t("auth.email")}
         </label>
+
         <input
           type="email"
           className="form-control"
@@ -136,6 +183,7 @@ const Login = () => {
         <label htmlFor="password" className="form-label">
           {t("auth.password")}
         </label>
+
         <input
           type="password"
           className="form-control"
@@ -187,6 +235,7 @@ const Login = () => {
             size="xl"
             style={{ color: "#ffffff" }}
           />
+
           <span className="w-100 text-center">{t("auth.githubSign")}</span>
         </a>
 
@@ -202,6 +251,7 @@ const Login = () => {
           }}
         >
           <GoogleIcon className="position-absolute start-0 ms-3" />
+
           <span className="w-100 text-center">{t("auth.googleSign")}</span>
         </a>
       </div>
