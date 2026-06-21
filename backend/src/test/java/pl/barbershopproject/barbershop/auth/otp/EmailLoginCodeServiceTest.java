@@ -25,16 +25,10 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EmailLoginCodeServiceTest {
@@ -91,19 +85,29 @@ class EmailLoginCodeServiceTest {
         verify(valueOperations).set(codeKey(), CODE_HASH, CODE_TTL);
         verify(stringRedisTemplate).delete(attemptsKey());
 
-        ArgumentCaptor<String> emailBodyCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> plainTextBodyCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> htmlBodyCaptor = ArgumentCaptor.forClass(String.class);
 
-        verify(emailSenderService).sendEmail(
+        verify(emailSenderService).sendHtmlEmail(
                 eq(EMAIL),
-                eq("YourBarbershop one-time login code"),
-                emailBodyCaptor.capture()
+                eq("YourBarbershop login code"),
+                plainTextBodyCaptor.capture(),
+                htmlBodyCaptor.capture()
         );
 
-        String emailBody = emailBodyCaptor.getValue();
+        String plainTextBody = plainTextBodyCaptor.getValue();
+        String htmlBody = htmlBodyCaptor.getValue();
 
         verify(passwordEncoder).encode(anyString());
-        assertTrue(emailBody.contains("Your login code:"));
-        assertTrue(emailBody.contains("The code expires in 10 minutes."));
+
+        assertTrue(plainTextBody.contains("YourBarbershop login code is:"));
+        assertTrue(plainTextBody.contains("The code expires in 10 minutes."));
+        assertTrue(plainTextBody.contains("If you did not request this code"));
+
+        assertTrue(htmlBody.contains("YourBarbershop"));
+        assertTrue(htmlBody.contains("Your login code"));
+        assertTrue(htmlBody.contains("10 minutes"));
+        assertTrue(htmlBody.contains("<!doctype html>"));
     }
 
     @Test
