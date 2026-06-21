@@ -69,19 +69,25 @@ export const userForgotPasswordRequest = async (email, captchaToken) => {
   }
 };
 
-export const userResetPasswordRequest = async (token, newPassword) => {
+export const userResetPasswordRequest = async (
+  token,
+  newPassword,
+  confirmPassword,
+) => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/reset-password`, {
       method: "POST",
       data: {
         token,
         newPassword,
+        confirmPassword,
       },
     });
 
     return response.data;
   } catch (error) {
     console.error("Error resetting password:", error);
+
     throw error;
   }
 };

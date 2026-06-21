@@ -170,6 +170,7 @@ const resources = {
         email: "Adres e-mail",
         password: "Hasło",
         newPassword: "Nowe hasło",
+        confirmPassword: "Powtórz nowe hasło",
         firstname: "Imię",
         lastname: "Nazwisko",
         loginBtn: "Zaloguj",
@@ -192,6 +193,9 @@ const resources = {
         registerLink: "Zarejestruj się",
         loginLink: "Zaloguj się",
         successRegister: "Konto zostało pomyślnie zarejestrowane. Zaloguj się.",
+        registerError:
+          "Nie udało się utworzyć konta. Jeśli masz już konto, spróbuj się zalogować albo zresetować hasło.",
+        captchaRequired: "Proszę rozwiązać CAPTCHA!",
         githubSign: "Zaloguj przez Github",
         googleSign: "Zaloguj przez Google",
         loggingIn: "Logowanie...",
@@ -200,13 +204,24 @@ const resources = {
         send: "Wyślij",
         sending: "Wysyłanie...",
         resetLinkSent:
-          "Link do resetowania hasła został wysłany na podany adres email.",
+          "Jeśli konto z tym adresem e-mail istnieje, link do resetowania hasła został wysłany.",
         checkEmailForResetLink:
           "Sprawdź skrzynkę mailową i kliknij link do resetowania hasła.",
+        resetLinkNotArrived: "Link nie dotarł?",
+        resendResetLink: "Wyślij link ponownie",
+        resendingResetLink: "Ponowne wysyłanie...",
+        resetLinkResent:
+          "Jeśli konto z tym adresem e-mail istnieje, link resetujący został wysłany ponownie.",
         requestError: "Wystąpił błąd podczas wysyłania żądania.",
         missingToken: "Brak tokena resetowania hasła w URL.",
+        invalidOrExpiredResetLink:
+          "Link resetujący jest nieprawidłowy albo wygasł.",
+        requestNewResetLinkInfo:
+          "Poproś o nowy link resetujący i spróbuj ponownie.",
+        requestNewResetLink: "Poproś o nowy link resetujący",
         passwordChangedSuccess: "Hasło zostało pomyślnie zmienione.",
         passwordChangedError: "Wystąpił błąd podczas zmiany hasła.",
+        passwordsDoNotMatch: "Hasła nie są takie same.",
       },
       validation: {
         genericError: "Coś poszło nie tak. Spróbuj ponownie.",
@@ -495,6 +510,7 @@ const resources = {
         email: "Email Address",
         password: "Password",
         newPassword: "New Password",
+        confirmPassword: "Confirm new password",
         firstname: "First Name",
         lastname: "Last Name",
         loginBtn: "Sign In",
@@ -517,6 +533,9 @@ const resources = {
         registerLink: "Sign up",
         loginLink: "Sign in",
         successRegister: "Account successfully created. Please log in.",
+        registerError:
+          "We could not create the account. If you already have an account, try signing in or resetting your password.",
+        captchaRequired: "Please complete the CAPTCHA!",
         githubSign: "Sign in with Github",
         googleSign: "Sign in with Google",
         loggingIn: "Logging in...",
@@ -525,13 +544,24 @@ const resources = {
         send: "Send",
         sending: "Sending...",
         resetLinkSent:
-          "Password reset link has been sent to your email address.",
+          "If an account with this email address exists, a password reset link has been sent.",
         checkEmailForResetLink:
           "Check your email inbox and follow the password reset link.",
+        resetLinkNotArrived: "Didn't receive the link?",
+        resendResetLink: "Send link again",
+        resendingResetLink: "Sending again...",
+        resetLinkResent:
+          "If an account with this email address exists, the password reset link has been sent again.",
         requestError: "An error occurred while sending the request.",
         missingToken: "Password reset token is missing in the URL.",
+        invalidOrExpiredResetLink:
+          "The password reset link is invalid or has expired.",
+        requestNewResetLinkInfo:
+          "Request a new password reset link and try again.",
+        requestNewResetLink: "Request a new password reset link",
         passwordChangedSuccess: "Password has been successfully changed.",
         passwordChangedError: "An error occurred while changing the password.",
+        passwordsDoNotMatch: "Passwords do not match.",
       },
       validation: {
         genericError: "Something went wrong. Please try again.",
