@@ -331,6 +331,34 @@ make down
 
 The `make up` command will automatically rebuild containers and remove old volumes before starting. Use `make up-nc` when you want to force Docker to ignore cached layers and build everything from scratch.
 
+## Local GitHub Actions Testing with act
+
+GitHub Actions workflows can be tested locally with [`act`](https://github.com/nektos/act). This is useful for checking workflow syntax and common CI steps before pushing changes to GitHub.
+
+Example PowerShell commands:
+
+```powershell
+act push -W .github/workflows/frontend-build.yml -j build-frontend
+act push -W .github/workflows/backend-build.yaml -j build --env-file .env.act
+act push -W .github/workflows/db-migration-check.yaml -j validate-current-migrations
+act push -W .github/workflows/security-audit.yaml -j audit-frontend
+```
+
+Backend integration tests use **Testcontainers**. When running the backend workflow locally with `act`, create a local `.env.act` file in the project root:
+
+```env
+TESTCONTAINERS_RYUK_DISABLED=true
+TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
+```
+
+The `.env.act` file is local-only and should not be committed. Add it to `.gitignore`:
+
+```gitignore
+.env.act
+```
+
+> **Note**: The `.env.act` file is only needed for local `act` runs. The real GitHub Actions environment should run the workflow without this local workaround.
+
 ## 📁 Project Structure
 
 ```
