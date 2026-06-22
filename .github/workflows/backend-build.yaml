@@ -1,64 +1,80 @@
 name: Backend Build
 
-# Run on pushes and pull requests to main,
-# but only when backend-related files change
+# Build the backend application and its Docker image on every push and PR to main,
+# Run the backend verification only for files that can affect the Java build
+# or the backend container image.
 on:
   push:
-    branches: ["main"]
+    branches: [main]
     paths:
       - "backend/**"
       - "DockerFileBackend"
+      - "dockerize"
+      - ".dockerignore"
       - ".github/workflows/backend-build.yaml"
 
   pull_request:
-    branches: ["main"]
+    branches: [main]
     paths:
       - "backend/**"
       - "DockerFileBackend"
+      - "dockerize"
+      - ".dockerignore"
       - ".github/workflows/backend-build.yaml"
 
-# Grant the workflow only the permissions it needs
+  # Allows maintainers to rerun the complete verification manually.
+  workflow_dispatch:
+
 permissions:
   contents: read
 
-# Cancel an older running build when a newer commit
-# appears on the same branch or pull request
+# Cancel an older run when a newer commit appears on the same branch or PR.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
+    name: Run Gradle checks and build Docker image
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
+      # build.gradle targets Java 25 and the checked-in wrapper uses Gradle 9.2.1.
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
           java-version: "25"
           distribution: "temurin"
           cache: "gradle"
+          # These files determine the Gradle version and dependency graph.
+          cache-dependency-path: |
+            backend/build.gradle
+            backend/settings.gradle
+            backend/gradle/wrapper/gradle-wrapper.properties
 
-      # Create .env files from prepared templates
-      - name: Create .env files
-        run: |
-          cp .env_example .env
-          cp backend/.env_example backend/.env
-
-      # Grant execute permission to the Gradle wrapper
+      # Linux runners require the executable bit on the wrapper script.
       - name: Grant execute permission for Gradle wrapper
         working-directory: ./backend
         run: chmod +x gradlew
 
-      # Compile the backend and run all verification tasks
+      # 'check' compiles the application and runs the JUnit verification lifecycle.
+      # The repository's test resources activate the test profile and disable Flyway,
+      # so no production credentials or local .env file are required here.
       - name: Run backend checks
         working-directory: ./backend
-        run: ./gradlew check --no-daemon
+        run: ./gradlew check --no-daemon --stacktrace
 
-      # Build the image only when all checks pass
-      - name: Build Docker image
-        run: docker build -f DockerFileBackend -t barbershop-backend:${{ github.sha }} .
+      # Build the same multi-stage image used by the project. The image stays on the
+      # runner; the SHA tag makes it easy to identify in logs.
+      - name: Build backend Docker image
+        run: >-
+          docker build
+          --file DockerFileBackend
+          --tag barbershop-backend:${{ github.sha }}
+          .

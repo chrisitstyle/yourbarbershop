@@ -52,13 +52,6 @@
       "last 1 safari version"
     ]
   },
-  "pnpm": {
-    "auditConfig": {
-      "ignoreGhsas": [
-        "GHSA-gv7w-rqvm-qjhr"
-      ]
-    }
-  },
   "devDependencies": {
     "@testing-library/dom": "^10",
     "@types/react": "^19.2.0",
