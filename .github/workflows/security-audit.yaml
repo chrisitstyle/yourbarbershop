@@ -1,27 +1,63 @@
 name: Frontend Security Audit
 
+# Audit the dependency graph whenever the frontend manifest or lockfile changes.
+# A scheduled run is also important because vulnerability databases can change
+# even when no repository files have been modified.
 on:
   push:
-    branches: [main, master]
+    branches: [main]
+    paths:
+      - "frontend/package.json"
+      - "frontend/pnpm-lock.yaml"
+      - ".github/workflows/security-audit.yaml"
+
   pull_request:
-    branches: [main, master]
+    branches: [main]
+    paths:
+      - "frontend/package.json"
+      - "frontend/pnpm-lock.yaml"
+      - ".github/workflows/security-audit.yaml"
+
+  schedule:
+    - cron: "0 5 * * 1" # Every Monday at 05:00 UTC (07:00 in Poland during CEST).
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   audit-frontend:
-    name: PNPM Audit (Frontend)
+    name: Audit high and critical npm vulnerabilities
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Setup pnpm
+        with:
+          persist-credentials: false
+
+      # Match the pnpm version used by the frontend Dockerfile and build workflow.
+      - name: Set up pnpm 11.8.0
         uses: pnpm/action-setup@v4
         with:
-          version: 10
-      - name: Setup Node.js
+          version: 11.8.0
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Run pnpm audit
-        run: pnpm audit --audit-level=high
+      # pnpm audit reads the lockfile and queries the configured advisory registry;
+      # installing node_modules is not required for this check.
+      # The job fails for vulnerabilities with severity high or critical.
+      - name: Audit frontend dependencies
         working-directory: ./frontend
+        run: pnpm audit --audit-level=high

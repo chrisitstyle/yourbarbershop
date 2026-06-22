@@ -1,44 +1,80 @@
 name: Frontend Build Check
 
+# The repository contains a React application built with Vite.
+# Run this workflow only when the frontend, its container definition,
+# or the workflow itself changes.
 on:
   push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "DockerFileFrontend"
+      - ".dockerignore"
+      - ".github/workflows/frontend-build.yml"
 
+  pull_request:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "DockerFileFrontend"
+      - ".dockerignore"
+      - ".github/workflows/frontend-build.yml"
+
+  # Allows the workflow to be run manually from the Actions tab.
+  workflow_dispatch:
+
+# This workflow only reads repository contents.
 permissions:
   contents: read
 
+# A newer commit makes an older build for the same branch or PR obsolete.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-frontend:
-    name: Build Test
+    name: Build Vite application and Docker image
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # The workflow does not push commits or tags.
+          persist-credentials: false
 
-      - name: Setup pnpm
+      # Keep the package-manager version aligned with DockerFileFrontend.
+      - name: Set up pnpm 11.8.0
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 11.8.0
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
+          # Cache pnpm's global package store; node_modules is still recreated.
           cache: "pnpm"
-          cache-dependency-path: "./frontend/pnpm-lock.yaml"
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
+      # --frozen-lockfile prevents CI from silently changing resolved versions.
       - name: Install dependencies
+        working-directory: ./frontend
         run: pnpm install --frozen-lockfile
-        working-directory: ./frontend
 
-      - name: Build project
-        run: pnpm run build
+      # Vite performs the production compilation and catches unresolved imports,
+      # invalid JSX and other bundling errors.
+      - name: Build production bundle
         working-directory: ./frontend
+        run: pnpm run build
+
+      # Verify that the development container definition remains buildable too.
+      # The image is local to the runner and is not pushed to a registry.
+      - name: Build frontend Docker image
+        run: >-
+          docker build
+          --file DockerFileFrontend
+          --tag barbershop-frontend:${{ github.sha }}
+          .
