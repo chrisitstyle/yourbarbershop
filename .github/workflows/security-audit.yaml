@@ -52,8 +52,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
-          cache: "pnpm"
-          cache-dependency-path: frontend/pnpm-lock.yaml
 
       # pnpm audit reads the lockfile and queries the configured advisory registry;
       # installing node_modules is not required for this check.
