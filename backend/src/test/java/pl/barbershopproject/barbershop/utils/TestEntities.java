@@ -5,7 +5,12 @@ package pl.barbershopproject.barbershop.utils;
  * <p>
  * Useful for building entities with minimal boilerplate in JPA/Spring Data test scenarios.
  * It provides both complete object creation and Builders pre-filled with default test data.
+ *
+ * @deprecated Use dedicated test entity factories instead, such as:
+ * {@code UserTestEntities}, {@code OfferTestEntities}, {@code OrderTestEntities}
+ * and {@code GuestOrderTestEntities}.
  */
+@Deprecated(forRemoval = true)
 public class TestEntities {
 
     /**
@@ -13,6 +18,4 @@ public class TestEntities {
      */
     private TestEntities() {
     }
-
-
 }

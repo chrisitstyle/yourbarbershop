@@ -75,6 +75,11 @@ public class GlobalExceptionHandler {
         return createErrorResponse(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(InvalidPasswordTokenException.class)
+    public ResponseEntity<ErrorDTO> handleInvalidPasswordToken(InvalidPasswordTokenException ex) {
+        return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
     /**
      * Helper method to construct a standard {@link ResponseEntity} containing an {@link ErrorDTO}.
      *
