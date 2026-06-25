@@ -1,4 +1,4 @@
-.PHONY: help up up-nc down stop restart ps logs logs-live logs-backend logs-frontend logs-db logs-valkey \
+.PHONY: help up up-nc down stop restart ps db-up logs logs-live logs-backend logs-frontend logs-db logs-valkey \
         backend-run backend-test backend-build frontend-install frontend-dev frontend-build \
         act-frontend act-backend act-db act-security db-shell valkey-shell clean clean-all
 
@@ -12,6 +12,7 @@ help:
 	@echo "  make stop              - Stop containers without removing volumes"
 	@echo "  make restart           - Restart Docker stack"
 	@echo "  make ps                - Show running containers"
+	@echo "  make db-up             - Start database and Valkey containers"
 	@echo "  make clean             - Stop containers, remove volumes, orphans and unused Docker resources"
 	@echo "  make clean-all         - Stop containers and remove project images plus all unused Docker images"
 	@echo ""
@@ -64,6 +65,9 @@ restart:
 ps:
 	docker compose ps
 
+db-up:
+	docker compose up -d database valkey
+
 logs:
 	docker compose logs -f
 
@@ -83,7 +87,7 @@ logs-valkey:
 	docker compose logs -f valkey
 
 backend-run:
-	cd backend && ./gradlew bootRun --args='--spring.profiles.active=dev'
+	cd backend && ./gradlew bootRun --args='--spring.profiles.active=dev --spring.config.import=optional:file:.env[.properties]'
 
 backend-test:
 	cd backend && ./gradlew test
