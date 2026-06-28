@@ -64,6 +64,12 @@ jobs:
         working-directory: ./frontend
         run: pnpm install --frozen-lockfile
 
+      # ESLint checks code quality and catches common JavaScript/React issues
+      # before the production bundle is built.
+      - name: Run ESLint
+        working-directory: ./frontend
+        run: pnpm run lint
+
       # Vite performs the production compilation and catches unresolved imports,
       # invalid JSX and other bundling errors.
       - name: Build production bundle
