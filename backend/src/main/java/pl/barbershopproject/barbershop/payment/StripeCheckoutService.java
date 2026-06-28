@@ -39,25 +39,22 @@ public class StripeCheckoutService {
     }
 
     public StripeCheckoutSessionResponse createCheckoutSession(
-            PaymentTargetType targetType,
-            Long targetId,
+            Payment payment,
             Offer offer
     ) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("mode", "payment");
+        body.add("payment_method_types[0]", "card");
         body.add("success_url", successUrl);
         body.add("cancel_url", cancelUrl);
 
         body.add("line_items[0][quantity]", "1");
         body.add("line_items[0][price_data][currency]", currency);
-        body.add("line_items[0][price_data][unit_amount]", toSmallestCurrencyUnit(offer.getCost()).toString());
+        body.add("line_items[0][price_data][unit_amount]", toSmallestCurrencyUnit(payment.getAmount()).toString());
         body.add("line_items[0][price_data][product_data][name]", offer.getKind());
 
-        body.add("metadata[targetType]", targetType.name());
-        body.add("metadata[targetId]", targetId.toString());
-        body.add("payment_intent_data[metadata][targetType]", targetType.name());
-        body.add("payment_intent_data[metadata][targetId]", targetId.toString());
-
+        body.add("metadata[paymentId]", payment.getIdPayment().toString());
+        body.add("payment_intent_data[metadata][paymentId]", payment.getIdPayment().toString());
         body.add("payment_method_types[0]", "card"); // only card payment
 
         JsonNode response = restClient.post()

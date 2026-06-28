@@ -4,11 +4,9 @@ package pl.barbershopproject.barbershop.guestorder;
 import jakarta.persistence.*;
 import lombok.*;
 import pl.barbershopproject.barbershop.offer.Offer;
-import pl.barbershopproject.barbershop.payment.PaymentMethod;
-import pl.barbershopproject.barbershop.payment.PaymentStatus;
+import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.util.Status;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Builder
@@ -31,33 +29,15 @@ public class GuestOrder {
     @JoinColumn(name = "id_offer")
     private Offer offer;
 
-    @Column (name = "order_date")
+    @Column(name = "order_date")
     private LocalDateTime orderDate;
 
-    @Column (name = "visit_date")
+    @Column(name = "visit_date")
 
     private LocalDateTime visitDate;
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false)
-    private PaymentMethod paymentMethod;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status", nullable = false)
-    private PaymentStatus paymentStatus;
-
-    @Column(name = "stripe_checkout_session_id", unique = true)
-    private String stripeCheckoutSessionId;
-
-    @Column(name = "stripe_payment_intent_id")
-    private String stripePaymentIntentId;
-
-    @Column(name = "payment_amount")
-    private BigDecimal paymentAmount;
-
-    @Column(name = "payment_currency")
-    private String paymentCurrency;
-
+    @OneToOne(mappedBy = "guestOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Payment payment;
 }

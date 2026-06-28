@@ -3,7 +3,6 @@ package pl.barbershopproject.barbershop.order.mapper;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
-import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 
@@ -22,10 +21,6 @@ public class OrderCreationDTOMapper {
                 .orderDate(LocalDateTime.now())
                 .visitDate(dto.visitDate())
                 .status(Status.NOWE)
-                .paymentMethod(dto.paymentMethod())
-                .paymentStatus(PaymentStatus.OCZEKUJE_NA_PLATNOSC)
-                .paymentAmount(offer.getCost())
-                .paymentCurrency("PLN")
                 .build();
     }
 }

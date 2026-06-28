@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -24,12 +23,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "LEFT JOIN FETCH o.user " +
             "LEFT JOIN FETCH o.offer")
     List<Order> findAll();
-
-    Optional<Order> findByStripeCheckoutSessionId(String stripeCheckoutSessionId);
-
-    Optional<Order> findByStripePaymentIntentId(String stripePaymentIntentId);
-
-
-
 
 }

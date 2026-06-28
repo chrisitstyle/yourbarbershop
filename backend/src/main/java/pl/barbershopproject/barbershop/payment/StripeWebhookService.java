@@ -6,14 +6,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
-import pl.barbershopproject.barbershop.guestorder.GuestOrderRepository;
 import pl.barbershopproject.barbershop.order.Order;
-import pl.barbershopproject.barbershop.order.OrderRepository;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.util.Status;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -21,8 +20,7 @@ import java.util.Optional;
 public class StripeWebhookService {
 
     private final ObjectMapper objectMapper;
-    private final OrderRepository orderRepository;
-    private final GuestOrderRepository guestOrderRepository;
+    private final PaymentRepository paymentRepository;
     private final AppointmentAvailabilityService appointmentAvailabilityService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -36,6 +34,7 @@ public class StripeWebhookService {
             switch (eventType) {
                 case "checkout.session.completed" -> handleCheckoutCompleted(object);
                 case "checkout.session.expired" -> handleCheckoutExpired(object);
+                case "payment_intent.succeeded" -> handlePaymentIntentSucceeded(object);
                 case "payment_intent.payment_failed" -> handlePaymentIntentFailed(object);
                 case "charge.refunded" -> handleChargeRefunded(object);
                 default -> {
@@ -48,66 +47,75 @@ public class StripeWebhookService {
     }
 
     private void handleCheckoutCompleted(JsonNode session) {
-        String sessionId = session.path("id").asText();
-        String paymentIntentId = session.path("payment_intent").asText(null);
+        Optional<Payment> optionalPayment = resolvePaymentFromCheckoutSession(session);
 
-        orderRepository.findByStripeCheckoutSessionId(sessionId).ifPresent(order -> {
-            if (order.getPaymentStatus() == PaymentStatus.OPLACONA) {
+        optionalPayment.ifPresent(payment -> {
+            if (payment.getPaymentStatus() == PaymentStatus.OPLACONA) {
                 return;
             }
 
-            order.setPaymentStatus(PaymentStatus.OPLACONA);
-            order.setStripePaymentIntentId(paymentIntentId);
-            orderRepository.save(order);
+            String paymentIntentId = session.path("payment_intent").asText(null);
 
-            publishOrderConfirmation(order);
-        });
+            payment.setPaymentStatus(PaymentStatus.OPLACONA);
+            payment.setStripePaymentIntentId(paymentIntentId);
+            payment.setPaidAt(LocalDateTime.now());
 
-        guestOrderRepository.findByStripeCheckoutSessionId(sessionId).ifPresent(guestOrder -> {
-            if (guestOrder.getPaymentStatus() == PaymentStatus.OPLACONA) {
-                return;
-            }
+            paymentRepository.save(payment);
 
-            guestOrder.setPaymentStatus(PaymentStatus.OPLACONA);
-            guestOrder.setStripePaymentIntentId(paymentIntentId);
-            guestOrderRepository.save(guestOrder);
-
-            publishGuestOrderConfirmation(guestOrder);
+            publishConfirmation(payment);
         });
     }
 
     private void handleCheckoutExpired(JsonNode session) {
-        String sessionId = session.path("id").asText();
+        Optional<Payment> optionalPayment = resolvePaymentFromCheckoutSession(session);
 
-        orderRepository.findByStripeCheckoutSessionId(sessionId).ifPresent(order -> {
-            if (order.getPaymentStatus() == PaymentStatus.OPLACONA) {
+        optionalPayment.ifPresent(payment -> {
+            if (payment.getPaymentStatus() == PaymentStatus.OPLACONA) {
                 return;
             }
 
-            order.setPaymentStatus(PaymentStatus.WYGASLA);
-            appointmentAvailabilityService.releaseIfReserved(order.getVisitDate(), order.getStatus());
-            order.setStatus(Status.ANULOWANE);
-            orderRepository.save(order);
+            payment.setPaymentStatus(PaymentStatus.WYGASLA);
+            paymentRepository.save(payment);
+
+            cancelReservation(payment);
         });
+    }
 
-        guestOrderRepository.findByStripeCheckoutSessionId(sessionId).ifPresent(guestOrder -> {
-            if (guestOrder.getPaymentStatus() == PaymentStatus.OPLACONA) {
+    private void handlePaymentIntentSucceeded(JsonNode paymentIntent) {
+        Optional<Payment> optionalPayment = resolvePaymentFromPaymentIntent(paymentIntent);
+
+        optionalPayment.ifPresent(payment -> {
+            if (payment.getPaymentStatus() == PaymentStatus.OPLACONA) {
                 return;
             }
 
-            guestOrder.setPaymentStatus(PaymentStatus.WYGASLA);
-            appointmentAvailabilityService.releaseIfReserved(guestOrder.getVisitDate(), guestOrder.getStatus());
-            guestOrder.setStatus(Status.ANULOWANE);
-            guestOrderRepository.save(guestOrder);
+            String paymentIntentId = paymentIntent.path("id").asText(null);
+
+            payment.setPaymentStatus(PaymentStatus.OPLACONA);
+            payment.setStripePaymentIntentId(paymentIntentId);
+            payment.setPaidAt(LocalDateTime.now());
+
+            paymentRepository.save(payment);
+
+            publishConfirmation(payment);
         });
     }
 
     private void handlePaymentIntentFailed(JsonNode paymentIntent) {
-        Optional<PaymentTarget> target = resolveTarget(paymentIntent);
+        Optional<Payment> optionalPayment = resolvePaymentFromPaymentIntent(paymentIntent);
 
-        target.ifPresent(paymentTarget ->
-                updatePaymentStatus(paymentTarget, PaymentStatus.NIEUDANA)
-        );
+        optionalPayment.ifPresent(payment -> {
+            if (payment.getPaymentStatus() == PaymentStatus.OPLACONA) {
+                return;
+            }
+
+            String paymentIntentId = paymentIntent.path("id").asText(null);
+
+            payment.setPaymentStatus(PaymentStatus.NIEUDANA);
+            payment.setStripePaymentIntentId(paymentIntentId);
+
+            paymentRepository.save(payment);
+        });
     }
 
     private void handleChargeRefunded(JsonNode charge) {
@@ -117,61 +125,73 @@ public class StripeWebhookService {
             return;
         }
 
-        orderRepository.findByStripePaymentIntentId(paymentIntentId).ifPresent(order -> {
-            order.setPaymentStatus(PaymentStatus.ZWROCONA);
-            orderRepository.save(order);
-        });
-
-        guestOrderRepository.findByStripePaymentIntentId(paymentIntentId).ifPresent(guestOrder -> {
-            guestOrder.setPaymentStatus(PaymentStatus.ZWROCONA);
-            guestOrderRepository.save(guestOrder);
+        paymentRepository.findByStripePaymentIntentId(paymentIntentId).ifPresent(payment -> {
+            payment.setPaymentStatus(PaymentStatus.ZWROCONA);
+            paymentRepository.save(payment);
         });
     }
 
-    private Optional<PaymentTarget> resolveTarget(JsonNode object) {
-        String targetType = object.path("metadata").path("targetType").asText(null);
-        String targetId = object.path("metadata").path("targetId").asText(null);
+    private Optional<Payment> resolvePaymentFromCheckoutSession(JsonNode session) {
+        String sessionId = session.path("id").asText(null);
 
-        if (targetType == null || targetId == null) {
+        if (sessionId != null && !sessionId.isBlank()) {
+            Optional<Payment> paymentBySessionId = paymentRepository.findByStripeCheckoutSessionId(sessionId);
+
+            if (paymentBySessionId.isPresent()) {
+                return paymentBySessionId;
+            }
+        }
+
+        return resolvePaymentFromMetadata(session);
+    }
+
+    private Optional<Payment> resolvePaymentFromPaymentIntent(JsonNode paymentIntent) {
+        Optional<Payment> paymentByMetadata = resolvePaymentFromMetadata(paymentIntent);
+
+        if (paymentByMetadata.isPresent()) {
+            return paymentByMetadata;
+        }
+
+        String paymentIntentId = paymentIntent.path("id").asText(null);
+
+        if (paymentIntentId == null || paymentIntentId.isBlank()) {
+            return Optional.empty();
+        }
+
+        return paymentRepository.findByStripePaymentIntentId(paymentIntentId);
+    }
+
+    private Optional<Payment> resolvePaymentFromMetadata(JsonNode object) {
+        String paymentId = object.path("metadata").path("paymentId").asText(null);
+
+        if (paymentId == null || paymentId.isBlank()) {
             return Optional.empty();
         }
 
         try {
-            return Optional.of(new PaymentTarget(
-                    PaymentTargetType.valueOf(targetType),
-                    Long.valueOf(targetId)
-            ));
-        } catch (IllegalArgumentException exception) {
+            return paymentRepository.findById(Long.valueOf(paymentId));
+        } catch (NumberFormatException exception) {
             return Optional.empty();
         }
     }
 
-    private void updatePaymentStatus(PaymentTarget target, PaymentStatus paymentStatus) {
-        if (target.type() == PaymentTargetType.ORDER) {
-            orderRepository.findById(target.id()).ifPresent(order -> {
-                order.setPaymentStatus(paymentStatus);
-                orderRepository.save(order);
-            });
+    private void publishConfirmation(Payment payment) {
+        if (payment.getOrder() != null) {
+            Order order = payment.getOrder();
+
+            eventPublisher.publishEvent(new OrderCreatedEvent(
+                    order.getUser().getEmail(),
+                    order.getUser().getFirstname(),
+                    order.getVisitDate(),
+                    order.getOffer().getKind(),
+                    order.getOffer().getCost()
+            ));
+
             return;
         }
 
-        guestOrderRepository.findById(target.id()).ifPresent(guestOrder -> {
-            guestOrder.setPaymentStatus(paymentStatus);
-            guestOrderRepository.save(guestOrder);
-        });
-    }
+        GuestOrder guestOrder = payment.getGuestOrder();
 
-    private void publishOrderConfirmation(Order order) {
-        eventPublisher.publishEvent(new OrderCreatedEvent(
-                order.getUser().getEmail(),
-                order.getUser().getFirstname(),
-                order.getVisitDate(),
-                order.getOffer().getKind(),
-                order.getOffer().getCost()
-        ));
-    }
-
-    private void publishGuestOrderConfirmation(GuestOrder guestOrder) {
         eventPublisher.publishEvent(new OrderCreatedEvent(
                 guestOrder.getEmail(),
                 guestOrder.getFirstname(),
@@ -181,6 +201,19 @@ public class StripeWebhookService {
         ));
     }
 
-    private record PaymentTarget(PaymentTargetType type, Long id) {
+    private void cancelReservation(Payment payment) {
+        if (payment.getOrder() != null) {
+            Order order = payment.getOrder();
+
+            appointmentAvailabilityService.releaseIfReserved(order.getVisitDate(), order.getStatus());
+            order.setStatus(Status.ANULOWANE);
+
+            return;
+        }
+
+        GuestOrder guestOrder = payment.getGuestOrder();
+
+        appointmentAvailabilityService.releaseIfReserved(guestOrder.getVisitDate(), guestOrder.getStatus());
+        guestOrder.setStatus(Status.ANULOWANE);
     }
 }

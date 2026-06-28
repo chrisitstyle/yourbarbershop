@@ -11,12 +11,10 @@ import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderCreationDTOMa
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
-import pl.barbershopproject.barbershop.payment.PaymentMethod;
-import pl.barbershopproject.barbershop.payment.PaymentTargetType;
-import pl.barbershopproject.barbershop.payment.StripeCheckoutService;
-import pl.barbershopproject.barbershop.payment.StripeCheckoutSessionResponse;
+import pl.barbershopproject.barbershop.payment.*;
 import pl.barbershopproject.barbershop.util.Status;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -28,6 +26,7 @@ class GuestOrderService {
     private final OfferRepository offerRepository;
     private final AppointmentAvailabilityService appointmentAvailabilityService;
     private final StripeCheckoutService stripeCheckoutService;
+    private final PaymentRepository paymentRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -40,20 +39,30 @@ class GuestOrderService {
 
         GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrderToSave);
 
-        if (savedGuestOrder.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
+        Payment paymentToSave = Payment.builder()
+                .guestOrder(savedGuestOrder)
+                .paymentMethod(guestOrderCreationDTO.paymentMethod())
+                .paymentStatus(PaymentStatus.OCZEKUJE_NA_PLATNOSC)
+                .amount(offer.getCost())
+                .currency("PLN")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Payment savedPayment = paymentRepository.save(paymentToSave);
+
+        if (savedPayment.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
             StripeCheckoutSessionResponse checkoutSession = stripeCheckoutService.createCheckoutSession(
-                    PaymentTargetType.GUEST_ORDER,
-                    savedGuestOrder.getIdGuestOrder(),
-                    savedGuestOrder.getOffer()
+                    savedPayment,
+                    offer
             );
 
-            savedGuestOrder.setStripeCheckoutSessionId(checkoutSession.sessionId());
-            guestOrderRepository.save(savedGuestOrder);
+            savedPayment.setStripeCheckoutSessionId(checkoutSession.sessionId());
+            paymentRepository.save(savedPayment);
 
             return new GuestOrderCreationResponseDTO(
                     savedGuestOrder.getIdGuestOrder(),
-                    savedGuestOrder.getPaymentMethod(),
-                    savedGuestOrder.getPaymentStatus(),
+                    savedPayment.getPaymentMethod(),
+                    savedPayment.getPaymentStatus(),
                     checkoutSession.checkoutUrl()
             );
         }
@@ -62,8 +71,8 @@ class GuestOrderService {
 
         return new GuestOrderCreationResponseDTO(
                 savedGuestOrder.getIdGuestOrder(),
-                savedGuestOrder.getPaymentMethod(),
-                savedGuestOrder.getPaymentStatus(),
+                savedPayment.getPaymentMethod(),
+                savedPayment.getPaymentStatus(),
                 null
         );
     }
@@ -78,7 +87,6 @@ class GuestOrderService {
     }
 
     public List<GuestOrder> getGuestOrdersByStatus(Status status) {
-
         return guestOrderRepository.findGuestOrdersByStatus(status);
     }
 
@@ -118,7 +126,6 @@ class GuestOrderService {
 
         guestOrderRepository.delete(guestOrder);
     }
-
 
     private void publishOrderCreatedEvent(GuestOrder guestOrder) {
         eventPublisher.publishEvent(new OrderCreatedEvent(

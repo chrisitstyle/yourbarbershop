@@ -15,13 +15,11 @@ import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.order.mapper.OrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
-import pl.barbershopproject.barbershop.payment.PaymentMethod;
-import pl.barbershopproject.barbershop.payment.PaymentTargetType;
-import pl.barbershopproject.barbershop.payment.StripeCheckoutService;
-import pl.barbershopproject.barbershop.payment.StripeCheckoutSessionResponse;
+import pl.barbershopproject.barbershop.payment.*;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -33,6 +31,7 @@ class OrderService {
     private final OfferRepository offerRepository;
     private final AppointmentAvailabilityService appointmentAvailabilityService;
     private final StripeCheckoutService stripeCheckoutService;
+    private final PaymentRepository paymentRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -46,20 +45,30 @@ class OrderService {
 
         Order savedOrder = orderRepository.save(orderToSave);
 
-        if (savedOrder.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
+        Payment paymentToSave = Payment.builder()
+                .order(savedOrder)
+                .paymentMethod(orderCreationDTO.paymentMethod())
+                .paymentStatus(PaymentStatus.OCZEKUJE_NA_PLATNOSC)
+                .amount(offer.getCost())
+                .currency("PLN")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Payment savedPayment = paymentRepository.save(paymentToSave);
+
+        if (savedPayment.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
             StripeCheckoutSessionResponse checkoutSession = stripeCheckoutService.createCheckoutSession(
-                    PaymentTargetType.ORDER,
-                    savedOrder.getIdOrder(),
-                    savedOrder.getOffer()
+                    savedPayment,
+                    offer
             );
 
-            savedOrder.setStripeCheckoutSessionId(checkoutSession.sessionId());
-            orderRepository.save(savedOrder);
+            savedPayment.setStripeCheckoutSessionId(checkoutSession.sessionId());
+            paymentRepository.save(savedPayment);
 
             return new OrderCreationResponseDTO(
                     savedOrder.getIdOrder(),
-                    savedOrder.getPaymentMethod(),
-                    savedOrder.getPaymentStatus(),
+                    savedPayment.getPaymentMethod(),
+                    savedPayment.getPaymentStatus(),
                     checkoutSession.checkoutUrl()
             );
         }
@@ -68,8 +77,8 @@ class OrderService {
 
         return new OrderCreationResponseDTO(
                 savedOrder.getIdOrder(),
-                savedOrder.getPaymentMethod(),
-                savedOrder.getPaymentStatus(),
+                savedPayment.getPaymentMethod(),
+                savedPayment.getPaymentStatus(),
                 null
         );
     }
