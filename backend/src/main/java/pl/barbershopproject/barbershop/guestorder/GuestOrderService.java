@@ -6,10 +6,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentTargetType;
+import pl.barbershopproject.barbershop.payment.StripeCheckoutService;
+import pl.barbershopproject.barbershop.payment.StripeCheckoutSessionResponse;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.util.List;
@@ -22,27 +27,45 @@ class GuestOrderService {
     private final GuestOrderRepository guestOrderRepository;
     private final OfferRepository offerRepository;
     private final AppointmentAvailabilityService appointmentAvailabilityService;
+    private final StripeCheckoutService stripeCheckoutService;
     private final ApplicationEventPublisher eventPublisher;
+
     @Transactional
-    public GuestOrder addGuestOrder(GuestOrderCreationDTO guestOrderCreationDTO) {
+    public GuestOrderCreationResponseDTO addGuestOrder(GuestOrderCreationDTO guestOrderCreationDTO) {
         Offer offer = offerRepository.findById(guestOrderCreationDTO.idOffer())
                 .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + guestOrderCreationDTO.idOffer() + " nie istnieje"));
 
         GuestOrder guestOrderToSave = GuestOrderCreationDTOMapper.toEntity(guestOrderCreationDTO, offer);
-
         appointmentAvailabilityService.reserveSlot(guestOrderToSave.getVisitDate());
 
         GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrderToSave);
 
-        eventPublisher.publishEvent(new OrderCreatedEvent(
-                savedGuestOrder.getEmail(),
-                savedGuestOrder.getFirstname(),
-                savedGuestOrder.getVisitDate(),
-                savedGuestOrder.getOffer().getKind(),
-                savedGuestOrder.getOffer().getCost()
-        ));
+        if (savedGuestOrder.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
+            StripeCheckoutSessionResponse checkoutSession = stripeCheckoutService.createCheckoutSession(
+                    PaymentTargetType.GUEST_ORDER,
+                    savedGuestOrder.getIdGuestOrder(),
+                    savedGuestOrder.getOffer()
+            );
 
-        return savedGuestOrder;
+            savedGuestOrder.setStripeCheckoutSessionId(checkoutSession.sessionId());
+            guestOrderRepository.save(savedGuestOrder);
+
+            return new GuestOrderCreationResponseDTO(
+                    savedGuestOrder.getIdGuestOrder(),
+                    savedGuestOrder.getPaymentMethod(),
+                    savedGuestOrder.getPaymentStatus(),
+                    checkoutSession.checkoutUrl()
+            );
+        }
+
+        publishOrderCreatedEvent(savedGuestOrder);
+
+        return new GuestOrderCreationResponseDTO(
+                savedGuestOrder.getIdGuestOrder(),
+                savedGuestOrder.getPaymentMethod(),
+                savedGuestOrder.getPaymentStatus(),
+                null
+        );
     }
 
     public List<GuestOrder> getAllGuestOrders() {
@@ -97,4 +120,13 @@ class GuestOrderService {
     }
 
 
+    private void publishOrderCreatedEvent(GuestOrder guestOrder) {
+        eventPublisher.publishEvent(new OrderCreatedEvent(
+                guestOrder.getEmail(),
+                guestOrder.getFirstname(),
+                guestOrder.getVisitDate(),
+                guestOrder.getOffer().getKind(),
+                guestOrder.getOffer().getCost()
+        ));
+    }
 }

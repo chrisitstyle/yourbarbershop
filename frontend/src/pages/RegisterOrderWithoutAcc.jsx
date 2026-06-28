@@ -19,12 +19,29 @@ const RegisterOrderWithoutAcc = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("GOTOWKA");
+
   const [showAlert, setShowAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [isLoadingOffers, setIsLoadingOffers] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const { t } = useTranslation();
+
+  const paymentMethods = [
+    {
+      value: "GOTOWKA",
+      label: t("orders.paymentCash", "Gotówka na miejscu"),
+    },
+    {
+      value: "KARTA_NA_MIEJSCU",
+      label: t("orders.paymentCardOnSite", "Karta na miejscu"),
+    },
+    {
+      value: "KARTA_ONLINE",
+      label: t("orders.paymentCardOnline", "Karta online"),
+    },
+  ];
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -41,7 +58,6 @@ const RegisterOrderWithoutAcc = () => {
     fetchOffers();
   }, []);
 
-  // function to reset form fields
   const setInitialState = () => {
     setFirstName("");
     setLastName("");
@@ -51,6 +67,7 @@ const RegisterOrderWithoutAcc = () => {
     setSelectedDate("");
     setSelectedHour(8);
     setSelectedMinute(0);
+    setPaymentMethod("GOTOWKA");
   };
 
   const handleOfferChange = (e) => {
@@ -66,8 +83,14 @@ const RegisterOrderWithoutAcc = () => {
     setSelectedMinute(parseInt(e.target.value, 10));
   };
 
+  const handlePaymentMethodChange = (e) => {
+    setPaymentMethod(e.target.value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setShowAlert(false);
+    setShowErrorAlert(false);
     setIsLoading(true);
 
     try {
@@ -82,9 +105,15 @@ const RegisterOrderWithoutAcc = () => {
           selectedHour,
           selectedMinute,
         ),
+        paymentMethod,
       };
 
-      await createGuestOrder(guestOrderCreationData);
+      const response = await createGuestOrder(guestOrderCreationData);
+
+      if (response?.checkoutUrl) {
+        window.location.href = response.checkoutUrl;
+        return;
+      }
 
       setInitialState();
       setShowAlert(true);
@@ -107,6 +136,7 @@ const RegisterOrderWithoutAcc = () => {
             <h4 className="display-6 text-center">
               {t("orders.registerTitle")}
             </h4>
+
             <Alert
               variant="success"
               show={showAlert}
@@ -115,6 +145,7 @@ const RegisterOrderWithoutAcc = () => {
             >
               {t("orders.successMessage")}
             </Alert>
+
             <Alert
               variant="danger"
               show={showErrorAlert}
@@ -123,9 +154,10 @@ const RegisterOrderWithoutAcc = () => {
             >
               {t("orders.errorMessage")}
             </Alert>
+
             <form onSubmit={handleSubmit}>
               <div className="mb-2">
-                <label htmlFor="inputfirstname" className="form-label">
+                <label htmlFor="firstname" className="form-label">
                   {t("auth.firstname")}
                 </label>
                 <input
@@ -138,8 +170,9 @@ const RegisterOrderWithoutAcc = () => {
                   disabled={isLoading}
                 />
               </div>
+
               <div className="mb-2">
-                <label htmlFor="inputlastname" className="form-label">
+                <label htmlFor="lastname" className="form-label">
                   {t("auth.lastname")}
                 </label>
                 <input
@@ -152,8 +185,9 @@ const RegisterOrderWithoutAcc = () => {
                   disabled={isLoading}
                 />
               </div>
+
               <div className="mb-2">
-                <label htmlFor="inputphonenumber" className="form-label">
+                <label htmlFor="phonenumber" className="form-label">
                   {t("orders.phoneNumber")}
                 </label>
                 <input
@@ -166,8 +200,9 @@ const RegisterOrderWithoutAcc = () => {
                   disabled={isLoading}
                 />
               </div>
+
               <div className="mb-2">
-                <label htmlFor="inputemail" className="form-label">
+                <label htmlFor="email" className="form-label">
                   {t("auth.email")}
                 </label>
                 <input
@@ -180,6 +215,7 @@ const RegisterOrderWithoutAcc = () => {
                   disabled={isLoading}
                 />
               </div>
+
               <div className="mb-2">
                 <label htmlFor="selectoffer" className="form-label">
                   {t("orders.selectService")}
@@ -200,6 +236,7 @@ const RegisterOrderWithoutAcc = () => {
                   ))}
                 </select>
               </div>
+
               <div className="mb-2">
                 <label htmlFor="selectdate" className="form-label">
                   {t("orders.selectDate")}
@@ -215,6 +252,7 @@ const RegisterOrderWithoutAcc = () => {
                   disabled={isLoading}
                 />
               </div>
+
               <div className="mb-2">
                 <label htmlFor="selecttime" className="form-label">
                   {t("orders.selectTime")}
@@ -234,6 +272,7 @@ const RegisterOrderWithoutAcc = () => {
                       </option>
                     ))}
                   </select>
+
                   <select
                     className="form-select me-1"
                     id="selectminute"
@@ -250,6 +289,27 @@ const RegisterOrderWithoutAcc = () => {
                   </select>
                 </div>
               </div>
+
+              <div className="mb-2">
+                <label htmlFor="paymentMethod" className="form-label">
+                  {t("orders.paymentMethod", "Metoda płatności")}
+                </label>
+                <select
+                  className="form-select"
+                  id="paymentMethod"
+                  value={paymentMethod}
+                  onChange={handlePaymentMethodChange}
+                  required
+                  disabled={isLoading}
+                >
+                  {paymentMethods.map((method) => (
+                    <option key={method.value} value={method.value}>
+                      {method.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <ButtonSpinner
                 type="submit"
                 variant="dark"
@@ -259,6 +319,7 @@ const RegisterOrderWithoutAcc = () => {
               >
                 {t("orders.registerBtn")}
               </ButtonSpinner>
+
               <p className="mt-2 text-center">
                 {t("auth.noAccount")}{" "}
                 <Link to="/register">{t("auth.registerLink")}</Link>

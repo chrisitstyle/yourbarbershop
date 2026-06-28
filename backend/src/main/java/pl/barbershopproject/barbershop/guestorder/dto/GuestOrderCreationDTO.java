@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
 
 import java.time.LocalDateTime;
 
@@ -26,6 +27,9 @@ public record GuestOrderCreationDTO(
 
         @NotNull(message = "Data wizyty jest wymagana")
         @Future(message = "Data wizyty musi być w przyszłości")
-        LocalDateTime visitDate
+        LocalDateTime visitDate,
+
+        @NotNull(message = "Metoda płatności jest wymagana")
+        PaymentMethod paymentMethod
 ) {
 }

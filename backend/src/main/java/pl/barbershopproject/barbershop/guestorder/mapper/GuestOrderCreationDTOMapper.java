@@ -3,6 +3,7 @@ package pl.barbershopproject.barbershop.guestorder.mapper;
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,10 @@ public class GuestOrderCreationDTOMapper {
                 .orderDate(LocalDateTime.now())
                 .visitDate(dto.visitDate())
                 .status(Status.NOWE)
+                .paymentMethod(dto.paymentMethod())
+                .paymentStatus(PaymentStatus.OCZEKUJE_NA_PLATNOSC)
+                .paymentAmount(offer.getCost())
+                .paymentCurrency("PLN")
                 .build();
     }
 }

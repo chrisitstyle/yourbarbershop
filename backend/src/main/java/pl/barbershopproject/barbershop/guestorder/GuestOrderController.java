@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.net.URI;
@@ -20,15 +21,17 @@ class GuestOrderController {
     private final GuestOrderService guestOrderService;
 
     @PostMapping
-    public ResponseEntity<GuestOrder> addGuestOrder(@Valid @RequestBody GuestOrderCreationDTO guestOrderCreationDTO) {
-        GuestOrder savedGuestOrder = guestOrderService.addGuestOrder(guestOrderCreationDTO);
+    public ResponseEntity<GuestOrderCreationResponseDTO> addGuestOrder(
+            @Valid @RequestBody GuestOrderCreationDTO guestOrderCreationDTO
+    ) {
+        GuestOrderCreationResponseDTO response = guestOrderService.addGuestOrder(guestOrderCreationDTO);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(savedGuestOrder.getIdGuestOrder())
+                .buildAndExpand(response.guestOrderId())
                 .toUri();
 
-        return ResponseEntity.created(location).body(savedGuestOrder);
+        return ResponseEntity.created(location).body(response);
     }
 
     @GetMapping
@@ -44,8 +47,10 @@ class GuestOrderController {
     }
 
     @PutMapping("/{idGuestOrder}")
-    public GuestOrder updateGuestOrder(@Valid @RequestBody GuestOrder updatedGuestOrder,
-                                       @PathVariable Long idGuestOrder) {
+    public GuestOrder updateGuestOrder(
+            @Valid @RequestBody GuestOrder updatedGuestOrder,
+            @PathVariable Long idGuestOrder
+    ) {
         return guestOrderService.updateGuestOrder(updatedGuestOrder, idGuestOrder);
     }
 
