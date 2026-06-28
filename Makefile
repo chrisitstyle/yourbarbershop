@@ -1,6 +1,14 @@
+ifneq (,$(wildcard .env))
+include .env
+export
+endif
+
+STRIPE_FORWARD_URL ?= http://localhost:8080/stripe/webhook
+
 .PHONY: help up up-nc down stop restart ps db-up logs logs-live logs-backend logs-frontend logs-db logs-valkey \
         backend-run backend-test backend-build frontend-install frontend-dev frontend-build \
-        act-frontend act-backend act-db act-security db-shell valkey-shell clean clean-all
+        act-frontend act-backend act-db act-security db-shell valkey-shell \
+        stripe-listen stripe-trigger clean clean-all
 
 help:
 	@echo "Available commands:"
@@ -39,6 +47,10 @@ help:
 	@echo "  make act-backend       - Run backend GitHub Actions workflow locally"
 	@echo "  make act-db            - Run database migration check workflow locally"
 	@echo "  make act-security      - Run security audit workflow locally"
+	@echo ""
+	@echo "Stripe:"
+	@echo "  make stripe-listen     - Listen for Stripe webhooks and forward them to backend"
+	@echo "  make stripe-trigger    - Trigger checkout.session.completed Stripe event"
 	@echo ""
 	@echo "Shells:"
 	@echo "  make db-shell          - Open MySQL shell inside database container"
@@ -116,6 +128,12 @@ act-db:
 act-security:
 	act push -W .github/workflows/security-audit.yaml -j audit-frontend
 
+stripe-listen:
+	stripe listen --api-key "$(STRIPE_SECRET_KEY)" --forward-to "$(STRIPE_FORWARD_URL)"
+
+stripe-trigger:
+	stripe trigger checkout.session.completed --api-key "$(STRIPE_SECRET_KEY)"
+
 db-shell:
 	docker exec -it barbershop-db mysql -u root -p
 
@@ -129,4 +147,3 @@ clean:
 clean-all:
 	docker compose down -v --remove-orphans --rmi all
 	docker system prune -af
-
