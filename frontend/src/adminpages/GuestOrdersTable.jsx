@@ -27,6 +27,8 @@ const guestOrderFieldsHeaders = [
   "admin.guestOrders.orderDate",
   "admin.guestOrders.visitDate",
   "admin.guestOrders.status",
+  "admin.guestOrders.paymentMethod",
+  "admin.guestOrders.paymentStatus",
 ];
 
 const guestOrderFields = [
@@ -40,6 +42,8 @@ const guestOrderFields = [
   "orderDate",
   "visitDate",
   "status",
+  "paymentMethod",
+  "paymentStatus",
 ];
 
 const GuestOrderRow = memo(function GuestOrderRow({
@@ -96,7 +100,9 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
       order.lastname
     } ${order.email} ${order.offer?.kind || ""} ${order.offer?.cost || ""} ${
       order.phonenumber || ""
-    } ${order.orderDate} ${order.visitDate} ${order.status}`;
+    } ${order.orderDate} ${order.visitDate} ${order.status} ${
+      order.paymentMethod || ""
+    } ${order.paymentStatus || ""}`;
 
     return searchStr.toLowerCase().includes(term.toLowerCase());
   };

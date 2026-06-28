@@ -15,12 +15,28 @@ const RegisterOrderLogged = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("GOTOWKA");
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const { offers, isLoading: isLoadingOffers, error } = useOffers();
+  const { offers, isLoading: isLoadingOffers } = useOffers();
+
+  const paymentMethods = [
+    {
+      value: "GOTOWKA",
+      label: t("orders.paymentCash", "Gotówka na miejscu"),
+    },
+    {
+      value: "KARTA_NA_MIEJSCU",
+      label: t("orders.paymentCardOnSite", "Karta na miejscu"),
+    },
+    {
+      value: "KARTA_ONLINE",
+      label: t("orders.paymentCardOnline", "Karta online"),
+    },
+  ];
 
   const handleOfferChange = (e) => {
     const selectedOfferId = e.target.value;
@@ -35,8 +51,13 @@ const RegisterOrderLogged = () => {
     setSelectedMinute(parseInt(e.target.value, 10));
   };
 
+  const handlePaymentMethodChange = (e) => {
+    setPaymentMethod(e.target.value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setShowErrorAlert(false);
     setIsLoading(true);
 
     try {
@@ -47,9 +68,15 @@ const RegisterOrderLogged = () => {
           selectedHour,
           selectedMinute,
         ),
+        paymentMethod,
       };
 
-      await createOrder(orderCreationData, user.token);
+      const response = await createOrder(orderCreationData, user.token);
+
+      if (response?.checkoutUrl) {
+        window.location.href = response.checkoutUrl;
+        return;
+      }
 
       navigate(`/profile/${user.id}?registrationOrderSuccess=true`);
     } catch (error) {
@@ -71,6 +98,7 @@ const RegisterOrderLogged = () => {
             <h4 className="display-6 text-center">
               {t("orders.registerTitle")}
             </h4>
+
             <Alert
               variant="danger"
               show={showErrorAlert}
@@ -79,6 +107,7 @@ const RegisterOrderLogged = () => {
             >
               {t("orders.errorMessage")}
             </Alert>
+
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label htmlFor="selectoffer" className="form-label">
@@ -90,6 +119,7 @@ const RegisterOrderLogged = () => {
                   value={selectedOffer}
                   onChange={handleOfferChange}
                   required
+                  disabled={isLoading}
                 >
                   <option value="" disabled></option>
                   {offers.map((offer) => (
@@ -99,6 +129,7 @@ const RegisterOrderLogged = () => {
                   ))}
                 </select>
               </div>
+
               <div className="mb-3">
                 <label htmlFor="selectdate" className="form-label">
                   {t("orders.selectDate")}
@@ -111,8 +142,10 @@ const RegisterOrderLogged = () => {
                   onChange={(e) => setSelectedDate(e.target.value)}
                   min={new Date().toISOString().split("T")[0]}
                   required
+                  disabled={isLoading}
                 />
               </div>
+
               <div className="mb-3">
                 <label htmlFor="selecttime" className="form-label">
                   {t("orders.selectTimeFull")}
@@ -124,6 +157,7 @@ const RegisterOrderLogged = () => {
                     value={selectedHour}
                     onChange={handleHourChange}
                     required
+                    disabled={isLoading}
                   >
                     {[...Array(12).keys()].map((hour) => (
                       <option key={hour} value={hour + 8}>
@@ -131,12 +165,14 @@ const RegisterOrderLogged = () => {
                       </option>
                     ))}
                   </select>
+
                   <select
                     className="form-select"
                     id="selectminute"
                     value={selectedMinute}
                     onChange={handleMinuteChange}
                     required
+                    disabled={isLoading}
                   >
                     {[...Array(2).keys()].map((half) => (
                       <option key={half * 30} value={half * 30}>
@@ -146,6 +182,27 @@ const RegisterOrderLogged = () => {
                   </select>
                 </div>
               </div>
+
+              <div className="mb-3">
+                <label htmlFor="paymentMethod" className="form-label">
+                  {t("orders.paymentMethod", "Metoda płatności")}
+                </label>
+                <select
+                  className="form-select"
+                  id="paymentMethod"
+                  value={paymentMethod}
+                  onChange={handlePaymentMethodChange}
+                  required
+                  disabled={isLoading}
+                >
+                  {paymentMethods.map((method) => (
+                    <option key={method.value} value={method.value}>
+                      {method.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <ButtonSpinner
                 type="submit"
                 variant="dark"

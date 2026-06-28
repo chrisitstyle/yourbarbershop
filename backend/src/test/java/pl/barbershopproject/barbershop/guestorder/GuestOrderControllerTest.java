@@ -15,6 +15,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.util.Status;
 import pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities;
 import tools.jackson.databind.ObjectMapper;
@@ -43,35 +45,36 @@ class GuestOrderControllerTest {
 
     @Test
     void addGuestOrder_ReturnsCreated() throws Exception {
-        // given
         GuestOrderCreationDTO inputDto = GuestOrderTestEntities.createGuestOrderCreationDTO();
-        GuestOrder savedOrder = GuestOrderTestEntities.createGuestOrder();
+        GuestOrderCreationResponseDTO responseDTO =
+                GuestOrderTestEntities.createGuestOrderCreationResponseDTO();
 
         Mockito.when(guestOrderService.addGuestOrder(Mockito.any(GuestOrderCreationDTO.class)))
-                .thenReturn(savedOrder);
+                .thenReturn(responseDTO);
 
-        // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/guestorders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.idGuestOrder").value(1L))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.firstname").value("GuestJohn"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("guestjohndoe@example.com"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.guestOrderId").value(1L))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentMethod").value("GOTOWKA"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
     }
 
     @Test
     void getAllGuestOrders_ReturnsAll_WhenNoStatusParam() throws Exception {
         // given
-        GuestOrder guestOrder = GuestOrderTestEntities.createGuestOrder();
-        Mockito.when(guestOrderService.getAllGuestOrders()).thenReturn(List.of(guestOrder));
+        GuestOrderDTO guestOrderDTO = GuestOrderTestEntities.createGuestOrderDTO();
+        Mockito.when(guestOrderService.getAllGuestOrders()).thenReturn(List.of(guestOrderDTO));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.size()").value(1))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].firstname").value("GuestJohn"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].firstname").value("GuestJohn"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].paymentMethod").value("GOTOWKA"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
 
         Mockito.verify(guestOrderService).getAllGuestOrders();
     }
@@ -79,18 +82,19 @@ class GuestOrderControllerTest {
     @Test
     void getAllGuestOrders_ReturnsFiltered_WhenStatusParamProvided() throws Exception {
         // given
-        GuestOrder guestOrder = GuestOrderTestEntities.createGuestOrder();
+        GuestOrderDTO guestOrderDTO = GuestOrderTestEntities.createGuestOrderDTO();
         Status statusParam = Status.NOWE;
 
         Mockito.when(guestOrderService.getGuestOrdersByStatus(statusParam))
-                .thenReturn(List.of(guestOrder));
+                .thenReturn(List.of(guestOrderDTO));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders")
                         .queryParam("status", "NOWE"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.size()").value(1))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].status").value("NOWE"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].status").value("NOWE"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].paymentMethod").value("GOTOWKA"));
 
         Mockito.verify(guestOrderService).getGuestOrdersByStatus(statusParam);
     }
@@ -98,15 +102,16 @@ class GuestOrderControllerTest {
     @Test
     void getGuestOrder_ReturnsOrder_WhenExists() throws Exception {
         // given
-        GuestOrder guestOrder = GuestOrderTestEntities.createGuestOrder();
+        GuestOrderDTO guestOrderDTO = GuestOrderTestEntities.createGuestOrderDTO();
 
-        Mockito.when(guestOrderService.getGuestOrder(1L)).thenReturn(guestOrder);
+        Mockito.when(guestOrderService.getGuestOrder(1L)).thenReturn(guestOrderDTO);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders/1"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.idGuestOrder").value(1L))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.lastname").value("GuestDoe"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.lastname").value("GuestDoe"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
     }
 
     @Test

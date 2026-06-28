@@ -38,6 +38,7 @@ public class SecurityWebConfig {
                                 .requestMatchers("/register", "/login", "/login/email-code/**",
                                         "/forgot-password", "/reset-password**",
                                         "/oauth2/**","/login/oauth2/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/stripe/webhook").permitAll()
                                 // Users endpoints
                                 .requestMatchers(HttpMethod.POST, "/users").hasAuthority(Role.ADMIN.toString())
                                 .requestMatchers(HttpMethod.GET, "/users").hasAuthority(Role.ADMIN.toString())

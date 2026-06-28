@@ -3,6 +3,7 @@ package pl.barbershopproject.barbershop.email.template;
 public final class OrderConfirmationEmailTemplate {
 
     private static final String SUBJECT = "Potwierdzenie rezerwacji wizyty";
+
     private OrderConfirmationEmailTemplate() {
     }
 
@@ -14,7 +15,9 @@ public final class OrderConfirmationEmailTemplate {
             String firstname,
             String formattedVisitDate,
             String offerKind,
-            String offerCost
+            String offerCost,
+            String paymentMethod,
+            String paymentStatus
     ) {
         return """
                 Cześć %s!
@@ -24,6 +27,8 @@ public final class OrderConfirmationEmailTemplate {
                 Data wizyty: %s.
                 Wybrana oferta: %s
                 Koszt usługi: %s zł.
+                Metoda płatności: %s
+                Status płatności: %s
 
                 Zapraszamy w uzgodnionym terminie do nas!
 
@@ -33,7 +38,9 @@ public final class OrderConfirmationEmailTemplate {
                 fallback(firstname, "Kliencie"),
                 fallback(formattedVisitDate, "-"),
                 fallback(offerKind, "-"),
-                fallback(offerCost, "-")
+                fallback(offerCost, "-"),
+                formatPaymentMethod(paymentMethod),
+                formatPaymentStatus(paymentStatus)
         );
     }
 
@@ -41,12 +48,16 @@ public final class OrderConfirmationEmailTemplate {
             String firstname,
             String formattedVisitDate,
             String offerKind,
-            String offerCost
+            String offerCost,
+            String paymentMethod,
+            String paymentStatus
     ) {
         String safeFirstname = escapeHtml(fallback(firstname, "Kliencie"));
         String safeVisitDate = escapeHtml(fallback(formattedVisitDate, "-"));
         String safeOfferKind = escapeHtml(fallback(offerKind, "-"));
         String safeOfferCost = escapeHtml(fallback(offerCost, "-"));
+        String safePaymentMethod = escapeHtml(formatPaymentMethod(paymentMethod));
+        String safePaymentStatus = escapeHtml(formatPaymentStatus(paymentStatus));
 
         return """
                 <!doctype html>
@@ -101,11 +112,27 @@ public final class OrderConfirmationEmailTemplate {
                                     </td>
                                   </tr>
                                   <tr>
-                                    <td style="padding:14px 18px; background-color:#fafafa; color:#71717a; font-size:13px;">
+                                    <td style="padding:14px 18px; background-color:#fafafa; color:#71717a; font-size:13px; border-bottom:1px solid #e4e4e7;">
                                       Koszt usługi
                                     </td>
-                                    <td style="padding:14px 18px; color:#18181b; font-size:14px; font-weight:600;">
+                                    <td style="padding:14px 18px; color:#18181b; font-size:14px; font-weight:600; border-bottom:1px solid #e4e4e7;">
                                       %s zł
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding:14px 18px; background-color:#fafafa; color:#71717a; font-size:13px; border-bottom:1px solid #e4e4e7;">
+                                      Metoda płatności
+                                    </td>
+                                    <td style="padding:14px 18px; color:#18181b; font-size:14px; font-weight:600; border-bottom:1px solid #e4e4e7;">
+                                      %s
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding:14px 18px; background-color:#fafafa; color:#71717a; font-size:13px;">
+                                      Status płatności
+                                    </td>
+                                    <td style="padding:14px 18px; color:#18181b; font-size:14px; font-weight:600;">
+                                      %s
                                     </td>
                                   </tr>
                                 </table>
@@ -140,8 +167,39 @@ public final class OrderConfirmationEmailTemplate {
                 safeFirstname,
                 safeVisitDate,
                 safeOfferKind,
-                safeOfferCost
+                safeOfferCost,
+                safePaymentMethod,
+                safePaymentStatus
         );
+    }
+
+    private static String formatPaymentMethod(String paymentMethod) {
+        if (paymentMethod == null || paymentMethod.isBlank()) {
+            return "-";
+        }
+
+        return switch (paymentMethod) {
+            case "GOTOWKA" -> "Gotówka na miejscu";
+            case "KARTA_ONLINE" -> "Karta online";
+            case "KARTA_NA_MIEJSCU" -> "Karta na miejscu";
+            default -> paymentMethod;
+        };
+    }
+
+    private static String formatPaymentStatus(String paymentStatus) {
+        if (paymentStatus == null || paymentStatus.isBlank()) {
+            return "-";
+        }
+
+        return switch (paymentStatus) {
+            case "NIE_WYMAGANA" -> "Niewymagana";
+            case "OCZEKUJE_NA_PLATNOSC" -> "Oczekuje na płatność";
+            case "OPLACONA" -> "Opłacona";
+            case "NIEUDANA" -> "Nieudana";
+            case "WYGASLA" -> "Wygasła";
+            case "ZWROCONA" -> "Zwrócona";
+            default -> paymentStatus;
+        };
     }
 
     private static String fallback(String value, String fallback) {

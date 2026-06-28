@@ -30,6 +30,14 @@ public class OrderNotificationListener {
         String formattedDate = event.visitDate().format(POLISH_FORMATTER);
         String offerCost = String.valueOf(event.offerCost());
 
+        String paymentMethod = event.paymentMethod() != null
+                ? event.paymentMethod().name()
+                : null;
+
+        String paymentStatus = event.paymentStatus() != null
+                ? event.paymentStatus().name()
+                : null;
+
         emailSenderService.sendHtmlEmail(
                 event.email(),
                 OrderConfirmationEmailTemplate.subject(),
@@ -37,13 +45,17 @@ public class OrderNotificationListener {
                         event.firstname(),
                         formattedDate,
                         event.offerKind(),
-                        offerCost
+                        offerCost,
+                        paymentMethod,
+                        paymentStatus
                 ),
                 OrderConfirmationEmailTemplate.html(
                         event.firstname(),
                         formattedDate,
                         event.offerKind(),
-                        offerCost
+                        offerCost,
+                        paymentMethod,
+                        paymentStatus
                 )
         );
     }

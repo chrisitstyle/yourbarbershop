@@ -26,6 +26,8 @@ const orderFieldsHeaders = [
   "admin.orders.orderDate",
   "admin.orders.visitDate",
   "admin.orders.status",
+  "admin.orders.paymentMethod",
+  "admin.orders.paymentStatus",
 ];
 
 const orderFields = [
@@ -38,6 +40,8 @@ const orderFields = [
   "orderDate",
   "visitDate",
   "status",
+  "paymentMethod",
+  "paymentStatus",
 ];
 
 const OrderRow = memo(function OrderRow({
@@ -92,7 +96,9 @@ const OrdersTable = ({ onDeleteOrder }) => {
       order.user?.lastname || ""
     } ${order.user?.email || ""} ${order.offer?.kind || ""} ${
       order.offer?.cost || ""
-    } ${order.orderDate} ${order.visitDate} ${order.status}`;
+    } ${order.orderDate} ${order.visitDate} ${order.status} ${
+      order.paymentMethod || ""
+    } ${order.paymentStatus || ""}`;
 
     return searchStr.toLowerCase().includes(term.toLowerCase());
   };

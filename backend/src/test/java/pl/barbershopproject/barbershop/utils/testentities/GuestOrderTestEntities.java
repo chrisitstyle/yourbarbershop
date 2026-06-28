@@ -2,7 +2,11 @@ package pl.barbershopproject.barbershop.utils.testentities;
 
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
@@ -108,7 +112,34 @@ public final class GuestOrderTestEntities {
                 "123456789",
                 "guestjohndoe@example.com",
                 1L,
-                LocalDateTime.of(2026, 10, 17, 17, 0)
+                LocalDateTime.of(2026, 10, 17, 17, 0),
+                PaymentMethod.GOTOWKA
+        );
+    }
+
+
+    public static GuestOrderCreationResponseDTO createGuestOrderCreationResponseDTO() {
+        return new GuestOrderCreationResponseDTO(
+                1L,
+                PaymentMethod.GOTOWKA,
+                PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                null
+        );
+    }
+
+    public static GuestOrderDTO createGuestOrderDTO() {
+        return new GuestOrderDTO(
+                1L,
+                "GuestJohn",
+                "GuestDoe",
+                "123456789",
+                "guestjohndoe@example.com",
+                createOffer(),
+                LocalDateTime.of(2026, 1, 16, 15, 0),
+                LocalDateTime.of(2026, 10, 17, 17, 0),
+                Status.NOWE,
+                PaymentMethod.GOTOWKA,
+                PaymentStatus.OCZEKUJE_NA_PLATNOSC
         );
     }
 

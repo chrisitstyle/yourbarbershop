@@ -4,6 +4,7 @@ package pl.barbershopproject.barbershop.guestorder;
 import jakarta.persistence.*;
 import lombok.*;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
@@ -28,13 +29,15 @@ public class GuestOrder {
     @JoinColumn(name = "id_offer")
     private Offer offer;
 
-    @Column (name = "order_date")
+    @Column(name = "order_date")
     private LocalDateTime orderDate;
 
-    @Column (name = "visit_date")
+    @Column(name = "visit_date")
 
     private LocalDateTime visitDate;
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @OneToOne(mappedBy = "guestOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Payment payment;
 }

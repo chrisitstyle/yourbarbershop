@@ -10,9 +10,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
 import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
+import pl.barbershopproject.barbershop.payment.*;
 import pl.barbershopproject.barbershop.util.Status;
 import pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities;
 import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
@@ -40,6 +43,12 @@ class GuestOrderServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private StripeCheckoutService stripeCheckoutService;
+
+    @Mock
+    private PaymentRepository paymentRepository;
+
     @InjectMocks
     private GuestOrderService guestOrderService;
 
@@ -55,24 +64,28 @@ class GuestOrderServiceTest {
     }
 
     @Test
-    void addGuestOrder_ShouldReturnGuestOrder() {
+    void addGuestOrder_ShouldReturnGuestOrderCreationResponse() {
         GuestOrderCreationDTO dto = GuestOrderTestEntities.createGuestOrderCreationDTO();
 
         when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.of(offer));
         when(guestOrderRepository.save(any(GuestOrder.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+        when(paymentRepository.save(any(Payment.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        GuestOrder guestOrderResult = guestOrderService.addGuestOrder(dto);
+        GuestOrderCreationResponseDTO result = guestOrderService.addGuestOrder(dto);
 
-        assertNotNull(guestOrderResult);
-        assertEquals(dto.visitDate(), guestOrderResult.getVisitDate());
-        assertEquals(offer, guestOrderResult.getOffer());
-        assertEquals(Status.NOWE, guestOrderResult.getStatus());
+        assertNotNull(result);
+        assertEquals(PaymentMethod.GOTOWKA, result.paymentMethod());
+        assertEquals(PaymentStatus.OCZEKUJE_NA_PLATNOSC, result.paymentStatus());
+        assertNull(result.checkoutUrl());
 
         verify(offerRepository, times(1)).findById(dto.idOffer());
         verify(appointmentAvailabilityService, times(1)).reserveSlot(dto.visitDate());
         verify(guestOrderRepository, times(1)).save(any(GuestOrder.class));
+        verify(paymentRepository, times(1)).save(any(Payment.class));
         verify(eventPublisher, times(1)).publishEvent(any(OrderCreatedEvent.class));
+        verifyNoInteractions(stripeCheckoutService);
     }
 
     @Test
@@ -92,6 +105,7 @@ class GuestOrderServiceTest {
         verify(appointmentAvailabilityService, never()).reserveSlot(any());
         verify(guestOrderRepository, never()).save(any(GuestOrder.class));
         verify(eventPublisher, never()).publishEvent(any());
+        verify(paymentRepository, never()).save(any(Payment.class));
     }
 
     @Test
@@ -112,28 +126,29 @@ class GuestOrderServiceTest {
         verify(appointmentAvailabilityService, times(1)).reserveSlot(dto.visitDate());
         verify(guestOrderRepository, never()).save(any(GuestOrder.class));
         verify(eventPublisher, never()).publishEvent(any());
+        verify(paymentRepository, never()).save(any(Payment.class));
     }
 
     @Test
-    void getAllGuestOrders_ShouldReturnListOfGuestOrders() {
+    void getAllGuestOrders_ShouldReturnListOfGuestOrderDTOs() {
         when(guestOrderRepository.findAll()).thenReturn(List.of(guestOrder));
 
-        List<GuestOrder> guestOrderResult = guestOrderService.getAllGuestOrders();
+        List<GuestOrderDTO> result = guestOrderService.getAllGuestOrders();
 
-        assertEquals(1, guestOrderResult.size());
-        assertEquals(guestOrder, guestOrderResult.getFirst());
+        assertEquals(1, result.size());
+        assertEquals(guestOrder.getIdGuestOrder(), result.getFirst().idGuestOrder());
 
         verify(guestOrderRepository, times(1)).findAll();
     }
 
     @Test
-    void getGuestOrder_ShouldReturnGuestOrder_WhenOrderExists() {
+    void getGuestOrder_ShouldReturnGuestOrderDTO_WhenOrderExists() {
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
 
-        GuestOrder guestOrderResult = guestOrderService.getGuestOrder(1L);
+        GuestOrderDTO result = guestOrderService.getGuestOrder(1L);
 
-        assertNotNull(guestOrderResult);
-        assertEquals(guestOrder, guestOrderResult);
+        assertNotNull(result);
+        assertEquals(guestOrder.getIdGuestOrder(), result.idGuestOrder());
 
         verify(guestOrderRepository, times(1)).findById(1L);
     }
@@ -153,16 +168,15 @@ class GuestOrderServiceTest {
     }
 
     @Test
-    void getGuestOrdersByStatus_ShouldReturnGuestOrders_WhenStatusExists() {
+    void getGuestOrdersByStatus_ShouldReturnGuestOrderDTOs_WhenStatusExists() {
         when(guestOrderRepository.findGuestOrdersByStatus(Status.NOWE))
                 .thenReturn(List.of(guestOrder));
 
-        List<GuestOrder> guestOrdersByStatusResult =
-                guestOrderService.getGuestOrdersByStatus(Status.NOWE);
+        List<GuestOrderDTO> result = guestOrderService.getGuestOrdersByStatus(Status.NOWE);
 
-        assertNotNull(guestOrdersByStatusResult);
-        assertEquals(1, guestOrdersByStatusResult.size());
-        assertEquals(guestOrder, guestOrdersByStatusResult.getFirst());
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(Status.NOWE, result.getFirst().status());
 
         verify(guestOrderRepository, times(1)).findGuestOrdersByStatus(Status.NOWE);
     }
