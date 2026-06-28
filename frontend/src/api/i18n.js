@@ -422,7 +422,6 @@ const resources = {
           deleteLabel: "service",
           id: "Service ID",
           service: "Service",
-          cost: "Cost",
         },
         guestOrders: {
           title: "Guest Appointments",
