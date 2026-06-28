@@ -25,6 +25,9 @@ import AdminRoute from "./routes/AdminRoute";
 import UserRoute from "./routes/UserRoute";
 import NotFound from "./pages/NotFound";
 import OAuth2Redirect from "./OAuth2Redirect.jsx";
+import PaymentSuccess from "./pages/PaymentSuccess.jsx";
+import PaymentCancel from "./pages/PaymentCancel";
+
 function App() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light",
@@ -90,6 +93,9 @@ function App() {
                 element={<RegisterOrderWithoutAcc />}
               ></Route>
               <Route path="*" element={<NotFound />} />
+              {/* Stripe payment routes */}
+              <Route path="/payment/success" element={<PaymentSuccess />} />
+              <Route path="/payment/cancel" element={<PaymentCancel />} />
             </Routes>
           </main>
           <Footer />

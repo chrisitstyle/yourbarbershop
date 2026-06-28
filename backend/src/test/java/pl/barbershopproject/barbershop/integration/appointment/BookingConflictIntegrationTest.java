@@ -24,7 +24,6 @@ import tools.jackson.databind.node.ObjectNode;
 import java.time.LocalDateTime;
 import java.time.Month;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -104,8 +103,9 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(firstGuestOrder)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.idGuestOrder").exists())
-                .andExpect(jsonPath("$.visitDate").exists());
+                .andExpect(jsonPath("$.guestOrderId").exists())
+                .andExpect(jsonPath("$.paymentMethod").value("GOTOWKA"))
+                .andExpect(jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
 
         mockMvc.perform(post("/guestorders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -142,7 +142,9 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(guestOrder)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.idGuestOrder").exists());
+                .andExpect(jsonPath("$.guestOrderId").exists())
+                .andExpect(jsonPath("$.paymentMethod").value("GOTOWKA"))
+                .andExpect(jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
 
         mockMvc.perform(post("/orders")
                         .header("Authorization", "Bearer " + token)
@@ -181,7 +183,9 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userOrder)))
                 .andExpect(status().isCreated())
-                .andExpect(content().string(containsString("Wizyta została dodana.")));
+                .andExpect(jsonPath("$.orderId").exists())
+                .andExpect(jsonPath("$.paymentMethod").value("GOTOWKA"))
+                .andExpect(jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
 
         mockMvc.perform(post("/guestorders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -212,7 +216,9 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(firstUserOrder)))
                 .andExpect(status().isCreated())
-                .andExpect(content().string(containsString("Wizyta została dodana.")));
+                .andExpect(jsonPath("$.orderId").exists())
+                .andExpect(jsonPath("$.paymentMethod").value("GOTOWKA"))
+                .andExpect(jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
 
         mockMvc.perform(post("/orders")
                         .header("Authorization", "Bearer " + token)
@@ -230,7 +236,8 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
     private ObjectNode createUserOrderRequest(Long offerId, LocalDateTime visitDate) {
         return objectMapper.createObjectNode()
                 .put("idOffer", offerId)
-                .put("visitDate", visitDate.toString());
+                .put("visitDate", visitDate.toString())
+                .put("paymentMethod", "GOTOWKA");
     }
 
     private ObjectNode createGuestOrderRequest(
@@ -246,7 +253,8 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                 .put("phonenumber", "123456789")
                 .put("email", email)
                 .put("idOffer", offerId)
-                .put("visitDate", visitDate.toString());
+                .put("visitDate", visitDate.toString())
+                .put("paymentMethod", "GOTOWKA");
     }
 
     private String createJwtTokenForUser(String email) {

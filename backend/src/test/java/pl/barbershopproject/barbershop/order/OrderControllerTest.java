@@ -15,7 +15,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
+import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities;
 import tools.jackson.databind.ObjectMapper;
 
@@ -42,25 +45,28 @@ class OrderControllerTest {
     @MockitoBean
     private StringRedisTemplate stringRedisTemplate;
 
-    @Test
-    void addOrder_ReturnsCreatedString() throws Exception {
-        // given
+    void addOrder_ReturnsCreated() throws Exception {
         OrderCreationDTO inputDto = OrderTestEntities.createOrderCreationDTO();
 
-        Order savedOrder = OrderTestEntities.orderBuilder()
-                .idOrder(10L)
-                .build();
+        OrderCreationResponseDTO responseDTO = new OrderCreationResponseDTO(
+                10L,
+                PaymentMethod.GOTOWKA,
+                PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                null
+        );
 
         Mockito.when(orderService.addOrder(Mockito.any(OrderCreationDTO.class), Mockito.any()))
-                .thenReturn(savedOrder);
+                .thenReturn(responseDTO);
 
-        // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
-                .andExpect(MockMvcResultMatchers.content().string("Wizyta została dodana. ID Wizyty: 10"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.orderId").value(10L))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentMethod").value("GOTOWKA"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.checkoutUrl").doesNotExist());
     }
 
     @Test

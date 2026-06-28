@@ -10,13 +10,16 @@ import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityServic
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
+import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.order.mapper.OrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
+import pl.barbershopproject.barbershop.payment.*;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -27,29 +30,57 @@ class OrderService {
     private final OrderRepository orderRepository;
     private final OfferRepository offerRepository;
     private final AppointmentAvailabilityService appointmentAvailabilityService;
+    private final StripeCheckoutService stripeCheckoutService;
+    private final PaymentRepository paymentRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     @CacheEvict(value = "orders", allEntries = true)
-    public Order addOrder(OrderCreationDTO orderCreationDTO, User user) {
+    public OrderCreationResponseDTO addOrder(OrderCreationDTO orderCreationDTO, User user) {
         Offer offer = offerRepository.findById(orderCreationDTO.idOffer())
                 .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + orderCreationDTO.idOffer() + " nie istnieje"));
 
         Order orderToSave = OrderCreationDTOMapper.toEntity(orderCreationDTO, user, offer);
-
         appointmentAvailabilityService.reserveSlot(orderToSave.getVisitDate());
 
         Order savedOrder = orderRepository.save(orderToSave);
 
-        eventPublisher.publishEvent(new OrderCreatedEvent(
-                savedOrder.getUser().getEmail(),
-                savedOrder.getUser().getFirstname(),
-                savedOrder.getVisitDate(),
-                savedOrder.getOffer().getKind(),
-                savedOrder.getOffer().getCost()
-        ));
+        Payment paymentToSave = Payment.builder()
+                .order(savedOrder)
+                .paymentMethod(orderCreationDTO.paymentMethod())
+                .paymentStatus(PaymentStatus.OCZEKUJE_NA_PLATNOSC)
+                .amount(offer.getCost())
+                .currency("PLN")
+                .createdAt(LocalDateTime.now())
+                .build();
 
-        return savedOrder;
+        Payment savedPayment = paymentRepository.save(paymentToSave);
+
+        if (savedPayment.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
+            StripeCheckoutSessionResponse checkoutSession = stripeCheckoutService.createCheckoutSession(
+                    savedPayment,
+                    offer
+            );
+
+            savedPayment.setStripeCheckoutSessionId(checkoutSession.sessionId());
+            paymentRepository.save(savedPayment);
+
+            return new OrderCreationResponseDTO(
+                    savedOrder.getIdOrder(),
+                    savedPayment.getPaymentMethod(),
+                    savedPayment.getPaymentStatus(),
+                    checkoutSession.checkoutUrl()
+            );
+        }
+
+        publishOrderCreatedEvent(savedOrder, savedPayment);
+
+        return new OrderCreationResponseDTO(
+                savedOrder.getIdOrder(),
+                savedPayment.getPaymentMethod(),
+                savedPayment.getPaymentStatus(),
+                null
+        );
     }
 
     @Cacheable(value = "orders", key = "'all'")
@@ -115,4 +146,15 @@ class OrderService {
         orderRepository.delete(order);
     }
 
+    private void publishOrderCreatedEvent(Order order, Payment payment) {
+        eventPublisher.publishEvent(new OrderCreatedEvent(
+                order.getUser().getEmail(),
+                order.getUser().getFirstname(),
+                order.getVisitDate(),
+                order.getOffer().getKind(),
+                order.getOffer().getCost(),
+                payment.getPaymentMethod(),
+                payment.getPaymentStatus()
+        ));
+    }
 }

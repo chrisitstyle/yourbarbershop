@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 
@@ -24,20 +25,22 @@ public class Order {
     private Long idOrder;
     @ManyToOne
     @JoinColumn(name = "id_user")
-    @JsonIgnoreProperties({"userOrders","enabled","authorities","accountNonLocked","credentialsNonExpired","accountNonExpired", "password","role"})
+    @JsonIgnoreProperties({"userOrders", "enabled", "authorities", "accountNonLocked", "credentialsNonExpired", "accountNonExpired", "password", "role"})
     private User user;
     @ManyToOne
     @JoinColumn(name = "id_offer")
     private Offer offer;
 
-    @Column (name = "order_date")
+    @Column(name = "order_date")
     private LocalDateTime orderDate;
 
-    @Column (name = "visit_date")
+    @Column(name = "visit_date")
 
     private LocalDateTime visitDate;
 
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Payment payment;
 }

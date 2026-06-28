@@ -17,6 +17,8 @@ The application provides comprehensive management tools:
 - **Photo Gallery** - Showcase barber portfolio and work examples stored in Supabase
 - **Password Recovery** - Secure password reset functionality
 - **Guest Orders** - Allow non-registered customers to book appointments
+- **Stripe Online Payments** - Support online card payments through Stripe Checkout with webhook-based payment confirmation
+- **Payment Management** - Store payment method, payment status, Stripe Checkout Session ID, Payment Intent ID, amount, currency, and paid timestamp in a dedicated `payment` table
 - **Email Notifications System** - Automated appointment confirmations sent directly to customers' email addresses
 - **Automated Database Migrations** - Robust schema management and versioning with **Flyway**.
 - **Integration Testing** - Robust testing suite ensuring system reliability using **Testcontainers**.
@@ -27,6 +29,7 @@ The application provides comprehensive management tools:
 - [x] Email notifications system
 - [x] reCAPTCHA Bot Protection
 - [x] Passwordless email OTP login
+- [x] Stripe Checkout online payments
 - [ ] Customizable user avatars
 - [ ] SMS appointment reminders
 - [ ] Analytics dashboard
@@ -41,6 +44,7 @@ The application provides comprehensive management tools:
 - **Valkey (Redis)** - High-performance data structure store used for efficient caching and short-lived email login OTP data
 - **OAuth2 & JWT** - Secure authentication with external providers and JSON Web Tokens
 - **Google reCAPTCHA API** - Server-side validation of user interactions
+- **Stripe API** - Online card payments with Stripe Checkout and webhook-based payment status updates
 - **Gradle** - Build automation tool
 - **MySQL** - Relational database management
 - **Lombok** - Reduce boilerplate code
@@ -56,6 +60,7 @@ The application provides comprehensive management tools:
 
 - **Docker** - Containerization for easy deployment using custom multi-stage builds (_DockerFileBackend_, _DockerFileFrontend_)
 - **Testcontainers** - Used for spinning up real Docker containers (MySQL, Redis/Valkey) during integration tests to ensure environment parity
+- **WireMock** - Used for testing Stripe integration scenarios without calling the real Stripe API
 - **Supabase** - Cloud storage for barber portfolio images and photo gallery
 
 ## 🚀 Getting Started
@@ -68,6 +73,8 @@ The application provides comprehensive management tools:
 - Valkey server (Docker files provide)
 - Supabase account (for photo storage)
 - Google reCAPTCHA Keys (Site Key and Secret Key)
+- Stripe account and test API keys
+- Stripe CLI (recommended for local webhook testing)
 - Docker (optional)
 
 ### Installation
@@ -79,7 +86,7 @@ git clone https://github.com/chrisitstyle/yourbarbershop.git
 cd yourbarbershop
 ```
 
-**2.Database Initialization**
+**2. Database Initialization**
 
 YourBarbershop uses **Flyway** for automatic database setup. You no longer need to manually import SQL dumps.
 
@@ -148,7 +155,31 @@ To enable bot protection, you need to generate API keys from Google:
 - Add _localhost_ to the list of allowed domains.
 - Copy your **Site Key** and **Secret Key**.
 
-**6. Configure environment variables**
+**6. Configure Stripe Payments**
+
+To enable online card payments, create or use a Stripe account in test mode and copy your test **Secret key** from the Stripe Dashboard.
+
+For local webhook testing, install and log in to the Stripe CLI. Then run the listener with the same Stripe secret key that your backend uses.
+
+You can run the listener directly:
+
+```powershell
+stripe listen --api-key sk_test_your_secret_key --forward-to http://localhost:8080/stripe/webhook
+```
+
+Or use the Makefile command from the project root:
+
+```bash
+make stripe-listen
+```
+
+The Makefile loads variables from the root `.env` file if it exists, so `make stripe-listen` uses `STRIPE_SECRET_KEY` and forwards events to `STRIPE_FORWARD_URL` (`http://localhost:8080/stripe/webhook` by default).
+
+The command prints a webhook signing secret beginning with `whsec_`. Use that value as `STRIPE_WEBHOOK_SECRET` in your backend environment and restart the backend after changing it.
+
+> **Important**: The Stripe listener must use the same `sk_test_...` key as the backend. Otherwise, Checkout Sessions may be created successfully, but local webhook events will not reach your application.
+
+**7. Configure environment variables**
 
 **Backend configuration** - Create `backend/.env` file:
 
@@ -173,6 +204,12 @@ VALKEY_PORT=6379 (default)
 
 # Google reCAPTCHA Secret Key
 GOOGLE_RECAPTCHA_SECRET=your-recaptcha-secret-key
+
+# Stripe Payments
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_signing_secret
+FRONTEND_URL=http://localhost:3000
+STRIPE_FORWARD_URL=http://localhost:8080/stripe/webhook
 ```
 
 > **Note**: `JWT_EXPIRATION_HOURS` is optional. If it is not set, the backend uses the default value from `JwtService` - 8 hours.
@@ -202,9 +239,18 @@ spring. datasource.password=${MYSQL_PASSWORD}
 # Mail configuration
 spring.mail.username=${MAIL_USERNAME}
 spring.mail.password=${MAIL_PASSWORD}
+
+# Stripe configuration
+stripe.api-base-url=https://api.stripe.com
+stripe.secret-key=${STRIPE_SECRET_KEY}
+stripe.webhook-secret=${STRIPE_WEBHOOK_SECRET}
+stripe.currency=pln
+stripe.success-url=${FRONTEND_URL:http://localhost:3000}?payment=success
+stripe.cancel-url=${FRONTEND_URL:http://localhost:3000}?payment=cancel
 ```
 
 > **Security Note**: Never commit `.env` files to version control. Make sure they are included in `.gitignore`.
+> Stripe secret keys (`sk_test_...`, `sk_live_...`) and webhook signing secrets (`whsec_...`) are sensitive and must only be used on the backend.
 
 ### Authentication features
 
@@ -231,11 +277,70 @@ How it works:
 
 The OTP flow also includes request cooldowns and verification attempt limits to reduce abuse. The request endpoint returns a generic success message so it does not reveal whether an email address exists in the database.
 
-**7. Run the application**
+### Stripe payment flow
+
+YourBarbershop supports online card payments for registered user orders and guest orders through Stripe Checkout.
+
+Payment-related data is stored in a dedicated `payment` table instead of directly inside `user_order` or `guest_order`. Each payment is connected to either a registered user order or a guest order.
+
+Supported payment methods:
+
+- `GOTOWKA` - cash payment on site
+- `KARTA_NA_MIEJSCU` - card payment on site
+- `KARTA_ONLINE` - online card payment through Stripe Checkout
+
+Supported payment statuses:
+
+- `OCZEKUJE_NA_PLATNOSC` - payment is pending
+- `OPLACONA` - payment has been successfully completed
+- `NIEUDANA` - payment failed
+- `WYGASLA` - Stripe Checkout Session expired
+- `ZWROCONA` - payment was refunded
+- `NIE_WYMAGANA` - payment is not required for a given case
+
+Online payment flow:
+
+1. The customer selects a service, visit date, and payment method.
+2. For `KARTA_ONLINE`, the backend creates an order and a related payment record.
+3. The backend creates a Stripe Checkout Session and returns `checkoutUrl` to the frontend.
+4. The frontend redirects the customer to Stripe Checkout.
+5. Stripe sends webhook events to `POST /stripe/webhook`.
+6. After `checkout.session.completed` or `payment_intent.succeeded`, the backend updates the payment status to `OPLACONA`, stores the Stripe Payment Intent ID, and sets `paid_at`.
+
+Local webhook listener:
+
+```powershell
+stripe listen --api-key sk_test_your_secret_key --forward-to http://localhost:8080/stripe/webhook
+```
+
+Or with Makefile:
+
+```bash
+make stripe-listen
+```
+
+You can also trigger a sample `checkout.session.completed` event from the Stripe CLI with:
+
+```bash
+make stripe-trigger
+```
+
+This is useful for checking whether the webhook endpoint accepts Stripe events. A triggered sample event may not update a specific local `payment` row unless its metadata contains a matching `paymentId`.
+
+Use Stripe's test card for local testing:
+
+```text
+4242 4242 4242 4242
+```
+
+**8. Run the application**
 
 ```bash
 # Using Makefile (recommended)
-make up / make up-nc
+make up
+
+# Or rebuild without Docker cache
+make up-nc
 
 # Manual Backend
 cd backend
@@ -248,7 +353,7 @@ cd backend
 > - Navigate to `BarbershopApplication.java`
 > - Right-click and select "Run" or click the green play button
 
-**8. Install and run the frontend**
+**9. Install and run the frontend**
 
 ```bash
 cd frontend
@@ -287,6 +392,14 @@ JWT_SECRET_KEY=generate-your-secret-key
 JWT_EXPIRATION_HOURS=token-expiration-time-in-hours
 GOOGLE_RECAPTCHA_SECRET=your-recaptcha-secret-key-backend
 
+# Stripe Payments
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_signing_secret
+FRONTEND_URL=http://localhost:3000
+STRIPE_FORWARD_URL=http://localhost:8080/stripe/webhook
+STRIPE_SUCCESS_URL=http://localhost:3000/payment/success
+STRIPE_CANCEL_URL=http://localhost:3000/payment/cancel
+
 # Database
 MYSQL_ROOT_PASSWORD=your-root-password
 MYSQL_DATABASE=barbershop-with-roles
@@ -310,6 +423,8 @@ VALKEY_PORT=6379 # (default both)
 
 > **Note**: Passwordless email OTP login uses the configured mail provider to send one-time login codes and Valkey/Redis to store short-lived hashed codes, cooldowns, and attempt counters.
 
+> **Note**: For local Stripe webhook testing with Docker, keep the backend exposed on `http://localhost:8080` and run `make stripe-listen` from your host machine. You can also run `stripe listen --api-key sk_test_your_secret_key --forward-to http://localhost:8080/stripe/webhook` manually.
+
 Then run:
 
 ```bash
@@ -325,11 +440,32 @@ make up
 # Build and start all containers WITHOUT using cache (fresh build)
 make up-nc
 
-# Stop and remove all containers
+# Stop and remove all containers and volumes
 make down
+
+# Start the local Stripe webhook listener
+make stripe-listen
+
+# Trigger a sample Stripe Checkout completion event
+make stripe-trigger
 ```
 
-The `make up` command will automatically rebuild containers and remove old volumes before starting. Use `make up-nc` when you want to force Docker to ignore cached layers and build everything from scratch.
+The `make up` command automatically removes old volumes, rebuilds containers, and starts the stack. Use `make up-nc` when you want to force Docker to ignore cached layers and build everything from scratch.
+
+The Stripe Makefile commands use variables loaded from the root `.env` file:
+
+```env
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_FORWARD_URL=http://localhost:8080/stripe/webhook
+```
+
+Run the Stripe listener in a separate terminal while the backend is running:
+
+```bash
+make stripe-listen
+```
+
+When Stripe CLI prints a new `whsec_...` webhook signing secret, copy it to `STRIPE_WEBHOOK_SECRET` and restart the backend. Use `make stripe-trigger` only as a quick webhook smoke test; real Checkout payments are still the best way to verify payment metadata and database updates.
 
 ## Local GitHub Actions Testing with act
 
@@ -399,6 +535,7 @@ The application uses MySQL with the following main tables:
 - **offer** - Available barbershop services
 - **user_order** - Orders placed by registered users
 - **guest_order** - Orders placed by guest customers
+- **payment** - Payment records connected to user or guest orders, including payment method, payment status, Stripe Checkout Session ID, Payment Intent ID, amount, currency, and paid timestamp
 - **password_reset_token** - Password recovery tokens
 
 Email login OTP codes are stored in Valkey/Redis with TTL and are not persisted in MySQL.

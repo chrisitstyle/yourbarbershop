@@ -77,7 +77,9 @@ class SecurityAccessIntegrationTest extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(guestOrderData)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.idGuestOrder").exists());
+                .andExpect(jsonPath("$.guestOrderId").exists())
+                .andExpect(jsonPath("$.paymentMethod").value("GOTOWKA"))
+                .andExpect(jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
     }
 
     @DisplayName("Should return unauthorized when anonymous user accesses protected endpoints")
@@ -215,7 +217,9 @@ class SecurityAccessIntegrationTest extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(orderData)))
                 .andExpect(status().isCreated())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Wizyta została dodana.")));
+                .andExpect(jsonPath("$.orderId").exists())
+                .andExpect(jsonPath("$.paymentMethod").value("GOTOWKA"))
+                .andExpect(jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
     }
 
     private ObjectNode createOfferRequest() {
@@ -227,7 +231,8 @@ class SecurityAccessIntegrationTest extends BaseIntegrationTest {
     private ObjectNode createOrderRequest(Long offerId, LocalDateTime visitDate) {
         return objectMapper.createObjectNode()
                 .put("idOffer", offerId)
-                .put("visitDate", visitDate.toString());
+                .put("visitDate", visitDate.toString())
+                .put("paymentMethod", "GOTOWKA");
     }
 
     private ObjectNode createGuestOrderRequest(
@@ -243,7 +248,8 @@ class SecurityAccessIntegrationTest extends BaseIntegrationTest {
                 .put("phonenumber", "123456789")
                 .put("email", email)
                 .put("idOffer", offerId)
-                .put("visitDate", visitDate.toString());
+                .put("visitDate", visitDate.toString())
+                .put("paymentMethod", "GOTOWKA");
     }
 
     private String tokenFor(String email) {

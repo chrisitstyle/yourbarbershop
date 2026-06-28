@@ -55,6 +55,7 @@ help:
 	@echo "Shells:"
 	@echo "  make db-shell          - Open MySQL shell inside database container"
 	@echo "  make valkey-shell      - Open Valkey CLI inside Valkey container"
+.PHONY: up up-nc down stripe-listen stripe-trigger
 
 up:
 	docker compose down -v && docker compose up --build
@@ -147,3 +148,4 @@ clean:
 clean-all:
 	docker compose down -v --remove-orphans --rmi all
 	docker system prune -af
+	stripe trigger checkout.session.completed --api-key "$(STRIPE_SECRET_KEY)"

@@ -12,8 +12,10 @@ import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
+import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
+import pl.barbershopproject.barbershop.payment.*;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
@@ -43,6 +45,12 @@ class OrderServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private StripeCheckoutService stripeCheckoutService;
+
+    @Mock
+    private PaymentRepository paymentRepository;
+
     @InjectMocks
     private OrderService orderService;
 
@@ -71,19 +79,22 @@ class OrderServiceTest {
         when(offerRepository.findById(dto.idOffer())).thenReturn(Optional.of(offer));
         when(orderRepository.save(any(Order.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+        when(paymentRepository.save(any(Payment.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Order result = orderService.addOrder(dto, user);
+        OrderCreationResponseDTO result = orderService.addOrder(dto, user);
 
         assertNotNull(result);
-        assertEquals(dto.visitDate(), result.getVisitDate());
-        assertEquals(user, result.getUser());
-        assertEquals(offer, result.getOffer());
-        assertEquals(Status.NOWE, result.getStatus());
+        assertEquals(PaymentMethod.GOTOWKA, result.paymentMethod());
+        assertEquals(PaymentStatus.OCZEKUJE_NA_PLATNOSC, result.paymentStatus());
+        assertNull(result.checkoutUrl());
 
         verify(offerRepository, times(1)).findById(dto.idOffer());
         verify(appointmentAvailabilityService, times(1)).reserveSlot(dto.visitDate());
         verify(orderRepository, times(1)).save(any(Order.class));
+        verify(paymentRepository, times(1)).save(any(Payment.class));
         verify(eventPublisher, times(1)).publishEvent(any(OrderCreatedEvent.class));
+        verifyNoInteractions(stripeCheckoutService);
     }
 
     @Test
@@ -103,6 +114,7 @@ class OrderServiceTest {
         verify(appointmentAvailabilityService, never()).reserveSlot(any());
         verify(orderRepository, never()).save(any(Order.class));
         verify(eventPublisher, never()).publishEvent(any());
+        verify(paymentRepository, never()).save(any(Payment.class));
     }
 
     @Test

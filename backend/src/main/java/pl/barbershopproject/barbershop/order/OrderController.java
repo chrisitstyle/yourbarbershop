@@ -9,6 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
+import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.user.User;
 
@@ -23,17 +24,18 @@ class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<String> addOrder(@Valid @RequestBody OrderCreationDTO order, @AuthenticationPrincipal User user) {
-
-        Order savedOrder = orderService.addOrder(order, user);
+    public ResponseEntity<OrderCreationResponseDTO> addOrder(
+            @Valid @RequestBody OrderCreationDTO order,
+            @AuthenticationPrincipal User user
+    ) {
+        OrderCreationResponseDTO response = orderService.addOrder(order, user);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(savedOrder.getIdOrder())
+                .buildAndExpand(response.orderId())
                 .toUri();
 
-        return ResponseEntity.created(location)
-                .body("Wizyta została dodana. ID Wizyty: " + savedOrder.getIdOrder());
+        return ResponseEntity.created(location).body(response);
     }
 
     @GetMapping
@@ -49,8 +51,10 @@ class OrderController {
     }
 
     @PutMapping("/{idOrder}")
-    public Order updateOrder(@Valid @RequestBody Order updatedOrder,
-                             @PathVariable Long idOrder) {
+    public Order updateOrder(
+            @Valid @RequestBody Order updatedOrder,
+            @PathVariable Long idOrder
+    ) {
         return orderService.updateOrder(updatedOrder, idOrder);
     }
 
