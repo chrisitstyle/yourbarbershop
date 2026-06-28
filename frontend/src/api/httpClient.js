@@ -1,14 +1,16 @@
-/**
- * Reads and processes the HTTP response body.
- *
- * If the response has no body, it returns `null`.
- * Responses with the `Content-Type: application/json` header are parsed
- * into JavaScript values. If JSON parsing fails, the raw response text
- * is returned instead.
- *
- * @param {Response} response - Response returned by the Fetch API.
- * @returns {Promise<unknown>} Parsed response data, raw text, or `null`.
- */
+import { API_BASE_URL } from "./config.js";
+
+let accessToken = null;
+let refreshPromise = null;
+
+export const setAccessToken = (token) => {
+  accessToken = token;
+};
+
+export const clearAccessToken = () => {
+  accessToken = null;
+};
+
 const parseResponseData = async (response) => {
   const responseText = await response.text();
 
@@ -29,21 +31,6 @@ const parseResponseData = async (response) => {
   return responseText;
 };
 
-/**
- * Resolves an error message based on the HTTP response
- * and the data returned by the backend.
- *
- * Message priority:
- * 1. Plain text returned by the backend.
- * 2. The `message` property from the response object.
- * 3. The `error` property from the response object.
- * 4. The HTTP status text.
- * 5. A fallback message containing the status code.
- *
- * @param {Response} response - HTTP response with an error status.
- * @param {unknown} data - Parsed response data returned by the backend.
- * @returns {string} Resolved error message.
- */
 const getErrorMessage = (response, data) => {
   if (typeof data === "string" && data.trim()) {
     return data;
@@ -56,42 +43,11 @@ const getErrorMessage = (response, data) => {
   return response.statusText || `HTTP error ${response.status}`;
 };
 
-/**
- * Represents an unsuccessful HTTP response.
- *
- * The class preserves an Axios-like error structure so existing code
- * can continue reading backend error data through:
- *
- * `error.response.data`
- *
- * @extends Error
- */
 export class ApiError extends Error {
-  /**
-   * Creates an API error from an HTTP response.
-   *
-   * @param {Response} response - HTTP response with a non-success status.
-   * @param {unknown} data - Error data returned by the backend.
-   */
   constructor(response, data) {
     super(getErrorMessage(response, data));
-
     this.name = "ApiError";
     this.status = response.status;
-
-    /**
-     * Details of the failed HTTP response.
-     *
-     * The structure is compatible with the error handling previously
-     * used with Axios.
-     *
-     * @type {{
-     *   data: unknown,
-     *   status: number,
-     *   statusText: string,
-     *   headers: Object.<string, string>
-     * }}
-     */
     this.response = {
       data,
       status: response.status,
@@ -101,51 +57,33 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Performs an HTTP request using the native Fetch API.
- *
- * The function:
- * - automatically serializes `data` to JSON,
- * - sets the `Content-Type: application/json` header,
- * - parses JSON and text responses,
- * - handles empty responses such as `204 No Content`,
- * - throws `ApiError` for responses outside the 200-299 range.
- *
- * Standard Fetch API options such as `method`, `credentials`, `signal`,
- * and other request settings can be passed directly in the second argument.
- *
- * @example
- * const response = await apiRequest("/api/offers");
- * console.log(response.data);
- *
- * @example
- * const response = await apiRequest("/api/offers", {
- *   method: "POST",
- *   data: {
- *     kind: "Haircut",
- *     cost: 50,
- *   },
- * });
- *
- * @param {string | URL | Request} url - Resource URL.
- * @param {RequestInit & {
- *   data?: unknown,
- *   headers?: HeadersInit
- * }} [config={}] - Request configuration.
- * @returns {Promise<{
- *   data: unknown,
- *   status: number,
- *   statusText: string,
- *   headers: Object.<string, string>
- * }>} HTTP response details with parsed response data.
- *
- * @throws {ApiError} When the backend returns a status outside 200-299.
- * @throws {TypeError} When a network error occurs or the URL is invalid.
- * @throws {DOMException} When the request is aborted using AbortController.
- */
-export const apiRequest = async (
+export const refreshAccessToken = async () => {
+  if (!refreshPromise) {
+    refreshPromise = rawApiRequest(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      skipAuthRefresh: true,
+    })
+      .then((response) => {
+        const newAccessToken = response.data?.accessToken;
+
+        if (!newAccessToken) {
+          throw new Error("Refresh response does not contain accessToken");
+        }
+
+        setAccessToken(newAccessToken);
+        return response.data;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+};
+
+const rawApiRequest = async (
   url,
-  { data, headers = {}, ...options } = {},
+  { data, headers = {}, skipAuthRefresh = false, ...options } = {},
 ) => {
   const requestHeaders = new Headers(headers);
   const hasData = data !== undefined;
@@ -154,8 +92,13 @@ export const apiRequest = async (
     requestHeaders.set("Content-Type", "application/json");
   }
 
+  if (accessToken && !requestHeaders.has("Authorization")) {
+    requestHeaders.set("Authorization", `Bearer ${accessToken}`);
+  }
+
   const response = await fetch(url, {
     ...options,
+    credentials: "include",
     headers: requestHeaders,
     body: hasData ? JSON.stringify(data) : undefined,
   });
@@ -174,19 +117,34 @@ export const apiRequest = async (
   };
 };
 
-/**
- * Creates an Authorization header for a JWT access token.
- *
- * @example
- * const headers = getAuthorizationHeaders(userToken);
- *
- * await apiRequest("/api/users", {
- *   headers,
- * });
- *
- * @param {string} token - User JWT access token.
- * @returns {{Authorization: string}} Bearer authorization header.
- */
-export const getAuthorizationHeaders = (token) => ({
-  Authorization: `Bearer ${token}`,
-});
+export const apiRequest = async (url, config = {}) => {
+  try {
+    return await rawApiRequest(url, config);
+  } catch (error) {
+    const shouldTryRefresh =
+      error instanceof ApiError &&
+      error.status === 401 &&
+      !config.skipAuthRefresh &&
+      !String(url).includes("/auth/refresh") &&
+      !String(url).includes("/login") &&
+      !String(url).includes("/register");
+
+    if (!shouldTryRefresh) {
+      throw error;
+    }
+
+    await refreshAccessToken();
+
+    return rawApiRequest(url, config);
+  }
+};
+
+export const getAuthorizationHeaders = () => {
+  if (!accessToken) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${accessToken}`,
+  };
+};

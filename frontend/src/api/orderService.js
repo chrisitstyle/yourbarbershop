@@ -6,7 +6,6 @@ export const createOrder = async (orderCreationData, userToken) => {
     const response = await apiRequest(`${API_BASE_URL}/orders`, {
       method: "POST",
       credentials: "include",
-      headers: getAuthorizationHeaders(userToken),
       data: orderCreationData,
     });
 
@@ -21,7 +20,6 @@ export const getOrders = async (userToken) => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/orders`, {
       credentials: "include",
-      headers: getAuthorizationHeaders(userToken),
     });
 
     return response.data;
@@ -35,7 +33,6 @@ export const updateOrder = async (orderId, newData, userToken) => {
   const response = await apiRequest(`${API_BASE_URL}/orders/${orderId}`, {
     method: "PUT",
     credentials: "include",
-    headers: getAuthorizationHeaders(userToken),
     data: newData,
   });
 
@@ -47,7 +44,6 @@ export const deleteOrder = async (idOrder, userToken) => {
     await apiRequest(`${API_BASE_URL}/orders/${idOrder}`, {
       method: "DELETE",
       credentials: "include",
-      headers: getAuthorizationHeaders(userToken),
     });
   } catch (error) {
     console.error("Error deleting order:", error);

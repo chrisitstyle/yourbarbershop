@@ -34,11 +34,19 @@ public class SecurityWebConfig {
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                                .requestMatchers("/register", "/login", "/login/email-code/**",
-                                        "/forgot-password", "/reset-password**",
-                                        "/oauth2/**","/login/oauth2/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/stripe/webhook").permitAll()
+.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+.requestMatchers(
+        "/register",
+        "/login",
+        "/login/email-code/**",
+        "/auth/refresh",
+        "/auth/logout",
+        "/forgot-password",
+        "/reset-password**",
+        "/oauth2/**",
+        "/login/oauth2/**"
+).permitAll()
+.requestMatchers(HttpMethod.POST, "/stripe/webhook").permitAll()
                                 // Users endpoints
                                 .requestMatchers(HttpMethod.POST, "/users").hasAuthority(Role.ADMIN.toString())
                                 .requestMatchers(HttpMethod.GET, "/users").hasAuthority(Role.ADMIN.toString())

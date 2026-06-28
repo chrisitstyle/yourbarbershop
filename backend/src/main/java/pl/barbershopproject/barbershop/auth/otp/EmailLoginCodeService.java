@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.barbershopproject.barbershop.auth.AuthResponse;
+import pl.barbershopproject.barbershop.auth.AuthResult;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.email.EmailSenderService;
 import pl.barbershopproject.barbershop.exception.InvalidEmailLoginCodeException;
@@ -92,7 +93,7 @@ public class EmailLoginCodeService {
         );
     }
 
-    public AuthResponse verifyCode(EmailLoginCodeVerifyRequest request) {
+    public AuthResult verifyCode(EmailLoginCodeVerifyRequest request) {
         String email = normalizeEmail(request.email());
 
         String codeKey = buildCodeKey(email);
@@ -132,9 +133,8 @@ public class EmailLoginCodeService {
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(this::invalidCodeException);
 
-        String jwt = jwtService.generateToken(user);
-
-        return new AuthResponse(jwt, user.getIdUser(), user.getRole());
+        String accessToken = jwtService.generateAccessToken(user);
+        return new AuthResult(accessToken, user);
     }
 
     private long incrementAttempts(String attemptsKey) {

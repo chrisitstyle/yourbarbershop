@@ -17,7 +17,6 @@ export const getUsers = async (userToken) => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/users`, {
       credentials: "include",
-      headers: getAuthorizationHeaders(userToken),
     });
 
     return response.data;
@@ -31,7 +30,6 @@ export const updateUser = async (userId, newData, userToken) => {
   const response = await apiRequest(`${API_BASE_URL}/users/${userId}`, {
     method: "PUT",
     credentials: "include",
-    headers: getAuthorizationHeaders(userToken),
     data: newData,
   });
 
@@ -43,7 +41,6 @@ export const deleteUser = async (idUser, userToken) => {
     await apiRequest(`${API_BASE_URL}/users/${idUser}`, {
       method: "DELETE",
       credentials: "include",
-      headers: getAuthorizationHeaders(userToken),
     });
   } catch (error) {
     console.error("Error deleting user:", error);

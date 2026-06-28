@@ -1,13 +1,17 @@
 import { useState } from "react";
+
 import { Alert } from "react-bootstrap";
+
 import { useNavigate } from "react-router-dom";
+
 import { useTranslation } from "react-i18next";
+
 import { useAuth } from "../../AuthContext";
-import {
-  requestEmailLoginCode,
-  verifyEmailLoginCode,
-} from "../../api/authService";
+
+import { requestEmailLoginCode } from "../../api/authService";
+
 import ButtonSpinner from "../common/ButtonSpinner";
+
 import useAutoDismiss from "../../hooks/useAutoDismiss";
 
 const EMAIL_CODE_STEP = {
@@ -22,8 +26,10 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
   const [errors, setErrors] = useAutoDismiss(null, 6000);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { loginWithEmailCode } = useAuth();
+
   const navigate = useNavigate();
+
   const { t } = useTranslation();
 
   const getErrorMessages = (error) => {
@@ -71,9 +77,8 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
     setErrors(null);
 
     try {
-      const userData = await verifyEmailLoginCode(email, code);
+      await loginWithEmailCode(email, code);
 
-      login(userData);
       navigate("/");
     } catch (error) {
       setErrors(getErrorMessages(error));
@@ -136,6 +141,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
               defaultValue: "Code",
             })}
           </label>
+
           <input
             type="text"
             className="form-control text-center"
@@ -206,6 +212,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
         <label htmlFor="emailCodeLoginEmail" className="form-label">
           {t("auth.email")}
         </label>
+
         <input
           type="email"
           className="form-control"

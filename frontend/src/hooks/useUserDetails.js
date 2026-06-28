@@ -23,7 +23,6 @@ const useUserDetails = (userId, userToken) => {
       try {
         const response = await apiRequest(`${API_BASE_URL}/users/${userId}`, {
           credentials: "include",
-          headers: getAuthorizationHeaders(userToken),
           signal: abortController.signal,
         });
 
