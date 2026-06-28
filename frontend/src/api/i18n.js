@@ -71,6 +71,8 @@ const resources = {
           orderDate: "Data zamówienia",
           visitDate: "Data wizyty",
           status: "Status",
+          paymentMethod: "Metoda płatności",
+          paymentStatus: "Status płatności",
         },
         offers: {
           title: "Usługi",
@@ -100,6 +102,8 @@ const resources = {
           orderDate: "Data zamówienia",
           visitDate: "Data wizyty",
           status: "Status",
+          paymentMethod: "Metoda płatności",
+          paymentStatus: "Status płatności",
         },
         gallery: {
           title: "Ustawienia galerii",
@@ -288,6 +292,10 @@ const resources = {
         loadingServices: "Ładowanie dostępnych usług...",
         registerBtn: "Umów wizytę",
         registeringOrder: "Rezerwowanie wizyty...",
+        paymentMethod: "Metoda płatności",
+        paymentCash: "Gotówka na miejscu",
+        paymentCardOnSite: "Karta na miejscu",
+        paymentCardOnline: "Karta online",
       },
       contact: {
         info: {
@@ -326,6 +334,8 @@ const resources = {
           orderDate: "Data złożenia wizyty",
           visitDate: "Data wizyty",
           status: "Status",
+          paymentMethod: "Metoda płatności",
+          paymentStatus: "Status płatności",
         },
       },
       footer: {
@@ -340,6 +350,17 @@ const resources = {
       common: {
         close: "Zamknij",
         currency: "zł",
+      },
+      payment: {
+        successTitle: "Płatność zakończona sukcesem",
+        successMessage:
+          "Dziękujemy! Twoja płatność została przyjęta. Szczegóły rezerwacji zostały wysłane na adres e-mail.",
+        cancelTitle: "Płatność nie została ukończona",
+        cancelMessage:
+          "Proces płatności został przerwany. Możesz wrócić i spróbować ponownie.",
+        goToProfile: "Przejdź do profilu",
+        goHome: "Wróć na stronę główną",
+        tryAgain: "Spróbuj ponownie",
       },
     },
   },
@@ -410,6 +431,8 @@ const resources = {
           orderDate: "Order Date",
           visitDate: "Visit Date",
           status: "Status",
+          paymentMethod: "Payment Method",
+          paymentStatus: "Payment Status",
         },
         offers: {
           title: "Services",
@@ -439,6 +462,8 @@ const resources = {
           orderDate: "Order Date",
           visitDate: "Visit Date",
           status: "Status",
+          paymentMethod: "Payment Method",
+          paymentStatus: "Payment Status",
         },
         gallery: {
           title: "Gallery Settings",
@@ -625,6 +650,10 @@ const resources = {
         loadingServices: "Loading available services...",
         registerBtn: "Book Appointment",
         registeringOrder: "Booking appointment...",
+        paymentMethod: "Payment method",
+        paymentCash: "Cash on site",
+        paymentCardOnSite: "Card on site",
+        paymentCardOnline: "Online card payment",
       },
       contact: {
         info: {
@@ -663,6 +692,8 @@ const resources = {
           orderDate: "Order Date",
           visitDate: "Visit Date",
           status: "Status",
+          paymentMethod: "Payment Method",
+          paymentStatus: "Payment Status",
         },
       },
       footer: {
@@ -677,6 +708,17 @@ const resources = {
       common: {
         close: "Close",
         currency: "PLN",
+      },
+      payment: {
+        successTitle: "Payment completed successfully",
+        successMessage:
+          "Thank you! Your payment has been accepted. Reservation details have been sent to your email address.",
+        cancelTitle: "Payment was not completed",
+        cancelMessage:
+          "The payment process was cancelled. You can go back and try again.",
+        goToProfile: "Go to profile",
+        goHome: "Go back home",
+        tryAgain: "Try again",
       },
     },
   },

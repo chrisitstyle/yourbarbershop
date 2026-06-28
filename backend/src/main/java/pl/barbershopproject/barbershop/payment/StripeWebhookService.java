@@ -184,7 +184,9 @@ public class StripeWebhookService {
                     order.getUser().getFirstname(),
                     order.getVisitDate(),
                     order.getOffer().getKind(),
-                    order.getOffer().getCost()
+                    order.getOffer().getCost(),
+                    order.getPayment().getPaymentMethod(),
+                    order.getPayment().getPaymentStatus()
             ));
 
             return;
@@ -197,7 +199,9 @@ public class StripeWebhookService {
                 guestOrder.getFirstname(),
                 guestOrder.getVisitDate(),
                 guestOrder.getOffer().getKind(),
-                guestOrder.getOffer().getCost()
+                guestOrder.getOffer().getCost(),
+                guestOrder.getPayment().getPaymentMethod(),
+                guestOrder.getPayment().getPaymentStatus()
         ));
     }
 

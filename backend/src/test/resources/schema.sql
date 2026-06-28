@@ -37,6 +37,43 @@ CREATE TABLE GUEST_ORDER (
                              CONSTRAINT FK_GUEST_ORDER_OFFER FOREIGN KEY (ID_OFFER) REFERENCES OFFER(ID_OFFER) ON DELETE SET NULL
 );
 
+CREATE TABLE PAYMENT (
+                         ID_PAYMENT BIGINT AUTO_INCREMENT PRIMARY KEY,
+                         ID_ORDER BIGINT,
+                         ID_GUEST_ORDER BIGINT,
+
+                         PAYMENT_METHOD VARCHAR(50) NOT NULL,
+                         PAYMENT_STATUS VARCHAR(50) NOT NULL,
+
+                         STRIPE_CHECKOUT_SESSION_ID VARCHAR(255),
+                         STRIPE_PAYMENT_INTENT_ID VARCHAR(255),
+
+                         AMOUNT DECIMAL(10,2) NOT NULL,
+                         CURRENCY VARCHAR(3) NOT NULL DEFAULT 'PLN',
+
+                         CREATED_AT TIMESTAMP NOT NULL,
+                         PAID_AT TIMESTAMP,
+
+                         CONSTRAINT UK_PAYMENT_ORDER UNIQUE (ID_ORDER),
+                         CONSTRAINT UK_PAYMENT_GUEST_ORDER UNIQUE (ID_GUEST_ORDER),
+                         CONSTRAINT UK_PAYMENT_STRIPE_CHECKOUT_SESSION_ID UNIQUE (STRIPE_CHECKOUT_SESSION_ID),
+
+                         CONSTRAINT FK_PAYMENT_USER_ORDER
+                             FOREIGN KEY (ID_ORDER) REFERENCES USER_ORDER(ID_ORDER)
+                                 ON DELETE CASCADE,
+
+                         CONSTRAINT FK_PAYMENT_GUEST_ORDER
+                             FOREIGN KEY (ID_GUEST_ORDER) REFERENCES GUEST_ORDER(ID_GUEST_ORDER)
+                                 ON DELETE CASCADE,
+
+                         CONSTRAINT CHK_PAYMENT_TARGET
+                             CHECK (
+                                 (ID_ORDER IS NOT NULL AND ID_GUEST_ORDER IS NULL)
+                                     OR
+                                 (ID_ORDER IS NULL AND ID_GUEST_ORDER IS NOT NULL)
+                                 )
+);
+
 CREATE TABLE PASSWORD_RESET_TOKEN (
                                       ID BIGINT AUTO_INCREMENT PRIMARY KEY,
                                       TOKEN VARCHAR(255) NOT NULL,

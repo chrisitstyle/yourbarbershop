@@ -44,7 +44,7 @@ public class StripeCheckoutService {
     ) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("mode", "payment");
-        body.add("payment_method_types[0]", "card");
+        body.add("payment_method_types[0]", "card"); // only card payment (without BLIK, Klarna etc.)
         body.add("success_url", successUrl);
         body.add("cancel_url", cancelUrl);
 
@@ -55,7 +55,6 @@ public class StripeCheckoutService {
 
         body.add("metadata[paymentId]", payment.getIdPayment().toString());
         body.add("payment_intent_data[metadata][paymentId]", payment.getIdPayment().toString());
-        body.add("payment_method_types[0]", "card"); // only card payment
 
         JsonNode response = restClient.post()
                 .uri("/v1/checkout/sessions")

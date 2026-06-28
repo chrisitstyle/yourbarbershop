@@ -1,6 +1,8 @@
 package pl.barbershopproject.barbershop.utils.testentities;
 
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
@@ -126,7 +128,9 @@ public final class UserTestEntities {
                 offer,
                 LocalDateTime.of(2026, 1, 16, 15, 0),
                 LocalDateTime.of(2026, 10, 17, 17, 0),
-                Status.NOWE
+                Status.NOWE,
+                PaymentMethod.GOTOWKA,
+                PaymentStatus.OCZEKUJE_NA_PLATNOSC
         );
     }
 }

@@ -73,7 +73,7 @@ class OrderService {
             );
         }
 
-        publishOrderCreatedEvent(savedOrder);
+        publishOrderCreatedEvent(savedOrder, savedPayment);
 
         return new OrderCreationResponseDTO(
                 savedOrder.getIdOrder(),
@@ -146,13 +146,15 @@ class OrderService {
         orderRepository.delete(order);
     }
 
-    private void publishOrderCreatedEvent(Order order) {
+    private void publishOrderCreatedEvent(Order order, Payment payment) {
         eventPublisher.publishEvent(new OrderCreatedEvent(
                 order.getUser().getEmail(),
                 order.getUser().getFirstname(),
                 order.getVisitDate(),
                 order.getOffer().getKind(),
-                order.getOffer().getCost()
+                order.getOffer().getCost(),
+                payment.getPaymentMethod(),
+                payment.getPaymentStatus()
         ));
     }
 }

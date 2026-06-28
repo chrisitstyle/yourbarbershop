@@ -19,6 +19,8 @@ const visitHeaders = [
   "profile.table.orderDate",
   "profile.table.visitDate",
   "profile.table.status",
+  "profile.table.paymentMethod",
+  "profile.table.paymentStatus",
 ];
 
 const visitFields = [
@@ -28,6 +30,8 @@ const visitFields = [
   "orderDate",
   "visitDate",
   "status",
+  "paymentMethod",
+  "paymentStatus",
 ];
 
 const Profile = () => {
@@ -55,7 +59,9 @@ const Profile = () => {
   const filterVisits = (order, term) => {
     return `${order.idOrder} ${order.offer?.kind || ""} ${
       order.offer?.cost || ""
-    } ${order.orderDate} ${order.visitDate} ${order.status}`
+    } ${order.orderDate} ${order.visitDate} ${order.status} ${
+      order.paymentMethod || ""
+    } ${order.paymentStatus || ""}`
       .toLowerCase()
       .includes(term.toLowerCase());
   };
@@ -119,18 +125,16 @@ const Profile = () => {
             t("profile.visitInfo")}
         </div>
 
-        {/* search box */}
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
           placeholder={t("profile.searchPlaceholder")}
         />
 
-        {/* table */}
         <div className="table-responsive">
           <table
             className="table table-bordered table-hover shadow rounded mx-auto"
-            style={{ maxWidth: "900px" }}
+            style={{ maxWidth: "1100px" }}
           >
             <SortableTableHeader
               headers={visitHeaders}
@@ -166,7 +170,6 @@ const Profile = () => {
           </table>
         </div>
 
-        {/* pagination */}
         <PaginationControl
           currentPage={currentPage}
           totalPages={totalPages}

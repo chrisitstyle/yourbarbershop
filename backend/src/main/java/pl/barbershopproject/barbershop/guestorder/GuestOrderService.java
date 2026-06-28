@@ -7,7 +7,9 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderCreationDTOMapper;
+import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderDTOMapper;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
@@ -67,7 +69,7 @@ class GuestOrderService {
             );
         }
 
-        publishOrderCreatedEvent(savedGuestOrder);
+        publishOrderCreatedEvent(savedGuestOrder, savedPayment);
 
         return new GuestOrderCreationResponseDTO(
                 savedGuestOrder.getIdGuestOrder(),
@@ -77,17 +79,22 @@ class GuestOrderService {
         );
     }
 
-    public List<GuestOrder> getAllGuestOrders() {
-        return guestOrderRepository.findAll();
+    public List<GuestOrderDTO> getAllGuestOrders() {
+        return guestOrderRepository.findAll().stream()
+                .map(GuestOrderDTOMapper::toDTO)
+                .toList();
     }
 
-    public GuestOrder getGuestOrder(Long idGuestOrder) {
+    public GuestOrderDTO getGuestOrder(Long idGuestOrder) {
         return guestOrderRepository.findById(idGuestOrder)
+                .map(GuestOrderDTOMapper::toDTO)
                 .orElseThrow(() -> new NoSuchElementException("Nie znaleziono zamówienia o ID: " + idGuestOrder));
     }
 
-    public List<GuestOrder> getGuestOrdersByStatus(Status status) {
-        return guestOrderRepository.findGuestOrdersByStatus(status);
+    public List<GuestOrderDTO> getGuestOrdersByStatus(Status status) {
+        return guestOrderRepository.findGuestOrdersByStatus(status).stream()
+                .map(GuestOrderDTOMapper::toDTO)
+                .toList();
     }
 
     @Transactional
@@ -127,13 +134,15 @@ class GuestOrderService {
         guestOrderRepository.delete(guestOrder);
     }
 
-    private void publishOrderCreatedEvent(GuestOrder guestOrder) {
+    private void publishOrderCreatedEvent(GuestOrder guestOrder, Payment payment) {
         eventPublisher.publishEvent(new OrderCreatedEvent(
                 guestOrder.getEmail(),
                 guestOrder.getFirstname(),
                 guestOrder.getVisitDate(),
                 guestOrder.getOffer().getKind(),
-                guestOrder.getOffer().getCost()
+                guestOrder.getOffer().getCost(),
+                payment.getPaymentMethod(),
+                payment.getPaymentStatus()
         ));
     }
 }

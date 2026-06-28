@@ -5,6 +5,8 @@ import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.dto.UserInOrderDTO;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 
@@ -97,7 +99,9 @@ public final class OrderTestEntities {
                 createOffer(),
                 LocalDateTime.of(2026, 1, 16, 15, 0),
                 LocalDateTime.of(2026, 10, 17, 17, 0),
-                Status.NOWE
+                Status.NOWE,
+                PaymentMethod.GOTOWKA,
+                PaymentStatus.OCZEKUJE_NA_PLATNOSC
         );
     }
 
@@ -111,7 +115,8 @@ public final class OrderTestEntities {
     public static OrderCreationDTO createOrderCreationDTO() {
         return new OrderCreationDTO(
                 1L,
-                LocalDateTime.of(2026, 10, 17, 17, 0)
+                LocalDateTime.of(2026, 10, 17, 17, 0),
+                PaymentMethod.GOTOWKA
         );
     }
 }

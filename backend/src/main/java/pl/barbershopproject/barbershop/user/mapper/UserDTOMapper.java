@@ -7,6 +7,9 @@ import pl.barbershopproject.barbershop.user.dto.UserDTO;
 import java.util.List;
 
 public class UserDTOMapper {
+    private UserDTOMapper() {
+        throw new IllegalStateException("Utility class");
+    }
     public static UserDTO toDTO(User user) {
         List<UserOrdersDTO> ordersDTOs = user.getUserOrders()
                 .stream()
