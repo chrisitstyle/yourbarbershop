@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import pl.barbershopproject.barbershop.offer.dto.OfferCreationDTO;
+import pl.barbershopproject.barbershop.offer.dto.UpdateOfferDTO;
 
 import java.net.URI;
 import java.util.List;
@@ -18,8 +20,8 @@ class OfferController {
     private final OfferService offerService;
 
     @PostMapping
-    public ResponseEntity<Offer> addOffer(@Valid @RequestBody Offer offer) {
-        Offer savedOffer = offerService.addOffer(offer);
+    public ResponseEntity<Offer> addOffer(@Valid @RequestBody OfferCreationDTO offerCreationDTO) {
+        Offer savedOffer = offerService.addOffer(offerCreationDTO);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -40,8 +42,10 @@ class OfferController {
     }
 
     @PutMapping("/{idOffer}")
-    public Offer updateOffer(@Valid @RequestBody Offer updatedOffer,
-                             @PathVariable Long idOffer) {
+    public Offer updateOffer(
+            @Valid @RequestBody UpdateOfferDTO updatedOffer,
+            @PathVariable Long idOffer
+    ) {
         return offerService.updateOffer(updatedOffer, idOffer);
     }
 

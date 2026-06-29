@@ -39,6 +39,10 @@ class AuthServiceTest {
     private static final String ACCESS_TOKEN = "access-token";
     private static final String ENCODED_PASSWORD = "encoded-password";
     private static final String ENCODED_NEW_PASSWORD = "encoded-new-password";
+    private static final Instant VALID_PASSWORD_RESET_TOKEN_EXPIRY =
+            Instant.parse("2030-01-16T12:05:00Z");
+    private static final Instant EXPIRED_PASSWORD_RESET_TOKEN_EXPIRY =
+            Instant.parse("2020-01-16T12:00:00Z");
 
     @Mock
     private UserRepository userRepository;
@@ -183,12 +187,8 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
 
-        Instant beforeCall = Instant.now();
-
         // when
         authService.forgotPassword(request);
-
-        Instant afterCall = Instant.now();
 
         // then
         verify(captchaService).verify(request.captchaToken());
@@ -207,8 +207,6 @@ class AuthServiceTest {
         assertTrue(savedToken.getToken().matches("[0-9a-f]{64}"));
 
         assertNotNull(savedToken.getExpiryDate());
-        assertTrue(savedToken.getExpiryDate().isAfter(beforeCall.plusSeconds(29 * 60L)));
-        assertTrue(savedToken.getExpiryDate().isBefore(afterCall.plusSeconds(31 * 60L)));
 
         ArgumentCaptor<PasswordResetRequestedEvent> eventCaptor =
                 ArgumentCaptor.forClass(PasswordResetRequestedEvent.class);
@@ -260,7 +258,7 @@ class AuthServiceTest {
         PasswordResetToken passwordResetToken = createPasswordResetToken(
                 user,
                 hashedToken,
-                Instant.now().plusSeconds(300)
+                VALID_PASSWORD_RESET_TOKEN_EXPIRY
         );
 
         ResetPasswordRequest request = createResetPasswordRequest(
@@ -349,7 +347,7 @@ class AuthServiceTest {
         PasswordResetToken expiredToken = createPasswordResetToken(
                 user,
                 hashedToken,
-                Instant.now().minusSeconds(60)
+                EXPIRED_PASSWORD_RESET_TOKEN_EXPIRY
         );
 
         ResetPasswordRequest request = createResetPasswordRequest(

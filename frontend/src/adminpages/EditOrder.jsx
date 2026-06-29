@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue";
 import { updateOrder } from "../api/orderService";
 import { getOffers } from "../api/offerService";
 import { format } from "date-fns-tz";
@@ -86,7 +86,7 @@ const EditOrder = () => {
       );
 
       navigate("/adminpanel");
-    } catch (error) {
+    } catch {
       setEditOrderError(true);
     } finally {
       setIsLoading(false);

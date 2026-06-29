@@ -115,6 +115,6 @@ class LoginControllerTest extends BaseIntegrationTest {
 
     private String extractToken(MvcResult result) throws Exception {
         String content = result.getResponse().getContentAsString();
-        return objectMapper.readTree(content).get("accessToken").asText();
+        return objectMapper.readTree(content).get("accessToken").asString();
     }
 }

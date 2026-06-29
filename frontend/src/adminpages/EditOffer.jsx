@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue";
 import { updateOffer } from "../api/offerService";
 import { Alert } from "react-bootstrap";
 import ButtonSpinner from "../components/common/ButtonSpinner";
@@ -35,7 +35,7 @@ const EditOffer = () => {
     try {
       await updateOffer(offerData.idOffer, { kind, cost }, user.token);
       navigate("/adminpanel");
-    } catch (error) {
+    } catch {
       setEditOfferError(true);
     } finally {
       setIsLoading(false);

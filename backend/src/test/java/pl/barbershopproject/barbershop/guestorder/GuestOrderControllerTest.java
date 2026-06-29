@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -17,7 +18,10 @@ import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
+import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderDTOMapper;
 import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.TestClockConfig;
 import pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities;
 import tools.jackson.databind.ObjectMapper;
 
@@ -29,17 +33,23 @@ import java.util.NoSuchElementException;
                 OAuth2ClientWebSecurityAutoConfiguration.class
         })
 @AutoConfigureMockMvc(addFilters = false)
+@Import(TestClockConfig.class)
 class GuestOrderControllerTest {
     @Autowired
     private MockMvc mockMvc;
+
     @Autowired
     private ObjectMapper objectMapper;
+
     @MockitoBean
     private GuestOrderService guestOrderService;
+
     @MockitoBean
     private JwtService jwtService;
+
     @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
+
     @MockitoBean
     private StringRedisTemplate stringRedisTemplate;
 
@@ -117,19 +127,24 @@ class GuestOrderControllerTest {
     @Test
     void updateGuestOrder_ReturnsUpdatedOrder() throws Exception {
         // given
-        GuestOrder inputOrder = GuestOrderTestEntities.createGuestOrder();
+        GuestOrderUpdateRequestDTO inputDto = GuestOrderTestEntities.createGuestOrderUpdateRequestDTO();
 
         GuestOrder updatedOrder = GuestOrderTestEntities.guestOrderBuilder()
                 .firstname("updated_firstname")
                 .build();
 
-        Mockito.when(guestOrderService.updateGuestOrder(Mockito.any(GuestOrder.class), Mockito.eq(1L)))
-                .thenReturn(updatedOrder);
+        GuestOrderDTO responseDTO = GuestOrderDTOMapper.toDTO(updatedOrder);
+
+        Mockito.when(guestOrderService.updateGuestOrder(
+                        Mockito.any(GuestOrderUpdateRequestDTO.class),
+                        Mockito.eq(1L)
+                ))
+                .thenReturn(responseDTO);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.put("/guestorders/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputOrder)))
+                        .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.idGuestOrder").value(1L))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.firstname").value("updated_firstname"));
@@ -149,12 +164,12 @@ class GuestOrderControllerTest {
     void getGuestOrder_ReturnsNotFound_WhenNoSuchElementException() throws Exception {
         // given
         Mockito.when(guestOrderService.getGuestOrder(99L))
-                .thenThrow(new NoSuchElementException("Guest order not found"));
+                .thenThrow(new NoSuchElementException("Nie znaleziono zamówienia"));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders/99"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Guest order not found"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Nie znaleziono zamówienia"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("NOT_FOUND"));
     }
 
@@ -164,14 +179,14 @@ class GuestOrderControllerTest {
         GuestOrderCreationDTO invalidDto = GuestOrderTestEntities.createGuestOrderCreationDTO();
 
         Mockito.when(guestOrderService.addGuestOrder(Mockito.any(GuestOrderCreationDTO.class)))
-                .thenThrow(new IllegalArgumentException("Invalid phone number"));
+                .thenThrow(new IllegalArgumentException("Nieprawidłowy numer telefonu"));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/guestorders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid phone number"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Nieprawidłowy numer telefonu"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));
     }
 }

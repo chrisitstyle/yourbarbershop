@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -15,6 +16,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import pl.barbershopproject.barbershop.auth.oauth2.OAuth2LoginSuccessHandler;
 import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
+import pl.barbershopproject.barbershop.utils.TestClockConfig;
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(value = EmailController.class,
@@ -22,6 +24,7 @@ import tools.jackson.databind.ObjectMapper;
                 OAuth2ClientWebSecurityAutoConfiguration.class
         })
 @AutoConfigureMockMvc(addFilters = false)
+@Import(TestClockConfig.class)
 class EmailControllerTest {
 
     @Autowired

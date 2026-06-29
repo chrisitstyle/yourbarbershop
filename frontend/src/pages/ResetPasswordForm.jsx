@@ -14,23 +14,18 @@ const ResetPasswordForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const getTokenFromUrl = () => {
-    const searchParams = new URLSearchParams(location.search);
-
-    return searchParams.get("token") || "";
-  };
-
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [alert, setAlert] = useState({ message: "", variant: "" });
-  const [token, setToken] = useState(getTokenFromUrl);
+  const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isResetLinkInvalid, setIsResetLinkInvalid] = useState(false);
 
   const { t } = useTranslation();
 
   useEffect(() => {
-    const tokenFromUrl = getTokenFromUrl();
+    const searchParams = new URLSearchParams(location.search);
+    const tokenFromUrl = searchParams.get("token") || "";
 
     setToken(tokenFromUrl);
 

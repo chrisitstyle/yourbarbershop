@@ -26,12 +26,12 @@ class JwtServiceTest {
         jwtService = new JwtService();
 
         ReflectionTestUtils.setField(jwtService, "secretKey", SECRET_KEY);
-        ReflectionTestUtils.setField(jwtService, "expirationHours", 8L);
+        ReflectionTestUtils.setField(jwtService, "accessExpirationMinutes", 15L);
     }
 
-    @DisplayName("generateToken should contain user email as subject")
+    @DisplayName("generateAccessToken should contain user email as subject")
     @Test
-    void generateToken_ShouldContainUserEmailAsSubject() {
+    void generateAccessToken_ShouldContainUserEmailAsSubject() {
         // given
         User user = userBuilder()
                 .idUser(7L)
@@ -40,7 +40,7 @@ class JwtServiceTest {
                 .build();
 
         // when
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateAccessToken(user);
 
         // then
         assertNotNull(token);
@@ -48,9 +48,9 @@ class JwtServiceTest {
         assertEquals("john.jwt@example.com", jwtService.extractUserName(token));
     }
 
-    @DisplayName("generateToken should contain user role and id claims")
+    @DisplayName("generateAccessToken should contain user role and id claims")
     @Test
-    void generateToken_ShouldContainUserRoleAndIdClaims() {
+    void generateAccessToken_ShouldContainUserRoleAndIdClaims() {
         // given
         User user = userBuilder()
                 .idUser(7L)
@@ -59,7 +59,7 @@ class JwtServiceTest {
                 .build();
 
         // when
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateAccessToken(user);
 
         // then
         String role = jwtService.extractClaim(
@@ -76,9 +76,9 @@ class JwtServiceTest {
         assertEquals(7L, id.longValue());
     }
 
-    @DisplayName("generateToken with extra claims should contain custom claims")
+    @DisplayName("generateAccessToken with extra claims should contain custom claims")
     @Test
-    void generateToken_ShouldContainCustomClaims_WhenExtraClaimsAreProvided() {
+    void generateAccessToken_ShouldContainCustomClaims_WhenExtraClaimsAreProvided() {
         // given
         User user = userBuilder()
                 .idUser(8L)
@@ -92,7 +92,7 @@ class JwtServiceTest {
         );
 
         // when
-        String token = jwtService.generateToken(extraClaims, user);
+        String token = jwtService.generateAccessToken(extraClaims, user);
 
         // then
         String customClaim = jwtService.extractClaim(
@@ -120,7 +120,7 @@ class JwtServiceTest {
                 .role(Role.USER)
                 .build();
 
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateAccessToken(user);
 
         // when
         boolean valid = jwtService.isTokenValid(token, user);
@@ -146,7 +146,7 @@ class JwtServiceTest {
                 .role(Role.USER)
                 .build();
 
-        String token = jwtService.generateToken(tokenOwner);
+        String token = jwtService.generateAccessToken(tokenOwner);
 
         // when
         boolean valid = jwtService.isTokenValid(token, differentUser);
@@ -159,7 +159,7 @@ class JwtServiceTest {
     @Test
     void isTokenValid_ShouldThrowExpiredJwtException_WhenTokenIsExpired() {
         // given
-        ReflectionTestUtils.setField(jwtService, "expirationHours", -1L);
+        ReflectionTestUtils.setField(jwtService, "accessExpirationMinutes", -1L);
 
         User user = userBuilder()
                 .idUser(12L)
@@ -167,7 +167,7 @@ class JwtServiceTest {
                 .role(Role.USER)
                 .build();
 
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateAccessToken(user);
 
         // when + then
         assertThrows(
@@ -186,7 +186,7 @@ class JwtServiceTest {
                 .role(Role.USER)
                 .build();
 
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateAccessToken(user);
 
         // when
         Object expiration = jwtService.extractClaim(

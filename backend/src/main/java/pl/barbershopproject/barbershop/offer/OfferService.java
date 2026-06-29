@@ -5,6 +5,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.offer.dto.OfferCreationDTO;
+import pl.barbershopproject.barbershop.offer.dto.UpdateOfferDTO;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -16,16 +18,20 @@ class OfferService {
     private final OfferRepository offerRepository;
 
     @CacheEvict(value = "offers", allEntries = true)
-    public Offer addOffer(Offer offer) {
+    public Offer addOffer(OfferCreationDTO offerCreationDTO) {
+        Offer offer = Offer.builder()
+                .kind(offerCreationDTO.kind())
+                .cost(offerCreationDTO.cost())
+                .build();
 
         return offerRepository.save(offer);
-
     }
 
     @Cacheable(value = "offers")
-    public List<Offer> getAllOffers(){
+    public List<Offer> getAllOffers() {
         return offerRepository.findAll();
     }
+
     @Cacheable(value = "offers", key = "#idOffer")
     public Offer getSingleOffer(Long idOffer) {
         return offerRepository.findById(idOffer)
@@ -34,10 +40,13 @@ class OfferService {
 
     @Transactional
     @CacheEvict(value = "offers", allEntries = true)
-    public Offer updateOffer(Offer updatedOffer, Long idOffer) {
-        Offer existingOffer = offerRepository.findById(idOffer).orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje"));
-        existingOffer.setKind(updatedOffer.getKind());
-        existingOffer.setCost(updatedOffer.getCost());
+    public Offer updateOffer(UpdateOfferDTO updatedOffer, Long idOffer) {
+        Offer existingOffer = offerRepository.findById(idOffer)
+                .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje"));
+
+        existingOffer.setKind(updatedOffer.kind());
+        existingOffer.setCost(updatedOffer.cost());
+
         return offerRepository.save(existingOffer);
     }
 

@@ -10,13 +10,9 @@ import pl.barbershopproject.barbershop.offer.Offer;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class StripeCheckoutServiceTest {
 
     private WireMockServer stripeMock;
+    private static final LocalDateTime PAYMENT_CREATED_AT =
+            LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0);
 
     @BeforeEach
     void startWireMock() {
@@ -69,7 +67,7 @@ class StripeCheckoutServiceTest {
                 .paymentStatus(PaymentStatus.OCZEKUJE_NA_PLATNOSC)
                 .amount(BigDecimal.valueOf(80))
                 .currency("PLN")
-                .createdAt(LocalDateTime.now())
+                .createdAt(PAYMENT_CREATED_AT)
                 .build();
 
         StripeCheckoutSessionResponse response = service.createCheckoutSession(
@@ -129,7 +127,7 @@ class StripeCheckoutServiceTest {
                 .paymentStatus(PaymentStatus.OCZEKUJE_NA_PLATNOSC)
                 .amount(BigDecimal.valueOf(80))
                 .currency("PLN")
-                .createdAt(LocalDateTime.now())
+                .createdAt(PAYMENT_CREATED_AT)
                 .build();
 
         assertThatThrownBy(() -> service.createCheckoutSession(payment, offer))
@@ -168,7 +166,7 @@ class StripeCheckoutServiceTest {
                 .paymentStatus(PaymentStatus.OCZEKUJE_NA_PLATNOSC)
                 .amount(BigDecimal.valueOf(80))
                 .currency("PLN")
-                .createdAt(LocalDateTime.now())
+                .createdAt(PAYMENT_CREATED_AT)
                 .build();
 
         assertThatThrownBy(() -> service.createCheckoutSession(payment, offer))

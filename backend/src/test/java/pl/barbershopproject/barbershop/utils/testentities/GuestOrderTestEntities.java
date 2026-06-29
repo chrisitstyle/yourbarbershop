@@ -4,12 +4,14 @@ import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createOffer;
 
@@ -40,8 +42,8 @@ public final class GuestOrderTestEntities {
                 .phonenumber("123456789")
                 .email("guestjohndoe@example.com")
                 .offer(createOffer())
-                .orderDate(LocalDateTime.of(2026, 1, 16, 15, 0))
-                .visitDate(LocalDateTime.of(2026, 10, 17, 17, 0))
+                .orderDate(LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0))
+                .visitDate(LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0))
                 .status(Status.NOWE);
     }
 
@@ -92,8 +94,8 @@ public final class GuestOrderTestEntities {
                 .lastname("GuestDoe")
                 .phonenumber("123456789")
                 .email("guestjohndoe@example.com")
-                .orderDate(LocalDateTime.of(2026, 1, 16, 15, 0))
-                .visitDate(LocalDateTime.of(2026, 10, 17, 17, 0))
+                .orderDate(LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0))
+                .visitDate(LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0))
                 .status(Status.NOWE)
                 .build();
     }
@@ -112,11 +114,48 @@ public final class GuestOrderTestEntities {
                 "123456789",
                 "guestjohndoe@example.com",
                 1L,
-                LocalDateTime.of(2026, 10, 17, 17, 0),
+                LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0),
                 PaymentMethod.GOTOWKA
         );
     }
 
+    /**
+     * Creates a GuestOrderUpdateRequestDTO with default updated test data.
+     * <p>
+     * Useful for testing guest order update endpoint and service.
+     *
+     * @return GuestOrderUpdateRequestDTO instance
+     */
+    public static GuestOrderUpdateRequestDTO createGuestOrderUpdateRequestDTO() {
+        return new GuestOrderUpdateRequestDTO(
+                "updated_firstname",
+                "GuestDoe",
+                "123456789",
+                "guestjohn@example.com",
+                1L,
+                LocalDateTime.of(2026, Month.JANUARY, 16, 12, 0),
+                Status.NOWE
+        );
+    }
+
+    /**
+     * Creates a GuestOrderUpdateRequestDTO with null status.
+     * <p>
+     * Useful for testing update logic that keeps the current guest order status.
+     *
+     * @return GuestOrderUpdateRequestDTO instance
+     */
+    public static GuestOrderUpdateRequestDTO createGuestOrderUpdateRequestDTOWithNullStatus() {
+        return new GuestOrderUpdateRequestDTO(
+                "updated_firstname",
+                "GuestDoe",
+                "123456789",
+                "guestjohn@example.com",
+                1L,
+                LocalDateTime.of(2026, Month.JANUARY, 16, 12, 0),
+                null
+        );
+    }
 
     public static GuestOrderCreationResponseDTO createGuestOrderCreationResponseDTO() {
         return new GuestOrderCreationResponseDTO(
@@ -135,8 +174,8 @@ public final class GuestOrderTestEntities {
                 "123456789",
                 "guestjohndoe@example.com",
                 createOffer(),
-                LocalDateTime.of(2026, 1, 16, 15, 0),
-                LocalDateTime.of(2026, 10, 17, 17, 0),
+                LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0),
+                LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0),
                 Status.NOWE,
                 PaymentMethod.GOTOWKA,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC

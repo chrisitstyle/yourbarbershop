@@ -15,6 +15,7 @@ import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 
@@ -141,8 +142,10 @@ class UserRepositoryTest {
         Offer offer = OfferTestEntities.createOffer("strzyżenie", BigDecimal.valueOf(35.0));
         offerRepository.save(offer);
 
-        Order order = OrderTestEntities.createOrder(user, offer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
-                Status.NOWE);
+        LocalDateTime orderDate = LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0);
+        LocalDateTime visitDate = LocalDateTime.of(2026, Month.JANUARY, 17, 17, 0);
+
+        Order order = OrderTestEntities.createOrder(user, offer, orderDate, visitDate, Status.NOWE);
 
         orderRepository.save(order);
 

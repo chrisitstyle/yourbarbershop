@@ -57,7 +57,7 @@ const ForgotPassword = () => {
       setEmail("");
       setEmailSent(true);
       resetCaptcha();
-    } catch (err) {
+    } catch {
       resetCaptcha();
 
       setAlert({
@@ -91,7 +91,7 @@ const ForgotPassword = () => {
       });
 
       resetCaptcha();
-    } catch (err) {
+    } catch {
       resetCaptcha();
 
       setAlert({

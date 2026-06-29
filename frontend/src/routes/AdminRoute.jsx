@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue";
 
 import LoadingSpinner from "../components/common/LoadingSpinner";
 

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import pl.barbershopproject.barbershop.auth.AuthResponse;
 import pl.barbershopproject.barbershop.auth.AuthResult;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.email.EmailSenderService;

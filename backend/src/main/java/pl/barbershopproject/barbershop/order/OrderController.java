@@ -11,6 +11,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
+import pl.barbershopproject.barbershop.order.dto.OrderUpdatedRequestDTO;
 import pl.barbershopproject.barbershop.user.User;
 
 import java.net.URI;
@@ -51,8 +52,8 @@ class OrderController {
     }
 
     @PutMapping("/{idOrder}")
-    public Order updateOrder(
-            @Valid @RequestBody Order updatedOrder,
+    public OrderDTO updateOrder(
+            @Valid @RequestBody OrderUpdatedRequestDTO updatedOrder,
             @PathVariable Long idOrder
     ) {
         return orderService.updateOrder(updatedOrder, idOrder);

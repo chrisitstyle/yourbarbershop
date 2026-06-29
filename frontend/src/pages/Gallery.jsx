@@ -26,39 +26,40 @@ const Gallery = () => {
     setShowModal(false);
   };
 
-  async function getImages() {
-    try {
-      const { data, error } = await supabase.storage
-        .from("barbershopimages")
-        .list("images", {
-          limit: 100,
-          offset: 0,
-          sortBy: { column: "created_at", order: "desc" },
-        });
-
-      if (data !== null) {
-        const filteredImages = data.filter((image) => {
-          const lowercasedName = image.name.toLowerCase();
-          return (
-            !lowercasedName.includes(".emptyFolderPlaceholder") &&
-            (lowercasedName.endsWith(".png") ||
-              lowercasedName.endsWith(".jpeg") ||
-              lowercasedName.endsWith(".jpg"))
-          );
-        });
-        setImages(filteredImages);
-      } else {
-        //alert("Error loading images");
-        console.error("Data is null, error:", error);
-      }
-    } catch (error) {
-      console.error("Error fetching images:", error.message);
-    }
-  }
-
   useEffect(() => {
+    const getImages = async () => {
+      try {
+        const { data, error } = await supabase.storage
+          .from("barbershopimages")
+          .list("images", {
+            limit: 100,
+            offset: 0,
+            sortBy: { column: "created_at", order: "desc" },
+          });
+
+        if (data !== null) {
+          const filteredImages = data.filter((image) => {
+            const lowercasedName = image.name.toLowerCase();
+            return (
+              !lowercasedName.includes(".emptyFolderPlaceholder") &&
+              (lowercasedName.endsWith(".png") ||
+                lowercasedName.endsWith(".jpeg") ||
+                lowercasedName.endsWith(".jpg"))
+            );
+          });
+
+          setImages(filteredImages);
+        } else {
+          //alert("Error loading images");
+          console.error("Data is null, error:", error);
+        }
+      } catch (error) {
+        console.error("Error fetching images:", error.message);
+      }
+    };
+
     getImages();
-  }, []);
+  }, [supabase]);
 
   return (
     <Container className="text-center mt-4">

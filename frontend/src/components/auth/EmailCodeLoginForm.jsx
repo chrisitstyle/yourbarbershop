@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";
 
-import { useAuth } from "../../AuthContext";
+import { useAuth } from "../../auth/AuthContextValue";
 
 import { requestEmailLoginCode } from "../../api/authService";
 

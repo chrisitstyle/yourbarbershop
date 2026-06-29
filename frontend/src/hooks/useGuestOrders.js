@@ -18,7 +18,7 @@ const useGuestOrders = (userToken) => {
       try {
         const data = await guestOrderService.getGuestOrders(userToken);
         setGuestOrders(data);
-      } catch (err) {
+      } catch {
         setError("Błąd podczas ładowania wizyt gości");
       } finally {
         setIsLoading(false);
@@ -34,7 +34,7 @@ const useGuestOrders = (userToken) => {
     try {
       const data = await guestOrderService.getGuestOrders(userToken);
       setGuestOrders(data);
-    } catch (err) {
+    } catch {
       setError("Błąd podczas ładowania wizyt gości");
     } finally {
       setIsLoading(false);

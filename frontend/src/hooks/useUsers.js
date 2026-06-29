@@ -12,7 +12,7 @@ const useUsers = (userToken) => {
     try {
       const data = await userService.getUsers(userToken);
       setUsers(data);
-    } catch (err) {
+    } catch {
       setError("Błąd podczas ładowania użytkowników");
     } finally {
       setIsLoading(false);

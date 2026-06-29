@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue";
 import { updateGuestOrder } from "../api/guestOrderService";
 import { format } from "date-fns-tz";
 import { formatSelectedDateTime } from "../api/dataParser";
@@ -80,7 +80,7 @@ const EditGuestOrder = () => {
       );
 
       navigate("/adminpanel");
-    } catch (error) {
+    } catch {
       setEditGuestOrderError(true);
     }
   };

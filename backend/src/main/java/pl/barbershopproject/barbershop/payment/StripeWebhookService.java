@@ -12,6 +12,7 @@ import pl.barbershopproject.barbershop.util.Status;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -23,12 +24,13 @@ public class StripeWebhookService {
     private final PaymentRepository paymentRepository;
     private final AppointmentAvailabilityService appointmentAvailabilityService;
     private final ApplicationEventPublisher eventPublisher;
+    private final Clock clock;
 
     @Transactional
     public void handleEvent(String payload) {
         try {
             JsonNode event = objectMapper.readTree(payload);
-            String eventType = event.path("type").asText();
+            String eventType = event.path("type").asString();
             JsonNode object = event.path("data").path("object");
 
             switch (eventType) {
@@ -38,7 +40,7 @@ public class StripeWebhookService {
                 case "payment_intent.payment_failed" -> handlePaymentIntentFailed(object);
                 case "charge.refunded" -> handleChargeRefunded(object);
                 default -> {
-                    // Stripe wysyła wiele eventów. Nieobsługiwane eventy ignorujemy.
+                    // Stripe sends many events. Unsupported events are ignored.
                 }
             }
         } catch (Exception exception) {
@@ -54,11 +56,11 @@ public class StripeWebhookService {
                 return;
             }
 
-            String paymentIntentId = session.path("payment_intent").asText(null);
+            String paymentIntentId = session.path("payment_intent").asString(null);
 
             payment.setPaymentStatus(PaymentStatus.OPLACONA);
             payment.setStripePaymentIntentId(paymentIntentId);
-            payment.setPaidAt(LocalDateTime.now());
+            payment.setPaidAt(LocalDateTime.now(clock));
 
             paymentRepository.save(payment);
 
@@ -89,11 +91,11 @@ public class StripeWebhookService {
                 return;
             }
 
-            String paymentIntentId = paymentIntent.path("id").asText(null);
+            String paymentIntentId = paymentIntent.path("id").asString(null);
 
             payment.setPaymentStatus(PaymentStatus.OPLACONA);
             payment.setStripePaymentIntentId(paymentIntentId);
-            payment.setPaidAt(LocalDateTime.now());
+            payment.setPaidAt(LocalDateTime.now(clock));
 
             paymentRepository.save(payment);
 
@@ -109,7 +111,7 @@ public class StripeWebhookService {
                 return;
             }
 
-            String paymentIntentId = paymentIntent.path("id").asText(null);
+            String paymentIntentId = paymentIntent.path("id").asString(null);
 
             payment.setPaymentStatus(PaymentStatus.NIEUDANA);
             payment.setStripePaymentIntentId(paymentIntentId);
@@ -119,7 +121,7 @@ public class StripeWebhookService {
     }
 
     private void handleChargeRefunded(JsonNode charge) {
-        String paymentIntentId = charge.path("payment_intent").asText(null);
+        String paymentIntentId = charge.path("payment_intent").asString(null);
 
         if (paymentIntentId == null || paymentIntentId.isBlank()) {
             return;
@@ -132,7 +134,7 @@ public class StripeWebhookService {
     }
 
     private Optional<Payment> resolvePaymentFromCheckoutSession(JsonNode session) {
-        String sessionId = session.path("id").asText(null);
+        String sessionId = session.path("id").asString(null);
 
         if (sessionId != null && !sessionId.isBlank()) {
             Optional<Payment> paymentBySessionId = paymentRepository.findByStripeCheckoutSessionId(sessionId);
@@ -152,7 +154,7 @@ public class StripeWebhookService {
             return paymentByMetadata;
         }
 
-        String paymentIntentId = paymentIntent.path("id").asText(null);
+        String paymentIntentId = paymentIntent.path("id").asString(null);
 
         if (paymentIntentId == null || paymentIntentId.isBlank()) {
             return Optional.empty();
@@ -162,7 +164,7 @@ public class StripeWebhookService {
     }
 
     private Optional<Payment> resolvePaymentFromMetadata(JsonNode object) {
-        String paymentId = object.path("metadata").path("paymentId").asText(null);
+        String paymentId = object.path("metadata").path("paymentId").asString(null);
 
         if (paymentId == null || paymentId.isBlank()) {
             return Optional.empty();
@@ -170,7 +172,7 @@ public class StripeWebhookService {
 
         try {
             return paymentRepository.findById(Long.valueOf(paymentId));
-        } catch (NumberFormatException exception) {
+        } catch (NumberFormatException _) {
             return Optional.empty();
         }
     }

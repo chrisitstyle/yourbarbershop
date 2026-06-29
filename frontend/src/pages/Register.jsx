@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
 
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue";
 
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import useAutoDismiss from "../hooks/useAutoDismiss";

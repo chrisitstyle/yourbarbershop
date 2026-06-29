@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { Alert } from "react-bootstrap";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue";
 import useOrders from "../hooks/useOrders";
 import useTableData from "../hooks/useTableData";
 import useSortableData from "../hooks/useSortableData";

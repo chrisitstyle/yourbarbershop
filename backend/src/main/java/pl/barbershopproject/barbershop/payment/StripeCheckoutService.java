@@ -68,8 +68,8 @@ public class StripeCheckoutService {
         }
 
         return new StripeCheckoutSessionResponse(
-                response.path("id").asText(),
-                response.path("url").asText()
+                response.path("id").asString(),
+                response.path("url").asString()
         );
     }
 

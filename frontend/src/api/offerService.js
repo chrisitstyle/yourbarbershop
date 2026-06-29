@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "./config.js";
-import { apiRequest, getAuthorizationHeaders } from "./httpClient.js";
+import { apiRequest } from "./httpClient.js";
 
-export const addOffer = async (newOffer, userToken) => {
+export const addOffer = async (newOffer) => {
   try {
     await apiRequest(`${API_BASE_URL}/offers`, {
       method: "POST",
@@ -25,7 +25,7 @@ export const getOffers = async () => {
   }
 };
 
-export const updateOffer = async (offerId, newData, userToken) => {
+export const updateOffer = async (offerId, newData) => {
   const response = await apiRequest(`${API_BASE_URL}/offers/${offerId}`, {
     method: "PUT",
     credentials: "include",
@@ -35,7 +35,7 @@ export const updateOffer = async (offerId, newData, userToken) => {
   return response.data;
 };
 
-export const deleteOffer = async (idOffer, userToken) => {
+export const deleteOffer = async (idOffer) => {
   try {
     await apiRequest(`${API_BASE_URL}/offers/${idOffer}`, {
       method: "DELETE",

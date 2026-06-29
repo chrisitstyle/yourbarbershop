@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "./config.js";
-import { apiRequest, getAuthorizationHeaders } from "./httpClient.js";
+import { apiRequest } from "./httpClient.js";
 
 export const createGuestOrder = async (guestOrderCreationData) => {
   try {
@@ -15,7 +15,7 @@ export const createGuestOrder = async (guestOrderCreationData) => {
   }
 };
 
-export const getGuestOrders = async (userToken) => {
+export const getGuestOrders = async () => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/guestorders`, {
       credentials: "include",
@@ -28,7 +28,7 @@ export const getGuestOrders = async (userToken) => {
   }
 };
 
-export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
+export const updateGuestOrder = async (idGuestOrder, data) => {
   try {
     const response = await apiRequest(
       `${API_BASE_URL}/guestorders/${idGuestOrder}`,
@@ -46,7 +46,7 @@ export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
   }
 };
 
-export const deleteGuestOrder = async (idGuestOrder, userToken) => {
+export const deleteGuestOrder = async (idGuestOrder) => {
   try {
     await apiRequest(`${API_BASE_URL}/guestorders/${idGuestOrder}`, {
       method: "DELETE",

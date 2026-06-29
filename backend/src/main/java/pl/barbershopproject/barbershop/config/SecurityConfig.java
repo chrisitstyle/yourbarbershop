@@ -17,26 +17,29 @@ import pl.barbershopproject.barbershop.user.UserRepository;
 public class SecurityConfig {
 
     private final UserRepository userRepository;
+
     @Bean
-    public UserDetailsService userDetailsService(){
+    public UserDetailsService userDetailsService() {
         return userName -> userRepository
                 .findByEmail(userName)
                 .orElseThrow(() ->
                         new UsernameNotFoundException(String.format("User '%s' not found!", userName)));
     }
+
     @Bean
-    public BCryptPasswordEncoder passwordEncoder(){
+    public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
     @Bean
-    public AuthenticationProvider authenticationProvider(){
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider daoAuthProvider = new DaoAuthenticationProvider(userDetailsService());
         daoAuthProvider.setPasswordEncoder(passwordEncoder());
         return daoAuthProvider;
     }
+
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-    throws Exception{
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) {
         return config.getAuthenticationManager();
     }
 }

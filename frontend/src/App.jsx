@@ -11,7 +11,7 @@ import Offer from "./pages/Offer.jsx";
 import Contact from "./pages/Contact.jsx";
 import RegisterOrderWithoutAcc from "./pages/RegisterOrderWithoutAcc.jsx";
 import Footer from "./Footer.jsx";
-import { AuthProvider } from "./AuthContext.jsx";
+import { AuthProvider } from "./auth/AuthContext.jsx";
 import Profile from "./pages/Profile.jsx";
 import AdminPanel from "./adminpages/AdminPanel.jsx";
 import EditOffer from "./adminpages/EditOffer.jsx";

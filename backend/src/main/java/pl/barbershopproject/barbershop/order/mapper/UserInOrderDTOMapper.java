@@ -5,6 +5,10 @@ import pl.barbershopproject.barbershop.user.User;
 
 public class UserInOrderDTOMapper {
 
+    private UserInOrderDTOMapper() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static UserInOrderDTO toUserInOrderDTO(User user) {
         return new UserInOrderDTO(
                 user.getIdUser(),

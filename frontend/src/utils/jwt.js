@@ -14,7 +14,7 @@ export function isTokenValid(token) {
 
     if (!payload.exp) return false;
     return payload.exp * 1000 > Date.now();
-  } catch (err) {
+  } catch {
     // if parsing the token fails, return false
     return false;
   }

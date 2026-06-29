@@ -1,5 +1,6 @@
 package pl.barbershopproject.barbershop.user;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -20,13 +21,13 @@ import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.SelfDeletionException;
-import pl.barbershopproject.barbershop.user.dto.CurrentUserResponseDTO;
-import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
-import pl.barbershopproject.barbershop.user.dto.UserDTO;
-import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
+import pl.barbershopproject.barbershop.user.dto.*;
 import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,20 +40,36 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest {
 
+    private static final String USER_EMAIL = "johndoe@example.com";
+    private static final ZoneId TEST_ZONE = ZoneId.of("Europe/Warsaw");
+    private static final Instant TEST_INSTANT = Instant.parse("2026-01-16T12:00:00Z");
+
     @Autowired
     private MockMvc mockMvc;
+
     @MockitoBean
     private UserService userService;
+
     @MockitoBean
     private JwtService jwtService;
+
     @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
+
     @MockitoBean
     private StringRedisTemplate stringRedisTemplate;
+
+    @MockitoBean
+    private Clock clock;
+
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static final String USER_EMAIL = "johndoe@example.com";
+    @BeforeEach
+    void setUp() {
+        Mockito.lenient().when(clock.getZone()).thenReturn(TEST_ZONE);
+        Mockito.lenient().when(clock.instant()).thenReturn(TEST_INSTANT);
+    }
 
     @Test
     void addUser_ReturnsCreated() throws Exception {
@@ -136,13 +153,24 @@ class UserControllerTest {
     @Test
     void updateUser_ReturnsUpdatedUser() throws Exception {
 
-        User updatedUser = UserTestEntities.createUser();
-        User returnedUser = UserTestEntities.userBuilder()
-                .role(Role.ADMIN)
-                .build();
+        UserProfileUpdateRequestDTO updatedUser = new UserProfileUpdateRequestDTO(
+                "John",
+                "Doe",
+                USER_EMAIL
+        );
+
+        UserDTO returnedUser = new UserDTO(
+                1L,
+                "John",
+                "Doe",
+                USER_EMAIL,
+                Role.ADMIN,
+                List.of()
+        );
 
 
-        Mockito.when(userService.updateUser(Mockito.any(User.class), Mockito.eq(1L))).thenReturn(returnedUser);
+        Mockito.when(userService.updateUser(Mockito.any(UserProfileUpdateRequestDTO.class), Mockito.eq(1L)))
+                .thenReturn(returnedUser);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -150,7 +178,7 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.idUser").value(1L))
                 .andExpect(jsonPath("$.role").value("ADMIN"))
-                .andExpect(jsonPath("$.email").value(returnedUser.getEmail()));
+                .andExpect(jsonPath("$.email").value(returnedUser.email()));
     }
 
 

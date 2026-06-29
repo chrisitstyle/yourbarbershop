@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue";
 
 import { Alert } from "react-bootstrap";
 

@@ -1,16 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./auth/AuthContextValue";
 import { Sun, Moon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./components/common/LanguageSwitcher";
+import "./css/Navbar.css";
 
 const Navbar = ({ theme, onToggleTheme }) => {
   const { isLoggedIn, logout, user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -18,13 +19,14 @@ const Navbar = ({ theme, onToggleTheme }) => {
   const isUser = user?.role === "USER";
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark app-navbar">
       <div className="container-fluid">
-        <Link className="navbar-brand" to="/">
+        <Link className="navbar-brand fw-semibold" to="/">
           YourBarbershop
         </Link>
+
         <button
-          className="navbar-toggler"
+          className="navbar-toggler app-navbar-toggler"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarNavDropdown"
@@ -37,17 +39,19 @@ const Navbar = ({ theme, onToggleTheme }) => {
 
         <div className="collapse navbar-collapse" id="navbarNavDropdown">
           {/* Main navigation links left */}
-          <ul className="navbar-nav">
+          <ul className="navbar-nav app-navbar-main">
             <li className="nav-item">
               <Link className="nav-link active custom-nav-link" to="/gallery">
                 {t("nav.gallery")}
               </Link>
             </li>
+
             <li className="nav-item">
               <Link className="nav-link active custom-nav-link" to="/offers">
                 {t("nav.offers")}
               </Link>
             </li>
+
             <li className="nav-item">
               <Link className="nav-link active custom-nav-link" to="/contact">
                 {t("nav.contact")}
@@ -72,17 +76,18 @@ const Navbar = ({ theme, onToggleTheme }) => {
           </ul>
 
           {/* Account navigation right */}
-          <ul className="navbar-nav ms-auto align-items-center">
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle custom-nav-link"
-                role="button"
+          <ul className="navbar-nav ms-lg-auto app-navbar-actions">
+            <li className="nav-item dropdown app-navbar-account">
+              <button
+                className="nav-link dropdown-toggle custom-nav-link app-account-button"
+                type="button"
                 data-bs-toggle="dropdown"
-                tabIndex={0}
+                aria-expanded="false"
               >
                 {t("nav.account")}
-              </a>
-              <ul className="dropdown-menu dropdown-menu-end">
+              </button>
+
+              <ul className="dropdown-menu dropdown-menu-lg-end app-account-menu">
                 {isLoggedIn ? (
                   <>
                     {isAdmin && (
@@ -95,6 +100,7 @@ const Navbar = ({ theme, onToggleTheme }) => {
                         </Link>
                       </li>
                     )}
+
                     {isUser && (
                       <li>
                         <Link
@@ -105,12 +111,15 @@ const Navbar = ({ theme, onToggleTheme }) => {
                         </Link>
                       </li>
                     )}
+
                     <li>
                       <hr className="dropdown-divider" />
                     </li>
+
                     <li>
                       <button
                         className="dropdown-item custom-nav-link"
+                        type="button"
                         onClick={handleLogout}
                       >
                         {t("nav.logout")}
@@ -127,6 +136,7 @@ const Navbar = ({ theme, onToggleTheme }) => {
                         {t("nav.login")}
                       </Link>
                     </li>
+
                     <li>
                       <Link
                         className="dropdown-item custom-nav-link"
@@ -140,19 +150,20 @@ const Navbar = ({ theme, onToggleTheme }) => {
               </ul>
             </li>
 
-            <li className="nav-item ms-3 me-2">
-              <LanguageSwitcher />
-            </li>
+            <li className="nav-item app-navbar-controls">
+              <div className="app-language-switcher">
+                <LanguageSwitcher />
+              </div>
 
-            <li className="nav-item d-flex align-items-center">
               <button
-                className="bg-transparent border-0 ms-2 p-0"
+                type="button"
+                className="app-theme-toggle"
                 onClick={onToggleTheme}
                 title={
                   theme === "dark" ? t("nav.switchLight") : t("nav.switchDark")
                 }
               >
-                {theme === "dark" ? <Sun /> : <Moon color="#fff" />}
+                {theme === "dark" ? <Sun size={22} /> : <Moon size={22} />}
               </button>
             </li>
           </ul>
