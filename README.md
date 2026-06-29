@@ -10,7 +10,7 @@ The application provides comprehensive management tools:
 - **Appointment System** - Schedule and manage customer visits efficiently
 - **Service Catalog** - Create and manage service offerings with pricing
 - **Order Processing** - Track service orders and customer history
-- **Secure Authentication** - JWT-based authorization with password hashing
+- **Secure Authentication** - Short-lived JWT access tokens with refresh tokens stored in secure HttpOnly cookies and password hashing
 - **Passwordless Email OTP Login** - Users can sign in with a short-lived one-time code delivered by email
 - **Bot Protection** - Integrated Google reCAPTCHA v2 to secure registration and password recovery flows.
 - **Role-Based Access Control** - Two roles: administrators and users (customers)
@@ -42,7 +42,7 @@ The application provides comprehensive management tools:
 - **Spring Boot 4.0.0**
 - **Flyway** - Database migrations and schema versioning
 - **Valkey (Redis)** - High-performance data structure store used for efficient caching and short-lived email login OTP data
-- **OAuth2 & JWT** - Secure authentication with external providers and JSON Web Tokens
+- **OAuth2, JWT & Refresh Tokens** - Secure authentication with external providers, short-lived access tokens, and HttpOnly refresh-token cookies
 - **Google reCAPTCHA API** - Server-side validation of user interactions
 - **Stripe API** - Online card payments with Stripe Checkout and webhook-based payment status updates
 - **Gradle** - Build automation tool
@@ -187,7 +187,10 @@ The command prints a webhook signing secret beginning with `whsec_`. Use that va
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 JWT_SECRET_KEY=your-secret-key
-JWT_EXPIRATION_HOURS=token-expiration-time-in-hours
+JWT_ACCESS_EXPIRATION_MINUTES=15
+REFRESH_TOKEN_DAYS=14
+REFRESH_COOKIE_SECURE=false
+REFRESH_COOKIE_SAME_SITE=Lax
 MYSQL_USERNAME=yor-mysql-username
 MYSQL_PASSWORD=your-mysql-password
 
@@ -212,7 +215,7 @@ FRONTEND_URL=http://localhost:3000
 STRIPE_FORWARD_URL=http://localhost:8080/stripe/webhook
 ```
 
-> **Note**: `JWT_EXPIRATION_HOURS` is optional. If it is not set, the backend uses the default value from `JwtService` - 8 hours.
+> **Note**: `JWT_ACCESS_EXPIRATION_MINUTES` is optional. If it is not set, the backend uses the default short access-token lifetime. Refresh token settings are also optional: `REFRESH_TOKEN_DAYS` controls refresh token lifetime, while `REFRESH_COOKIE_SECURE` and `REFRESH_COOKIE_SAME_SITE` control the refresh cookie flags. For local HTTP development use `REFRESH_COOKIE_SECURE=false` and `REFRESH_COOKIE_SAME_SITE=Lax`. For HTTPS production deployments use `REFRESH_COOKIE_SECURE=true` and `REFRESH_COOKIE_SAME_SITE=None`.
 
 > **Note**: Passwordless email OTP login uses the existing mail configuration (`MAIL_USERNAME`, `MAIL_PASSWORD`) and Valkey/Redis configuration (`VALKEY_HOST`, `VALKEY_PORT`). No additional environment variables are required for this feature.
 
@@ -236,6 +239,12 @@ spring.datasource.url=jdbc:mysql://localhost:3306/barbershop_with_roles
 spring.datasource.username=${MYSQL_USERNAME}
 spring. datasource.password=${MYSQL_PASSWORD}
 
+# JWT / refresh token configuration
+JWT_ACCESS_EXPIRATION_MINUTES=${JWT_ACCESS_EXPIRATION_MINUTES:15}
+application.security.refresh-token-days=${REFRESH_TOKEN_DAYS:14}
+application.security.refresh-cookie-secure=${REFRESH_COOKIE_SECURE:true}
+application.security.refresh-cookie-same-site=${REFRESH_COOKIE_SAME_SITE:None}
+
 # Mail configuration
 spring.mail.username=${MAIL_USERNAME}
 spring.mail.password=${MAIL_PASSWORD}
@@ -256,9 +265,25 @@ stripe.cancel-url=${FRONTEND_URL:http://localhost:3000}?payment=cancel
 
 YourBarbershop supports multiple authentication flows:
 
-- **Email and password login** - traditional login with a hashed password and JWT response.
-- **OAuth2 login** - social login through Google and GitHub.
-- **Passwordless email OTP login** - users can request a one-time login code delivered to their email address.
+- **Email and password login** - traditional login with a hashed password, a short-lived access token response, and a refresh token stored in an HttpOnly cookie.
+- **OAuth2 login** - social login through Google and GitHub. OAuth2 no longer exposes tokens in the redirect URL; it sets the refresh cookie and redirects the frontend to `/oauth2/redirect`.
+- **Passwordless email OTP login** - users can request a one-time login code delivered to their email address and receive the same access-token plus refresh-cookie session after successful verification.
+
+Access token and refresh token model:
+
+1. Standard login, registration, email OTP login, and OAuth2 login create a session.
+2. The backend returns a short-lived JWT `accessToken` in the JSON response.
+3. The backend also sets an opaque `refresh_token` as an HttpOnly cookie. The raw refresh token is never stored in localStorage and is not exposed to JavaScript.
+4. The frontend keeps the access token in memory and sends it in the `Authorization: Bearer <accessToken>` header.
+5. When the access token expires, the frontend calls `POST /auth/refresh` with credentials included. The backend validates the refresh cookie, rotates/reissues the session, and returns a new access token.
+6. `POST /auth/logout` revokes the refresh token and clears the refresh cookie.
+
+Public refresh-token endpoints:
+
+```http
+POST /auth/refresh
+POST /auth/logout
+```
 
 The email OTP login flow uses two public endpoints:
 
@@ -273,7 +298,7 @@ How it works:
 2. The backend generates a 6-digit one-time code and sends it by email.
 3. Only a hashed version of the code is stored in Valkey/Redis with a short TTL.
 4. The user enters the code in the login form.
-5. After successful verification, the backend deletes the code and returns the same JWT-based `AuthResponse` as standard login.
+5. After successful verification, the backend deletes the code, returns an `AuthResponse` containing `accessToken`, `id`, and `role`, and sets the refresh token in an HttpOnly cookie.
 
 The OTP flow also includes request cooldowns and verification attempt limits to reduce abuse. The request endpoint returns a generic success message so it does not reveal whether an email address exists in the database.
 
@@ -389,7 +414,10 @@ SPRING_DATASOURCE_URL=jdbc:mysql://database:3306/barbershop-with-roles
 SPRING_DATASOURCE_USERNAME=db-username
 SPRING_DATASOURCE_PASSWORD=db-password
 JWT_SECRET_KEY=generate-your-secret-key
-JWT_EXPIRATION_HOURS=token-expiration-time-in-hours
+JWT_ACCESS_EXPIRATION_MINUTES=15
+REFRESH_TOKEN_DAYS=14
+REFRESH_COOKIE_SECURE=false
+REFRESH_COOKIE_SAME_SITE=Lax
 GOOGLE_RECAPTCHA_SECRET=your-recaptcha-secret-key-backend
 
 # Stripe Payments
@@ -421,7 +449,7 @@ VALKEY_HOST=valkey # (default for docker is valkey, default for springboot is lo
 VALKEY_PORT=6379 # (default both)
 ```
 
-> **Note**: Passwordless email OTP login uses the configured mail provider to send one-time login codes and Valkey/Redis to store short-lived hashed codes, cooldowns, and attempt counters.
+> **Note**: Passwordless email OTP login uses the configured mail provider to send one-time login codes and Valkey/Redis to store short-lived hashed codes, cooldowns, and attempt counters. Refresh tokens are persisted in MySQL as hashes and sent to the browser only as HttpOnly cookies.
 
 > **Note**: For local Stripe webhook testing with Docker, keep the backend exposed on `http://localhost:8080` and run `make stripe-listen` from your host machine. You can also run `stripe listen --api-key sk_test_your_secret_key --forward-to http://localhost:8080/stripe/webhook` manually.
 
@@ -537,8 +565,9 @@ The application uses MySQL with the following main tables:
 - **guest_order** - Orders placed by guest customers
 - **payment** - Payment records connected to user or guest orders, including payment method, payment status, Stripe Checkout Session ID, Payment Intent ID, amount, currency, and paid timestamp
 - **password_reset_token** - Password recovery tokens
+- **refresh_token** - Hashed refresh tokens used for session renewal, rotation, revocation, and logout
 
-Email login OTP codes are stored in Valkey/Redis with TTL and are not persisted in MySQL.
+Email login OTP codes are stored in Valkey/Redis with TTL and are not persisted in MySQL. Refresh tokens are stored in MySQL only as hashes; the raw refresh token is sent to the browser in an HttpOnly cookie.
 
 Portfolio images are stored in Supabase cloud storage.
 
