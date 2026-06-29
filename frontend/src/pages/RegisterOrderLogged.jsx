@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue";
 import { useNavigate } from "react-router-dom";
 import { Alert } from "react-bootstrap";
 import useOffers from "../hooks/useOffers";
@@ -79,7 +79,7 @@ const RegisterOrderLogged = () => {
       }
 
       navigate(`/profile/${user.id}?registrationOrderSuccess=true`);
-    } catch (error) {
+    } catch {
       setShowErrorAlert(true);
     } finally {
       setIsLoading(false);

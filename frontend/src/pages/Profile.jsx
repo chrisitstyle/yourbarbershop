@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue";
 import { useParams, useLocation } from "react-router-dom";
 import { Alert } from "react-bootstrap";
 import LoadingSpinner from "../components/common/LoadingSpinner";

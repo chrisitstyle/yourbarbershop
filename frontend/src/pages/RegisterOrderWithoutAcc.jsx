@@ -117,7 +117,7 @@ const RegisterOrderWithoutAcc = () => {
 
       setInitialState();
       setShowAlert(true);
-    } catch (error) {
+    } catch {
       setShowErrorAlert(true);
     } finally {
       setIsLoading(false);

@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "./config.js";
-import { apiRequest, getAuthorizationHeaders } from "./httpClient.js";
+import { apiRequest } from "./httpClient.js";
 
-export const createOrder = async (orderCreationData, userToken) => {
+export const createOrder = async (orderCreationData) => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/orders`, {
       method: "POST",
@@ -16,7 +16,7 @@ export const createOrder = async (orderCreationData, userToken) => {
   }
 };
 
-export const getOrders = async (userToken) => {
+export const getOrders = async () => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/orders`, {
       credentials: "include",
@@ -29,7 +29,7 @@ export const getOrders = async (userToken) => {
   }
 };
 
-export const updateOrder = async (orderId, newData, userToken) => {
+export const updateOrder = async (orderId, newData) => {
   const response = await apiRequest(`${API_BASE_URL}/orders/${orderId}`, {
     method: "PUT",
     credentials: "include",
@@ -39,7 +39,7 @@ export const updateOrder = async (orderId, newData, userToken) => {
   return response.data;
 };
 
-export const deleteOrder = async (idOrder, userToken) => {
+export const deleteOrder = async (idOrder) => {
   try {
     await apiRequest(`${API_BASE_URL}/orders/${idOrder}`, {
       method: "DELETE",

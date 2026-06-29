@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue.js";
 import { Alert } from "react-bootstrap";
 import { updateUser } from "../api/userService";
 import { useTranslation } from "react-i18next";
+
+const ROLES = ["USER", "ADMIN"];
 
 const EditUser = () => {
   const { user } = useAuth();
@@ -23,43 +25,29 @@ const EditUser = () => {
       setFirstName(userData.firstname);
       setLastName(userData.lastname);
       setEmail(userData.email);
-      setSelectedRole(userData.role);
-    }
-  }, [userData]);
 
-  const roles = ["USER", "ADMIN"];
-
-  useEffect(() => {
-    // domyślna rola użytkownika
-    if (userData && roles.includes(userData.role)) {
-      setSelectedRole(userData.role);
-    } else if (roles.includes(user.role)) {
+      if (ROLES.includes(userData.role)) {
+        setSelectedRole(userData.role);
+      }
+    } else if (user?.role && ROLES.includes(user.role)) {
       // ustawianie roli zalogowanego użytkownika
       setSelectedRole(user.role);
     }
-  }, [user.role, userData]);
+  }, [user?.role, userData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await updateUser(
-        userData.idUser,
-        {
-          firstname,
-          lastname,
-          email,
-          role: selectedRole,
-        },
-        user.token,
-      );
+      await updateUser(userData.idUser, {
+        firstname,
+        lastname,
+        email,
+        role: selectedRole,
+      });
 
-      if (response.status === 200) {
-        navigate("/adminpanel");
-      } else {
-        setEditUserError(true);
-      }
-    } catch (error) {
+      navigate("/adminpanel");
+    } catch {
       setEditUserError(true);
     }
   };
@@ -80,7 +68,7 @@ const EditUser = () => {
             </Alert>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label htmlFor="inputfirstname" className="form-label">
+                <label htmlFor="firstname" className="form-label">
                   {t("auth.firstname")}
                 </label>
                 <input
@@ -93,7 +81,7 @@ const EditUser = () => {
                 />
               </div>
               <div className="mb-3">
-                <label htmlFor="inputlastname" className="form-label">
+                <label htmlFor="lastname" className="form-label">
                   {t("auth.lastname")}
                 </label>
                 <input
@@ -106,7 +94,7 @@ const EditUser = () => {
                 />
               </div>
               <div className="mb-3">
-                <label htmlFor="inputemail" className="form-label">
+                <label htmlFor="email" className="form-label">
                   {t("auth.email")}
                 </label>
                 <input
@@ -120,7 +108,7 @@ const EditUser = () => {
               </div>
 
               <div className="mb-3">
-                <label htmlFor="inputrole" className="form-label">
+                <label htmlFor="role" className="form-label">
                   {t("admin.users.role")}
                 </label>
                 <select
@@ -130,9 +118,9 @@ const EditUser = () => {
                   onChange={(e) => setSelectedRole(e.target.value)}
                   required
                 >
-                  {roles.map((r) => (
-                    <option key={r} value={r}>
-                      {r === "USER" ? t("admin.users.roleUser") : r}
+                  {ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {role === "USER" ? t("admin.users.roleUser") : role}
                     </option>
                   ))}
                 </select>

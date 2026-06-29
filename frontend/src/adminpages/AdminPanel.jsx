@@ -9,7 +9,6 @@ import AddOffer from "./AddOffer";
 import UsersTable from "./UsersTable";
 import AddUser from "./AddUser";
 import OrdersTable from "./OrdersTable";
-import { useAuth } from "../AuthContext";
 import AdminMenuButton from "../components/AdminMenuButton.jsx";
 import GuestOrdersTable from "./GuestOrdersTable.jsx";
 import GallerySettings from "./GallerySettings.jsx";
@@ -23,8 +22,6 @@ import {
 import { useTranslation } from "react-i18next";
 
 const AdminPanel = () => {
-  const { user } = useAuth();
-  const [selectedTable, setSelectedTable] = useState(null);
   const { t } = useTranslation();
 
   // table/form visibility states
@@ -51,7 +48,7 @@ const AdminPanel = () => {
 
   const handleAddOffer = async (newOffer) => {
     try {
-      await offerService.addOffer(newOffer, user.token);
+      await offerService.addOffer(newOffer);
       handleToggleTable("offers");
       setAddOfferSuccessfulMsg(t("admin.messages.addOfferSuccess"));
     } catch (error) {
@@ -62,7 +59,7 @@ const AdminPanel = () => {
 
   const handleDeleteOffer = async (idOffer) => {
     try {
-      await offerService.deleteOffer(idOffer, user.token);
+      await offerService.deleteOffer(idOffer);
     } catch (error) {
       console.error("Error deleting offer:", error);
       setDeleteOfferErrorMsg(t("admin.messages.deleteOfferError"));
@@ -82,7 +79,7 @@ const AdminPanel = () => {
 
   const handleDeleteUser = async (idUser) => {
     try {
-      await userService.deleteUser(idUser, user.token);
+      await userService.deleteUser(idUser);
     } catch (error) {
       setDeleteUserErrorMsg(t("admin.messages.deleteUserError"));
       console.error("Error deleting user:", error);
@@ -91,7 +88,7 @@ const AdminPanel = () => {
 
   const handleDeleteOrder = async (idOrder) => {
     try {
-      await orderService.deleteOrder(idOrder, user.token);
+      await orderService.deleteOrder(idOrder);
     } catch (error) {
       setDeleteOrderErrorMsg(t("admin.messages.deleteOrderError"));
       console.error("Error deleting order:", error);
@@ -100,7 +97,7 @@ const AdminPanel = () => {
 
   const handleDeleteGuestOrder = async (idGuestOrder) => {
     try {
-      await guestOrderService.deleteGuestOrder(idGuestOrder, user.token);
+      await guestOrderService.deleteGuestOrder(idGuestOrder);
     } catch (error) {
       setDeleteGuestOrderErrorMsg(t("admin.messages.deleteGuestOrderError"));
       console.error("Error deleting order:", error);
@@ -109,7 +106,6 @@ const AdminPanel = () => {
 
   // handle switching between modules/views
   const handleToggleTable = (table) => {
-    setSelectedTable((prev) => (prev === table ? null : table));
     setShowAddUserForm(false);
     setShowAddOfferForm(false);
     setShowUserTable(false);

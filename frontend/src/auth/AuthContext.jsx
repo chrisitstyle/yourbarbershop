@@ -1,14 +1,13 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { clearAccessToken, setAccessToken } from "./api/httpClient.js";
+import { useCallback, useEffect, useState } from "react";
+import { clearAccessToken, setAccessToken } from "../api/httpClient.js";
 import {
   loginUser,
   logoutUser,
   refreshSession,
   registerUser,
   verifyEmailLoginCode,
-} from "./api/authService.js";
-
-const AuthContext = createContext();
+} from "../api/authService.js";
+import { AuthContext } from "./AuthContextValue.js";
 
 const buildUserFromAuthResponse = (authResponse) => ({
   id: authResponse.id,
@@ -20,19 +19,19 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const applyAuthResponse = (authResponse) => {
+  const applyAuthResponse = useCallback((authResponse) => {
     setAccessToken(authResponse.accessToken);
     setUser(buildUserFromAuthResponse(authResponse));
     setIsLoggedIn(true);
-  };
+  }, []);
 
-  const clearAuthState = () => {
+  const clearAuthState = useCallback(() => {
     clearAccessToken();
     setUser(null);
     setIsLoggedIn(false);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-  };
+  }, []);
 
   useEffect(() => {
     const bootstrapAuth = async () => {
@@ -50,7 +49,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     bootstrapAuth();
-  }, []);
+  }, [applyAuthResponse, clearAuthState]);
 
   const login = async (email, password) => {
     const authResponse = await loginUser(email, password);
@@ -101,5 +100,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);

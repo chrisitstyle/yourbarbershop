@@ -10,7 +10,7 @@ import i18n from "../api/i18n";
  * @returns {String|Number} The retrieved and formatted value, or "brak" if the value is missing/null.
  */
 
-export function getNestedValue(obj, field, lng = "pl") {
+export function getNestedValue(obj, field, _lng = "pl") {
   const currentLang = i18n.language || "pl";
   const locale = currentLang.startsWith("en") ? "en-US" : "pl-PL";
 

@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Alert } from "react-bootstrap";
 import { sendCustomEmail } from "../api/emailService";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContextValue";
 import useUsers from "../hooks/useUsers";
 import useTableData from "../hooks/useTableData";
 import useSortableData from "../hooks/useSortableData";

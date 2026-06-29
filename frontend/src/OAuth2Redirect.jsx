@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./auth/AuthContextValue";
 
 const OAuth2Redirect = () => {
   const navigate = useNavigate();

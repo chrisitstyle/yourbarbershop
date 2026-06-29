@@ -1,0 +1,110 @@
+.app-navbar {
+  padding: 0.75rem 1rem;
+}
+
+.app-navbar-toggler {
+  border-radius: 0.6rem;
+}
+
+.app-account-button {
+  background: transparent;
+  border: 0;
+}
+
+.app-navbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.app-theme-toggle {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 991.98px) {
+  .app-navbar .navbar-collapse {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .app-navbar-main,
+  .app-navbar-actions {
+    width: 100%;
+  }
+
+  .app-navbar .nav-link,
+  .app-account-button {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 0;
+  }
+
+  .app-navbar-actions {
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    align-items: stretch;
+  }
+
+  .app-navbar-account {
+    width: 100%;
+  }
+
+  .app-account-menu {
+    position: static;
+    width: 100%;
+    margin-top: 0.25rem;
+    background-color: #2b3035;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .app-account-menu .dropdown-item {
+    color: rgba(255, 255, 255, 0.9);
+    padding: 0.65rem 1rem;
+  }
+
+  .app-account-menu .dropdown-item:hover,
+  .app-account-menu .dropdown-item:focus {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .app-account-menu .dropdown-divider {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .app-navbar-controls {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 0.75rem;
+  }
+
+  .app-language-switcher {
+    display: flex;
+    align-items: center;
+  }
+
+  .app-theme-toggle {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+@media (min-width: 992px) {
+  .app-navbar-actions {
+    align-items: center;
+    gap: 0.75rem;
+  }
+}

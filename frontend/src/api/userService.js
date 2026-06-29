@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "./config.js";
-import { apiRequest, getAuthorizationHeaders } from "./httpClient.js";
+import { apiRequest } from "./httpClient.js";
 
 export const addUser = async (newUser) => {
   try {
@@ -21,7 +21,7 @@ export const getCurrentUser = async () => {
   return response.data;
 };
 
-export const getUsers = async (userToken) => {
+export const getUsers = async () => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/users`, {
       credentials: "include",
@@ -34,7 +34,7 @@ export const getUsers = async (userToken) => {
   }
 };
 
-export const updateUser = async (userId, newData, userToken) => {
+export const updateUser = async (userId, newData) => {
   const response = await apiRequest(`${API_BASE_URL}/users/${userId}`, {
     method: "PUT",
     credentials: "include",
@@ -44,7 +44,7 @@ export const updateUser = async (userId, newData, userToken) => {
   return response.data;
 };
 
-export const deleteUser = async (idUser, userToken) => {
+export const deleteUser = async (idUser) => {
   try {
     await apiRequest(`${API_BASE_URL}/users/${idUser}`, {
       method: "DELETE",

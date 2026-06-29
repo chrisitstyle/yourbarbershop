@@ -13,7 +13,7 @@ const useOffers = () => {
     try {
       const data = await getOffers();
       setOffers(data);
-    } catch (err) {
+    } catch {
       setError("Błąd podczas ładowania usług");
     } finally {
       setIsLoading(false);

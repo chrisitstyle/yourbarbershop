@@ -1,4 +1,4 @@
-import { useEffect, useState, memo } from "react";
+import { useCallback, useEffect, useState, memo } from "react";
 import { useSupabaseClient, CDNURL } from "../api/supabaseApi";
 import { Container, Table, Modal, Button, Form, Alert } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -70,7 +70,7 @@ const GallerySettings = () => {
   const [uploadingImageTimeout, setUploadingImageTimeout] = useState(null);
 
   // fetch the image list from Supabase storage (filtered by file type)
-  async function getImages() {
+  const getImages = useCallback(async () => {
     try {
       const { data, error } = await supabase.storage
         .from("barbershopimages")
@@ -79,6 +79,7 @@ const GallerySettings = () => {
           offset: 0,
           sortBy: { column: "created_at", order: "desc" },
         });
+
       if (data !== null) {
         // filter out unwanted files (non-images and placeholder files)
         const filteredImages = data.filter((image) => {
@@ -97,7 +98,7 @@ const GallerySettings = () => {
     } catch (error) {
       console.error("Error fetching images:", error.message);
     }
-  }
+  }, [supabase]);
 
   const filterImages = (image, term) => {
     return image.name.toLowerCase().includes(term.toLowerCase());
@@ -112,17 +113,20 @@ const GallerySettings = () => {
     setCurrentPage,
   } = useTableData(images, filterImages);
 
-  const performDeleteImage = async (image) => {
-    const { error } = await supabase.storage
-      .from("barbershopimages")
-      .remove([`images/${image.name}`]);
+  const performDeleteImage = useCallback(
+    async (image) => {
+      const { error } = await supabase.storage
+        .from("barbershopimages")
+        .remove([`images/${image.name}`]);
 
-    if (error) {
-      setDeleteImageErrorMsg(t("admin.gallery.messages.deleteError"));
-      console.error("Error removing image:", error.message);
-      throw error;
-    }
-  };
+      if (error) {
+        setDeleteImageErrorMsg(t("admin.gallery.messages.deleteError"));
+        console.error("Error removing image:", error.message);
+        throw error;
+      }
+    },
+    [supabase, t],
+  );
 
   const {
     show: showDeleteModal,
@@ -161,18 +165,25 @@ const GallerySettings = () => {
         setUploadingImageMsg(
           t("admin.gallery.messages.uploadingFile", { name: file.name }),
         );
-        const { data, error } = await supabase.storage
+
+        const { data, error: uploadError } = await supabase.storage
           .from("barbershopimages")
           .upload("images/" + encodeURIComponent(file.name), file);
 
-        if (!data) {
+        if (uploadError || !data) {
           uploadSuccessful = false;
           setUploadImageErrorMsg(
             t("admin.gallery.messages.uploadErrorFile", { name: file.name }),
           );
+
+          if (uploadError) {
+            console.error("Error uploading image:", uploadError.message);
+          }
+
           break;
         }
       }
+
       if (uploadSuccessful) {
         setUploadImageSuccessfulMsg(t("admin.gallery.messages.uploadSuccess"));
         inputElement.value = null;
@@ -193,7 +204,7 @@ const GallerySettings = () => {
 
   useEffect(() => {
     getImages();
-  }, []);
+  }, [getImages]);
 
   // cleanup any timeouts left from upload feedback
   useEffect(() => {

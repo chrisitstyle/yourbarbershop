@@ -18,7 +18,7 @@ const useOrders = (userToken) => {
       try {
         const data = await getOrders(userToken);
         setOrders(data);
-      } catch (err) {
+      } catch {
         setError("Błąd podczas ładowania zamówień");
       } finally {
         setIsLoading(false);
@@ -34,7 +34,7 @@ const useOrders = (userToken) => {
     try {
       const data = await getOrders(userToken);
       setOrders(data);
-    } catch (err) {
+    } catch {
       setError("Błąd podczas ładowania zamówień");
     } finally {
       setIsLoading(false);
