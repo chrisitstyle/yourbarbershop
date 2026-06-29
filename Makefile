@@ -5,7 +5,7 @@ endif
 
 STRIPE_FORWARD_URL ?= http://localhost:8080/stripe/webhook
 
-.PHONY: help up up-nc down stop restart ps db-up logs logs-live logs-backend logs-frontend logs-db logs-valkey \
+.PHONY: help up up-nc down stop restart ps db-up backend-up frontend-up logs logs-live logs-backend logs-frontend logs-db logs-valkey \
         backend-run backend-test backend-build frontend-install frontend-dev frontend-build \
         act-frontend act-backend act-db act-security db-shell valkey-shell \
         stripe-listen stripe-trigger clean clean-all
@@ -21,6 +21,8 @@ help:
 	@echo "  make restart           - Restart Docker stack"
 	@echo "  make ps                - Show running containers"
 	@echo "  make db-up             - Start database and Valkey containers"
+	@echo "  make backend-up        - Build and start backend container"
+	@echo "  make frontend-up       - Build and start frontend container"
 	@echo "  make clean             - Stop containers, remove volumes, orphans and unused Docker resources"
 	@echo "  make clean-all         - Stop containers and remove project images plus all unused Docker images"
 	@echo ""
@@ -79,6 +81,12 @@ ps:
 
 db-up:
 	docker compose up -d database valkey
+
+backend-up:
+	docker compose up -d --build backend
+
+frontend-up:
+	docker compose up -d --build --no-deps frontend
 
 logs:
 	docker compose logs -f
