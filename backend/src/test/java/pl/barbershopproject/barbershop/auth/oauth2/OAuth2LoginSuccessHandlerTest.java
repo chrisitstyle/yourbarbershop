@@ -9,7 +9,8 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.util.ReflectionTestUtils;
-import pl.barbershopproject.barbershop.config.JwtService;
+import pl.barbershopproject.barbershop.auth.refresh.RefreshCookieService;
+import pl.barbershopproject.barbershop.auth.refresh.RefreshTokenService;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 
@@ -22,19 +23,24 @@ import static org.mockito.Mockito.*;
 class OAuth2LoginSuccessHandlerTest {
 
     private static final String FRONTEND_URL = "http://localhost:3000";
-    private static final String JWT_TOKEN = "jwt-token";
+    private static final String REFRESH_TOKEN = "refresh-token";
 
-    @DisplayName("Should process OAuth2 user, generate JWT and redirect to frontend")
+    @DisplayName("Should process OAuth2 user, create refresh token cookie and redirect to frontend")
     @Test
-    void onAuthenticationSuccess_ShouldRedirectWithJwtToken_WhenProviderIsSupported() throws Exception {
+    void onAuthenticationSuccess_ShouldCreateRefreshCookieAndRedirect_WhenProviderIsSupported() throws Exception {
         // given
-        JwtService jwtService = mock(JwtService.class);
+        RefreshTokenService refreshTokenService = mock(RefreshTokenService.class);
+        RefreshCookieService refreshCookieService = mock(RefreshCookieService.class);
         OAuth2UserStrategy googleStrategy = mock(OAuth2UserStrategy.class);
 
         when(googleStrategy.getProviderName()).thenReturn("google");
 
         OAuth2LoginSuccessHandler successHandler =
-                new OAuth2LoginSuccessHandler(jwtService, List.of(googleStrategy));
+                new OAuth2LoginSuccessHandler(
+                        refreshTokenService,
+                        refreshCookieService,
+                        List.of(googleStrategy)
+                );
 
         ReflectionTestUtils.setField(successHandler, "frontendUrl", FRONTEND_URL);
 
@@ -50,11 +56,11 @@ class OAuth2LoginSuccessHandlerTest {
                 .role(Role.USER)
                 .build();
 
-        when(googleStrategy.processUser(oAuth2User)).thenReturn(user);
-        when(jwtService.generateToken(user)).thenReturn(JWT_TOKEN);
-
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(googleStrategy.processUser(oAuth2User)).thenReturn(user);
+        when(refreshTokenService.createRefreshToken(user, request)).thenReturn(REFRESH_TOKEN);
 
         // when
         successHandler.onAuthenticationSuccess(request, response, authentication);
@@ -62,25 +68,31 @@ class OAuth2LoginSuccessHandlerTest {
         // then
         assertEquals(302, response.getStatus());
         assertEquals(
-                FRONTEND_URL + "/oauth2/redirect?token=" + JWT_TOKEN,
+                FRONTEND_URL + "/oauth2/redirect",
                 response.getRedirectedUrl()
         );
 
         verify(googleStrategy).processUser(oAuth2User);
-        verify(jwtService).generateToken(user);
+        verify(refreshTokenService).createRefreshToken(user, request);
+        verify(refreshCookieService).addRefreshCookie(response, REFRESH_TOKEN);
     }
 
     @DisplayName("Should redirect with error when provider is not supported")
     @Test
     void onAuthenticationSuccess_ShouldRedirectWithError_WhenProviderIsNotSupported() throws Exception {
         // given
-        JwtService jwtService = mock(JwtService.class);
+        RefreshTokenService refreshTokenService = mock(RefreshTokenService.class);
+        RefreshCookieService refreshCookieService = mock(RefreshCookieService.class);
         OAuth2UserStrategy googleStrategy = mock(OAuth2UserStrategy.class);
 
         when(googleStrategy.getProviderName()).thenReturn("google");
 
         OAuth2LoginSuccessHandler successHandler =
-                new OAuth2LoginSuccessHandler(jwtService, List.of(googleStrategy));
+                new OAuth2LoginSuccessHandler(
+                        refreshTokenService,
+                        refreshCookieService,
+                        List.of(googleStrategy)
+                );
 
         ReflectionTestUtils.setField(successHandler, "frontendUrl", FRONTEND_URL);
 
@@ -101,14 +113,16 @@ class OAuth2LoginSuccessHandlerTest {
         );
 
         verify(googleStrategy, never()).processUser(any(OAuth2User.class));
-        verify(jwtService, never()).generateToken(any(User.class));
+        verifyNoInteractions(refreshTokenService);
+        verifyNoInteractions(refreshCookieService);
     }
 
     @DisplayName("Should use matching strategy based on OAuth2 registration id")
     @Test
     void onAuthenticationSuccess_ShouldUseMatchingStrategy_BasedOnRegistrationId() throws Exception {
         // given
-        JwtService jwtService = mock(JwtService.class);
+        RefreshTokenService refreshTokenService = mock(RefreshTokenService.class);
+        RefreshCookieService refreshCookieService = mock(RefreshCookieService.class);
 
         OAuth2UserStrategy googleStrategy = mock(OAuth2UserStrategy.class);
         OAuth2UserStrategy githubStrategy = mock(OAuth2UserStrategy.class);
@@ -117,7 +131,11 @@ class OAuth2LoginSuccessHandlerTest {
         when(githubStrategy.getProviderName()).thenReturn("github");
 
         OAuth2LoginSuccessHandler successHandler =
-                new OAuth2LoginSuccessHandler(jwtService, List.of(googleStrategy, githubStrategy));
+                new OAuth2LoginSuccessHandler(
+                        refreshTokenService,
+                        refreshCookieService,
+                        List.of(googleStrategy, githubStrategy)
+                );
 
         ReflectionTestUtils.setField(successHandler, "frontendUrl", FRONTEND_URL);
 
@@ -133,11 +151,11 @@ class OAuth2LoginSuccessHandlerTest {
                 .role(Role.USER)
                 .build();
 
-        when(githubStrategy.processUser(oAuth2User)).thenReturn(user);
-        when(jwtService.generateToken(user)).thenReturn(JWT_TOKEN);
-
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(githubStrategy.processUser(oAuth2User)).thenReturn(user);
+        when(refreshTokenService.createRefreshToken(user, request)).thenReturn(REFRESH_TOKEN);
 
         // when
         successHandler.onAuthenticationSuccess(request, response, authentication);
@@ -145,13 +163,14 @@ class OAuth2LoginSuccessHandlerTest {
         // then
         assertEquals(302, response.getStatus());
         assertEquals(
-                FRONTEND_URL + "/oauth2/redirect?token=" + JWT_TOKEN,
+                FRONTEND_URL + "/oauth2/redirect",
                 response.getRedirectedUrl()
         );
 
         verify(githubStrategy).processUser(oAuth2User);
         verify(googleStrategy, never()).processUser(any(OAuth2User.class));
-        verify(jwtService).generateToken(user);
+        verify(refreshTokenService).createRefreshToken(user, request);
+        verify(refreshCookieService).addRefreshCookie(response, REFRESH_TOKEN);
     }
 
     private static OAuth2User createOAuth2User() {

@@ -46,7 +46,7 @@ public class AuthService {
     private final CaptchaService captchaService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResult register(RegisterRequest request) {
         captchaService.verify(request.captchaToken());
 
         if (userRepository.findByEmail(request.email()).isPresent()) {
@@ -67,26 +67,24 @@ public class AuthService {
                 new UserRegisteredEvent(user.getEmail(), user.getFirstname())
         );
 
-        var token = jwtService.generateToken(user);
+        var accessToken = jwtService.generateAccessToken(user);
 
-        // return id, role and user token
-        return new AuthResponse(token, user.getIdUser(), user.getRole());
+        return new AuthResult(accessToken, user);
     }
 
-    public AuthResponse authenticate(AuthRequest request) {
+    public AuthResult authenticate(AuthRequest request) {
         return authenticate(request.email(), request.password());
     }
 
-    public AuthResponse authenticate(@NotNull String email, @NotNull String password) {
+    public AuthResult authenticate(@NotNull String email, @NotNull String password) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password)
         );
 
         var user = userRepository.findByEmail(email).orElseThrow();
-        var token = jwtService.generateToken(user);
+        var accessToken = jwtService.generateAccessToken(user);
 
-        // return id, role and user token
-        return new AuthResponse(token, user.getIdUser(), user.getRole());
+        return new AuthResult(accessToken, user);
     }
 
     @Transactional

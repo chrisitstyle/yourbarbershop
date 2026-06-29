@@ -1,5 +1,6 @@
 package pl.barbershopproject.barbershop.user;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,14 +10,17 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.SelfDeletionException;
+import pl.barbershopproject.barbershop.user.dto.CurrentUserResponseDTO;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
 import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
@@ -24,6 +28,9 @@ import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = UserController.class,
         excludeAutoConfiguration = {
@@ -45,6 +52,7 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final String USER_EMAIL = "johndoe@example.com";
 
     @Test
     void addUser_ReturnsCreated() throws Exception {
@@ -58,8 +66,36 @@ class UserControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userCreationDTO)))
-                .andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.idUser").value(1L));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.idUser").value(1L));
+    }
+
+    @DisplayName("Should allow authenticated user to access current user endpoint")
+    @Test
+    void shouldAllowAuthenticatedUserToAccessCurrentUserEndpoint() throws Exception {
+        // given
+        CurrentUserResponseDTO currentUser = new CurrentUserResponseDTO(
+                1L,
+                "John",
+                "Doe",
+                USER_EMAIL,
+                Role.USER
+        );
+
+        Mockito.when(userService.getCurrentUser(USER_EMAIL))
+                .thenReturn(currentUser);
+
+        // when + then
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/me")
+                        .principal(authenticationFor(USER_EMAIL)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.firstname").value("John"))
+                .andExpect(jsonPath("$.lastname").value("Doe"))
+                .andExpect(jsonPath("$.email").value(USER_EMAIL))
+                .andExpect(jsonPath("$.role").value("USER"));
+
+        Mockito.verify(userService).getCurrentUser(USER_EMAIL);
     }
 
     @Test
@@ -72,12 +108,12 @@ class UserControllerTest {
         Mockito.when(userService.getAllUsers()).thenReturn(usersList);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users"))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].idUser").value(1L))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].userOrders[0].idOrder").value(10L))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].userOrders[0].offer.kind").value("test_kind"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].userOrders[0].offer.cost").value(120.0))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].userOrders[0].status").value("NOWE"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].idUser").value(1L))
+                .andExpect(jsonPath("$[0].userOrders[0].idOrder").value(10L))
+                .andExpect(jsonPath("$[0].userOrders[0].offer.kind").value("test_kind"))
+                .andExpect(jsonPath("$[0].userOrders[0].offer.cost").value(120.0))
+                .andExpect(jsonPath("$[0].userOrders[0].status").value("NOWE"));
     }
 
 
@@ -89,12 +125,12 @@ class UserControllerTest {
         Mockito.when(userService.getUserById(1L)).thenReturn(user);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users/1"))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.idUser").value(1L))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.userOrders[0].idOrder").value(10L))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.userOrders[0].offer.kind").value("test_kind"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.userOrders[0].offer.cost").value(120.0))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.userOrders[0].status").value("NOWE"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idUser").value(1L))
+                .andExpect(jsonPath("$.userOrders[0].idOrder").value(10L))
+                .andExpect(jsonPath("$.userOrders[0].offer.kind").value("test_kind"))
+                .andExpect(jsonPath("$.userOrders[0].offer.cost").value(120.0))
+                .andExpect(jsonPath("$.userOrders[0].status").value("NOWE"));
     }
 
     @Test
@@ -111,10 +147,10 @@ class UserControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.put("/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatedUser)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.idUser").value(1L))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.role").value("ADMIN"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.email").value(returnedUser.getEmail()));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idUser").value(1L))
+                .andExpect(jsonPath("$.role").value("ADMIN"))
+                .andExpect(jsonPath("$.email").value(returnedUser.getEmail()));
     }
 
 
@@ -123,7 +159,7 @@ class UserControllerTest {
         Mockito.doNothing().when(userService).deleteUserById(4L);
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/users/4"))
-                .andExpect(MockMvcResultMatchers.status().isNoContent());
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -132,9 +168,9 @@ class UserControllerTest {
                 .thenThrow(new java.util.NoSuchElementException("User not found"));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users/99"))
-                .andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("User not found"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("NOT_FOUND"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("User not found"))
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
     }
 
     @Test
@@ -143,9 +179,9 @@ class UserControllerTest {
                 .thenThrow(new IllegalArgumentException("Illegal argument"));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users/98"))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Illegal argument"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Illegal argument"))
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
     }
 
     @Test
@@ -158,9 +194,9 @@ class UserControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userCreationDTO)))
-                .andExpect(MockMvcResultMatchers.status().isUnprocessableContent())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Email exists"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("UNPROCESSABLE_CONTENT"));
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.message").value("Email exists"))
+                .andExpect(jsonPath("$.status").value("UNPROCESSABLE_CONTENT"));
     }
 
     @Test
@@ -169,9 +205,9 @@ class UserControllerTest {
                 .when(userService).deleteUserById(123L);
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/users/123"))
-                .andExpect(MockMvcResultMatchers.status().isForbidden())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Permission denied"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("FORBIDDEN"));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Permission denied"))
+                .andExpect(jsonPath("$.status").value("FORBIDDEN"));
     }
 
     @Test
@@ -180,9 +216,17 @@ class UserControllerTest {
                 .when(userService).deleteUserById(321L);
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/users/321"))
-                .andExpect(MockMvcResultMatchers.status().isForbidden())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Cannot remove yourself"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("FORBIDDEN"));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Cannot remove yourself"))
+                .andExpect(jsonPath("$.status").value("FORBIDDEN"));
 
+    }
+
+    private Authentication authenticationFor(String email) {
+        return new UsernamePasswordAuthenticationToken(
+                email,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
     }
 }

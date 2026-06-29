@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { API_BASE_URL } from "../api/config";
-import { apiRequest, getAuthorizationHeaders } from "../api/httpClient";
 
-const useUserDetails = (userId, userToken) => {
+import { API_BASE_URL } from "../api/config";
+import { apiRequest } from "../api/httpClient";
+
+const useUserDetails = (userId) => {
   const [userDetails, setUserDetails] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(Boolean(userId));
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!userId || !userToken) {
+    if (!userId) {
       setUserDetails(null);
       setIsLoading(false);
       return;
@@ -22,8 +23,7 @@ const useUserDetails = (userId, userToken) => {
 
       try {
         const response = await apiRequest(`${API_BASE_URL}/users/${userId}`, {
-          credentials: "include",
-          headers: getAuthorizationHeaders(userToken),
+          method: "GET",
           signal: abortController.signal,
         });
 
@@ -45,7 +45,7 @@ const useUserDetails = (userId, userToken) => {
     return () => {
       abortController.abort();
     };
-  }, [userId, userToken]);
+  }, [userId]);
 
   return {
     userDetails,

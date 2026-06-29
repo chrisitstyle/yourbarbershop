@@ -1,19 +1,22 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+
 import { useAuth } from "../AuthContext";
-import { isTokenValid } from "../utils/jwt";
+
 import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const AdminRoute = () => {
-  const { user, authLoading } = useAuth();
-  const isAdmin = user && user.role === "ADMIN";
-  const hasValidToken = isTokenValid(user?.token);
+  const { isLoggedIn, user, authLoading } = useAuth();
+
+  const location = useLocation();
+
+  const isAdmin = user?.role === "ADMIN";
 
   if (authLoading) {
     return <LoadingSpinner text="Ładowanie..." />;
   }
 
-  if (!user || !user.token || !isAdmin || !hasValidToken) {
-    return <Navigate to="/login" replace />;
+  if (!isLoggedIn || !user || !isAdmin) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   return <Outlet />;

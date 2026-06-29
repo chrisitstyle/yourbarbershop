@@ -133,9 +133,11 @@ class EmailCodeLoginControllerIntegrationTest extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(verifyData)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.id").value(user.getIdUser()))
-                .andExpect(jsonPath("$.role").value("USER"));
+                .andExpect(jsonPath("$.role").value("USER"))
+                .andExpect(cookie().exists("refresh_token"))
+                .andExpect(cookie().httpOnly("refresh_token", true));
 
         assertNull(stringRedisTemplate.opsForValue().get(codeKey));
         assertNull(stringRedisTemplate.opsForValue().get(attemptsKey));

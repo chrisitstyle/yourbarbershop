@@ -1,58 +1,101 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { isTokenValid } from "./utils/jwt";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { clearAccessToken, setAccessToken } from "./api/httpClient.js";
+import {
+  loginUser,
+  logoutUser,
+  refreshSession,
+  registerUser,
+  verifyEmailLoginCode,
+} from "./api/authService.js";
 
 const AuthContext = createContext();
+
+const buildUserFromAuthResponse = (authResponse) => ({
+  id: authResponse.id,
+  role: authResponse.role,
+});
 
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  // check localStorage for credentials on app init/refresh
-  useEffect(() => {
-    const checkLocalStorage = () => {
-      const storedToken = localStorage.getItem("token");
-      const storedUserRaw = localStorage.getItem("user");
-      const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
 
-      if (storedToken && storedUser && isTokenValid(storedToken)) {
-        setIsLoggedIn(true);
-        setUser(storedUser);
-      } else {
-        setIsLoggedIn(false);
-        setUser(null);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-      }
-      setAuthLoading(false);
-    };
-
-    checkLocalStorage();
-  }, []);
-
-  const login = (userData) => {
-    if (userData && isTokenValid(userData.token)) {
-      setIsLoggedIn(true);
-      setUser(userData);
-      localStorage.setItem("token", userData.token);
-      localStorage.setItem("user", JSON.stringify(userData));
-    } else {
-      setIsLoggedIn(false);
-      setUser(null);
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    }
+  const applyAuthResponse = (authResponse) => {
+    setAccessToken(authResponse.accessToken);
+    setUser(buildUserFromAuthResponse(authResponse));
+    setIsLoggedIn(true);
   };
 
-  const logout = () => {
-    setIsLoggedIn(false);
+  const clearAuthState = () => {
+    clearAccessToken();
     setUser(null);
+    setIsLoggedIn(false);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   };
 
+  useEffect(() => {
+    const bootstrapAuth = async () => {
+      try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        const authResponse = await refreshSession();
+        applyAuthResponse(authResponse);
+      } catch {
+        clearAuthState();
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    bootstrapAuth();
+  }, []);
+
+  const login = async (email, password) => {
+    const authResponse = await loginUser(email, password);
+    applyAuthResponse(authResponse);
+    return authResponse;
+  };
+
+  const register = async (userData) => {
+    const authResponse = await registerUser(userData);
+    applyAuthResponse(authResponse);
+    return authResponse;
+  };
+
+  const loginWithEmailCode = async (email, code) => {
+    const authResponse = await verifyEmailLoginCode(email, code);
+    applyAuthResponse(authResponse);
+    return authResponse;
+  };
+
+  const refreshAuth = async () => {
+    const authResponse = await refreshSession();
+    applyAuthResponse(authResponse);
+    return authResponse;
+  };
+
+  const logout = async () => {
+    try {
+      await logoutUser();
+    } finally {
+      clearAuthState();
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ isLoggedIn, user, login, logout, authLoading }}
+      value={{
+        isLoggedIn,
+        user,
+        authLoading,
+        login,
+        register,
+        loginWithEmailCode,
+        refreshAuth,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

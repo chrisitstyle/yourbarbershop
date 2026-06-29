@@ -40,6 +40,27 @@ INSERT INTO `user` (`firstname`, `lastname`, `email`, `password`, `role`) VALUES
 INSERT INTO `user` (`firstname`, `lastname`, `email`, `password`, `role`) VALUES ('John', 'Doe', 'johndoe@example.com', '$2a$10$3tg0XIJRF9oeMv.gqElnR.XmmZD4W7FJR.3R8Ms1GZf4T.H694sJi', 'USER');
 /* password for both  is "test1234"*/
 
+CREATE TABLE IF NOT EXISTS `refresh_token` (
+   `id_refresh_token` bigint NOT NULL AUTO_INCREMENT,
+    `token_hash` varchar(64) NOT NULL,
+    `id_user` bigint NOT NULL,
+    `expires_at` datetime(6) NOT NULL,
+    `revoked_at` datetime(6) DEFAULT NULL,
+    `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    `replaced_by_token_hash` varchar(64) DEFAULT NULL,
+    `user_agent` varchar(512) DEFAULT NULL,
+    `ip_address` varchar(64) DEFAULT NULL,
+
+    PRIMARY KEY (`id_refresh_token`),
+    UNIQUE KEY `uk_refresh_token_hash` (`token_hash`),
+    KEY `idx_refresh_token_user` (`id_user`),
+    KEY `idx_refresh_token_expires_at` (`expires_at`),
+
+    CONSTRAINT `fk_refresh_token_user`
+    FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`)
+    ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- Dumping structure for table barbershop-with-roles.guest_order
 CREATE TABLE IF NOT EXISTS `guest_order` (
   `id_guest_order` bigint NOT NULL AUTO_INCREMENT,

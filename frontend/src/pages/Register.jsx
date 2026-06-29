@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
+
 import { Link, useNavigate } from "react-router-dom";
 
-import { registerUser } from "../api/authService";
+import { useAuth } from "../AuthContext";
 
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import useAutoDismiss from "../hooks/useAutoDismiss";
@@ -25,6 +26,8 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  const { register } = useAuth();
 
   const { t } = useTranslation();
 
@@ -66,8 +69,8 @@ const Register = () => {
     setCaptchaToken(null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
     setIsLoading(true);
     setRegisterErrors([]);
@@ -80,7 +83,7 @@ const Register = () => {
     }
 
     try {
-      const response = await registerUser({
+      await register({
         firstname,
         lastname,
         email,
@@ -88,9 +91,7 @@ const Register = () => {
         captchaToken,
       });
 
-      if (response.status === 200) {
-        navigate("/login?registrationSuccess=true");
-      }
+      navigate("/");
     } catch (error) {
       resetCaptcha();
 
@@ -127,7 +128,7 @@ const Register = () => {
                 className="form-control"
                 id="firstname"
                 value={firstname}
-                onChange={(e) => setFirstName(e.target.value)}
+                onChange={(event) => setFirstName(event.target.value)}
                 autoComplete="given-name"
                 required
                 disabled={isLoading}
@@ -144,7 +145,7 @@ const Register = () => {
                 className="form-control"
                 id="lastname"
                 value={lastname}
-                onChange={(e) => setLastName(e.target.value)}
+                onChange={(event) => setLastName(event.target.value)}
                 autoComplete="family-name"
                 required
                 disabled={isLoading}
@@ -161,7 +162,7 @@ const Register = () => {
                 className="form-control"
                 id="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
                 required
                 disabled={isLoading}
@@ -178,7 +179,7 @@ const Register = () => {
                 className="form-control"
                 id="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 autoComplete="new-password"
                 required
                 disabled={isLoading}

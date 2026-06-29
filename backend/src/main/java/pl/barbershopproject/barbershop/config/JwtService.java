@@ -26,10 +26,39 @@ public class JwtService {
     @Value("${JWT_EXPIRATION_HOURS:8}")
     private long expirationHours;
 
+    @Value("${JWT_ACCESS_EXPIRATION_MINUTES:15}")
+    private long accessExpirationMinutes;
+
+    public String generateAccessToken(UserDetails userDetails) {
+        Map<String, Object> extraClaims = new HashMap<>();
+
+        if (userDetails instanceof User user) {
+            extraClaims.put("role", user.getRole().toString());
+            extraClaims.put("id", user.getIdUser());
+        }
+
+        return generateAccessToken(extraClaims, userDetails);
+    }
+
+    public String generateAccessToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        final Instant now = Instant.now();
+        final Instant expiry = now.plus(accessExpirationMinutes, ChronoUnit.MINUTES);
+
+        return Jwts.builder()
+                .claims(extraClaims)
+                .subject(userDetails.getUsername())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiry))
+                .signWith(getSignKey(), Jwts.SIG.HS256)
+                .compact();
+    }
+
+
     private SecretKey getSignKey() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
     }
 
+    @Deprecated
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
 

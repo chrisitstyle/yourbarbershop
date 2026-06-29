@@ -36,7 +36,7 @@ import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntitie
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    private static final String JWT_TOKEN = "jwt-token";
+    private static final String ACCESS_TOKEN = "access-token";
     private static final String ENCODED_PASSWORD = "encoded-password";
     private static final String ENCODED_NEW_PASSWORD = "encoded-new-password";
 
@@ -65,7 +65,7 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    void register_ReturnsAuthResponseAndPublishesEvent_WhenEmailIsFree() {
+    void register_ReturnsAuthResultAndPublishesEvent_WhenEmailIsFree() {
         // given
         RegisterRequest request = createRegisterRequest();
 
@@ -76,15 +76,19 @@ class AuthServiceTest {
             savedUser.setIdUser(1L);
             return savedUser;
         });
-        when(jwtService.generateToken(any(User.class))).thenReturn(JWT_TOKEN);
+        when(jwtService.generateAccessToken(any(User.class))).thenReturn(ACCESS_TOKEN);
 
         // when
-        AuthResponse response = authService.register(request);
+        AuthResult result = authService.register(request);
 
         // then
-        assertEquals(JWT_TOKEN, response.token());
-        assertEquals(1L, response.id());
-        assertEquals(Role.USER, response.role());
+        assertEquals(ACCESS_TOKEN, result.accessToken());
+        assertNotNull(result.user());
+        assertEquals(1L, result.user().getIdUser());
+        assertEquals(request.firstname(), result.user().getFirstname());
+        assertEquals(request.lastname(), result.user().getLastname());
+        assertEquals(request.email(), result.user().getEmail());
+        assertEquals(Role.USER, result.user().getRole());
 
         verify(captchaService).verify(request.captchaToken());
         verify(userRepository).findByEmail(request.email());
@@ -110,7 +114,7 @@ class AuthServiceTest {
         assertEquals(request.email(), event.email());
         assertEquals(request.firstname(), event.firstname());
 
-        verify(jwtService).generateToken(savedUser);
+        verify(jwtService).generateAccessToken(savedUser);
     }
 
     @Test
@@ -132,12 +136,12 @@ class AuthServiceTest {
 
         verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));
-        verify(jwtService, never()).generateToken(any(User.class));
+        verify(jwtService, never()).generateAccessToken(any(User.class));
         verify(eventPublisher, never()).publishEvent(any(Object.class));
     }
 
     @Test
-    void authenticate_ReturnsAuthResponse_WhenCredentialsAreValid() {
+    void authenticate_ReturnsAuthResult_WhenCredentialsAreValid() {
         // given
         AuthRequest request = createAuthRequest();
 
@@ -148,15 +152,16 @@ class AuthServiceTest {
                 .build();
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
-        when(jwtService.generateToken(user)).thenReturn(JWT_TOKEN);
+        when(jwtService.generateAccessToken(user)).thenReturn(ACCESS_TOKEN);
 
         // when
-        AuthResponse response = authService.authenticate(request);
+        AuthResult result = authService.authenticate(request);
 
         // then
-        assertEquals(JWT_TOKEN, response.token());
-        assertEquals(7L, response.id());
-        assertEquals(Role.ADMIN, response.role());
+        assertEquals(ACCESS_TOKEN, result.accessToken());
+        assertEquals(user, result.user());
+        assertEquals(7L, result.user().getIdUser());
+        assertEquals(Role.ADMIN, result.user().getRole());
 
         verify(authenticationManager).authenticate(argThat(authentication ->
                 request.email().equals(authentication.getPrincipal())
@@ -164,7 +169,7 @@ class AuthServiceTest {
         ));
 
         verify(userRepository).findByEmail(request.email());
-        verify(jwtService).generateToken(user);
+        verify(jwtService).generateAccessToken(user);
     }
 
     @Test

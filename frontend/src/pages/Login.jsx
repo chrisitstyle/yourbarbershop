@@ -6,8 +6,6 @@ import { useAuth } from "../AuthContext";
 
 import { Alert } from "react-bootstrap";
 
-import { loginUser } from "../api/authService";
-
 import ButtonSpinner from "../components/common/ButtonSpinner";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -64,13 +62,9 @@ const Login = () => {
 
     const searchParams = new URLSearchParams(location.search);
 
-    // if ?registrationSuccess=true is in the URL
     if (searchParams.get("registrationSuccess")) {
-      // set the message in state (this triggers the timer from useAutoDismiss)
       setSuccessMessage(t("auth.successRegister"));
 
-      // clean up the URL so the parameter doesn't linger in the address bar
-      // replace: true ensures the user cannot navigate back to the URL with the parameter
       navigate(location.pathname, {
         replace: true,
       });
@@ -106,9 +100,7 @@ const Login = () => {
     setLoginErrors(null);
 
     try {
-      const userData = await loginUser(email, password);
-
-      login(userData);
+      await login(email, password);
 
       navigate("/");
     } catch (error) {
@@ -221,9 +213,7 @@ const Login = () => {
         </span>
       </button>
 
-      {/* OAUTH2 */}
       <div className="text-center mt-3">
-        {/* GITHUB BUTTON */}
         <a
           href={`${API_BASE_URL}/oauth2/authorization/github`}
           className="btn btn-dark w-100 py-2 fw-bold position-relative d-flex align-items-center"
@@ -239,7 +229,6 @@ const Login = () => {
           <span className="w-100 text-center">{t("auth.githubSign")}</span>
         </a>
 
-        {/* GOOGLE BUTTON */}
         <a
           href={`${API_BASE_URL}/oauth2/authorization/google`}
           className="btn btn-light w-100 py-2 fw-bold position-relative d-flex align-items-center mt-2"
@@ -255,8 +244,6 @@ const Login = () => {
           <span className="w-100 text-center">{t("auth.googleSign")}</span>
         </a>
       </div>
-
-      {/* --------------------------- */}
 
       <p className="mt-3 text-center">
         <Link to="/forgotpassword">{t("auth.forgotPassword")}</Link>

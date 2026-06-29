@@ -1,11 +1,15 @@
 import { API_BASE_URL } from "./config.js";
 import { apiRequest } from "./httpClient.js";
 
-export const registerUser = async (userData) =>
-  apiRequest(`${API_BASE_URL}/register`, {
+export const registerUser = async (userData) => {
+  const response = await apiRequest(`${API_BASE_URL}/register`, {
     method: "POST",
     data: userData,
+    skipAuthRefresh: true,
   });
+
+  return response.data;
+};
 
 export const loginUser = async (email, password) => {
   const response = await apiRequest(`${API_BASE_URL}/login`, {
@@ -14,6 +18,7 @@ export const loginUser = async (email, password) => {
       email,
       password,
     },
+    skipAuthRefresh: true,
   });
 
   return response.data;
@@ -27,6 +32,7 @@ export const requestEmailLoginCode = async (email) => {
       data: {
         email,
       },
+      skipAuthRefresh: true,
     },
   );
 
@@ -40,9 +46,26 @@ export const verifyEmailLoginCode = async (email, code) => {
       email,
       code,
     },
+    skipAuthRefresh: true,
   });
 
   return response.data;
+};
+
+export const refreshSession = async () => {
+  const response = await apiRequest(`${API_BASE_URL}/auth/refresh`, {
+    method: "POST",
+    skipAuthRefresh: true,
+  });
+
+  return response.data;
+};
+
+export const logoutUser = async () => {
+  await apiRequest(`${API_BASE_URL}/auth/logout`, {
+    method: "POST",
+    skipAuthRefresh: true,
+  });
 };
 
 const authService = {
@@ -50,6 +73,8 @@ const authService = {
   loginUser,
   requestEmailLoginCode,
   verifyEmailLoginCode,
+  refreshSession,
+  logoutUser,
 };
 
 export default authService;

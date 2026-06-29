@@ -6,7 +6,6 @@ export const addOffer = async (newOffer, userToken) => {
     await apiRequest(`${API_BASE_URL}/offers`, {
       method: "POST",
       credentials: "include",
-      headers: getAuthorizationHeaders(userToken),
       data: newOffer,
     });
   } catch (error) {
@@ -30,7 +29,6 @@ export const updateOffer = async (offerId, newData, userToken) => {
   const response = await apiRequest(`${API_BASE_URL}/offers/${offerId}`, {
     method: "PUT",
     credentials: "include",
-    headers: getAuthorizationHeaders(userToken),
     data: newData,
   });
 
@@ -42,7 +40,6 @@ export const deleteOffer = async (idOffer, userToken) => {
     await apiRequest(`${API_BASE_URL}/offers/${idOffer}`, {
       method: "DELETE",
       credentials: "include",
-      headers: getAuthorizationHeaders(userToken),
     });
   } catch (error) {
     console.error("Error deleting offer:", error);

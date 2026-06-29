@@ -4,8 +4,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import pl.barbershopproject.barbershop.user.dto.CurrentUserResponseDTO;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
 import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
@@ -30,6 +32,13 @@ public class UserController {
                 .toUri();
 
         return ResponseEntity.created(location).body(savedUser);
+    }
+
+    @GetMapping("/me")
+    public CurrentUserResponseDTO getCurrentUser(
+            Authentication authentication
+    ) {
+        return userService.getCurrentUser(authentication.getName());
     }
 
     @GetMapping

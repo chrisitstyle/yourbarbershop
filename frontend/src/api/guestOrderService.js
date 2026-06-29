@@ -19,7 +19,6 @@ export const getGuestOrders = async (userToken) => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/guestorders`, {
       credentials: "include",
-      headers: getAuthorizationHeaders(userToken),
     });
 
     return response.data;
@@ -36,7 +35,6 @@ export const updateGuestOrder = async (idGuestOrder, data, userToken) => {
       {
         method: "PUT",
         credentials: "include",
-        headers: getAuthorizationHeaders(userToken),
         data,
       },
     );
@@ -53,7 +51,6 @@ export const deleteGuestOrder = async (idGuestOrder, userToken) => {
     await apiRequest(`${API_BASE_URL}/guestorders/${idGuestOrder}`, {
       method: "DELETE",
       credentials: "include",
-      headers: getAuthorizationHeaders(userToken),
     });
   } catch (error) {
     console.error("Error deleting guest order:", error);
