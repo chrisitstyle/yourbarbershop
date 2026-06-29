@@ -16,6 +16,7 @@ import pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities;
 import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +33,15 @@ class OrderRepositoryTest {
     @Autowired
     private OfferRepository offerRepository;
 
+    private static final LocalDateTime ORDER_DATE =
+            LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0);
+
+    private static final LocalDateTime VISIT_DATE_NEXT_DAY =
+            LocalDateTime.of(2026, Month.JANUARY, 17, 17, 0);
+
+    private static final LocalDateTime VISIT_DATE_TWO_DAYS_LATER =
+            LocalDateTime.of(2026, Month.JANUARY, 18, 17, 0);
+
     @Test
     @DisplayName("save method should persist order and assign id")
     void save_persistsOrder_andAssignsId() {
@@ -44,8 +54,8 @@ class OrderRepositoryTest {
         Offer savedOffer = offerRepository.save(offer);
 
 
-        Order order = OrderTestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(),
-                LocalDateTime.now().plusDays(1), Status.NOWE);
+        Order order = OrderTestEntities.createOrder(savedUser, savedOffer, ORDER_DATE,
+                VISIT_DATE_NEXT_DAY, Status.NOWE);
         Order savedOrder = orderRepository.save(order);
 
         assertThat(savedOrder.getIdOrder()).isGreaterThan(0);
@@ -64,8 +74,8 @@ class OrderRepositoryTest {
         offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
 
-        Order order = OrderTestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(),
-                LocalDateTime.now().plusDays(2), Status.ZREALIZOWANE);
+        Order order = OrderTestEntities.createOrder(savedUser, savedOffer, ORDER_DATE,
+                VISIT_DATE_TWO_DAYS_LATER, Status.ZREALIZOWANE);
         Order savedOrder = orderRepository.save(order);
 
         Optional<Order> found = orderRepository.findById(savedOrder.getIdOrder());
@@ -87,10 +97,10 @@ class OrderRepositoryTest {
         offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
 
-        Order o1 = OrderTestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+        Order o1 = OrderTestEntities.createOrder(savedUser, savedOffer, ORDER_DATE, VISIT_DATE_NEXT_DAY,
                 Status.NOWE);
 
-        Order o2 = OrderTestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(), LocalDateTime.now().plusDays(2),
+        Order o2 = OrderTestEntities.createOrder(savedUser, savedOffer, ORDER_DATE, VISIT_DATE_TWO_DAYS_LATER,
                 Status.ANULOWANE);
 
         orderRepository.saveAll(List.of(o1, o2));
@@ -114,8 +124,8 @@ class OrderRepositoryTest {
         offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
 
-        Order order = OrderTestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(),
-                LocalDateTime.now().plusDays(1), Status.ZREALIZOWANE);
+        Order order = OrderTestEntities.createOrder(savedUser, savedOffer, ORDER_DATE,
+                VISIT_DATE_NEXT_DAY, Status.ZREALIZOWANE);
 
         Order savedOrder = orderRepository.save(order);
         Long orderId = savedOrder.getIdOrder();
@@ -137,10 +147,10 @@ class OrderRepositoryTest {
         offer.setIdOffer(null);
         Offer savedOffer = offerRepository.save(offer);
 
-        Order o1 = OrderTestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(), LocalDateTime.now().plusDays(1),
+        Order o1 = OrderTestEntities.createOrder(savedUser, savedOffer, ORDER_DATE, VISIT_DATE_NEXT_DAY,
                 Status.NOWE);
 
-        Order o2 = OrderTestEntities.createOrder(savedUser, savedOffer, LocalDateTime.now(), LocalDateTime.now().plusDays(2),
+        Order o2 = OrderTestEntities.createOrder(savedUser, savedOffer, ORDER_DATE, VISIT_DATE_TWO_DAYS_LATER,
                 Status.ANULOWANE);
 
         orderRepository.saveAll(List.of(o1, o2));

@@ -14,6 +14,7 @@ import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
+import pl.barbershopproject.barbershop.order.dto.OrderUpdatedRequestDTO;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.payment.*;
 import pl.barbershopproject.barbershop.user.User;
@@ -22,7 +23,10 @@ import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 import pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities;
 import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -32,6 +36,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
+
+    private static final ZoneId TEST_ZONE = ZoneId.of("Europe/Warsaw");
+    private static final Instant TEST_INSTANT = Instant.parse("2026-01-16T12:00:00Z");
 
     @Mock
     private OrderRepository orderRepository;
@@ -51,6 +58,9 @@ class OrderServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
 
+    @Mock
+    private Clock clock;
+
     @InjectMocks
     private OrderService orderService;
 
@@ -60,6 +70,9 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(clock.instant()).thenReturn(TEST_INSTANT);
+        lenient().when(clock.getZone()).thenReturn(TEST_ZONE);
+
         offer = OfferTestEntities.createOffer();
         user = UserTestEntities.createUser();
 
@@ -215,36 +228,36 @@ class OrderServiceTest {
 
     @Test
     void updateOrder_ShouldUpdateExistingOrder() {
-        Order updatedOrder = new Order();
+        OrderUpdatedRequestDTO updatedOrder = OrderTestEntities.createOrderUpdatedRequestDTO();
 
         LocalDateTime currentVisitDate = order.getVisitDate();
         Status currentStatus = order.getStatus();
 
-        LocalDateTime targetVisitDate = LocalDateTime.parse("2025-03-26T10:00:00");
-        Status targetStatus = Status.NOWE;
-
-        updatedOrder.setUser(user);
-        updatedOrder.setOffer(offer);
-        updatedOrder.setOrderDate(LocalDateTime.parse("2025-03-25T10:00:00"));
-        updatedOrder.setVisitDate(targetVisitDate);
-        updatedOrder.setStatus(targetStatus);
+        LocalDateTime targetVisitDate = updatedOrder.visitDate();
+        Status targetStatus = updatedOrder.status();
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(offerRepository.findById(updatedOrder.idOffer())).thenReturn(Optional.of(offer));
         when(orderRepository.save(any(Order.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Order updatedOrderResult = orderService.updateOrder(updatedOrder, 1L);
+        OrderDTO updatedOrderResult = orderService.updateOrder(updatedOrder, 1L);
 
         assertNotNull(updatedOrderResult);
         assertAll(
-                () -> assertEquals(updatedOrder.getUser(), updatedOrderResult.getUser()),
-                () -> assertEquals(updatedOrder.getOffer(), updatedOrderResult.getOffer()),
-                () -> assertEquals(updatedOrder.getOrderDate(), updatedOrderResult.getOrderDate()),
-                () -> assertEquals(targetVisitDate, updatedOrderResult.getVisitDate()),
-                () -> assertEquals(targetStatus, updatedOrderResult.getStatus())
+                () -> assertEquals(order.getIdOrder(), updatedOrderResult.idOrder()),
+                () -> assertEquals(user.getIdUser(), updatedOrderResult.user().idUser()),
+                () -> assertEquals(user.getFirstname(), updatedOrderResult.user().firstname()),
+                () -> assertEquals(user.getLastname(), updatedOrderResult.user().lastname()),
+                () -> assertEquals(user.getEmail(), updatedOrderResult.user().email()),
+                () -> assertEquals(offer, updatedOrderResult.offer()),
+                () -> assertEquals(order.getOrderDate(), updatedOrderResult.orderDate()),
+                () -> assertEquals(targetVisitDate, updatedOrderResult.visitDate()),
+                () -> assertEquals(targetStatus, updatedOrderResult.status())
         );
 
         verify(orderRepository, times(1)).findById(1L);
+        verify(offerRepository, times(1)).findById(updatedOrder.idOffer());
         verify(appointmentAvailabilityService, times(1)).updateSlotReservation(
                 currentVisitDate,
                 currentStatus,
@@ -256,29 +269,30 @@ class OrderServiceTest {
 
     @Test
     void updateOrder_ShouldUseCurrentStatus_WhenUpdatedStatusIsNull() {
-        Order updatedOrder = new Order();
+        LocalDateTime targetVisitDate = LocalDateTime.parse("2025-03-26T10:00:00");
+
+        OrderUpdatedRequestDTO updatedOrder = new OrderUpdatedRequestDTO(
+                1L,
+                targetVisitDate,
+                null
+        );
 
         LocalDateTime currentVisitDate = order.getVisitDate();
         Status currentStatus = order.getStatus();
-        LocalDateTime targetVisitDate = LocalDateTime.parse("2025-03-26T10:00:00");
-
-        updatedOrder.setUser(user);
-        updatedOrder.setOffer(offer);
-        updatedOrder.setOrderDate(LocalDateTime.parse("2025-03-25T10:00:00"));
-        updatedOrder.setVisitDate(targetVisitDate);
-        updatedOrder.setStatus(null);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(offerRepository.findById(updatedOrder.idOffer())).thenReturn(Optional.of(offer));
         when(orderRepository.save(any(Order.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Order updatedOrderResult = orderService.updateOrder(updatedOrder, 1L);
+        OrderDTO updatedOrderResult = orderService.updateOrder(updatedOrder, 1L);
 
         assertNotNull(updatedOrderResult);
-        assertEquals(targetVisitDate, updatedOrderResult.getVisitDate());
-        assertEquals(currentStatus, updatedOrderResult.getStatus());
+        assertEquals(targetVisitDate, updatedOrderResult.visitDate());
+        assertEquals(currentStatus, updatedOrderResult.status());
 
         verify(orderRepository, times(1)).findById(1L);
+        verify(offerRepository, times(1)).findById(updatedOrder.idOffer());
         verify(appointmentAvailabilityService, times(1)).updateSlotReservation(
                 currentVisitDate,
                 currentStatus,
@@ -290,9 +304,7 @@ class OrderServiceTest {
 
     @Test
     void updateOrder_ShouldThrowException_WhenOrderNotFound() {
-        Order updatedOrder = new Order();
-        updatedOrder.setVisitDate(LocalDateTime.parse("2025-03-26T10:00:00"));
-        updatedOrder.setStatus(Status.NOWE);
+        OrderUpdatedRequestDTO updatedOrder = OrderTestEntities.createOrderUpdatedRequestDTO();
 
         when(orderRepository.findById(2L)).thenReturn(Optional.empty());
 
@@ -301,9 +313,30 @@ class OrderServiceTest {
                 () -> orderService.updateOrder(updatedOrder, 2L)
         );
 
-        assertEquals("Zamówienie o ID: 2", exception.getMessage());
+        assertEquals("Zamówienie o ID: 2 nie istnieje", exception.getMessage());
 
         verify(orderRepository, times(1)).findById(2L);
+        verify(offerRepository, never()).findById(any());
+        verify(appointmentAvailabilityService, never()).updateSlotReservation(any(), any(), any(), any());
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void updateOrder_ShouldThrowException_WhenOfferNotFound() {
+        OrderUpdatedRequestDTO updatedOrder = OrderTestEntities.createOrderUpdatedRequestDTO();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(offerRepository.findById(updatedOrder.idOffer())).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> orderService.updateOrder(updatedOrder, 1L)
+        );
+
+        assertEquals("Oferta o ID: " + updatedOrder.idOffer() + " nie istnieje", exception.getMessage());
+
+        verify(orderRepository, times(1)).findById(1L);
+        verify(offerRepository, times(1)).findById(updatedOrder.idOffer());
         verify(appointmentAvailabilityService, never()).updateSlotReservation(any(), any(), any(), any());
         verify(orderRepository, never()).save(any(Order.class));
     }

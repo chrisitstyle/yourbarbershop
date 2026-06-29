@@ -1,5 +1,6 @@
 package pl.barbershopproject.barbershop.exception;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +22,10 @@ import java.util.NoSuchElementException;
  * Replaces individual @ExceptionHandler methods in controllers.
  */
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final Clock clock;
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<String> handleBadCredentials() {
@@ -91,7 +96,7 @@ public class GlobalExceptionHandler {
         ErrorDTO errorDTO = new ErrorDTO(
                 message,
                 status.name(),
-                LocalDateTime.now()
+                LocalDateTime.now(clock)
         );
         return new ResponseEntity<>(errorDTO, status);
     }

@@ -5,13 +5,11 @@ import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
-import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
-import pl.barbershopproject.barbershop.user.dto.UserDTO;
-import pl.barbershopproject.barbershop.user.dto.UserOrdersDTO;
-import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
+import pl.barbershopproject.barbershop.user.dto.*;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createOffer;
@@ -80,6 +78,31 @@ public final class UserTestEntities {
     }
 
     /**
+     * Creates an admin User instance for tests.
+     *
+     * @return admin User instance
+     */
+    public static User createAdminUser() {
+        return User.builder()
+                .idUser(99L)
+                .role(Role.ADMIN)
+                .build();
+    }
+
+    /**
+     * Creates a regular User instance with the given id for tests.
+     *
+     * @param id the user's id
+     * @return regular User instance
+     */
+    public static User createRegularUser(Long id) {
+        return User.builder()
+                .idUser(id)
+                .role(Role.USER)
+                .build();
+    }
+
+    /**
      * Creates a default UserDTO with a sample list of orders.
      *
      * @return UserDTO instance
@@ -107,6 +130,19 @@ public final class UserTestEntities {
     }
 
     /**
+     * Creates a UserProfileUpdateRequestDTO with default updated profile data.
+     *
+     * @return UserProfileUpdateRequestDTO instance
+     */
+    public static UserProfileUpdateRequestDTO createUserProfileUpdateRequestDTO() {
+        return new UserProfileUpdateRequestDTO(
+                "Jane",
+                "Smith",
+                "jane@smith.com"
+        );
+    }
+
+    /**
      * Creates a UserResponseDTO corresponding to the default test user.
      *
      * @return UserResponseDTO instance
@@ -126,8 +162,8 @@ public final class UserTestEntities {
         return new UserOrdersDTO(
                 10L,
                 offer,
-                LocalDateTime.of(2026, 1, 16, 15, 0),
-                LocalDateTime.of(2026, 10, 17, 17, 0),
+                LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0),
+                LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0),
                 Status.NOWE,
                 PaymentMethod.GOTOWKA,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC

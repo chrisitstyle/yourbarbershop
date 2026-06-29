@@ -12,6 +12,7 @@ import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
+import pl.barbershopproject.barbershop.order.dto.OrderUpdatedRequestDTO;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.order.mapper.OrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
@@ -19,6 +20,7 @@ import pl.barbershopproject.barbershop.payment.*;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -27,20 +29,26 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 class OrderService {
 
+    private static final String OFFER_NOT_FOUND_MSG = "Oferta o ID: ";
+    private static final String ORDER_NOT_FOUND_MSG = "Zamówienie o ID: ";
+    private static final String DOES_NOT_EXIST_MSG = " nie istnieje";
+    private static final String AVAILABLE_STATUSES_MSG = "Dostępne statusy: ";
+
     private final OrderRepository orderRepository;
     private final OfferRepository offerRepository;
     private final AppointmentAvailabilityService appointmentAvailabilityService;
     private final StripeCheckoutService stripeCheckoutService;
     private final PaymentRepository paymentRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final Clock clock;
 
     @Transactional
     @CacheEvict(value = "orders", allEntries = true)
     public OrderCreationResponseDTO addOrder(OrderCreationDTO orderCreationDTO, User user) {
         Offer offer = offerRepository.findById(orderCreationDTO.idOffer())
-                .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + orderCreationDTO.idOffer() + " nie istnieje"));
+                .orElseThrow(() -> offerNotFoundException(orderCreationDTO.idOffer()));
 
-        Order orderToSave = OrderCreationDTOMapper.toEntity(orderCreationDTO, user, offer);
+        Order orderToSave = OrderCreationDTOMapper.toEntity(orderCreationDTO, user, offer, clock);
         appointmentAvailabilityService.reserveSlot(orderToSave.getVisitDate());
 
         Order savedOrder = orderRepository.save(orderToSave);
@@ -51,7 +59,7 @@ class OrderService {
                 .paymentStatus(PaymentStatus.OCZEKUJE_NA_PLATNOSC)
                 .amount(offer.getCost())
                 .currency("PLN")
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(clock))
                 .build();
 
         Payment savedPayment = paymentRepository.save(paymentToSave);
@@ -94,7 +102,7 @@ class OrderService {
     public OrderDTO getSingleOrder(Long idOrder) {
         return orderRepository.findById(idOrder)
                 .map(OrderDTOMapper::toDTO)
-                .orElseThrow(() -> new NoSuchElementException("Zamówienie o ID: " + idOrder + " nie istnieje"));
+                .orElseThrow(() -> orderNotFoundException(idOrder));
     }
 
     @Cacheable(value = "orders", key = "'status_' + #status.toUpperCase()")
@@ -105,45 +113,56 @@ class OrderService {
                     .map(OrderDTOMapper::toDTO)
                     .toList();
         } catch (IllegalArgumentException _) {
-            throw new IllegalArgumentException("Dostępne statusy: " + List.of(Status.values()));
+            throw new IllegalArgumentException(AVAILABLE_STATUSES_MSG + List.of(Status.values()));
         }
     }
 
     @Transactional
     @CacheEvict(value = "orders", allEntries = true)
-    public Order updateOrder(Order updatedOrder, Long idOrder) {
+    public OrderDTO updateOrder(OrderUpdatedRequestDTO updatedOrder, Long idOrder) {
         Order existingOrder = orderRepository.findById(idOrder)
-                .orElseThrow(() -> new NoSuchElementException("Zamówienie o ID: " + idOrder));
+                .orElseThrow(() -> orderNotFoundException(idOrder));
 
-        Status targetStatus = updatedOrder.getStatus() != null
-                ? updatedOrder.getStatus()
+        Offer offer = offerRepository.findById(updatedOrder.idOffer())
+                .orElseThrow(() -> offerNotFoundException(updatedOrder.idOffer()));
+
+        Status targetStatus = updatedOrder.status() != null
+                ? updatedOrder.status()
                 : existingOrder.getStatus();
 
         appointmentAvailabilityService.updateSlotReservation(
                 existingOrder.getVisitDate(),
                 existingOrder.getStatus(),
-                updatedOrder.getVisitDate(),
+                updatedOrder.visitDate(),
                 targetStatus
         );
 
-        existingOrder.setUser(updatedOrder.getUser());
-        existingOrder.setOffer(updatedOrder.getOffer());
-        existingOrder.setOrderDate(updatedOrder.getOrderDate());
-        existingOrder.setVisitDate(updatedOrder.getVisitDate());
+        existingOrder.setOffer(offer);
+        existingOrder.setVisitDate(updatedOrder.visitDate());
         existingOrder.setStatus(targetStatus);
 
-        return orderRepository.save(existingOrder);
+        Order savedOrder = orderRepository.save(existingOrder);
+
+        return OrderDTOMapper.toDTO(savedOrder);
     }
 
     @Transactional
     @CacheEvict(value = "orders", allEntries = true)
     public void deleteOrderById(Long idOrder) {
         Order order = orderRepository.findById(idOrder)
-                .orElseThrow(() -> new NoSuchElementException("Zamówienie o ID: " + idOrder + " nie istnieje"));
+                .orElseThrow(() -> orderNotFoundException(idOrder));
 
         appointmentAvailabilityService.releaseIfReserved(order.getVisitDate(), order.getStatus());
 
         orderRepository.delete(order);
+    }
+
+    private NoSuchElementException offerNotFoundException(Long idOffer) {
+        return new NoSuchElementException(OFFER_NOT_FOUND_MSG + idOffer + DOES_NOT_EXIST_MSG);
+    }
+
+    private NoSuchElementException orderNotFoundException(Long idOrder) {
+        return new NoSuchElementException(ORDER_NOT_FOUND_MSG + idOrder + DOES_NOT_EXIST_MSG);
     }
 
     private void publishOrderCreatedEvent(Order order, Payment payment) {

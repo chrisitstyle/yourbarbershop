@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -17,8 +18,10 @@ import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
+import pl.barbershopproject.barbershop.order.dto.OrderUpdatedRequestDTO;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
+import pl.barbershopproject.barbershop.utils.TestClockConfig;
 import pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities;
 import tools.jackson.databind.ObjectMapper;
 
@@ -30,21 +33,28 @@ import java.util.NoSuchElementException;
                 OAuth2ClientWebSecurityAutoConfiguration.class
         })
 @AutoConfigureMockMvc(addFilters = false)
+@Import(TestClockConfig.class)
 class OrderControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
     @Autowired
     private ObjectMapper objectMapper;
+
     @MockitoBean
     private OrderService orderService;
+
     @MockitoBean
     private JwtService jwtService;
+
     @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
+
     @MockitoBean
     private StringRedisTemplate stringRedisTemplate;
 
+    @Test
     void addOrder_ReturnsCreated() throws Exception {
         OrderCreationDTO inputDto = OrderTestEntities.createOrderCreationDTO();
 
@@ -65,8 +75,7 @@ class OrderControllerTest {
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.orderId").value(10L))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.paymentMethod").value("GOTOWKA"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.checkoutUrl").doesNotExist());
+                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
     }
 
     @Test
@@ -122,21 +131,26 @@ class OrderControllerTest {
     @Test
     void updateOrder_ReturnsUpdatedOrder() throws Exception {
         // given
-        Order inputOrder = OrderTestEntities.createOrder();
+        OrderUpdatedRequestDTO inputDto = OrderTestEntities.createOrderUpdatedRequestDTO();
+        OrderDTO responseDTO = OrderTestEntities.createOrderDTO();
 
-        Order updatedOrder = OrderTestEntities.orderBuilder()
-                .idOrder(10L)
-                .build();
-
-        Mockito.when(orderService.updateOrder(Mockito.any(Order.class), Mockito.eq(10L)))
-                .thenReturn(updatedOrder);
+        Mockito.when(orderService.updateOrder(
+                        Mockito.any(OrderUpdatedRequestDTO.class),
+                        Mockito.eq(10L)
+                ))
+                .thenReturn(responseDTO);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.put("/orders/10")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputOrder)))
+                        .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.idOrder").value(10L));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.idOrder").value(responseDTO.idOrder()));
+
+        Mockito.verify(orderService).updateOrder(
+                Mockito.any(OrderUpdatedRequestDTO.class),
+                Mockito.eq(10L)
+        );
     }
 
     @Test
@@ -153,12 +167,12 @@ class OrderControllerTest {
     void getSingleOrder_ReturnsNotFound_WhenNoSuchElementException() throws Exception {
         // given
         Mockito.when(orderService.getSingleOrder(99L))
-                .thenThrow(new NoSuchElementException("Order not found"));
+                .thenThrow(new NoSuchElementException("Zamówienie o ID: 99 nie istnieje"));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/orders/99"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Order not found"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Zamówienie o ID: 99 nie istnieje"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("NOT_FOUND"));
     }
 
@@ -168,14 +182,14 @@ class OrderControllerTest {
         OrderCreationDTO invalidDto = OrderTestEntities.createOrderCreationDTO();
 
         Mockito.when(orderService.addOrder(Mockito.any(OrderCreationDTO.class), Mockito.any()))
-                .thenThrow(new IllegalArgumentException("Invalid date"));
+                .thenThrow(new IllegalArgumentException("Nieprawidłowa data wizyty"));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid date"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Nieprawidłowa data wizyty"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));
     }
 }

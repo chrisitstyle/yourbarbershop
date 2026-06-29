@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.SelfDeletionException;
-import pl.barbershopproject.barbershop.user.dto.CurrentUserResponseDTO;
-import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
-import pl.barbershopproject.barbershop.user.dto.UserDTO;
-import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
+import pl.barbershopproject.barbershop.user.dto.*;
 import pl.barbershopproject.barbershop.user.mapper.UserCreationDTOMapper;
 import pl.barbershopproject.barbershop.user.mapper.UserDTOMapper;
 
@@ -63,14 +60,17 @@ public class UserService {
     }
 
     @Transactional
-    public User updateUser(User updatedUser, Long idUser) {
+    public UserDTO updateUser(UserProfileUpdateRequestDTO updatedUser, Long idUser) {
         User authUser = getAuthenticatedUser();
         validateUserAccess(authUser, idUser);
+
         User existingUser = userRepository.findById(idUser)
                 .orElseThrow(() -> new NoSuchElementException("Użytkownik o podanym ID nie istnieje"));
 
         updateUserFields(existingUser, updatedUser);
-        return userRepository.save(existingUser);
+
+        User savedUser = userRepository.save(existingUser);
+        return UserDTOMapper.toDTO(savedUser);
     }
 
     @Transactional
@@ -110,14 +110,10 @@ public class UserService {
         }
     }
 
-    private void updateUserFields(User existing, User updated) {
-        existing.setFirstname(updated.getFirstname());
-        existing.setLastname(updated.getLastname());
-        existing.setEmail(updated.getEmail());
-
-        if (updated.getPassword() != null) {
-            existing.setPassword(passwordEncoder.encode(updated.getPassword()));
-        }
+    private void updateUserFields(User existing, UserProfileUpdateRequestDTO updated) {
+        existing.setFirstname(updated.firstname());
+        existing.setLastname(updated.lastname());
+        existing.setEmail(updated.email());
     }
 }
 

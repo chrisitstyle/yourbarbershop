@@ -9,6 +9,8 @@ import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Builder
@@ -18,8 +20,10 @@ import java.time.LocalDateTime;
 @Setter
 @Table(name = "user_order")
 @Entity
-public class Order {
+public class Order implements Serializable {
 
+    @Serial
+    private static final long serialVersionUID = 1L;
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     private Long idOrder;

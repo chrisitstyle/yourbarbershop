@@ -18,17 +18,20 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 class SecurityAccessIntegrationTest extends BaseIntegrationTest {
 
     private static final String ADMIN_EMAIL = "admin@test.com";
     private static final String USER_EMAIL = "johndoe@example.com";
-
+    private static final LocalDateTime FUTURE_VISIT_DATE =
+            LocalDateTime.of(2030, Month.JANUARY, 16, 12, 0);
     private MockMvc mockMvc;
 
     @Autowired
@@ -275,12 +278,7 @@ class SecurityAccessIntegrationTest extends BaseIntegrationTest {
     }
 
     private LocalDateTime futureVisitDate() {
-        return LocalDateTime.now()
-                .plusDays(60)
-                .withHour(12)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
+        return FUTURE_VISIT_DATE;
     }
 
     private String bearer(String token) {

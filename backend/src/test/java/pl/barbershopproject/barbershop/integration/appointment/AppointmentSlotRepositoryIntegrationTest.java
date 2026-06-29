@@ -8,6 +8,7 @@ import pl.barbershopproject.barbershop.appointment.AppointmentSlotRepository;
 import pl.barbershopproject.barbershop.integration.BaseIntegrationTest;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,7 +25,7 @@ class AppointmentSlotRepositoryIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldDeleteSlotByVisitDate() {
-        LocalDateTime visitDate = LocalDateTime.of(2026, 4, 20, 12, 0);
+        LocalDateTime visitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
 
         appointmentSlotRepository.saveAndFlush(
                 AppointmentSlot.builder()
@@ -40,8 +41,8 @@ class AppointmentSlotRepositoryIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldNotDeleteSlotWithDifferentVisitDate() {
-        LocalDateTime existingVisitDate = LocalDateTime.of(2026, 4, 20, 12, 0);
-        LocalDateTime differentVisitDate = LocalDateTime.of(2026, 4, 21, 12, 0);
+        LocalDateTime existingVisitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
+        LocalDateTime differentVisitDate = LocalDateTime.of(2026, Month.APRIL, 21, 12, 0);
 
         appointmentSlotRepository.saveAndFlush(
                 AppointmentSlot.builder()

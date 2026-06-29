@@ -9,6 +9,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
+import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.net.URI;
@@ -48,8 +49,8 @@ class GuestOrderController {
     }
 
     @PutMapping("/{idGuestOrder}")
-    public GuestOrder updateGuestOrder(
-            @Valid @RequestBody GuestOrder updatedGuestOrder,
+    public GuestOrderDTO updateGuestOrder(
+            @Valid @RequestBody GuestOrderUpdateRequestDTO updatedGuestOrder,
             @PathVariable Long idGuestOrder
     ) {
         return guestOrderService.updateGuestOrder(updatedGuestOrder, idGuestOrder);

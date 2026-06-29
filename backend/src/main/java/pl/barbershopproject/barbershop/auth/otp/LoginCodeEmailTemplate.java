@@ -2,11 +2,12 @@ package pl.barbershopproject.barbershop.auth.otp;
 
 public final class LoginCodeEmailTemplate {
 
+    private static final String SUBJECT = "YourBarbershop login code";
     private LoginCodeEmailTemplate() {
     }
 
     public static String subject() {
-        return "YourBarbershop login code";
+        return SUBJECT;
     }
 
     public static String plainText(String code, int expirationMinutes) {

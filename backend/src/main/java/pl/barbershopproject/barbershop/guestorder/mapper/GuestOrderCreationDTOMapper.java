@@ -5,6 +5,7 @@ import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.util.Status;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 public class GuestOrderCreationDTOMapper {
@@ -13,14 +14,14 @@ public class GuestOrderCreationDTOMapper {
         throw new IllegalStateException("Utility class");
     }
 
-    public static GuestOrder toEntity(GuestOrderCreationDTO dto, Offer offer) {
+    public static GuestOrder toEntity(GuestOrderCreationDTO dto, Offer offer, Clock clock) {
         return GuestOrder.builder()
                 .firstname(dto.firstname())
                 .lastname(dto.lastname())
                 .phonenumber(dto.phonenumber())
                 .email(dto.email())
                 .offer(offer)
-                .orderDate(LocalDateTime.now())
+                .orderDate(LocalDateTime.now(clock))
                 .visitDate(dto.visitDate())
                 .status(Status.NOWE)
                 .build();

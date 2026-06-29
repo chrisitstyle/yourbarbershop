@@ -1,13 +1,13 @@
 package pl.barbershopproject.barbershop.offer;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import pl.barbershopproject.barbershop.utils.TestEntities;
+import pl.barbershopproject.barbershop.offer.dto.OfferCreationDTO;
+import pl.barbershopproject.barbershop.offer.dto.UpdateOfferDTO;
 import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 
 import java.math.BigDecimal;
@@ -32,34 +32,37 @@ class OfferServiceTest {
     @BeforeEach
     void setUp() {
         offer = OfferTestEntities.createOffer();
-
     }
 
     @Test
     void addOffer_ShouldReturnOffer() {
+        OfferCreationDTO offerCreationDTO = new OfferCreationDTO(
+                offer.getKind(),
+                offer.getCost()
+        );
 
-        when(offerRepository.save(offer)).thenReturn(offer);
+        when(offerRepository.save(any(Offer.class))).thenReturn(offer);
 
-        Offer savedOffer = offerService.addOffer(offer);
+        Offer savedOffer = offerService.addOffer(offerCreationDTO);
 
         assertNotNull(savedOffer);
         assertEquals(offer.getIdOffer(), savedOffer.getIdOffer());
         assertEquals(offer.getKind(), savedOffer.getKind());
         assertEquals(offer.getCost(), savedOffer.getCost());
 
-        verify(offerRepository, times(1)).save(offer);
-
-
+        verify(offerRepository, times(1)).save(argThat(saved ->
+                saved.getKind().equals(offerCreationDTO.kind())
+                        && saved.getCost().equals(offerCreationDTO.cost())
+        ));
     }
 
     @Test
     void getAllOffers_ShouldReturnAllOffers() {
-
         when(offerRepository.findAll()).thenReturn(List.of(offer));
 
         List<Offer> allOffersReturn = offerService.getAllOffers();
 
-        Assertions.assertNotNull(allOffersReturn);
+        assertNotNull(allOffersReturn);
         verify(offerRepository, times(1)).findAll();
     }
 
@@ -71,15 +74,15 @@ class OfferServiceTest {
         Offer singleOffer = offerService.getSingleOffer(idOffer);
 
         assertNotNull(singleOffer);
-
     }
 
     @Test
     void updateOffer_ShouldUpdateAndReturnOffer_WhenOfferExists() {
+        UpdateOfferDTO updatedOffer = new UpdateOfferDTO(
+                "New Kind",
+                new BigDecimal("150.0")
+        );
 
-        Offer updatedOffer = new Offer();
-        updatedOffer.setKind("New Kind");
-        updatedOffer.setCost(new BigDecimal("150.0"));
         when(offerRepository.findById(1L)).thenReturn(Optional.of(offer));
         when(offerRepository.save(any(Offer.class))).thenReturn(offer);
 
@@ -95,7 +98,10 @@ class OfferServiceTest {
 
     @Test
     void updateOffer_ShouldThrowException_WhenOfferDoesNotExist() {
-        Offer updatedOffer = OfferTestEntities.createOffer();
+        UpdateOfferDTO updatedOffer = new UpdateOfferDTO(
+                "New Kind",
+                new BigDecimal("150.0")
+        );
 
         when(offerRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -115,7 +121,6 @@ class OfferServiceTest {
         verify(offerRepository, times(1)).deleteById(1L);
     }
 
-
     @Test
     void deleteOfferById_ShouldThrowException_WhenOfferDoesNotExist() {
         when(offerRepository.existsById(1L)).thenReturn(false);
@@ -125,5 +130,4 @@ class OfferServiceTest {
         verify(offerRepository, times(1)).existsById(1L);
         verify(offerRepository, never()).deleteById(1L);
     }
-
 }

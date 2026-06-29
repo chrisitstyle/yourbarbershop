@@ -7,10 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import pl.barbershopproject.barbershop.user.dto.CurrentUserResponseDTO;
-import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
-import pl.barbershopproject.barbershop.user.dto.UserDTO;
-import pl.barbershopproject.barbershop.user.dto.UserResponseDTO;
+import pl.barbershopproject.barbershop.user.dto.*;
 
 import java.net.URI;
 import java.util.List;
@@ -53,7 +50,7 @@ public class UserController {
     }
 
     @PutMapping("/{idUser}")
-    public User updateUser(@Valid @RequestBody User updatedUser, @PathVariable Long idUser) {
+    public UserDTO updateUser(@Valid @RequestBody UserProfileUpdateRequestDTO updatedUser, @PathVariable Long idUser) {
         return userService.updateUser(updatedUser, idUser);
     }
 

@@ -37,8 +37,8 @@ class CaptchaServiceTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private final String SECRET = "test-secret";
-    private final String VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
+    private static final String SECRET = "test-secret";
+    private static final String VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
 
     @BeforeEach
     void setUp() {

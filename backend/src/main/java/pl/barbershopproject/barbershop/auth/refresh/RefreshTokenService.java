@@ -32,20 +32,7 @@ public class RefreshTokenService {
 
     @Transactional
     public String createRefreshToken(User user, HttpServletRequest request) {
-        String rawToken = generateSecureToken();
-        String tokenHash = hashToken(rawToken);
-
-        RefreshToken refreshToken = RefreshToken.builder()
-                .tokenHash(tokenHash)
-                .user(user)
-                .expiresAt(Instant.now().plus(Duration.ofDays(refreshTokenDays)))
-                .userAgent(request.getHeader("User-Agent"))
-                .ipAddress(resolveClientIp(request))
-                .build();
-
-        refreshTokenRepository.save(refreshToken);
-
-        return rawToken;
+        return createRefreshTokenInternal(user, request);
     }
 
     @Transactional
@@ -61,7 +48,7 @@ public class RefreshTokenService {
 
         oldToken.setRevokedAt(Instant.now());
 
-        String newRawToken = createRefreshToken(oldToken.getUser(), request);
+        String newRawToken = createRefreshTokenInternal(oldToken.getUser(), request);
         oldToken.setReplacedByTokenHash(hashToken(newRawToken));
 
         refreshTokenRepository.save(oldToken);
@@ -79,6 +66,23 @@ public class RefreshTokenService {
                 refreshTokenRepository.save(token);
             }
         });
+    }
+
+    private String createRefreshTokenInternal(User user, HttpServletRequest request) {
+        String rawToken = generateSecureToken();
+        String tokenHash = hashToken(rawToken);
+
+        RefreshToken refreshToken = RefreshToken.builder()
+                .tokenHash(tokenHash)
+                .user(user)
+                .expiresAt(Instant.now().plus(Duration.ofDays(refreshTokenDays)))
+                .userAgent(request.getHeader("User-Agent"))
+                .ipAddress(resolveClientIp(request))
+                .build();
+
+        refreshTokenRepository.save(refreshToken);
+
+        return rawToken;
     }
 
     private String generateSecureToken() {

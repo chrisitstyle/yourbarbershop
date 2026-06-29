@@ -261,7 +261,7 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
         User user = userRepository.findByEmail(email)
                 .orElseThrow();
 
-        return jwtService.generateToken(user);
+        return jwtService.generateAccessToken(user);
     }
 
     private Long firstOfferId() {

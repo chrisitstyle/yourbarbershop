@@ -1,5 +1,6 @@
 package pl.barbershopproject.barbershop.offer;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +15,15 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
+import pl.barbershopproject.barbershop.offer.dto.OfferCreationDTO;
+import pl.barbershopproject.barbershop.offer.dto.UpdateOfferDTO;
 import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 import tools.jackson.databind.ObjectMapper;
 
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -28,33 +35,52 @@ import java.util.NoSuchElementException;
 @AutoConfigureMockMvc(addFilters = false)
 class OfferControllerTest {
 
+    private static final ZoneId TEST_ZONE = ZoneId.of("Europe/Warsaw");
+    private static final Instant TEST_INSTANT = Instant.parse("2026-01-16T12:00:00Z");
+
     @Autowired
     private MockMvc mockMvc;
+
     @Autowired
     private ObjectMapper objectMapper;
+
     @MockitoBean
     private OfferService offerService;
+
     @MockitoBean
     private JwtService jwtService;
+
     @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
+
     @MockitoBean
     private StringRedisTemplate stringRedisTemplate;
+
+    @MockitoBean
+    private Clock clock;
+
+    @BeforeEach
+    void setUp() {
+        Mockito.when(clock.getZone()).thenReturn(TEST_ZONE);
+        Mockito.when(clock.instant()).thenReturn(TEST_INSTANT);
+    }
 
     @Test
     void addOffer_ReturnsSavedOffer() throws Exception {
 
-        Offer offer = OfferTestEntities.createOffer();
-        offer.setIdOffer(0L);
+        OfferCreationDTO offerCreationDTO = new OfferCreationDTO(
+                "test_kind",
+                BigDecimal.valueOf(120)
+        );
 
         Offer savedOffer = OfferTestEntities.createOffer();
 
-        Mockito.when(offerService.addOffer(Mockito.any(Offer.class))).thenReturn(savedOffer);
+        Mockito.when(offerService.addOffer(Mockito.any(OfferCreationDTO.class))).thenReturn(savedOffer);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/offers")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(offer)))
+                        .content(objectMapper.writeValueAsString(offerCreationDTO)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.idOffer").value(1L))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.kind").value("test_kind"))
@@ -95,17 +121,21 @@ class OfferControllerTest {
 
     @Test
     void updateOffer_ReturnsUpdatedOffer() throws Exception {
-        Offer offer = OfferTestEntities.createOffer();
+        UpdateOfferDTO updateOfferDTO = new UpdateOfferDTO(
+                "updated_kind",
+                BigDecimal.valueOf(120)
+        );
+
         Offer updatedOffer = OfferTestEntities.createOffer();
         updatedOffer.setKind("updated_kind");
 
-        Mockito.when(offerService.updateOffer(Mockito.any(Offer.class), Mockito.eq(1L)))
+        Mockito.when(offerService.updateOffer(Mockito.any(UpdateOfferDTO.class), Mockito.eq(1L)))
                 .thenReturn(updatedOffer);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.put("/offers/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(offer)))
+                        .content(objectMapper.writeValueAsString(updateOfferDTO)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.idOffer").value(1L))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.kind").value("updated_kind"));
@@ -137,9 +167,12 @@ class OfferControllerTest {
     @Test
     void addOffer_ReturnsBadRequest_WhenIllegalArgumentException() throws Exception {
         // given
-        Offer invalidOffer = OfferTestEntities.createOffer();
+        OfferCreationDTO invalidOffer = new OfferCreationDTO(
+                "invalid_kind",
+                BigDecimal.valueOf(120)
+        );
 
-        Mockito.when(offerService.addOffer(Mockito.any(Offer.class)))
+        Mockito.when(offerService.addOffer(Mockito.any(OfferCreationDTO.class)))
                 .thenThrow(new IllegalArgumentException("Invalid offer data"));
 
         // when then

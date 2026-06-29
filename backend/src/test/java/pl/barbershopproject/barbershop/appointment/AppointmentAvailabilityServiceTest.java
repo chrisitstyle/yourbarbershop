@@ -11,6 +11,7 @@ import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,7 +28,7 @@ class AppointmentAvailabilityServiceTest {
 
     @Test
     void shouldReserveSlot() {
-        LocalDateTime visitDate = LocalDateTime.of(2026, 4, 20, 12, 0);
+        LocalDateTime visitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
 
         appointmentAvailabilityService.reserveSlot(visitDate);
 
@@ -42,7 +43,7 @@ class AppointmentAvailabilityServiceTest {
 
     @Test
     void shouldThrowAppointmentSlotTakenExceptionWhenSlotIsAlreadyReserved() {
-        LocalDateTime visitDate = LocalDateTime.of(2026, 4, 20, 12, 0);
+        LocalDateTime visitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
 
         when(appointmentSlotRepository.saveAndFlush(any(AppointmentSlot.class)))
                 .thenThrow(DataIntegrityViolationException.class);
@@ -64,8 +65,8 @@ class AppointmentAvailabilityServiceTest {
 
     @Test
     void shouldDoNothingWhenCurrentAndTargetStatusesDoNotReserveSlot() {
-        LocalDateTime currentVisitDate = LocalDateTime.of(2026, 4, 20, 12, 0);
-        LocalDateTime targetVisitDate = LocalDateTime.of(2026, 4, 21, 12, 0);
+        LocalDateTime currentVisitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
+        LocalDateTime targetVisitDate = LocalDateTime.of(2026, Month.APRIL, 21, 12, 0);
 
         appointmentAvailabilityService.updateSlotReservation(
                 currentVisitDate,
@@ -79,10 +80,10 @@ class AppointmentAvailabilityServiceTest {
 
     @Test
     void shouldReserveSlotWhenAppointmentChangesFromCancelledToActive() {
-        LocalDateTime targetVisitDate = LocalDateTime.of(2026, 4, 21, 12, 0);
+        LocalDateTime targetVisitDate = LocalDateTime.of(2026, Month.APRIL, 21, 12, 0);
 
         appointmentAvailabilityService.updateSlotReservation(
-                LocalDateTime.of(2026, 4, 20, 12, 0),
+                LocalDateTime.of(2026, Month.APRIL, 20, 12, 0),
                 Status.ANULOWANE,
                 targetVisitDate,
                 Status.NOWE
@@ -98,7 +99,7 @@ class AppointmentAvailabilityServiceTest {
 
     @Test
     void shouldReleaseSlotWhenAppointmentChangesFromActiveToCancelled() {
-        LocalDateTime currentVisitDate = LocalDateTime.of(2026, 4, 20, 12, 0);
+        LocalDateTime currentVisitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
 
         appointmentAvailabilityService.updateSlotReservation(
                 currentVisitDate,
@@ -113,8 +114,8 @@ class AppointmentAvailabilityServiceTest {
 
     @Test
     void shouldUpdateSlotWhenActiveAppointmentChangesVisitDate() {
-        LocalDateTime currentVisitDate = LocalDateTime.of(2026, 4, 20, 12, 0);
-        LocalDateTime targetVisitDate = LocalDateTime.of(2026, 4, 21, 12, 0);
+        LocalDateTime currentVisitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
+        LocalDateTime targetVisitDate = LocalDateTime.of(2026, Month.APRIL, 21, 12, 0);
 
         appointmentAvailabilityService.updateSlotReservation(
                 currentVisitDate,
@@ -133,7 +134,7 @@ class AppointmentAvailabilityServiceTest {
 
     @Test
     void shouldNotUpdateSlotWhenActiveAppointmentKeepsSameVisitDate() {
-        LocalDateTime visitDate = LocalDateTime.of(2026, 4, 20, 12, 0);
+        LocalDateTime visitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
 
         appointmentAvailabilityService.updateSlotReservation(
                 visitDate,
@@ -147,7 +148,7 @@ class AppointmentAvailabilityServiceTest {
 
     @Test
     void shouldReleaseSlotIfStatusReservesSlot() {
-        LocalDateTime visitDate = LocalDateTime.of(2026, 4, 20, 12, 0);
+        LocalDateTime visitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
 
         appointmentAvailabilityService.releaseIfReserved(visitDate, Status.NOWE);
 
@@ -156,7 +157,7 @@ class AppointmentAvailabilityServiceTest {
 
     @Test
     void shouldNotReleaseSlotIfStatusDoesNotReserveSlot() {
-        LocalDateTime visitDate = LocalDateTime.of(2026, 4, 20, 12, 0);
+        LocalDateTime visitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
 
         appointmentAvailabilityService.releaseIfReserved(visitDate, Status.ANULOWANE);
 

@@ -4,6 +4,7 @@ import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
+import pl.barbershopproject.barbershop.order.dto.OrderUpdatedRequestDTO;
 import pl.barbershopproject.barbershop.order.dto.UserInOrderDTO;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
@@ -11,6 +12,7 @@ import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.util.Status;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createOffer;
 import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUser;
@@ -41,8 +43,8 @@ public final class OrderTestEntities {
                 .idOrder(10L)
                 .user(createUser())
                 .offer(createOffer())
-                .orderDate(LocalDateTime.of(2026, 1, 16, 15, 0))
-                .visitDate(LocalDateTime.of(2026, 10, 17, 17, 0))
+                .orderDate(LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0))
+                .visitDate(LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0))
                 .status(Status.NOWE);
     }
 
@@ -97,8 +99,8 @@ public final class OrderTestEntities {
                 1L,
                 createUserInOrderDTO(),
                 createOffer(),
-                LocalDateTime.of(2026, 1, 16, 15, 0),
-                LocalDateTime.of(2026, 10, 17, 17, 0),
+                LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0),
+                LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0),
                 Status.NOWE,
                 PaymentMethod.GOTOWKA,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC
@@ -115,8 +117,23 @@ public final class OrderTestEntities {
     public static OrderCreationDTO createOrderCreationDTO() {
         return new OrderCreationDTO(
                 1L,
-                LocalDateTime.of(2026, 10, 17, 17, 0),
+                LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0),
                 PaymentMethod.GOTOWKA
+        );
+    }
+
+    /**
+     * Creates an OrderUpdatedRequestDTO with default updated test data.
+     * <p>
+     * Useful for testing order update endpoint and service.
+     *
+     * @return OrderUpdatedRequestDTO instance
+     */
+    public static OrderUpdatedRequestDTO createOrderUpdatedRequestDTO() {
+        return new OrderUpdatedRequestDTO(
+                1L,
+                LocalDateTime.of(2026, Month.JANUARY, 16, 12, 0),
+                Status.NOWE
         );
     }
 }

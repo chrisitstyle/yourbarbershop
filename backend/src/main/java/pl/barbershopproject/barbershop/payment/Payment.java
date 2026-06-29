@@ -6,6 +6,8 @@ import lombok.*;
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.order.Order;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -16,7 +18,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "payment")
-public class Payment {
+public class Payment implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
