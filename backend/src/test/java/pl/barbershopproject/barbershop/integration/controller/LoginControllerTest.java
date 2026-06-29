@@ -16,8 +16,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Transactional
 class LoginControllerTest extends BaseIntegrationTest {
@@ -52,7 +51,9 @@ class LoginControllerTest extends BaseIntegrationTest {
                         .content(objectMapper.writeValueAsString(loginData))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(cookie().exists("refresh_token"))
+                .andExpect(cookie().httpOnly("refresh_token", true))
                 .andReturn();
 
         String token = extractToken(loginResult);
@@ -114,6 +115,6 @@ class LoginControllerTest extends BaseIntegrationTest {
 
     private String extractToken(MvcResult result) throws Exception {
         String content = result.getResponse().getContentAsString();
-        return objectMapper.readTree(content).get("token").toString().replace("\"", "");
+        return objectMapper.readTree(content).get("accessToken").asText();
     }
 }

@@ -13,6 +13,14 @@ export const addUser = async (newUser) => {
   }
 };
 
+export const getCurrentUser = async () => {
+  const response = await apiRequest(`${API_BASE_URL}/users/me`, {
+    method: "GET",
+  });
+
+  return response.data;
+};
+
 export const getUsers = async (userToken) => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/users`, {
@@ -92,6 +100,7 @@ export const userResetPasswordRequest = async (
 const userService = {
   addUser,
   getUsers,
+  getCurrentUser,
   updateUser,
   deleteUser,
   userForgotPasswordRequest,

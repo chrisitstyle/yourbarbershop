@@ -10,10 +10,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import pl.barbershopproject.barbershop.auth.AuthResponse;
+import pl.barbershopproject.barbershop.auth.AuthResult;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.email.EmailSenderService;
 import pl.barbershopproject.barbershop.exception.InvalidEmailLoginCodeException;
+import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
 
@@ -41,7 +42,7 @@ class EmailLoginCodeServiceTest {
     private static final String RAW_EMAIL = " JohnDoe@Example.com ";
     private static final String CODE = "123456";
     private static final String CODE_HASH = "hashed-code";
-    private static final String JWT = "jwt-token";
+    private static final String ACCESS_TOKEN = "access-token";
 
     @Mock
     private UserRepository userRepository;
@@ -137,7 +138,7 @@ class EmailLoginCodeServiceTest {
     }
 
     @Test
-    void shouldVerifyCodeAndReturnAuthResponse() {
+    void shouldVerifyCodeAndReturnAuthResult() {
         User user = createUserForSuccessfulLogin();
 
         when(valueOperations.get(codeKey()))
@@ -150,19 +151,21 @@ class EmailLoginCodeServiceTest {
                 .thenReturn(true);
         when(userRepository.findByEmailIgnoreCase(EMAIL))
                 .thenReturn(Optional.of(user));
-        when(jwtService.generateToken(user))
-                .thenReturn(JWT);
+        when(jwtService.generateAccessToken(user))
+                .thenReturn(ACCESS_TOKEN);
 
-        AuthResponse response = emailLoginCodeService.verifyCode(
+        AuthResult result = emailLoginCodeService.verifyCode(
                 new EmailLoginCodeVerifyRequest(RAW_EMAIL, CODE)
         );
 
-        assertEquals(JWT, response.token());
-        assertEquals(1L, response.id());
-        assertNull(response.role());
+        assertEquals(ACCESS_TOKEN, result.accessToken());
+        assertEquals(user, result.user());
+        assertEquals(1L, result.user().getIdUser());
+        assertEquals(Role.USER, result.user().getRole());
 
         verify(stringRedisTemplate).delete(codeKey());
         verify(stringRedisTemplate).delete(attemptsKey());
+        verify(jwtService).generateAccessToken(user);
     }
 
     @Test
@@ -268,12 +271,14 @@ class EmailLoginCodeServiceTest {
     }
 
     private User createUserForSuccessfulLogin() {
-        User user = org.mockito.Mockito.mock(User.class);
-
-        when(user.getIdUser()).thenReturn(1L);
-        when(user.getRole()).thenReturn(null);
-
-        return user;
+        return User.builder()
+                .idUser(1L)
+                .firstname("John")
+                .lastname("Doe")
+                .email(EMAIL)
+                .password("password")
+                .role(Role.USER)
+                .build();
     }
 
     private static String codeKey() {

@@ -32,6 +32,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     @Value("${application.security.frontend-url-localhost:http://localhost:3000}")
     private String frontendUrl;
 
+    // The constructor injects a list of all beans implementing the OAuth2UserStrategy interface
     public OAuth2LoginSuccessHandler(
             RefreshTokenService refreshTokenService,
             RefreshCookieService refreshCookieService,
