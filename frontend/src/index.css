@@ -1,19 +1,53 @@
+/* =========================
+   Global styles
+   ========================= */
+
+:root {
+  --app-navbar-height: 56px;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 html,
 body {
-  height: 100%;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* background-color: #f5f5f5 !important; */
+}
+
+body {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
+
+a,
+button,
+input,
+select,
+textarea {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+/* =========================
+   Application layout
+   ========================= */
 
 .App {
   display: flex;
@@ -23,17 +57,21 @@ code {
 
 main {
   flex: 1;
-  padding-top: 56px; /* navbar height */
+  padding-top: var(--app-navbar-height);
 }
+
+/* =========================
+   Navbar
+   ========================= */
 
 .navbar {
   position: fixed !important;
   top: 0;
-  left: 0;
   right: 0;
-  z-index: 1000; /*over other elements */
-  background-color: #343a40;
+  left: 0;
+  z-index: 1000;
   width: 100%;
+  background-color: #343a40;
 }
 
 .custom-navbar-ul {
@@ -42,23 +80,39 @@ main {
   gap: 50px;
 }
 
+/* =========================
+   Footer
+   ========================= */
+
 .footer {
-  margin-top: auto;
   width: 100%;
+  margin-top: auto;
   padding: 1rem 0;
+  color: #ffffff;
   background-color: #343a40;
-  color: white;
 }
+
+.footer a {
+  color: inherit;
+}
+
+/* =========================
+   Pagination
+   ========================= */
 
 .pagination {
   margin-bottom: 70px;
 }
 
 .pagination .page-item.active .page-link {
-  background-color: black;
-  color: white;
-  border-color: black;
+  color: #ffffff;
+  background-color: #000000;
+  border-color: #000000;
 }
+
+/* =========================
+   Social media icons
+   ========================= */
 
 .social-icons {
   font-size: 70px;
@@ -68,13 +122,17 @@ main {
   margin-right: 100px;
 }
 
+/* =========================
+   Gallery arrows
+   ========================= */
+
 .arrow-left,
 .arrow-right {
-  color: black;
-  font-size: 30px;
-  margin-top: 10px;
   position: absolute;
   top: 50%;
+  margin-top: 10px;
+  color: #000000;
+  font-size: 30px;
   transform: translateY(-50%);
 }
 
@@ -86,28 +144,504 @@ main {
   right: 160px;
 }
 
+/* =========================
+   Responsive layout
+   ========================= */
+
+@media (max-width: 991.98px) {
+  .custom-navbar-ul {
+    gap: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .arrow-icon {
-    color: black;
-    font-size: 20px;
     margin: 0 -80px;
+    color: #000000;
+    font-size: 20px;
+  }
+
+  .social-icons {
+    font-size: 50px;
+  }
+
+  .social-icons a {
+    margin-right: 35px;
   }
 }
 
 @media (min-width: 769px) and (max-width: 1200px) {
   .arrow-icon {
-    color: black;
+    color: #000000;
     font-size: 30px;
   }
 }
 
-/* add distinct border and subtle shadow to navbar and footer in dark mode for better separation */
-html[data-bs-theme="dark"] .navbar {
-  border-bottom: 2px solid #444;
-  box-shadow: 0 2px 8px -2px #0005;
+/* =========================================================
+   Dark theme
+   ========================================================= */
+
+html[data-bs-theme="dark"] {
+  color-scheme: dark;
+
+  --bs-body-bg: #0d0f12;
+  --bs-body-color: #f2efe9;
+
+  --bs-emphasis-color: #ffffff;
+  --bs-secondary-color: #a9afb8;
+  --bs-secondary-bg: #14171c;
+  --bs-tertiary-bg: #1a1e24;
+
+  --bs-border-color: #2b313a;
+  --bs-border-color-translucent: rgba(255, 255, 255, 0.1);
+
+  --bs-link-color: #d0a15e;
+  --bs-link-hover-color: #e7bd7f;
+
+  --app-dark-background: #0d0f12;
+  --app-dark-surface: #16191e;
+  --app-dark-surface-elevated: #1c2026;
+  --app-dark-input: #101318;
+  --app-dark-input-focus: #12161b;
+  --app-dark-navbar: #111419;
+  --app-dark-footer: #111419;
+
+  --app-dark-border: rgba(255, 255, 255, 0.1);
+  --app-dark-border-strong: rgba(255, 255, 255, 0.16);
+
+  --app-dark-text: #f2efe9;
+  --app-dark-text-muted: #a9afb8;
+
+  --app-accent: #d0a15e;
+  --app-accent-hover: #e1b575;
+  --app-accent-active: #b98949;
+  --app-accent-rgb: 208, 161, 94;
 }
 
+/* =========================
+   Dark theme: body
+   ========================= */
+
+html[data-bs-theme="dark"] body {
+  color: var(--app-dark-text);
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(var(--app-accent-rgb), 0.08),
+      transparent 34rem
+    ),
+    var(--app-dark-background);
+  background-attachment: fixed;
+}
+
+/* =========================
+   Dark theme: navbar
+   ========================= */
+
+html[data-bs-theme="dark"] .navbar {
+  background-color: rgba(17, 20, 25, 0.96) !important;
+  border-bottom: 1px solid var(--app-dark-border);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+html[data-bs-theme="dark"] .navbar-brand {
+  color: #ffffff;
+}
+
+html[data-bs-theme="dark"] .navbar-brand:hover,
+html[data-bs-theme="dark"] .navbar-brand:focus {
+  color: var(--app-accent);
+}
+
+html[data-bs-theme="dark"] .navbar .nav-link,
+html[data-bs-theme="dark"] .app-account-button {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+html[data-bs-theme="dark"] .navbar .nav-link:hover,
+html[data-bs-theme="dark"] .navbar .nav-link:focus,
+html[data-bs-theme="dark"] .app-account-button:hover,
+html[data-bs-theme="dark"] .app-account-button:focus {
+  color: #ffffff;
+}
+
+html[data-bs-theme="dark"] .navbar-toggler {
+  border-color: var(--app-dark-border-strong);
+}
+
+html[data-bs-theme="dark"] .navbar-toggler:focus {
+  border-color: rgba(var(--app-accent-rgb), 0.65);
+  box-shadow: 0 0 0 0.2rem rgba(var(--app-accent-rgb), 0.16);
+}
+
+/* =========================
+   Dark theme: theme toggle
+   ========================= */
+
+html[data-bs-theme="dark"] .app-theme-toggle {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--app-dark-border);
+}
+
+html[data-bs-theme="dark"] .app-theme-toggle:hover,
+html[data-bs-theme="dark"] .app-theme-toggle:focus {
+  color: var(--app-accent);
+  background-color: rgba(var(--app-accent-rgb), 0.1);
+  border-color: rgba(var(--app-accent-rgb), 0.5);
+  box-shadow: 0 0 0 0.2rem rgba(var(--app-accent-rgb), 0.12);
+}
+
+/* =========================
+   Dark theme: dropdowns
+   ========================= */
+
+html[data-bs-theme="dark"] .dropdown-menu,
+html[data-bs-theme="dark"] .app-account-menu {
+  color: var(--app-dark-text);
+  background-color: var(--app-dark-surface-elevated);
+  border: 1px solid var(--app-dark-border);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+}
+
+html[data-bs-theme="dark"] .dropdown-item,
+html[data-bs-theme="dark"] .app-account-menu .dropdown-item {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+html[data-bs-theme="dark"] .dropdown-item:hover,
+html[data-bs-theme="dark"] .dropdown-item:focus,
+html[data-bs-theme="dark"] .app-account-menu .dropdown-item:hover,
+html[data-bs-theme="dark"] .app-account-menu .dropdown-item:focus {
+  color: #ffffff;
+  background-color: rgba(var(--app-accent-rgb), 0.12);
+}
+
+html[data-bs-theme="dark"] .dropdown-divider,
+html[data-bs-theme="dark"] .app-account-menu .dropdown-divider {
+  border-color: var(--app-dark-border);
+}
+
+/* =========================
+   Dark theme: footer
+   ========================= */
+
 html[data-bs-theme="dark"] .footer {
-  border-top: 2px solid #444;
-  box-shadow: 0 -2px 8px -2px #0005;
+  color: var(--app-dark-text-muted);
+  background-color: var(--app-dark-footer);
+  border-top: 1px solid var(--app-dark-border);
+  box-shadow: 0 -5px 18px rgba(0, 0, 0, 0.2);
+}
+
+html[data-bs-theme="dark"] .footer a {
+  color: var(--app-accent);
+  text-decoration: none;
+}
+
+html[data-bs-theme="dark"] .footer a:hover,
+html[data-bs-theme="dark"] .footer a:focus {
+  color: var(--app-accent-hover);
+  text-decoration: underline;
+}
+
+/* =========================
+   Dark theme: cards
+   ========================= */
+
+html[data-bs-theme="dark"] .card {
+  color: var(--app-dark-text);
+  background: linear-gradient(
+    145deg,
+    var(--app-dark-surface-elevated),
+    var(--app-dark-surface)
+  );
+  border: 1px solid var(--app-dark-border);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+html[data-bs-theme="dark"] .card-header,
+html[data-bs-theme="dark"] .card-footer {
+  background-color: rgba(255, 255, 255, 0.025);
+  border-color: var(--app-dark-border);
+}
+
+html[data-bs-theme="dark"] .card-title {
+  color: #ffffff;
+}
+
+html[data-bs-theme="dark"] .card-subtitle,
+html[data-bs-theme="dark"] .text-muted {
+  color: var(--app-dark-text-muted) !important;
+}
+
+/* =========================
+   Dark theme: modal
+   ========================= */
+
+html[data-bs-theme="dark"] .modal-content {
+  color: var(--app-dark-text);
+  background-color: var(--app-dark-surface-elevated);
+  border: 1px solid var(--app-dark-border);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+html[data-bs-theme="dark"] .modal-header,
+html[data-bs-theme="dark"] .modal-footer {
+  border-color: var(--app-dark-border);
+}
+
+/* =========================
+   Dark theme: forms
+   ========================= */
+
+html[data-bs-theme="dark"] .form-label {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+html[data-bs-theme="dark"] .form-control,
+html[data-bs-theme="dark"] .form-select {
+  color: var(--app-dark-text);
+  background-color: var(--app-dark-input);
+  border-color: #303741;
+}
+
+html[data-bs-theme="dark"] .form-control:hover,
+html[data-bs-theme="dark"] .form-select:hover {
+  border-color: #454e5a;
+}
+
+html[data-bs-theme="dark"] .form-control:focus,
+html[data-bs-theme="dark"] .form-select:focus {
+  color: #ffffff;
+  background-color: var(--app-dark-input-focus);
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--app-accent-rgb), 0.16);
+}
+
+html[data-bs-theme="dark"] .form-control::placeholder {
+  color: #737b86;
+  opacity: 1;
+}
+
+html[data-bs-theme="dark"] .form-control:disabled,
+html[data-bs-theme="dark"] .form-select:disabled {
+  color: #858c96;
+  background-color: #191d22;
+  border-color: #292f37;
+  opacity: 0.75;
+}
+
+html[data-bs-theme="dark"] .form-check-input {
+  background-color: var(--app-dark-input);
+  border-color: #46505c;
+}
+
+html[data-bs-theme="dark"] .form-check-input:focus {
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--app-accent-rgb), 0.16);
+}
+
+html[data-bs-theme="dark"] .form-check-input:checked {
+  background-color: var(--app-accent);
+  border-color: var(--app-accent);
+}
+
+html[data-bs-theme="dark"] .input-group-text {
+  color: var(--app-dark-text-muted);
+  background-color: #1c2026;
+  border-color: #303741;
+}
+
+/* =========================
+   Dark theme: buttons
+   ========================= */
+
+html[data-bs-theme="dark"] .btn-primary {
+  color: #17130d;
+  background-color: var(--app-accent);
+  border-color: var(--app-accent);
+}
+
+html[data-bs-theme="dark"] .btn-primary:hover,
+html[data-bs-theme="dark"] .btn-primary:focus {
+  color: #17130d;
+  background-color: var(--app-accent-hover);
+  border-color: var(--app-accent-hover);
+}
+
+html[data-bs-theme="dark"] .btn-primary:focus {
+  box-shadow: 0 0 0 0.2rem rgba(var(--app-accent-rgb), 0.22);
+}
+
+html[data-bs-theme="dark"] .btn-primary:active,
+html[data-bs-theme="dark"] .btn-primary.active {
+  color: #ffffff;
+  background-color: var(--app-accent-active);
+  border-color: var(--app-accent-active);
+}
+
+html[data-bs-theme="dark"] .btn-outline-primary {
+  color: var(--app-accent);
+  border-color: var(--app-accent);
+}
+
+html[data-bs-theme="dark"] .btn-outline-primary:hover,
+html[data-bs-theme="dark"] .btn-outline-primary:focus {
+  color: #17130d;
+  background-color: var(--app-accent);
+  border-color: var(--app-accent);
+}
+
+html[data-bs-theme="dark"] .btn-secondary {
+  color: #ffffff;
+  background-color: #30363f;
+  border-color: #3b434e;
+}
+
+html[data-bs-theme="dark"] .btn-secondary:hover,
+html[data-bs-theme="dark"] .btn-secondary:focus {
+  background-color: #3b434e;
+  border-color: #4a5563;
+}
+
+/* =========================
+   Dark theme: tables
+   ========================= */
+
+html[data-bs-theme="dark"] .table {
+  --bs-table-color: var(--app-dark-text);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--app-dark-border);
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.025);
+  --bs-table-striped-color: var(--app-dark-text);
+  --bs-table-hover-bg: rgba(var(--app-accent-rgb), 0.08);
+  --bs-table-hover-color: #ffffff;
+
+  color: var(--app-dark-text);
+}
+
+html[data-bs-theme="dark"] .table thead th {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.035);
+  border-bottom-color: var(--app-dark-border-strong);
+}
+
+/* =========================
+   Dark theme: list groups
+   ========================= */
+
+html[data-bs-theme="dark"] .list-group-item {
+  color: var(--app-dark-text);
+  background-color: var(--app-dark-surface);
+  border-color: var(--app-dark-border);
+}
+
+html[data-bs-theme="dark"] .list-group-item-action:hover,
+html[data-bs-theme="dark"] .list-group-item-action:focus {
+  color: #ffffff;
+  background-color: rgba(var(--app-accent-rgb), 0.08);
+}
+
+/* =========================
+   Dark theme: accordion
+   ========================= */
+
+html[data-bs-theme="dark"] .accordion-item {
+  color: var(--app-dark-text);
+  background-color: var(--app-dark-surface);
+  border-color: var(--app-dark-border);
+}
+
+html[data-bs-theme="dark"] .accordion-button {
+  color: var(--app-dark-text);
+  background-color: var(--app-dark-surface-elevated);
+}
+
+html[data-bs-theme="dark"] .accordion-button:not(.collapsed) {
+  color: var(--app-accent);
+  background-color: rgba(var(--app-accent-rgb), 0.08);
+  box-shadow: inset 0 -1px 0 var(--app-dark-border);
+}
+
+html[data-bs-theme="dark"] .accordion-button:focus {
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--app-accent-rgb), 0.14);
+}
+
+/* =========================
+   Dark theme: pagination
+   ========================= */
+
+html[data-bs-theme="dark"] .pagination .page-link {
+  color: var(--app-dark-text-muted);
+  background-color: var(--app-dark-surface);
+  border-color: var(--app-dark-border);
+}
+
+html[data-bs-theme="dark"] .pagination .page-link:hover,
+html[data-bs-theme="dark"] .pagination .page-link:focus {
+  color: var(--app-accent);
+  background-color: var(--app-dark-surface-elevated);
+  border-color: rgba(var(--app-accent-rgb), 0.45);
+  box-shadow: none;
+}
+
+html[data-bs-theme="dark"] .pagination .page-item.active .page-link {
+  color: #17130d;
+  background-color: var(--app-accent);
+  border-color: var(--app-accent);
+}
+
+html[data-bs-theme="dark"] .pagination .page-item.disabled .page-link {
+  color: #656d77;
+  background-color: #14171b;
+  border-color: var(--app-dark-border);
+}
+
+/* =========================
+   Dark theme: gallery
+   ========================= */
+
+html[data-bs-theme="dark"] .arrow-left,
+html[data-bs-theme="dark"] .arrow-right,
+html[data-bs-theme="dark"] .arrow-icon {
+  color: var(--app-accent);
+}
+
+html[data-bs-theme="dark"] .arrow-left:hover,
+html[data-bs-theme="dark"] .arrow-right:hover,
+html[data-bs-theme="dark"] .arrow-icon:hover {
+  color: var(--app-accent-hover);
+}
+
+/* =========================
+   Dark theme: social icons
+   ========================= */
+
+html[data-bs-theme="dark"] .social-icons a {
+  color: var(--app-accent);
+}
+
+html[data-bs-theme="dark"] .social-icons a:hover,
+html[data-bs-theme="dark"] .social-icons a:focus {
+  color: var(--app-accent-hover);
+}
+
+/* =========================
+   Dark theme: miscellaneous
+   ========================= */
+
+html[data-bs-theme="dark"] hr {
+  border-color: var(--app-dark-border);
+  opacity: 1;
+}
+
+html[data-bs-theme="dark"] a {
+  text-underline-offset: 0.2em;
+}
+
+html[data-bs-theme="dark"] ::selection {
+  color: #17130d;
+  background-color: var(--app-accent);
 }
