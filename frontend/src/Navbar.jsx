@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "./auth/AuthContextValue";
 import { Sun, Moon } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -15,8 +15,18 @@ const Navbar = ({ theme, onToggleTheme }) => {
     navigate("/login");
   };
 
+  const getMainNavLinkClass = ({ isActive }) =>
+    `nav-link custom-nav-link${isActive ? " active" : ""}`;
+
+  const getDropdownLinkClass = ({ isActive }) =>
+    `dropdown-item app-dropdown-link${isActive ? " active" : ""}`;
+
   const isAdmin = user?.role === "ADMIN";
   const isUser = user?.role === "USER";
+
+  const bookingPath = isUser
+    ? "/registerorderlogged"
+    : "/registerorderwithoutaccount";
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark app-navbar">
@@ -32,50 +42,43 @@ const Navbar = ({ theme, onToggleTheme }) => {
           data-bs-target="#navbarNavDropdown"
           aria-controls="navbarNavDropdown"
           aria-expanded="false"
-          aria-label="Toggle navigation"
+          aria-label={t("nav.toggleNavigation")}
         >
-          <span className="navbar-toggler-icon"></span>
+          <span className="navbar-toggler-icon" />
         </button>
 
         <div className="collapse navbar-collapse" id="navbarNavDropdown">
-          {/* Main navigation links left */}
+          {/* Main navigation links */}
           <ul className="navbar-nav app-navbar-main">
             <li className="nav-item">
-              <Link className="nav-link active custom-nav-link" to="/gallery">
+              <NavLink className={getMainNavLinkClass} to="/gallery">
                 {t("nav.gallery")}
-              </Link>
+              </NavLink>
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link active custom-nav-link" to="/offers">
+              <NavLink className={getMainNavLinkClass} to="/offers">
                 {t("nav.offers")}
-              </Link>
+              </NavLink>
             </li>
 
             <li className="nav-item">
-              <Link className="nav-link active custom-nav-link" to="/contact">
+              <NavLink className={getMainNavLinkClass} to="/contact">
                 {t("nav.contact")}
-              </Link>
+              </NavLink>
             </li>
 
-            {/* Umów wizytę – visible only for USER and unauthenticated users */}
+            {/* Visible only for users and unauthenticated visitors */}
             {!isAdmin && (
               <li className="nav-item">
-                <Link
-                  className="nav-link active custom-nav-link"
-                  to={
-                    isUser
-                      ? "/registerorderlogged"
-                      : "/registerorderwithoutaccount"
-                  }
-                >
+                <NavLink className={getMainNavLinkClass} to={bookingPath}>
                   {t("nav.bookVisit")}
-                </Link>
+                </NavLink>
               </li>
             )}
           </ul>
 
-          {/* Account navigation right */}
+          {/* Account navigation */}
           <ul className="navbar-nav ms-lg-auto app-navbar-actions">
             <li className="nav-item dropdown app-navbar-account">
               <button
@@ -92,23 +95,23 @@ const Navbar = ({ theme, onToggleTheme }) => {
                   <>
                     {isAdmin && (
                       <li>
-                        <Link
-                          className="dropdown-item custom-nav-link"
+                        <NavLink
+                          className={getDropdownLinkClass}
                           to="/adminpanel"
                         >
                           {t("nav.adminPanel")}
-                        </Link>
+                        </NavLink>
                       </li>
                     )}
 
-                    {isUser && (
+                    {isUser && user?.id && (
                       <li>
-                        <Link
-                          className="dropdown-item custom-nav-link"
-                          to={`/profile/${user?.id}`}
+                        <NavLink
+                          className={getDropdownLinkClass}
+                          to={`/profile/${user.id}`}
                         >
                           {t("nav.profile")}
-                        </Link>
+                        </NavLink>
                       </li>
                     )}
 
@@ -118,7 +121,7 @@ const Navbar = ({ theme, onToggleTheme }) => {
 
                     <li>
                       <button
-                        className="dropdown-item custom-nav-link"
+                        className="dropdown-item app-dropdown-link"
                         type="button"
                         onClick={handleLogout}
                       >
@@ -129,21 +132,15 @@ const Navbar = ({ theme, onToggleTheme }) => {
                 ) : (
                   <>
                     <li>
-                      <Link
-                        className="dropdown-item custom-nav-link"
-                        to="/login"
-                      >
+                      <NavLink className={getDropdownLinkClass} to="/login">
                         {t("nav.login")}
-                      </Link>
+                      </NavLink>
                     </li>
 
                     <li>
-                      <Link
-                        className="dropdown-item custom-nav-link"
-                        to="/register"
-                      >
+                      <NavLink className={getDropdownLinkClass} to="/register">
                         {t("nav.register")}
-                      </Link>
+                      </NavLink>
                     </li>
                   </>
                 )}
@@ -159,11 +156,18 @@ const Navbar = ({ theme, onToggleTheme }) => {
                 type="button"
                 className="app-theme-toggle"
                 onClick={onToggleTheme}
+                aria-label={
+                  theme === "dark" ? t("nav.switchLight") : t("nav.switchDark")
+                }
                 title={
                   theme === "dark" ? t("nav.switchLight") : t("nav.switchDark")
                 }
               >
-                {theme === "dark" ? <Sun size={22} /> : <Moon size={22} />}
+                {theme === "dark" ? (
+                  <Sun size={22} aria-hidden="true" />
+                ) : (
+                  <Moon size={22} aria-hidden="true" />
+                )}
               </button>
             </li>
           </ul>
