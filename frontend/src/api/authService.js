@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "./config.js";
-import { apiRequest } from "./httpClient.js";
+import { apiRequest, refreshAccessToken } from "./httpClient.js";
 
 export const registerUser = async (userData) => {
   const response = await apiRequest(`${API_BASE_URL}/register`, {
@@ -53,12 +53,7 @@ export const verifyEmailLoginCode = async (email, code) => {
 };
 
 export const refreshSession = async () => {
-  const response = await apiRequest(`${API_BASE_URL}/auth/refresh`, {
-    method: "POST",
-    skipAuthRefresh: true,
-  });
-
-  return response.data;
+  return refreshAccessToken();
 };
 
 export const logoutUser = async () => {

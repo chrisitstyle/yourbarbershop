@@ -34,21 +34,38 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    let isActive = true;
+
     const bootstrapAuth = async () => {
       try {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
 
         const authResponse = await refreshSession();
-        applyAuthResponse(authResponse);
-      } catch {
-        clearAuthState();
+
+        if (isActive) {
+          applyAuthResponse(authResponse);
+        }
+      } catch (error) {
+        if (isActive) {
+          clearAuthState();
+        }
+
+        if (error?.status !== 401) {
+          console.error("Failed to restore authentication session:", error);
+        }
       } finally {
-        setAuthLoading(false);
+        if (isActive) {
+          setAuthLoading(false);
+        }
       }
     };
 
     bootstrapAuth();
+
+    return () => {
+      isActive = false;
+    };
   }, [applyAuthResponse, clearAuthState]);
 
   const login = async (email, password) => {

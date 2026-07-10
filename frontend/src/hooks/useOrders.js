@@ -1,47 +1,35 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getOrders } from "../api/orderService";
 
-const useOrders = (userToken) => {
+const useOrders = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!userToken) {
-      setIsLoading(false);
-      setError("Brak tokena użytkownika!");
-      return;
-    }
-    const fetchOrders = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const data = await getOrders(userToken);
-        setOrders(data);
-      } catch {
-        setError("Błąd podczas ładowania zamówień");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [userToken]);
-
-  const refetch = async () => {
+  const fetchOrders = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+
     try {
-      const data = await getOrders(userToken);
+      const data = await getOrders();
       setOrders(data);
-    } catch {
-      setError("Błąd podczas ładowania zamówień");
+    } catch (error) {
+      setError(error?.message || "Błąd podczas ładowania zamówień");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  return { orders, isLoading, error, refetch };
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  return {
+    orders,
+    isLoading,
+    error,
+    refetch: fetchOrders,
+  };
 };
 
 export default useOrders;

@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import userService from "../api/userService";
 
-const useUsers = (userToken) => {
+const useUsers = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -9,25 +9,27 @@ const useUsers = (userToken) => {
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+
     try {
-      const data = await userService.getUsers(userToken);
+      const data = await userService.getUsers();
       setUsers(data);
-    } catch {
-      setError("Błąd podczas ładowania użytkowników");
+    } catch (error) {
+      setError(error?.message || "Błąd podczas ładowania użytkowników");
     } finally {
       setIsLoading(false);
     }
-  }, [userToken]);
+  }, []);
 
   useEffect(() => {
-    if (userToken) {
-      fetchUsers();
-    }
-  }, [userToken, fetchUsers]);
+    fetchUsers();
+  }, [fetchUsers]);
 
-  const refetch = fetchUsers;
-
-  return { users, isLoading, error, refetch };
+  return {
+    users,
+    isLoading,
+    error,
+    refetch: fetchUsers,
+  };
 };
 
 export default useUsers;

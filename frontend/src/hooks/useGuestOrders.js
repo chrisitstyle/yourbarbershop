@@ -1,47 +1,35 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import guestOrderService from "../api/guestOrderService";
 
-const useGuestOrders = (userToken) => {
+const useGuestOrders = () => {
   const [guestOrders, setGuestOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!userToken) {
-      setIsLoading(false);
-      setError("Brak tokena użytkownika!");
-      return;
-    }
-    const fetchGuestOrders = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const data = await guestOrderService.getGuestOrders(userToken);
-        setGuestOrders(data);
-      } catch {
-        setError("Błąd podczas ładowania wizyt gości");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchGuestOrders();
-  }, [userToken]);
-
-  const refetch = async () => {
+  const fetchGuestOrders = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+
     try {
-      const data = await guestOrderService.getGuestOrders(userToken);
+      const data = await guestOrderService.getGuestOrders();
       setGuestOrders(data);
-    } catch {
-      setError("Błąd podczas ładowania wizyt gości");
+    } catch (error) {
+      setError(error?.message || "Błąd podczas ładowania wizyt gości");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  return { guestOrders, isLoading, error, refetch };
+  useEffect(() => {
+    fetchGuestOrders();
+  }, [fetchGuestOrders]);
+
+  return {
+    guestOrders,
+    isLoading,
+    error,
+    refetch: fetchGuestOrders,
+  };
 };
 
 export default useGuestOrders;
