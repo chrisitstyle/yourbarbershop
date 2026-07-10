@@ -141,9 +141,11 @@ const AdminPanel = () => {
         <h2 className="fw-bold">{t("admin.panelTitle")}</h2>
         <p className="text-muted mb-0">{t("admin.panelDesc")}</p>
       </div>
+
       <div className="d-flex flex-wrap justify-content-center gap-3 mb-4">
         <div className="dropdown">
           <AdminMenuButton
+            className="admin-menu-button"
             title={
               <span>
                 <FontAwesomeIcon icon={faScissors} className="me-2" />
@@ -151,6 +153,7 @@ const AdminPanel = () => {
               </span>
             }
           />
+
           <div className="dropdown-menu">
             <button
               type="button"
@@ -161,6 +164,7 @@ const AdminPanel = () => {
             >
               {t("admin.actions.showOffers")}
             </button>
+
             <button
               type="button"
               className="dropdown-item"
@@ -178,8 +182,10 @@ const AdminPanel = () => {
             </button>
           </div>
         </div>
+
         <div className="dropdown">
           <AdminMenuButton
+            className="admin-menu-button"
             title={
               <span>
                 <FontAwesomeIcon icon={faUser} className="me-2" />
@@ -187,6 +193,7 @@ const AdminPanel = () => {
               </span>
             }
           />
+
           <div className="dropdown-menu">
             <button
               type="button"
@@ -197,6 +204,7 @@ const AdminPanel = () => {
             >
               {t("admin.actions.showUsers")}
             </button>
+
             <button
               type="button"
               className="dropdown-item"
@@ -214,8 +222,10 @@ const AdminPanel = () => {
             </button>
           </div>
         </div>
+
         <div className="dropdown">
           <AdminMenuButton
+            className="admin-menu-button"
             title={
               <span>
                 <FontAwesomeIcon icon={faCalendarCheck} className="me-2" />
@@ -223,6 +233,7 @@ const AdminPanel = () => {
               </span>
             }
           />
+
           <div className="dropdown-menu">
             <button
               type="button"
@@ -233,6 +244,7 @@ const AdminPanel = () => {
             >
               {t("admin.actions.showUserOrders")}
             </button>
+
             <button
               type="button"
               className="dropdown-item"
@@ -244,8 +256,10 @@ const AdminPanel = () => {
             </button>
           </div>
         </div>
+
         <div className="dropdown">
           <AdminMenuButton
+            className="admin-menu-button"
             title={
               <span>
                 <FontAwesomeIcon icon={faImages} className="me-2" />
@@ -253,6 +267,7 @@ const AdminPanel = () => {
               </span>
             }
           />
+
           <div className="dropdown-menu">
             <button
               type="button"
@@ -266,6 +281,7 @@ const AdminPanel = () => {
           </div>
         </div>
       </div>
+
       {/* alert messages for feedback */}
       <div className="mb-2">
         {addOfferErrorMsg && (
@@ -278,6 +294,7 @@ const AdminPanel = () => {
             {addOfferErrorMsg}
           </Alert>
         )}
+
         {addOfferSuccessfulMsg && (
           <Alert
             variant="success"
@@ -288,6 +305,7 @@ const AdminPanel = () => {
             {addOfferSuccessfulMsg}
           </Alert>
         )}
+
         {deleteOfferErrorMsg && (
           <Alert
             variant="danger"
@@ -298,6 +316,7 @@ const AdminPanel = () => {
             {deleteOfferErrorMsg}
           </Alert>
         )}
+
         {addUserSuccessfulMsg && (
           <Alert
             variant="success"
@@ -308,6 +327,7 @@ const AdminPanel = () => {
             {addUserSuccessfulMsg}
           </Alert>
         )}
+
         {addUserErrorMsg && (
           <Alert
             variant="danger"
@@ -318,6 +338,7 @@ const AdminPanel = () => {
             {addUserErrorMsg}
           </Alert>
         )}
+
         {deleteUserErrorMsg && (
           <Alert
             variant="danger"
@@ -328,6 +349,7 @@ const AdminPanel = () => {
             {deleteUserErrorMsg}
           </Alert>
         )}
+
         {deleteOrderErrorMsg && (
           <Alert
             variant="danger"
@@ -338,6 +360,7 @@ const AdminPanel = () => {
             {deleteOrderErrorMsg}
           </Alert>
         )}
+
         {deleteGuestOrderErrorMsg && (
           <Alert
             variant="danger"
@@ -349,6 +372,7 @@ const AdminPanel = () => {
           </Alert>
         )}
       </div>
+
       <div
         className="admin-panel-content mx-auto"
         style={{ maxWidth: "1400px" }}
@@ -358,45 +382,60 @@ const AdminPanel = () => {
             <AddOffer onAddOffer={handleAddOffer} />
           </div>
         )}
+
         {showAddUserForm && (
           <div className="fade-in card shadow p-4 mb-5">
             <AddUser onSubmit={handleAddUser} />
           </div>
         )}
+
         {showOfferTable && (
           <div className="fade-in card shadow p-4 mb-5">
             <OffersTable onDeleteOffer={handleDeleteOffer} />
           </div>
         )}
+
         {showUserTable && (
           <div className="fade-in card shadow p-4 mb-5">
             <UsersTable onDeleteUser={handleDeleteUser} />
           </div>
         )}
+
         {showOrderTable && (
           <div className="fade-in card shadow p-4 mb-5">
             <OrdersTable onDeleteOrder={handleDeleteOrder} />
           </div>
         )}
+
         {showGuestOrderTable && (
           <div className="fade-in card shadow p-4 mb-5">
             <GuestOrdersTable onDeleteGuestOrder={handleDeleteGuestOrder} />
           </div>
         )}
+
         {showGallerySettings && (
           <div className="fade-in card shadow p-4 mb-5">
             <GallerySettings />
           </div>
         )}
       </div>
+
       <style>
         {`
           .fade-in {
             animation: fadein 0.4s;
           }
+
           @keyframes fadein {
-            from { opacity: 0; transform: translateY(12px);}
-            to { opacity: 1; transform: translateY(0);}
+            from {
+              opacity: 0;
+              transform: translateY(12px);
+            }
+
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
         `}
       </style>
