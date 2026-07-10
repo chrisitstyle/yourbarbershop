@@ -1,11 +1,9 @@
-export default function Button({ title }) {
+export default function AdminMenuButton({ title, className = "" }) {
   return (
     <button
-      className={`btn btn-light dropdown-toggle`}
+      className={`btn dropdown-toggle ${className}`.trim()}
       type="button"
-      id="servicesDropdown"
       data-bs-toggle="dropdown"
-      aria-haspopup="true"
       aria-expanded="false"
     >
       {title}
