@@ -1,5 +1,9 @@
 package pl.barbershopproject.barbershop.auth;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -22,6 +26,7 @@ import pl.barbershopproject.barbershop.config.JwtService;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Authentication", description = "Endpoints related to login, registration, and session management")
 public class AuthController {
 
     private final AuthService authService;
@@ -30,6 +35,11 @@ public class AuthController {
     private final RefreshCookieService refreshCookieService;
     private final JwtService jwtService;
 
+    @Operation(summary = "Register a new user")
+    @ApiResponse(responseCode = "200", description = "Successfully registered")
+    @ApiResponse(responseCode = "400", description = "Invalid registration data")
+    @ApiResponse(responseCode = "429", description = "Too many requests (Rate Limit)")
+    @SecurityRequirements()
     @RateLimited(limit = 3, timeWindowSeconds = 3600)
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(
@@ -41,6 +51,10 @@ public class AuthController {
         return issueLoginResponse(result, servletRequest, servletResponse);
     }
 
+    @Operation(summary = "User login")
+    @ApiResponse(responseCode = "200", description = "Successfully logged in")
+    @ApiResponse(responseCode = "401", description = "Invalid email or password")
+    @SecurityRequirements()
     @RateLimited(timeWindowSeconds = 300)
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
@@ -52,6 +66,8 @@ public class AuthController {
         return issueLoginResponse(result, servletRequest, servletResponse);
     }
 
+    @Operation(summary = "Request a one-time login code via email")
+    @SecurityRequirements()
     @RateLimited(limit = 3, timeWindowSeconds = 900)
     @PostMapping("/login/email-code/request")
     public ResponseEntity<String> requestEmailLoginCode(
@@ -63,6 +79,8 @@ public class AuthController {
         );
     }
 
+    @Operation(summary = "Verify one-time code and login")
+    @SecurityRequirements()
     @RateLimited(timeWindowSeconds = 900)
     @PostMapping("/login/email-code/verify")
     public ResponseEntity<AuthResponse> verifyEmailLoginCode(
@@ -74,6 +92,8 @@ public class AuthController {
         return issueLoginResponse(result, servletRequest, servletResponse);
     }
 
+    @Operation(summary = "Refresh access token", description = "Requires a valid refresh token cookie")
+    @SecurityRequirements()
     @PostMapping("/auth/refresh")
     public ResponseEntity<AuthResponse> refresh(
             HttpServletRequest request,
@@ -100,6 +120,7 @@ public class AuthController {
         );
     }
 
+    @Operation(summary = "Logout user", description = "Revokes refresh token and clears the cookie")
     @PostMapping("/auth/logout")
     public ResponseEntity<Void> logout(
             HttpServletResponse response,
@@ -115,6 +136,8 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Request password reset")
+    @SecurityRequirements()
     @RateLimited(limit = 3, timeWindowSeconds = 900)
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
@@ -122,6 +145,8 @@ public class AuthController {
         return ResponseEntity.ok("Link do resetowania hasła został wysłany na podany adres email.");
     }
 
+    @Operation(summary = "Set a new password after verifying the reset token")
+    @SecurityRequirements()
     @RateLimited(timeWindowSeconds = 900)
     @PostMapping("/reset-password")
     public String resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
