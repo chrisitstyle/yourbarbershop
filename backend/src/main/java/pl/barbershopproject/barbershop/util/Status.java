@@ -1,5 +1,16 @@
 package pl.barbershopproject.barbershop.util;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Lifecycle status of an appointment reservation")
 public enum Status {
-    NOWE, ZREALIZOWANE, ANULOWANE
+
+    @Schema(description = "New appointment created and scheduled")
+    NOWE,
+
+    @Schema(description = "Appointment service completed")
+    ZREALIZOWANE,
+
+    @Schema(description = "Appointment cancelled")
+    ANULOWANE
 }
