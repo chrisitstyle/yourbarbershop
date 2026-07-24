@@ -32,7 +32,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("YourBarbershop API")
                         .version("1.0")
-                        .description("Dokumentacja API dla systemu rezerwacji salonu barbershop")
+                        .description("API documentation for the Barbershop reservation system")
                         .contact(new Contact()
                                 .name("Chris (@chrisitstyle)")
                                 .url("https://github.com/chrisitstyle")));
