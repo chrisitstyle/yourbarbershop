@@ -12,6 +12,7 @@ plugins {
     id 'org.springframework.boot' version '4.0.6'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'org.flywaydb.flyway' version '12.3.0'
+    id 'jacoco'
 }
 
 group = 'pl.barbershopproject'
@@ -83,4 +84,22 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport // generating report after testing
+}
+
+jacocoTestReport {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        csv.required = false
+        html.required = true
+    }
+}
+
+// attach coverage verification to gradle standard "check" task
+check.dependsOn jacocoTestCoverageVerification
+
+
+tasks.named('bootRun') {
+    systemProperties = System.properties
 }
