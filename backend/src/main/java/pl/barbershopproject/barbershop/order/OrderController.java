@@ -1,6 +1,9 @@
 package pl.barbershopproject.barbershop.order;
 
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,14 +23,21 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/orders")
+@Tag(name = "Orders (Logged In)", description = "Management of orders/reservations associated with user accounts")
 class OrderController {
 
     private final OrderService orderService;
 
+    @Operation(summary = "Create a new order/reservation by the user")
+    @ApiResponse(responseCode = "201", description = "Order successfully created")
+    @ApiResponse(responseCode = "400", description = "Invalid request payload")
+    @ApiResponse(responseCode = "401", description = "Unauthorized - User is not authenticated")
+    @ApiResponse(responseCode = "404", description = "Offer not found with the specified ID")
+    @ApiResponse(responseCode = "409", description = "Conflict - Selected appointment slot is already taken")
     @PostMapping
     public ResponseEntity<OrderCreationResponseDTO> addOrder(
             @Valid @RequestBody OrderCreationDTO order,
-            @AuthenticationPrincipal User user
+            @Parameter(hidden = true) @AuthenticationPrincipal User user
     ) {
         OrderCreationResponseDTO response = orderService.addOrder(order, user);
 
@@ -39,18 +49,38 @@ class OrderController {
         return ResponseEntity.created(location).body(response);
     }
 
+    @Operation(summary = "Get all orders", description = "Results can be filtered using the optional 'status' parameter")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved list of orders")
+    @ApiResponse(responseCode = "400", description = "Invalid status filter value")
+    @ApiResponse(responseCode = "401", description = "Unauthorized - Missing or invalid authentication token")
+    @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions to view orders")
     @GetMapping
-    public List<OrderDTO> getAllOrders(@RequestParam(required = false) String status) {
+    public List<OrderDTO> getAllOrders(
+            @Parameter(description = "Optional status filter, e.g., 'NOWE', 'ZAKONCZONE', 'ANULOWANE'")
+            @RequestParam(required = false) String status
+    ) {
         return status != null && !status.isEmpty()
                 ? orderService.getOrdersByStatus(status)
                 : orderService.getAllOrders();
     }
 
+    @Operation(summary = "Get details of a single order by ID")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved order details")
+    @ApiResponse(responseCode = "401", description = "Unauthorized - Missing or invalid authentication token")
+    @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions to view this order")
+    @ApiResponse(responseCode = "404", description = "Order not found with the specified ID")
     @GetMapping("/{idOrder}")
     public OrderDTO getSingleOrder(@PathVariable Long idOrder) {
         return orderService.getSingleOrder(idOrder);
     }
 
+    @Operation(summary = "Update an existing order (e.g., by an administrator)")
+    @ApiResponse(responseCode = "200", description = "Order successfully updated")
+    @ApiResponse(responseCode = "400", description = "Invalid request payload")
+    @ApiResponse(responseCode = "401", description = "Unauthorized - Missing or invalid authentication token")
+    @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions to update this order")
+    @ApiResponse(responseCode = "404", description = "Order or Offer not found")
+    @ApiResponse(responseCode = "409", description = "Conflict - Target appointment slot is already taken")
     @PutMapping("/{idOrder}")
     public OrderDTO updateOrder(
             @Valid @RequestBody OrderUpdatedRequestDTO updatedOrder,
@@ -59,6 +89,11 @@ class OrderController {
         return orderService.updateOrder(updatedOrder, idOrder);
     }
 
+    @Operation(summary = "Delete an order from the database (or cancel it)")
+    @ApiResponse(responseCode = "204", description = "Order successfully deleted")
+    @ApiResponse(responseCode = "401", description = "Unauthorized - Missing or invalid authentication token")
+    @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions to delete this order")
+    @ApiResponse(responseCode = "404", description = "Order not found with the specified ID")
     @DeleteMapping("/{idOrder}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrderById(@PathVariable Long idOrder) {
