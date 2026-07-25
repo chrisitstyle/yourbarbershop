@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAuth } from "../auth/AuthContextValue";
-import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-bootstrap";
 import useOffers from "../hooks/useOffers";
@@ -11,7 +10,7 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useTranslation } from "react-i18next";
 import { getPaymentMethods } from "../utils/paymentMethods";
 
-const RegisterOrderLoggedForm = () => {
+const RegisterOrderLoggedForm = ({ onSuccess }) => {
   const { user } = useAuth();
   const [selectedOffer, setSelectedOffer] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -19,7 +18,6 @@ const RegisterOrderLoggedForm = () => {
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("GOTOWKA");
   const [showErrorAlert, setShowErrorAlert] = useState(false);
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -36,12 +34,14 @@ const RegisterOrderLoggedForm = () => {
         queryClient.invalidateQueries({ queryKey: ["userDetails", user.id] });
       }
 
+      // redirect to stripe checkout if online payment was chosen
       if (response?.checkoutUrl) {
         window.location.href = response.checkoutUrl;
         return;
       }
 
-      navigate(`/profile/${user?.id}?registrationOrderSuccess=true`);
+      // trigger success alert in parent wrapper for on-site payments
+      onSuccess();
     },
     onError: (error) => {
       console.error("error registering order:", error);

@@ -1,9 +1,11 @@
 import { Button, Card } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../auth/AuthContextValue";
 
-const GuestOrderSuccessAlert = () => {
+const OrderSuccessAlert = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   return (
     <div className="d-flex justify-content-center px-3 py-4">
@@ -12,7 +14,7 @@ const GuestOrderSuccessAlert = () => {
         style={{ maxWidth: "480px", borderRadius: "1rem" }}
       >
         <Card.Body className="p-4 p-md-5">
-          {/* Success icon */}
+          {/* success icon */}
           <div
             className="d-inline-flex align-items-center justify-content-center mb-4"
             style={{
@@ -53,9 +55,15 @@ const GuestOrderSuccessAlert = () => {
           </p>
 
           <div className="d-flex flex-column flex-sm-row justify-content-center gap-2">
-            <Button as={Link} to="/login" variant="primary">
-              {t("auth.loginTitle", "Zaloguj się")}
-            </Button>
+            {user ? (
+              <Button as={Link} to={`/profile/${user.id}`} variant="primary">
+                {t("payment.goToProfile", "Przejdź do profilu")}
+              </Button>
+            ) : (
+              <Button as={Link} to="/login" variant="primary">
+                {t("auth.loginTitle", "Zaloguj się")}
+              </Button>
+            )}
             <Button as={Link} to="/" variant="outline-secondary">
               {t("payment.goHome", "Wróć na stronę główną")}
             </Button>
@@ -66,4 +74,4 @@ const GuestOrderSuccessAlert = () => {
   );
 };
 
-export default GuestOrderSuccessAlert;
+export default OrderSuccessAlert;
