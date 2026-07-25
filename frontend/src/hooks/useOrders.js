@@ -1,34 +1,22 @@
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getOrders } from "../api/orderService";
 
 const useOrders = () => {
-  const [orders, setOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const fetchOrders = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await getOrders();
-      setOrders(data);
-    } catch (error) {
-      setError(error?.message || "Błąd podczas ładowania zamówień");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+  const {
+    data: orders = [], // default to an empty array
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["orders"], // unique key for caching purposes
+    queryFn: getOrders, // function responsible for fetching orders
+  });
 
   return {
     orders,
     isLoading,
-    error,
-    refetch: fetchOrders,
+    error: error ? error?.message || "Błąd podczas ładowania zamówień" : null,
+    refetch,
   };
 };
 

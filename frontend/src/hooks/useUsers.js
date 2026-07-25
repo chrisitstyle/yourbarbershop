@@ -1,34 +1,24 @@
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import userService from "../api/userService";
 
 const useUsers = () => {
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const fetchUsers = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await userService.getUsers();
-      setUsers(data);
-    } catch (error) {
-      setError(error?.message || "Błąd podczas ładowania użytkowników");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  const {
+    data: users = [], // default to an empty array, same as previous usestate([])
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["users"], // unique key for caching purposes
+    queryFn: userService.getUsers, // function responsible for fetching data
+  });
 
   return {
     users,
     isLoading,
-    error,
-    refetch: fetchUsers,
+    error: error
+      ? error?.message || "Błąd podczas ładowania użytkowników"
+      : null,
+    refetch,
   };
 };
 

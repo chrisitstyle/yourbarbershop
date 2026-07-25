@@ -50,44 +50,23 @@ const Offer = () => {
 
   if (isLoading) return <LoadingSpinner text={t("offers.loading")} />;
 
-  if (error) {
-    return (
-      <Alert variant="danger" className="text-center">
-        {error}
-      </Alert>
-    );
-  }
-
-  if (safeOffers.length === 0) {
-    return (
-      <div className="container my-5 py-4">
-        <h1 className="display-6 text-center mb-4">
-          <FontAwesomeIcon icon={faScissors} className="me-2 text-primary" />
-          {t("offers.title")}
-        </h1>
-        <Alert variant="info" className="text-center">
-          {t("offers.empty")}
-        </Alert>
-      </div>
-    );
-  }
+  if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
-    <div className="container my-5 py-4">
-      <h1 className="display-6 text-center mb-4">
-        <FontAwesomeIcon icon={faScissors} className="me-2 text-primary" />
+    <div className="container my-5 py-4 text-center">
+      <h2 className="mb-4">
+        <FontAwesomeIcon icon={faScissors} className="me-2" />
         {t("offers.title")}
-      </h1>
-      <p className="lead text-center mb-4">{t("offers.lead")}</p>
+      </h2>
 
       {/* search box */}
       <SearchBox
         value={searchTerm}
         onChange={handleSearchChange}
         placeholder={t("offers.searchPlaceholder")}
-        width="400px"
       />
 
+      {/* table */}
       <div className="table-responsive">
         <table
           className="table table-bordered table-hover mx-auto shadow rounded"
@@ -126,6 +105,7 @@ const Offer = () => {
         </table>
       </div>
 
+      {/* pagination control */}
       <PaginationControl
         currentPage={currentPage}
         totalPages={totalPages}

@@ -87,7 +87,7 @@ const OrderRow = memo(function OrderRow({
 
 const OrdersTable = ({ onDeleteOrder }) => {
   const { user } = useAuth();
-  const { orders, isLoading, error, refetch } = useOrders(user?.token);
+  const { orders, isLoading, error, refetch } = useOrders();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -150,7 +150,7 @@ const OrdersTable = ({ onDeleteOrder }) => {
     <div className="container my-5 py-4 text-center">
       <h2 className="mb-4">{t("admin.orders.title")}</h2>
 
-      {/* search box*/}
+      {/* search box */}
       <SearchBox
         value={searchTerm}
         onChange={handleSearchChange}

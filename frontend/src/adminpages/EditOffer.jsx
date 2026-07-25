@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContextValue";
 import { updateOffer } from "../api/offerService";
 import { Alert } from "react-bootstrap";
@@ -13,11 +14,11 @@ const EditOffer = () => {
   const navigate = useNavigate();
   const offerData = location.state?.offerData;
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   const [kind, setKind] = useState("");
   const [cost, setCost] = useState("");
   const [editOfferError, setEditOfferError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
@@ -28,18 +29,22 @@ const EditOffer = () => {
     setIsInitialLoading(false);
   }, [offerData]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      await updateOffer(offerData.idOffer, { kind, cost }, user.token);
+  const updateOfferMutation = useMutation({
+    mutationFn: (updatedOffer) =>
+      updateOffer(offerData.idOffer, updatedOffer, user?.token),
+    onSuccess: () => {
+      // invalidate offers query cache so tables automatically update
+      queryClient.invalidateQueries({ queryKey: ["offers"] });
       navigate("/adminpanel");
-    } catch {
+    },
+    onError: () => {
       setEditOfferError(true);
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    updateOfferMutation.mutate({ kind, cost });
   };
 
   if (isInitialLoading) {
@@ -81,7 +86,7 @@ const EditOffer = () => {
                   value={kind}
                   onChange={(e) => setKind(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={updateOfferMutation.isPending}
                 />
               </div>
               <div className="mb-3">
@@ -96,14 +101,14 @@ const EditOffer = () => {
                   value={cost}
                   onChange={(e) => setCost(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={updateOfferMutation.isPending}
                 />
               </div>
               <ButtonSpinner
                 type="submit"
                 variant="dark"
                 className="mx-auto d-block"
-                loading={isLoading}
+                loading={updateOfferMutation.isPending}
                 loadingText={t("admin.common.saving")}
               >
                 {t("admin.common.save")}

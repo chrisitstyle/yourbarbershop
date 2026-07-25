@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Alert from "react-bootstrap/Alert";
-import { getOffers } from "../api/offerService";
+import useOffers from "../hooks/useOffers";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import { useTranslation } from "react-i18next";
@@ -13,7 +14,6 @@ const RegisterOrderWithoutAcc = () => {
   const [lastname, setLastName] = useState("");
   const [phonenumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
-  const [offers, setOffers] = useState([]);
   const [selectedOffer, setSelectedOffer] = useState("");
 
   const [selectedDate, setSelectedDate] = useState("");
@@ -23,10 +23,12 @@ const RegisterOrderWithoutAcc = () => {
 
   const [showAlert, setShowAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
-  const [isLoadingOffers, setIsLoadingOffers] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
 
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  // fetch offers using tanstack query hook
+  const { offers = [], isLoading: isLoadingOffers } = useOffers();
 
   const paymentMethods = [
     {
@@ -42,21 +44,6 @@ const RegisterOrderWithoutAcc = () => {
       label: t("orders.paymentCardOnline", "Karta online"),
     },
   ];
-
-  useEffect(() => {
-    const fetchOffers = async () => {
-      try {
-        const offersData = await getOffers();
-        setOffers(offersData);
-      } catch (error) {
-        console.error("Błąd ładowania ofert:", error);
-      } finally {
-        setIsLoadingOffers(false);
-      }
-    };
-
-    fetchOffers();
-  }, []);
 
   const setInitialState = () => {
     setFirstName("");
@@ -87,28 +74,13 @@ const RegisterOrderWithoutAcc = () => {
     setPaymentMethod(e.target.value);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setShowAlert(false);
-    setShowErrorAlert(false);
-    setIsLoading(true);
-
-    try {
-      const guestOrderCreationData = {
-        firstname,
-        lastname,
-        phonenumber,
-        email,
-        idOffer: Number(selectedOffer),
-        visitDate: formatSelectedDateTime(
-          selectedDate,
-          selectedHour,
-          selectedMinute,
-        ),
-        paymentMethod,
-      };
-
-      const response = await createGuestOrder(guestOrderCreationData);
+  // mutation for guest order creation and query cache invalidation
+  const createGuestOrderMutation = useMutation({
+    mutationFn: (guestOrderCreationData) =>
+      createGuestOrder(guestOrderCreationData),
+    onSuccess: (response) => {
+      // invalidate guest orders query cache so admin tables update automatically
+      queryClient.invalidateQueries({ queryKey: ["guestOrders"] });
 
       if (response?.checkoutUrl) {
         window.location.href = response.checkoutUrl;
@@ -117,11 +89,34 @@ const RegisterOrderWithoutAcc = () => {
 
       setInitialState();
       setShowAlert(true);
-    } catch {
+    },
+    onError: (error) => {
+      console.error("error registering guest order:", error);
       setShowErrorAlert(true);
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setShowAlert(false);
+    setShowErrorAlert(false);
+
+    // payload
+    const guestOrderCreationData = {
+      firstname,
+      lastname,
+      phonenumber,
+      email,
+      idOffer: Number(selectedOffer),
+      visitDate: formatSelectedDateTime(
+        selectedDate,
+        selectedHour,
+        selectedMinute,
+      ),
+      paymentMethod,
+    };
+
+    createGuestOrderMutation.mutate(guestOrderCreationData);
   };
 
   if (isLoadingOffers) {
@@ -140,7 +135,7 @@ const RegisterOrderWithoutAcc = () => {
             <Alert
               variant="success"
               show={showAlert}
-              onHide={() => setShowAlert(false)}
+              onClose={() => setShowAlert(false)}
               dismissible
             >
               {t("orders.successMessage")}
@@ -149,7 +144,7 @@ const RegisterOrderWithoutAcc = () => {
             <Alert
               variant="danger"
               show={showErrorAlert}
-              onHide={() => setShowErrorAlert(false)}
+              onClose={() => setShowErrorAlert(false)}
               dismissible
             >
               {t("orders.errorMessage")}
@@ -167,7 +162,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={firstname}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={createGuestOrderMutation.isPending}
                 />
               </div>
 
@@ -182,7 +177,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={lastname}
                   onChange={(e) => setLastName(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={createGuestOrderMutation.isPending}
                 />
               </div>
 
@@ -197,7 +192,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={phonenumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={createGuestOrderMutation.isPending}
                 />
               </div>
 
@@ -212,7 +207,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={createGuestOrderMutation.isPending}
                 />
               </div>
 
@@ -226,7 +221,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={selectedOffer}
                   onChange={handleOfferChange}
                   required
-                  disabled={isLoading}
+                  disabled={createGuestOrderMutation.isPending}
                 >
                   <option value="" disabled></option>
                   {offers.map((offer) => (
@@ -249,7 +244,7 @@ const RegisterOrderWithoutAcc = () => {
                   onChange={(e) => setSelectedDate(e.target.value)}
                   min={new Date().toISOString().split("T")[0]}
                   required
-                  disabled={isLoading}
+                  disabled={createGuestOrderMutation.isPending}
                 />
               </div>
 
@@ -264,7 +259,7 @@ const RegisterOrderWithoutAcc = () => {
                     value={selectedHour}
                     onChange={handleHourChange}
                     required
-                    disabled={isLoading}
+                    disabled={createGuestOrderMutation.isPending}
                   >
                     {[...Array(12).keys()].map((hour) => (
                       <option key={hour} value={hour + 8}>
@@ -279,7 +274,7 @@ const RegisterOrderWithoutAcc = () => {
                     value={selectedMinute}
                     onChange={handleMinuteChange}
                     required
-                    disabled={isLoading}
+                    disabled={createGuestOrderMutation.isPending}
                   >
                     {[...Array(2).keys()].map((half) => (
                       <option key={half * 30} value={half * 30}>
@@ -300,7 +295,7 @@ const RegisterOrderWithoutAcc = () => {
                   value={paymentMethod}
                   onChange={handlePaymentMethodChange}
                   required
-                  disabled={isLoading}
+                  disabled={createGuestOrderMutation.isPending}
                 >
                   {paymentMethods.map((method) => (
                     <option key={method.value} value={method.value}>
@@ -314,7 +309,7 @@ const RegisterOrderWithoutAcc = () => {
                 type="submit"
                 variant="dark"
                 className="mx-auto d-block"
-                loading={isLoading}
+                loading={createGuestOrderMutation.isPending}
                 loadingText={t("orders.registeringOrder")}
               >
                 {t("orders.registerBtn")}

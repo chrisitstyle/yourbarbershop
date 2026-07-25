@@ -74,7 +74,7 @@ const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
 const UsersTable = ({ onDeleteUser }) => {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-  const { users, isLoading, error, refetch } = useUsers(authUser?.token);
+  const { users, isLoading, error, refetch } = useUsers();
   const { t } = useTranslation();
 
   // email state
@@ -147,12 +147,14 @@ const UsersTable = ({ onDeleteUser }) => {
       <div className="container text-center py-4">
         <h2>{t("admin.users.title")}</h2>
 
+        {/* search box */}
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
           placeholder={t("admin.users.searchPlaceholder")}
         />
 
+        {/* table */}
         <div className="table-responsive">
           <table
             className="table border shadow table-hover mx-auto"
@@ -194,6 +196,7 @@ const UsersTable = ({ onDeleteUser }) => {
           </table>
         </div>
 
+        {/* pagination control */}
         <PaginationControl
           currentPage={currentPage}
           totalPages={totalPages}

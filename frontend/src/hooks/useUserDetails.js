@@ -1,56 +1,36 @@
-import { useEffect, useState } from "react";
-
+import { useQuery } from "@tanstack/react-query";
 import { API_BASE_URL } from "../api/config";
 import { apiRequest } from "../api/httpClient";
 
 const useUserDetails = (userId) => {
-  const [userDetails, setUserDetails] = useState(null);
-  const [isLoading, setIsLoading] = useState(Boolean(userId));
-  const [error, setError] = useState(null);
+  const {
+    data: userDetails = null,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    // query key includes userid for caching purposes
+    queryKey: ["userDetails", userId],
 
-  useEffect(() => {
-    if (!userId) {
-      setUserDetails(null);
-      setIsLoading(false);
-      return;
-    }
+    // function responsible for fetching user details via apiRequest
+    queryFn: async ({ signal }) => {
+      const response = await apiRequest(`${API_BASE_URL}/users/${userId}`, {
+        method: "GET",
+        signal, // pass abortsignal to underlying fetch request
+      });
 
-    const abortController = new AbortController();
+      return response.data;
+    },
 
-    const loadUserDetails = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await apiRequest(`${API_BASE_URL}/users/${userId}`, {
-          method: "GET",
-          signal: abortController.signal,
-        });
-
-        setUserDetails(response.data);
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          console.error("Error loading user details:", error);
-          setError("Błąd ładowania użytkownika");
-        }
-      } finally {
-        if (!abortController.signal.aborted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadUserDetails();
-
-    return () => {
-      abortController.abort();
-    };
-  }, [userId]);
+    // execution guard - query runs only when userid is truthy
+    enabled: Boolean(userId),
+  });
 
   return {
     userDetails,
-    isLoading,
-    error,
+    isLoading: Boolean(userId) && isLoading,
+    error: error ? "Błąd ładowania użytkownika" : null,
+    refetch,
   };
 };
 

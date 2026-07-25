@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContextValue.js";
 import { Alert } from "react-bootstrap";
 import { updateUser } from "../api/userService";
@@ -14,6 +15,7 @@ const EditUser = () => {
   const navigate = useNavigate();
   const [editUserError, setEditUserError] = useState(false);
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
@@ -30,26 +32,32 @@ const EditUser = () => {
         setSelectedRole(userData.role);
       }
     } else if (user?.role && ROLES.includes(user.role)) {
-      // ustawianie roli zalogowanego użytkownika
+      // setting logged-in user role
       setSelectedRole(user.role);
     }
   }, [user?.role, userData]);
 
-  const handleSubmit = async (e) => {
+  const updateUserMutation = useMutation({
+    mutationFn: (updatedUser) => updateUser(userData.idUser, updatedUser),
+    onSuccess: () => {
+      // invalidate users query cache so tables automatically update
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      navigate("/adminpanel");
+    },
+    onError: () => {
+      setEditUserError(true);
+    },
+  });
+
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    try {
-      await updateUser(userData.idUser, {
-        firstname,
-        lastname,
-        email,
-        role: selectedRole,
-      });
-
-      navigate("/adminpanel");
-    } catch {
-      setEditUserError(true);
-    }
+    updateUserMutation.mutate({
+      firstname,
+      lastname,
+      email,
+      role: selectedRole,
+    });
   };
 
   return (
@@ -78,6 +86,7 @@ const EditUser = () => {
                   value={firstname}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
+                  disabled={updateUserMutation.isPending}
                 />
               </div>
               <div className="mb-3">
@@ -91,6 +100,7 @@ const EditUser = () => {
                   value={lastname}
                   onChange={(e) => setLastName(e.target.value)}
                   required
+                  disabled={updateUserMutation.isPending}
                 />
               </div>
               <div className="mb-3">
@@ -104,6 +114,7 @@ const EditUser = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={updateUserMutation.isPending}
                 />
               </div>
 
@@ -117,6 +128,7 @@ const EditUser = () => {
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value)}
                   required
+                  disabled={updateUserMutation.isPending}
                 >
                   {ROLES.map((role) => (
                     <option key={role} value={role}>
@@ -126,7 +138,11 @@ const EditUser = () => {
                 </select>
               </div>
 
-              <button type="submit" className="btn btn-dark mx-auto d-block">
+              <button
+                type="submit"
+                className="btn btn-dark mx-auto d-block"
+                disabled={updateUserMutation.isPending}
+              >
                 {t("admin.common.save")}
               </button>
             </form>
