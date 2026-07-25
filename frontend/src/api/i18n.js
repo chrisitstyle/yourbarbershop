@@ -168,6 +168,7 @@ const resources = {
       },
       auth: {
         loginHeader: "Logowanie",
+        loginTitle: "Zaloguj się",
         registerHeader: "Rejestracja konta",
         forgotPasswordHeader: "Resetowanie hasła",
         changePasswordHeader: "Zmiana hasła",
@@ -296,6 +297,9 @@ const resources = {
         paymentCash: "Gotówka na miejscu",
         paymentCardOnSite: "Karta na miejscu",
         paymentCardOnline: "Karta online",
+        guestSuccessTitle: "Rezerwacja potwierdzona",
+        guestSuccessMessage:
+          "Dziękujemy! Twoja wizyta została pomyślnie zarejestrowana. Szczegóły rezerwacji znajdziesz w wiadomości wysłanej na Twój adres e-mail.",
       },
       contact: {
         info: {
@@ -528,6 +532,7 @@ const resources = {
       },
       auth: {
         loginHeader: "Sign In",
+        loginTitle: "Sign In",
         registerHeader: "Create Account",
         forgotPasswordHeader: "Reset Password",
         changePasswordHeader: "Change Password",
@@ -654,6 +659,9 @@ const resources = {
         paymentCash: "Cash on site",
         paymentCardOnSite: "Card on site",
         paymentCardOnline: "Online card payment",
+        guestSuccessTitle: "Reservation confirmed",
+        guestSuccessMessage:
+          "Thank you! Your visit has been successfully booked. Reservation details can be found in the email sent to you.",
       },
       contact: {
         info: {

@@ -2,23 +2,23 @@ import { useState } from "react";
 import { useAuth } from "../auth/AuthContextValue";
 import RegisterOrderLoggedForm from "../components/RegisterOrderLoggedForm";
 import RegisterOrderWithoutAccForm from "../components/RegisterOrderWithoutAccForm";
-import GuestOrderSuccessAlert from "../components/GuestOrderSuccessAlert";
+import OrderSuccessAlert from "../components/OrderSuccessAlert";
 import { useTranslation } from "react-i18next";
 
 const RegisterOrder = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
 
-  // state to manage guest order success visibility
-  const [showGuestSuccess, setShowGuestSuccess] = useState(false);
+  // state to manage order success alert visibility for all non-card-online payments
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   return (
     <div className="container mt-2">
       <div className="row justify-content-center">
-        {showGuestSuccess ? (
-          /* render standalone success card when guest order succeeds */
+        {showSuccessAlert ? (
+          /* render success card when order creation succeeds */
           <div className="col-12 col-md-8 col-lg-6">
-            <GuestOrderSuccessAlert />
+            <OrderSuccessAlert />
           </div>
         ) : (
           /* render form box */
@@ -28,10 +28,12 @@ const RegisterOrder = () => {
             </h4>
 
             {user ? (
-              <RegisterOrderLoggedForm />
+              <RegisterOrderLoggedForm
+                onSuccess={() => setShowSuccessAlert(true)}
+              />
             ) : (
               <RegisterOrderWithoutAccForm
-                onSuccess={() => setShowGuestSuccess(true)}
+                onSuccess={() => setShowSuccessAlert(true)}
               />
             )}
           </div>
