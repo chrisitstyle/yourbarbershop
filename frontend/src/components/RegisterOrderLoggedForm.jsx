@@ -9,6 +9,7 @@ import { createOrder } from "../api/orderService";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useTranslation } from "react-i18next";
+import { getPaymentMethods } from "../utils/paymentMethods";
 
 const RegisterOrderLoggedForm = () => {
   const { user } = useAuth();
@@ -23,18 +24,7 @@ const RegisterOrderLoggedForm = () => {
   const queryClient = useQueryClient();
 
   const { offers = [], isLoading: isLoadingOffers } = useOffers();
-
-  const paymentMethods = [
-    { value: "GOTOWKA", label: t("orders.paymentCash", "Gotówka na miejscu") },
-    {
-      value: "KARTA_NA_MIEJSCU",
-      label: t("orders.paymentCardOnSite", "Karta na miejscu"),
-    },
-    {
-      value: "KARTA_ONLINE",
-      label: t("orders.paymentCardOnline", "Karta online"),
-    },
-  ];
+  const paymentMethods = getPaymentMethods(t);
 
   const createOrderMutation = useMutation({
     mutationFn: (orderCreationData) =>
