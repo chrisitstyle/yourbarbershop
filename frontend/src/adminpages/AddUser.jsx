@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import { useTranslation } from "react-i18next";
 
@@ -8,12 +9,26 @@ const AddUser = ({ onSubmit }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("USER");
-  const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
-  const handleSubmit = async (e) => {
+  const addUserMutation = useMutation({
+    mutationFn: (newUser) => onSubmit(newUser),
+    onSuccess: () => {
+      // invalidate users query cache so tables automatically update
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPassword("");
+    },
+    onError: (error) => {
+      console.error("error adding user:", error);
+    },
+  });
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
     const newUser = {
       firstname,
@@ -23,17 +38,7 @@ const AddUser = ({ onSubmit }) => {
       role,
     };
 
-    try {
-      await onSubmit(newUser);
-      setFirstName("");
-      setLastName("");
-      setEmail("");
-      setPassword("");
-    } catch (error) {
-      console.error("Błąd dodawania użytkownika:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    addUserMutation.mutate(newUser);
   };
 
   return (
@@ -115,7 +120,7 @@ const AddUser = ({ onSubmit }) => {
                 type="submit"
                 variant="dark"
                 className="mx-auto d-block"
-                loading={isLoading}
+                loading={addUserMutation.isPending}
                 loadingText={t("admin.common.adding")}
               >
                 {t("admin.users.addBtn")}

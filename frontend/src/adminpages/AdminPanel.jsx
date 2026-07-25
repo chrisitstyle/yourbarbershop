@@ -3,6 +3,7 @@ import userService from "../api/userService.js";
 import offerService from "../api/offerService.js";
 import orderService from "../api/orderService.js";
 import guestOrderService from "../api/guestOrderService.js";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-bootstrap";
 import OffersTable from "./OffersTable";
 import AddOffer from "./AddOffer";
@@ -23,6 +24,7 @@ import { useTranslation } from "react-i18next";
 
 const AdminPanel = () => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   // table/form visibility states
   const [showUserTable, setShowUserTable] = useState(false);
@@ -46,63 +48,87 @@ const AdminPanel = () => {
   const [deleteGuestOrderErrorMsg, setDeleteGuestOrderErrorMsg] =
     useState(null);
 
-  const handleAddOffer = async (newOffer) => {
-    try {
-      await offerService.addOffer(newOffer);
+  // mutations for handling api operations with query invalidation
+  const addOfferMutation = useMutation({
+    mutationFn: (newOffer) => offerService.addOffer(newOffer),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["offers"] });
       handleToggleTable("offers");
       setAddOfferSuccessfulMsg(t("admin.messages.addOfferSuccess"));
-    } catch (error) {
-      console.error("Error adding offer:", error);
+    },
+    onError: (error) => {
+      console.error("error adding offer:", error);
       setAddOfferErrorMsg(t("admin.messages.addOfferError"));
-    }
-  };
+    },
+  });
 
-  const handleDeleteOffer = async (idOffer) => {
-    try {
-      await offerService.deleteOffer(idOffer);
-    } catch (error) {
-      console.error("Error deleting offer:", error);
+  const deleteOfferMutation = useMutation({
+    mutationFn: (idOffer) => offerService.deleteOffer(idOffer),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["offers"] });
+    },
+    onError: (error) => {
+      console.error("error deleting offer:", error);
       setDeleteOfferErrorMsg(t("admin.messages.deleteOfferError"));
-    }
-  };
+    },
+  });
 
-  const handleAddUser = async (newUser) => {
-    try {
-      await userService.addUser(newUser);
+  const addUserMutation = useMutation({
+    mutationFn: (newUser) => userService.addUser(newUser),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
       setAddUserSuccessfulMsg(t("admin.messages.addUserSuccess"));
       handleToggleTable("users");
-    } catch (error) {
+    },
+    onError: (error) => {
+      console.error("error adding user:", error);
       setAddUserErrorMsg(t("admin.messages.addUserError"));
-      console.error("Error adding user:", error);
-    }
-  };
+    },
+  });
 
-  const handleDeleteUser = async (idUser) => {
-    try {
-      await userService.deleteUser(idUser);
-    } catch (error) {
+  const deleteUserMutation = useMutation({
+    mutationFn: (idUser) => userService.deleteUser(idUser),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (error) => {
+      console.error("error deleting user:", error);
       setDeleteUserErrorMsg(t("admin.messages.deleteUserError"));
-      console.error("Error deleting user:", error);
-    }
-  };
+    },
+  });
 
-  const handleDeleteOrder = async (idOrder) => {
-    try {
-      await orderService.deleteOrder(idOrder);
-    } catch (error) {
+  const deleteOrderMutation = useMutation({
+    mutationFn: (idOrder) => orderService.deleteOrder(idOrder),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (error) => {
+      console.error("error deleting order:", error);
       setDeleteOrderErrorMsg(t("admin.messages.deleteOrderError"));
-      console.error("Error deleting order:", error);
-    }
-  };
+    },
+  });
 
-  const handleDeleteGuestOrder = async (idGuestOrder) => {
-    try {
-      await guestOrderService.deleteGuestOrder(idGuestOrder);
-    } catch (error) {
+  const deleteGuestOrderMutation = useMutation({
+    mutationFn: (idGuestOrder) =>
+      guestOrderService.deleteGuestOrder(idGuestOrder),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["guestOrders"] });
+    },
+    onError: (error) => {
+      console.error("error deleting order:", error);
       setDeleteGuestOrderErrorMsg(t("admin.messages.deleteGuestOrderError"));
-      console.error("Error deleting order:", error);
-    }
-  };
+    },
+  });
+
+  const handleAddOffer = (newOffer) => addOfferMutation.mutateAsync(newOffer);
+  const handleDeleteOffer = (idOffer) =>
+    deleteOfferMutation.mutateAsync(idOffer);
+  const handleAddUser = (newUser) => addUserMutation.mutateAsync(newUser);
+  const handleDeleteUser = (idUser) => deleteUserMutation.mutateAsync(idUser);
+  const handleDeleteOrder = (idOrder) =>
+    deleteOrderMutation.mutateAsync(idOrder);
+  const handleDeleteGuestOrder = (idGuestOrder) =>
+    deleteGuestOrderMutation.mutateAsync(idGuestOrder);
 
   // handle switching between modules/views
   const handleToggleTable = (table) => {

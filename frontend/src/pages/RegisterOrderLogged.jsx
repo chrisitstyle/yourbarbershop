@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../auth/AuthContextValue";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-bootstrap";
 import useOffers from "../hooks/useOffers";
 import { formatSelectedDateTime } from "../api/dataParser";
@@ -17,11 +18,11 @@ const RegisterOrderLogged = () => {
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("GOTOWKA");
   const [showErrorAlert, setShowErrorAlert] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
-  const { offers, isLoading: isLoadingOffers } = useOffers();
+  const { offers = [], isLoading: isLoadingOffers } = useOffers();
 
   const paymentMethods = [
     {
@@ -55,35 +56,46 @@ const RegisterOrderLogged = () => {
     setPaymentMethod(e.target.value);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setShowErrorAlert(false);
-    setIsLoading(true);
-
-    try {
-      const orderCreationData = {
-        idOffer: Number(selectedOffer),
-        visitDate: formatSelectedDateTime(
-          selectedDate,
-          selectedHour,
-          selectedMinute,
-        ),
-        paymentMethod,
-      };
-
-      const response = await createOrder(orderCreationData, user.token);
+  // mutation handling order creation and cache invalidation
+  const createOrderMutation = useMutation({
+    mutationFn: (orderCreationData) =>
+      createOrder(orderCreationData, user?.token),
+    onSuccess: (response) => {
+      // invalidate order queries so profile and admin tables refresh
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["userDetails", user.id] });
+      }
 
       if (response?.checkoutUrl) {
         window.location.href = response.checkoutUrl;
         return;
       }
 
-      navigate(`/profile/${user.id}?registrationOrderSuccess=true`);
-    } catch {
+      navigate(`/profile/${user?.id}?registrationOrderSuccess=true`);
+    },
+    onError: (error) => {
+      console.error("error registering order:", error);
       setShowErrorAlert(true);
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setShowErrorAlert(false);
+
+    // payload
+    const orderCreationData = {
+      idOffer: Number(selectedOffer),
+      visitDate: formatSelectedDateTime(
+        selectedDate,
+        selectedHour,
+        selectedMinute,
+      ),
+      paymentMethod,
+    };
+
+    createOrderMutation.mutate(orderCreationData);
   };
 
   if (isLoadingOffers) {
@@ -119,7 +131,7 @@ const RegisterOrderLogged = () => {
                   value={selectedOffer}
                   onChange={handleOfferChange}
                   required
-                  disabled={isLoading}
+                  disabled={createOrderMutation.isPending}
                 >
                   <option value="" disabled></option>
                   {offers.map((offer) => (
@@ -142,7 +154,7 @@ const RegisterOrderLogged = () => {
                   onChange={(e) => setSelectedDate(e.target.value)}
                   min={new Date().toISOString().split("T")[0]}
                   required
-                  disabled={isLoading}
+                  disabled={createOrderMutation.isPending}
                 />
               </div>
 
@@ -157,7 +169,7 @@ const RegisterOrderLogged = () => {
                     value={selectedHour}
                     onChange={handleHourChange}
                     required
-                    disabled={isLoading}
+                    disabled={createOrderMutation.isPending}
                   >
                     {[...Array(12).keys()].map((hour) => (
                       <option key={hour} value={hour + 8}>
@@ -172,7 +184,7 @@ const RegisterOrderLogged = () => {
                     value={selectedMinute}
                     onChange={handleMinuteChange}
                     required
-                    disabled={isLoading}
+                    disabled={createOrderMutation.isPending}
                   >
                     {[...Array(2).keys()].map((half) => (
                       <option key={half * 30} value={half * 30}>
@@ -193,7 +205,7 @@ const RegisterOrderLogged = () => {
                   value={paymentMethod}
                   onChange={handlePaymentMethodChange}
                   required
-                  disabled={isLoading}
+                  disabled={createOrderMutation.isPending}
                 >
                   {paymentMethods.map((method) => (
                     <option key={method.value} value={method.value}>
@@ -207,7 +219,7 @@ const RegisterOrderLogged = () => {
                 type="submit"
                 variant="dark"
                 className="mx-auto d-block"
-                loading={isLoading}
+                loading={createOrderMutation.isPending}
                 loadingText={t("orders.registeringOrder")}
               >
                 {t("orders.registerBtn")}

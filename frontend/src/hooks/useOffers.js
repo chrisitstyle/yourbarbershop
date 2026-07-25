@@ -1,30 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getOffers } from "../api/offerService";
 
 const useOffers = () => {
-  const [offers, setOffers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    data: offers = [], // default to an empty array
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["offers"], // unique key for caching purposes
+    queryFn: getOffers, // function responsible for fetching offers
+  });
 
-  const fetchOffers = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await getOffers();
-      setOffers(data);
-    } catch {
-      setError("Błąd podczas ładowania usług");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchOffers();
-  }, [fetchOffers]);
-
-  return { offers, isLoading, error, refetch: fetchOffers };
+  return {
+    offers,
+    isLoading,
+    error: error ? error?.message || "Błąd podczas ładowania usług" : null,
+    refetch,
+  };
 };
 
 export default useOffers;

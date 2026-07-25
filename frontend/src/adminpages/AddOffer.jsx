@@ -1,29 +1,33 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import { useTranslation } from "react-i18next";
 
 const AddOffer = ({ onAddOffer }) => {
   const [kind, setKind] = useState("");
   const [cost, setCost] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      await onAddOffer({ kind, cost });
+  const addOfferMutation = useMutation({
+    mutationFn: (newOffer) => onAddOffer(newOffer),
+    onSuccess: () => {
+      // invalidate offers query cache so tables automatically update
+      queryClient.invalidateQueries({ queryKey: ["offers"] });
       setKind("");
       setCost("");
       navigate("/adminpanel");
-    } catch (error) {
-      console.error("Błąd dodawania oferty:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    },
+    onError: (error) => {
+      console.error("error adding offer:", error);
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    addOfferMutation.mutate({ kind, cost });
   };
 
   return (
@@ -63,7 +67,7 @@ const AddOffer = ({ onAddOffer }) => {
                 type="submit"
                 variant="dark"
                 className="mx-auto d-block"
-                loading={isLoading}
+                loading={addOfferMutation.isPending}
                 loadingText={t("admin.common.adding")}
               >
                 {t("admin.common.add")}

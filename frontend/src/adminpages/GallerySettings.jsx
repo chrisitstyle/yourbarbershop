@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState, memo } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSupabaseClient, CDNURL } from "../api/supabaseApi";
 import { Container, Table, Modal, Button, Form, Alert } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -55,11 +56,11 @@ const ImageRow = memo(function ImageRow({
 });
 
 const GallerySettings = () => {
-  const [images, setImages] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const supabase = useSupabaseClient();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   // messages for different scenarios
   const [deleteImageErrorMsg, setDeleteImageErrorMsg] = useState(null);
@@ -69,9 +70,10 @@ const GallerySettings = () => {
   const [uploadingImageMsg, setUploadingImageMsg] = useState(null);
   const [uploadingImageTimeout, setUploadingImageTimeout] = useState(null);
 
-  // fetch the image list from Supabase storage (filtered by file type)
-  const getImages = useCallback(async () => {
-    try {
+  // fetch the image list from supabase storage (filtered by file type)
+  const { data: images = [] } = useQuery({
+    queryKey: ["galleryImages"],
+    queryFn: async () => {
       const { data, error } = await supabase.storage
         .from("barbershopimages")
         .list("images", {
@@ -80,25 +82,26 @@ const GallerySettings = () => {
           sortBy: { column: "created_at", order: "desc" },
         });
 
-      if (data !== null) {
-        // filter out unwanted files (non-images and placeholder files)
-        const filteredImages = data.filter((image) => {
-          const lowercasedName = image.name.toLowerCase();
-          return (
-            !lowercasedName.includes(".emptyfolderplaceholder") &&
-            (lowercasedName.endsWith(".png") ||
-              lowercasedName.endsWith(".jpeg") ||
-              lowercasedName.endsWith(".jpg"))
-          );
-        });
-        setImages(filteredImages);
-      } else {
-        console.error("Data is null, error:", error);
+      if (error) {
+        console.error("error fetching images:", error.message);
+        throw error;
       }
-    } catch (error) {
-      console.error("Error fetching images:", error.message);
-    }
-  }, [supabase]);
+
+      if (!data) return [];
+
+      // filter out unwanted files (non-images and placeholder files)
+      return data.filter((image) => {
+        const lowercasedName = image.name.toLowerCase();
+        return (
+          !lowercasedName.includes(".emptyfolderplaceholder") &&
+          (lowercasedName.endsWith(".png") ||
+            lowercasedName.endsWith(".jpeg") ||
+            lowercasedName.endsWith(".jpg"))
+        );
+      });
+    },
+    enabled: !!supabase,
+  });
 
   const filterImages = (image, term) => {
     return image.name.toLowerCase().includes(term.toLowerCase());
@@ -121,7 +124,7 @@ const GallerySettings = () => {
 
       if (error) {
         setDeleteImageErrorMsg(t("admin.gallery.messages.deleteError"));
-        console.error("Error removing image:", error.message);
+        console.error("error removing image:", error.message);
         throw error;
       }
     },
@@ -135,7 +138,9 @@ const GallerySettings = () => {
     askDelete: handleAskDeleteImage,
     confirmDelete: confirmDeleteImage,
     isDeleting,
-  } = useDeleteModal(performDeleteImage, getImages);
+  } = useDeleteModal(performDeleteImage, () =>
+    queryClient.invalidateQueries({ queryKey: ["galleryImages"] }),
+  );
 
   const handleImageClick = (image) => {
     setSelectedImage(image);
@@ -146,22 +151,11 @@ const GallerySettings = () => {
     setShowModal(false);
   };
 
-  // upload images sequentially, handle UI feedback and reset file input
-  const handleUploadImage = async (e) => {
-    e.preventDefault();
-    const inputElement = document.getElementById("formFile");
-    const files = inputElement.files;
-
-    if (!files || files.length === 0) {
-      setUploadImageErrorMsg(t("admin.gallery.messages.noFileSelected"));
-      return;
-    }
-
-    let uploadSuccessful = true;
-
-    try {
-      // upload each file, show status message
+  // upload images sequentially, handle ui feedback and reset file input
+  const uploadImageMutation = useMutation({
+    mutationFn: async (files) => {
       for (const file of files) {
+        // upload each file, show status message
         setUploadingImageMsg(
           t("admin.gallery.messages.uploadingFile", { name: file.name }),
         );
@@ -171,40 +165,50 @@ const GallerySettings = () => {
           .upload("images/" + encodeURIComponent(file.name), file);
 
         if (uploadError || !data) {
-          uploadSuccessful = false;
           setUploadImageErrorMsg(
             t("admin.gallery.messages.uploadErrorFile", { name: file.name }),
           );
 
           if (uploadError) {
-            console.error("Error uploading image:", uploadError.message);
+            console.error("error uploading image:", uploadError.message);
           }
 
-          break;
+          throw new Error(uploadError?.message || "upload failed");
         }
       }
+    },
+    onSuccess: () => {
+      setUploadImageSuccessfulMsg(t("admin.gallery.messages.uploadSuccess"));
+      const inputElement = document.getElementById("formFile");
+      if (inputElement) inputElement.value = null;
+      setUploadingImageMsg(null);
 
-      if (uploadSuccessful) {
-        setUploadImageSuccessfulMsg(t("admin.gallery.messages.uploadSuccess"));
-        inputElement.value = null;
-        setUploadingImageMsg(null);
+      const timeoutID = setTimeout(() => {
+        setUploadImageSuccessfulMsg(null);
+      }, 5000);
+      setUploadingImageTimeout(timeoutID);
 
-        const timeoutID = setTimeout(() => {
-          setUploadImageSuccessfulMsg(null);
-        }, 5000);
-        setUploadingImageTimeout(timeoutID);
-        getImages();
-      }
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ["galleryImages"] });
+    },
+    onError: (error) => {
       setUploadImageSuccessfulMsg(null);
       setUploadImageErrorMsg(t("admin.gallery.messages.uploadError"));
-      console.error("File upload error:", error.message);
-    }
-  };
+      console.error("file upload error:", error.message);
+    },
+  });
 
-  useEffect(() => {
-    getImages();
-  }, [getImages]);
+  const handleUploadImage = (e) => {
+    e.preventDefault();
+    const inputElement = document.getElementById("formFile");
+    const files = inputElement?.files;
+
+    if (!files || files.length === 0) {
+      setUploadImageErrorMsg(t("admin.gallery.messages.noFileSelected"));
+      return;
+    }
+
+    uploadImageMutation.mutate(Array.from(files));
+  };
 
   // cleanup any timeouts left from upload feedback
   useEffect(() => {
@@ -228,7 +232,7 @@ const GallerySettings = () => {
         </Alert>
       )}
 
-      {/* image upload Form */}
+      {/* image upload form */}
       <Container className="mt-5 d-flex flex-column align-items-center">
         <Form className="mb-3 d-flex align-items-center">
           {/* file input (multiple files) */}
@@ -246,6 +250,7 @@ const GallerySettings = () => {
             onClick={handleUploadImage}
             title={t("admin.gallery.uploadBtnTooltip")}
             style={{ minWidth: "40px" }}
+            disabled={uploadImageMutation.isPending}
           >
             <FontAwesomeIcon icon={faPlus} style={{ color: "white" }} />
           </Button>

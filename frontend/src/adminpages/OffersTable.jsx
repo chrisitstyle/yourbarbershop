@@ -111,12 +111,14 @@ const OffersTable = ({ onDeleteOffer }) => {
       <div>
         <h2 className="mb-4">{t("admin.offers.title")}</h2>
 
+        {/* search box */}
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
           placeholder={t("admin.offers.searchPlaceholder")}
         />
 
+        {/* table */}
         <div className="table-responsive">
           <table
             className="table table-bordered table-hover shadow rounded mx-auto"
@@ -159,6 +161,7 @@ const OffersTable = ({ onDeleteOffer }) => {
           </table>
         </div>
 
+        {/* pagination control */}
         <PaginationControl
           currentPage={currentPage}
           totalPages={totalPages}

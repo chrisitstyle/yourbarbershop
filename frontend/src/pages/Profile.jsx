@@ -42,7 +42,7 @@ const Profile = () => {
   const registrationOrderSuccess = searchParams.get("registrationOrderSuccess");
   const { t } = useTranslation();
 
-  const { userDetails, isLoading, error } = useUserDetails(id, user?.token);
+  const { userDetails, isLoading, error } = useUserDetails(id);
 
   const [showSuccessAlert, setShowSuccessAlert] = useState(
     Boolean(registrationOrderSuccess),
@@ -125,12 +125,14 @@ const Profile = () => {
             t("profile.visitInfo")}
         </div>
 
+        {/* search box */}
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
           placeholder={t("profile.searchPlaceholder")}
         />
 
+        {/* visits table */}
         <div className="table-responsive">
           <table
             className="table table-bordered table-hover shadow rounded mx-auto"
@@ -170,6 +172,7 @@ const Profile = () => {
           </table>
         </div>
 
+        {/* pagination control */}
         <PaginationControl
           currentPage={currentPage}
           totalPages={totalPages}

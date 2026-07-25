@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContextValue";
 import { updateOrder } from "../api/orderService";
-import { getOffers } from "../api/offerService";
+import useOffers from "../hooks/useOffers";
 import { format } from "date-fns-tz";
 import { formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
@@ -16,44 +17,31 @@ const EditOrder = () => {
   const orderData = location.state?.orderData;
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
-  const [offers, setOffers] = useState([]);
+  const { offers = [], isLoading: isLoadingOffers } = useOffers();
+
   const [selectedOffer, setSelectedOffer] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [editOrderError, setEditOrderError] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingOffers, setIsLoadingOffers] = useState(true);
 
   useEffect(() => {
-    const fetchOffers = async () => {
-      if (!orderData) {
-        setIsLoadingOffers(false);
-        return;
-      }
-
-      try {
-        const offersData = await getOffers();
-        setOffers(offersData);
-        setSelectedOffer(orderData.offer?.idOffer || "");
+    if (orderData) {
+      setSelectedOffer(orderData.offer?.idOffer || "");
+      if (orderData.visitDate) {
         setSelectedDate(format(new Date(orderData.visitDate), "yyyy-MM-dd"));
 
-        // Set time from orderData
+        // set time from orderdata
         const hours = new Date(orderData.visitDate).getHours();
         const minutes = new Date(orderData.visitDate).getMinutes();
         setSelectedHour(hours);
         setSelectedMinute(minutes);
-        setSelectedStatus(orderData.status);
-      } catch (error) {
-        console.error("Błąd ładowania ofert:", error);
-      } finally {
-        setIsLoadingOffers(false);
       }
-    };
-
-    fetchOffers();
+      setSelectedStatus(orderData.status || "");
+    }
   }, [orderData]);
 
   const handleHourChange = (e) => {
@@ -64,33 +52,31 @@ const EditOrder = () => {
     setSelectedMinute(parseInt(e.target.value, 10));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      await updateOrder(
-        orderData.idOrder,
-        {
-          user: { idUser: orderData.user.idUser },
-          offer: { idOffer: selectedOffer },
-          orderDate: orderData.orderDate,
-          visitDate: formatSelectedDateTime(
-            selectedDate,
-            selectedHour,
-            selectedMinute,
-          ),
-          status: selectedStatus,
-        },
-        user.token,
-      );
-
+  const updateOrderMutation = useMutation({
+    mutationFn: (updatedOrder) =>
+      updateOrder(orderData.idOrder, updatedOrder, user?.token),
+    onSuccess: () => {
+      // invalidate orders query cache so tables automatically update
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
       navigate("/adminpanel");
-    } catch {
+    },
+    onError: () => {
       setEditOrderError(true);
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    updateOrderMutation.mutate({
+      idOffer: Number(selectedOffer),
+      visitDate: formatSelectedDateTime(
+        selectedDate,
+        selectedHour,
+        selectedMinute,
+      ),
+      status: selectedStatus,
+    });
   };
 
   if (!orderData) {
@@ -132,7 +118,7 @@ const EditOrder = () => {
                   value={selectedOffer}
                   onChange={(e) => setSelectedOffer(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={updateOrderMutation.isPending}
                 >
                   <option value="" disabled>
                     {t("orders.selectService")}
@@ -155,7 +141,7 @@ const EditOrder = () => {
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={updateOrderMutation.isPending}
                 />
               </div>
               <div className="mb-3">
@@ -169,7 +155,7 @@ const EditOrder = () => {
                     value={selectedHour}
                     onChange={handleHourChange}
                     required
-                    disabled={isLoading}
+                    disabled={updateOrderMutation.isPending}
                   >
                     {[...Array(12).keys()].map((hour) => (
                       <option key={hour} value={hour + 8}>
@@ -183,7 +169,7 @@ const EditOrder = () => {
                     value={selectedMinute}
                     onChange={handleMinuteChange}
                     required
-                    disabled={isLoading}
+                    disabled={updateOrderMutation.isPending}
                   >
                     {[...Array(2).keys()].map((half) => (
                       <option key={half * 30} value={half * 30}>
@@ -203,7 +189,7 @@ const EditOrder = () => {
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={updateOrderMutation.isPending}
                 >
                   {["NOWE", "ZREALIZOWANE", "ANULOWANE"].map((status) => (
                     <option key={status} value={status}>
@@ -217,7 +203,7 @@ const EditOrder = () => {
                 type="submit"
                 variant="dark"
                 className="mx-auto d-block"
-                loading={isLoading}
+                loading={updateOrderMutation.isPending}
                 loadingText={t("admin.common.saving")}
               >
                 {t("admin.common.save")}

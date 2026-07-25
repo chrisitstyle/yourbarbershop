@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { useSupabaseClient } from "../api/supabaseApi";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSupabaseClient, CDNURL } from "../api/supabaseApi";
 import { Container, Carousel, Image, Modal, Button } from "react-bootstrap";
-import { CDNURL } from "../api/supabaseApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowCircleLeft,
@@ -11,9 +11,8 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useTranslation } from "react-i18next";
 
 const Gallery = () => {
-  const [images, setImages] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
   const supabase = useSupabaseClient();
   const { t } = useTranslation();
 
@@ -26,46 +25,46 @@ const Gallery = () => {
     setShowModal(false);
   };
 
-  useEffect(() => {
-    const getImages = async () => {
-      try {
-        const { data, error } = await supabase.storage
-          .from("barbershopimages")
-          .list("images", {
-            limit: 100,
-            offset: 0,
-            sortBy: { column: "created_at", order: "desc" },
-          });
+  // fetch images using tanstack query
+  const { data: images = [], isLoading } = useQuery({
+    queryKey: ["galleryImages"],
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from("barbershopimages")
+        .list("images", {
+          limit: 100,
+          offset: 0,
+          sortBy: { column: "created_at", order: "desc" },
+        });
 
-        if (data !== null) {
-          const filteredImages = data.filter((image) => {
-            const lowercasedName = image.name.toLowerCase();
-            return (
-              !lowercasedName.includes(".emptyFolderPlaceholder") &&
-              (lowercasedName.endsWith(".png") ||
-                lowercasedName.endsWith(".jpeg") ||
-                lowercasedName.endsWith(".jpg"))
-            );
-          });
-
-          setImages(filteredImages);
-        } else {
-          //alert("Error loading images");
-          console.error("Data is null, error:", error);
-        }
-      } catch (error) {
-        console.error("Error fetching images:", error.message);
+      if (error) {
+        console.error("error fetching images:", error.message);
+        throw new Error(error.message);
       }
-    };
 
-    getImages();
-  }, [supabase]);
+      if (!data) return [];
+
+      return data.filter((image) => {
+        const lowercasedName = image.name.toLowerCase();
+        return (
+          !lowercasedName.includes(".emptyFolderPlaceholder") &&
+          (lowercasedName.endsWith(".png") ||
+            lowercasedName.endsWith(".jpeg") ||
+            lowercasedName.endsWith(".jpg"))
+        );
+      });
+    },
+    enabled: !!supabase,
+  });
 
   return (
     <Container className="text-center mt-4">
       <h2 className="display-6">{t("gallery.title")}</h2>
       <p className="lead">{t("gallery.lead")}</p>
-      {images.length > 0 ? (
+
+      {isLoading ? (
+        <LoadingSpinner text={t("gallery.loading")} />
+      ) : images.length > 0 ? (
         <Carousel
           nextIcon={
             <FontAwesomeIcon
@@ -100,23 +99,24 @@ const Gallery = () => {
             </Carousel.Item>
           ))}
         </Carousel>
-      ) : (
-        <LoadingSpinner text={t("gallery.loading")} />
-      )}
-      {/* Modal */}
+      ) : null}
+
+      {/* modal */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title style={{ textAlign: "center", width: "100%" }}>
-            {selectedImage.name &&
+            {selectedImage?.name &&
               selectedImage.name.slice(0, selectedImage.name.lastIndexOf("."))}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Image
-            src={CDNURL + "images/" + selectedImage.name}
-            alt={selectedImage.name}
-            style={{ width: "100%" }}
-          />
+          {selectedImage && (
+            <Image
+              src={CDNURL + "images/" + selectedImage.name}
+              alt={selectedImage.name}
+              style={{ width: "100%" }}
+            />
+          )}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>

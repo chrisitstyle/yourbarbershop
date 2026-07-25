@@ -89,9 +89,7 @@ const GuestOrderRow = memo(function GuestOrderRow({
 
 const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
   const { user } = useAuth();
-  const { guestOrders, isLoading, error, refetch } = useGuestOrders(
-    user?.token,
-  );
+  const { guestOrders, isLoading, error, refetch } = useGuestOrders();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -155,12 +153,14 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
     <div className="container my-5 py-4 text-center">
       <h2 className="mb-4">{t("admin.guestOrders.title")}</h2>
 
+      {/* search box */}
       <SearchBox
         value={searchTerm}
         onChange={handleSearchChange}
         placeholder={t("admin.guestOrders.searchPlaceholder")}
       />
 
+      {/* table */}
       <div className="table-responsive">
         <table
           className="table table-bordered table-hover shadow rounded mx-auto"
@@ -207,6 +207,7 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
         </table>
       </div>
 
+      {/* pagination control */}
       <PaginationControl
         currentPage={currentPage}
         totalPages={totalPages}
