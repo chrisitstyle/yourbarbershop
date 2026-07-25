@@ -7,14 +7,13 @@ import Register from "./pages/Register.jsx";
 import Gallery from "./pages/Gallery.jsx";
 import Offer from "./pages/Offer.jsx";
 import Contact from "./pages/Contact.jsx";
-import RegisterOrderWithoutAcc from "./pages/RegisterOrderWithoutAcc.jsx";
+import RegisterOrder from "./pages/RegisterOrder.jsx";
 import Footer from "./Footer.jsx";
 import { AuthProvider } from "./auth/AuthContext.jsx";
 import Profile from "./pages/Profile.jsx";
 import AdminPanel from "./adminpages/AdminPanel.jsx";
 import EditOffer from "./adminpages/EditOffer.jsx";
 import EditUser from "./adminpages/EditUser.jsx";
-import RegisterOrderLogged from "./pages/RegisterOrderLogged.jsx";
 import EditOrder from "./adminpages/EditOrder.jsx";
 import EditGuestOrder from "./adminpages/EditGuestOrder.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
@@ -39,6 +38,7 @@ function App() {
   const handleToggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
+
   return (
     <AuthProvider>
       <div className="App">
@@ -47,20 +47,17 @@ function App() {
           <main>
             <Routes>
               <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
-              <Route path="/" element={<Home />}></Route>
-              <Route path="/login" element={<Login />}></Route>
-              <Route
-                path="/forgotpassword"
-                element={<ForgotPassword />}
-              ></Route>
-              <Route
-                path="/resetpassword"
-                element={<ResetPasswordForm />}
-              ></Route>
-              <Route path="/register" element={<Register />}></Route>
-              <Route path="/gallery" element={<Gallery />}></Route>
-              <Route path="/offers" element={<Offer />}></Route>
-              <Route path="/contact" element={<Contact />}></Route>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgotpassword" element={<ForgotPassword />} />
+              <Route path="/resetpassword" element={<ResetPasswordForm />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/offers" element={<Offer />} />
+              <Route path="/contact" element={<Contact />} />
+
+              {/* unified order registration route for both logged-in users and guests */}
+              <Route path="/registerorder" element={<RegisterOrder />} />
 
               <Route element={<AdminRoute />}>
                 <Route path="/adminpanel" element={<AdminPanel />} />
@@ -81,19 +78,12 @@ function App() {
 
               <Route element={<UserRoute />}>
                 <Route path="/profile/:id" element={<Profile />} />
-                <Route
-                  path="/registerorderlogged"
-                  element={<RegisterOrderLogged />}
-                />
               </Route>
-              <Route
-                path="/registerorderwithoutaccount"
-                element={<RegisterOrderWithoutAcc />}
-              ></Route>
-              <Route path="*" element={<NotFound />} />
+
               {/* Stripe payment routes */}
               <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/payment/cancel" element={<PaymentCancel />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />
