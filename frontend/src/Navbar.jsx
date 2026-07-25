@@ -24,9 +24,7 @@ const Navbar = ({ theme, onToggleTheme }) => {
   const isAdmin = user?.role === "ADMIN";
   const isUser = user?.role === "USER";
 
-  const bookingPath = isUser
-    ? "/registerorderlogged"
-    : "/registerorderwithoutaccount";
+  const bookingPath = isUser ? "/registerorder" : "/registerorder";
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark app-navbar">
