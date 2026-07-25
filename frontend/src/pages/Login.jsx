@@ -1,26 +1,15 @@
 import { useEffect, useState } from "react";
-
 import { Link, useNavigate, useLocation } from "react-router-dom";
-
 import { useAuth } from "../auth/AuthContextValue";
-
 import { Alert } from "react-bootstrap";
-
 import ButtonSpinner from "../components/common/ButtonSpinner";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
-
 import { API_BASE_URL } from "../api/config";
-
 import GoogleIcon from "../components/common/GoogleIcon";
-
 import useAutoDismiss from "../hooks/useAutoDismiss";
-
 import { useTranslation } from "react-i18next";
-
 import EmailCodeLoginForm from "../components/auth/EmailCodeLoginForm";
 
 const LOGIN_MODE = {
@@ -35,17 +24,14 @@ const Login = () => {
   const [loginMode, setLoginMode] = useState(LOGIN_MODE.PASSWORD);
 
   const [successMessage, setSuccessMessage] = useAutoDismiss(null, 5000);
-
   const [loginErrors, setLoginErrors] = useAutoDismiss(null, 6000);
 
   const [isLoading, setIsLoading] = useState(false);
 
   const location = useLocation();
-
   const navigate = useNavigate();
 
   const { login } = useAuth();
-
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -96,12 +82,10 @@ const Login = () => {
     event.preventDefault();
 
     setIsLoading(true);
-
     setLoginErrors(null);
 
     try {
       await login(email, password);
-
       navigate("/");
     } catch (error) {
       setLoginErrors(getErrorMessages(error));
@@ -112,19 +96,14 @@ const Login = () => {
 
   const switchToEmailCodeLogin = () => {
     setLoginErrors(null);
-
     setSuccessMessage(null);
-
     setPassword("");
-
     setLoginMode(LOGIN_MODE.EMAIL_CODE);
   };
 
   const switchToPasswordLogin = () => {
     setLoginErrors(null);
-
     setSuccessMessage(null);
-
     setLoginMode(LOGIN_MODE.PASSWORD);
   };
 
@@ -196,16 +175,18 @@ const Login = () => {
         {t("auth.loginBtn")}
       </ButtonSpinner>
 
+      {/* email code login button styled identically to github button */}
       <button
         type="button"
-        className="btn btn-outline-dark w-100 py-2 fw-bold position-relative d-flex align-items-center mt-3"
+        className="btn btn-dark w-100 py-2 fw-bold position-relative d-flex align-items-center mt-3"
         style={{ borderRadius: "6px" }}
         onClick={switchToEmailCodeLogin}
       >
         <FontAwesomeIcon
           icon={faEnvelope}
           className="position-absolute start-0 ms-3"
-          size="lg"
+          size="xl"
+          style={{ color: "#ffffff" }}
         />
 
         <span className="w-100 text-center">
@@ -213,7 +194,8 @@ const Login = () => {
         </span>
       </button>
 
-      <div className="text-center mt-3">
+      <div className="text-center mt-2">
+        {/* github oauth button */}
         <a
           href={`${API_BASE_URL}/oauth2/authorization/github`}
           className="btn btn-dark w-100 py-2 fw-bold position-relative d-flex align-items-center"
@@ -229,15 +211,11 @@ const Login = () => {
           <span className="w-100 text-center">{t("auth.githubSign")}</span>
         </a>
 
+        {/* google oauth button adjusted for theme compatibility */}
         <a
           href={`${API_BASE_URL}/oauth2/authorization/google`}
-          className="btn btn-light w-100 py-2 fw-bold position-relative d-flex align-items-center mt-2"
-          style={{
-            borderRadius: "6px",
-            border: "1px solid #dadce0",
-            color: "#3c4043",
-            backgroundColor: "#ffffff",
-          }}
+          className="btn btn-outline-secondary text-body w-100 py-2 fw-bold position-relative d-flex align-items-center mt-2"
+          style={{ borderRadius: "6px" }}
         >
           <GoogleIcon className="position-absolute start-0 ms-3" />
 

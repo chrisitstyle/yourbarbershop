@@ -44,12 +44,13 @@ const EmailMessageModal = ({
                 <span>{t("admin.emailModal.to")}</span>
               </OverlayTrigger>
             </Form.Label>
+            {/* dynamic bootstrap class for theme-compatible read-only input background */}
             <Form.Control
               type="email"
               value={emailTo}
               readOnly
               tabIndex={-1}
-              style={{ backgroundColor: "#f8f9fa" }}
+              className="bg-body-secondary"
             />
           </Form.Group>
           <Form.Group controlId="formEmailSubject" className="mt-3">
