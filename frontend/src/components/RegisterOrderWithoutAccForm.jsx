@@ -8,6 +8,7 @@ import ButtonSpinner from "../components/common/ButtonSpinner";
 import { useTranslation } from "react-i18next";
 import { formatSelectedDateTime } from "../api/dataParser";
 import { createGuestOrder } from "../api/guestOrderService";
+import { getPaymentMethods } from "../utils/paymentMethods";
 
 const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
   const [firstname, setFirstName] = useState("");
@@ -27,18 +28,7 @@ const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
   const queryClient = useQueryClient();
 
   const { offers = [], isLoading: isLoadingOffers } = useOffers();
-
-  const paymentMethods = [
-    { value: "GOTOWKA", label: t("orders.paymentCash", "Gotówka na miejscu") },
-    {
-      value: "KARTA_NA_MIEJSCU",
-      label: t("orders.paymentCardOnSite", "Karta na miejscu"),
-    },
-    {
-      value: "KARTA_ONLINE",
-      label: t("orders.paymentCardOnline", "Karta online"),
-    },
-  ];
+  const paymentMethods = getPaymentMethods(t);
 
   const createGuestOrderMutation = useMutation({
     mutationFn: (guestOrderCreationData) =>
