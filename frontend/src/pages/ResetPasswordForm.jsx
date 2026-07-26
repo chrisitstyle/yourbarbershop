@@ -1,13 +1,8 @@
 import { useState, useEffect } from "react";
-
 import { Link, useLocation, useNavigate } from "react-router-dom";
-
+import { toast } from "sonner";
 import { userResetPasswordRequest } from "../api/userService";
-
-import { Alert } from "react-bootstrap";
-
 import ButtonSpinner from "../components/common/ButtonSpinner";
-
 import { useTranslation } from "react-i18next";
 
 const ResetPasswordForm = () => {
@@ -16,7 +11,6 @@ const ResetPasswordForm = () => {
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [alert, setAlert] = useState({ message: "", variant: "" });
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isResetLinkInvalid, setIsResetLinkInvalid] = useState(false);
@@ -31,11 +25,7 @@ const ResetPasswordForm = () => {
 
     if (!tokenFromUrl) {
       setIsResetLinkInvalid(true);
-
-      setAlert({
-        message: t("auth.missingToken"),
-        variant: "danger",
-      });
+      toast.error(t("auth.missingToken"));
     }
   }, [location.search, t]);
 
@@ -48,59 +38,33 @@ const ResetPasswordForm = () => {
 
     if (!token) {
       setIsResetLinkInvalid(true);
-
-      setAlert({
-        message: t("auth.missingToken"),
-        variant: "danger",
-      });
-
+      toast.error(t("auth.missingToken"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setAlert({
-        message: t("auth.passwordsDoNotMatch"),
-        variant: "danger",
-      });
-
+      toast.error(t("auth.passwordsDoNotMatch"));
       return;
     }
 
     setIsLoading(true);
-    setAlert({ message: "", variant: "" });
 
     try {
       await userResetPasswordRequest(token, newPassword, confirmPassword);
 
-      navigate("/login", {
-        replace: true,
-        state: {
-          message: t("auth.passwordChangedSuccess"),
-        },
-      });
+      toast.success(t("auth.passwordChangedSuccess"));
+      navigate("/login", { replace: true });
     } catch (err) {
       if (isBadRequestError(err)) {
         setIsResetLinkInvalid(true);
-
-        setAlert({
-          message: t("auth.invalidOrExpiredResetLink"),
-          variant: "danger",
-        });
-
+        toast.error(t("auth.invalidOrExpiredResetLink"));
         return;
       }
 
-      setAlert({
-        message: t("auth.passwordChangedError"),
-        variant: "danger",
-      });
+      toast.error(t("auth.passwordChangedError"));
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleCloseAlert = () => {
-    setAlert({ message: "", variant: "" });
   };
 
   const isSubmitDisabled =
@@ -111,17 +75,6 @@ const ResetPasswordForm = () => {
       <div className="container mt-5">
         <div className="row justify-content-center">
           <div className="col-md-4 border p-3 text-center">
-            {alert.message && (
-              <Alert
-                variant={alert.variant}
-                onClose={handleCloseAlert}
-                dismissible
-                className="text-center"
-              >
-                {alert.message}
-              </Alert>
-            )}
-
             <h4 className="display-6 text-center">
               {t("auth.changePasswordHeader")}
             </h4>
@@ -141,17 +94,6 @@ const ResetPasswordForm = () => {
     <div className="container mt-5">
       <div className="row justify-content-center">
         <div className="col-md-4 border p-3">
-          {alert.message && (
-            <Alert
-              variant={alert.variant}
-              onClose={handleCloseAlert}
-              dismissible
-              className="text-center"
-            >
-              {alert.message}
-            </Alert>
-          )}
-
           <h4 className="display-6 text-center">
             {t("auth.changePasswordHeader")}
           </h4>
