@@ -4,7 +4,6 @@ import offerService from "../api/offerService.js";
 import orderService from "../api/orderService.js";
 import guestOrderService from "../api/guestOrderService.js";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Alert } from "react-bootstrap";
 import OffersTable from "./OffersTable";
 import AddOffer from "./AddOffer";
 import UsersTable from "./UsersTable";
@@ -35,30 +34,15 @@ const AdminPanel = () => {
   const [showGuestOrderTable, setShowGuestOrderTable] = useState(false);
   const [showGallerySettings, setShowGallerySettings] = useState(false);
 
-  // alert (feedback) state
-  const [addOfferErrorMsg, setAddOfferErrorMsg] = useState(null);
-  const [addOfferSuccessfulMsg, setAddOfferSuccessfulMsg] = useState(null);
-  const [deleteOfferErrorMsg, setDeleteOfferErrorMsg] = useState(null);
-
-  const [addUserErrorMsg, setAddUserErrorMsg] = useState(null);
-  const [addUserSuccessfulMsg, setAddUserSuccessfulMsg] = useState(null);
-  const [deleteUserErrorMsg, setDeleteUserErrorMsg] = useState(null);
-
-  const [deleteOrderErrorMsg, setDeleteOrderErrorMsg] = useState(null);
-  const [deleteGuestOrderErrorMsg, setDeleteGuestOrderErrorMsg] =
-    useState(null);
-
   // mutations for handling api operations with query invalidation
   const addOfferMutation = useMutation({
     mutationFn: (newOffer) => offerService.addOffer(newOffer),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["offers"] });
       handleToggleTable("offers");
-      setAddOfferSuccessfulMsg(t("admin.messages.addOfferSuccess"));
     },
     onError: (error) => {
       console.error("error adding offer:", error);
-      setAddOfferErrorMsg(t("admin.messages.addOfferError"));
     },
   });
 
@@ -69,7 +53,6 @@ const AdminPanel = () => {
     },
     onError: (error) => {
       console.error("error deleting offer:", error);
-      setDeleteOfferErrorMsg(t("admin.messages.deleteOfferError"));
     },
   });
 
@@ -77,12 +60,10 @@ const AdminPanel = () => {
     mutationFn: (newUser) => userService.addUser(newUser),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      setAddUserSuccessfulMsg(t("admin.messages.addUserSuccess"));
       handleToggleTable("users");
     },
     onError: (error) => {
       console.error("error adding user:", error);
-      setAddUserErrorMsg(t("admin.messages.addUserError"));
     },
   });
 
@@ -93,7 +74,6 @@ const AdminPanel = () => {
     },
     onError: (error) => {
       console.error("error deleting user:", error);
-      setDeleteUserErrorMsg(t("admin.messages.deleteUserError"));
     },
   });
 
@@ -104,7 +84,6 @@ const AdminPanel = () => {
     },
     onError: (error) => {
       console.error("error deleting order:", error);
-      setDeleteOrderErrorMsg(t("admin.messages.deleteOrderError"));
     },
   });
 
@@ -115,8 +94,7 @@ const AdminPanel = () => {
       queryClient.invalidateQueries({ queryKey: ["guestOrders"] });
     },
     onError: (error) => {
-      console.error("error deleting order:", error);
-      setDeleteGuestOrderErrorMsg(t("admin.messages.deleteGuestOrderError"));
+      console.error("error deleting guest order:", error);
     },
   });
 
@@ -306,97 +284,6 @@ const AdminPanel = () => {
             </button>
           </div>
         </div>
-      </div>
-
-      {/* alert messages for feedback */}
-      <div className="mb-2">
-        {addOfferErrorMsg && (
-          <Alert
-            variant="danger"
-            onClose={() => setAddOfferErrorMsg(null)}
-            dismissible
-            className="text-center"
-          >
-            {addOfferErrorMsg}
-          </Alert>
-        )}
-
-        {addOfferSuccessfulMsg && (
-          <Alert
-            variant="success"
-            onClose={() => setAddOfferSuccessfulMsg(null)}
-            dismissible
-            className="text-center"
-          >
-            {addOfferSuccessfulMsg}
-          </Alert>
-        )}
-
-        {deleteOfferErrorMsg && (
-          <Alert
-            variant="danger"
-            onClose={() => setDeleteOfferErrorMsg(null)}
-            dismissible
-            className="text-center"
-          >
-            {deleteOfferErrorMsg}
-          </Alert>
-        )}
-
-        {addUserSuccessfulMsg && (
-          <Alert
-            variant="success"
-            onClose={() => setAddUserSuccessfulMsg(null)}
-            dismissible
-            className="text-center"
-          >
-            {addUserSuccessfulMsg}
-          </Alert>
-        )}
-
-        {addUserErrorMsg && (
-          <Alert
-            variant="danger"
-            onClose={() => setAddUserErrorMsg(null)}
-            dismissible
-            className="text-center"
-          >
-            {addUserErrorMsg}
-          </Alert>
-        )}
-
-        {deleteUserErrorMsg && (
-          <Alert
-            variant="danger"
-            onClose={() => setDeleteUserErrorMsg(null)}
-            dismissible
-            className="text-center"
-          >
-            {deleteUserErrorMsg}
-          </Alert>
-        )}
-
-        {deleteOrderErrorMsg && (
-          <Alert
-            variant="danger"
-            onClose={() => setDeleteOrderErrorMsg(null)}
-            dismissible
-            className="text-center"
-          >
-            {deleteOrderErrorMsg}
-          </Alert>
-        )}
-
-        {deleteGuestOrderErrorMsg && (
-          <Alert
-            variant="danger"
-            onClose={() => setDeleteGuestOrderErrorMsg(null)}
-            dismissible
-            className="text-center"
-          >
-            {deleteGuestOrderErrorMsg}
-          </Alert>
-        )}
       </div>
 
       <div

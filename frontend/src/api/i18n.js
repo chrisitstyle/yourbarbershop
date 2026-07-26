@@ -132,6 +132,7 @@ const resources = {
           addUserError: "Wystąpił błąd podczas dodawania użytkownika.",
           deleteUserSuccess: "Pomyślnie usunięto użytkownika.",
           deleteUserError: "Wystąpił błąd podczas usuwania użytkownika.",
+          deleteSelfError: "Nie możesz usunąć własnego konta.",
           deleteOrderError: "Wystąpił błąd podczas usuwania wizyty.",
           deleteGuestOrderError:
             "Wystąpił błąd podczas usuwania wizyty gościa.",
@@ -502,6 +503,7 @@ const resources = {
           addUserError: "Error occurred while adding the user.",
           deleteUserSuccess: "Successfully deleted user.",
           deleteUserError: "Error occurred while deleting the user.",
+          deleteSelfError: "You cannot delete your own account.",
           deleteOrderError: "Error occurred while deleting the appointment.",
           deleteGuestOrderError:
             "Error occurred while deleting the guest appointment.",

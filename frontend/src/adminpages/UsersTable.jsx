@@ -128,9 +128,16 @@ const UsersTable = ({ onDeleteUser }) => {
       );
     } catch (err) {
       console.error("error deleting user:", err);
+      const status = err?.status || err?.response?.status;
       const errorMsg = err?.data || err?.message;
 
-      if (typeof errorMsg === "string" && errorMsg) {
+      // handle self deletion error using i18n key instead of hardcoded backend message
+      if (
+        status === 403 ||
+        (typeof errorMsg === "string" && errorMsg.toLowerCase().includes("sam"))
+      ) {
+        toast.error(t("admin.messages.deleteSelfError"));
+      } else if (typeof errorMsg === "string" && errorMsg) {
         toast.error(errorMsg);
       } else {
         toast.error(t("admin.messages.deleteUserError"));
