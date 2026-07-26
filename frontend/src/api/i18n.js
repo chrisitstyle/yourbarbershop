@@ -2,9 +2,9 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
-// translation dictionaries
+// dictionaries
 const resources = {
-  // polish translations
+  // PL
   pl: {
     translation: {
       admin: {
@@ -134,6 +134,8 @@ const resources = {
           deleteGuestOrderError:
             "Wystąpił błąd podczas usuwania wizyty gościa.",
           editError: "Błąd podczas edytowania. Spróbuj ponownie.",
+          deleteOfferSuccess: "Pomyślnie usunięto usługę.",
+          editSuccess: "Pomyślnie zapisano zmiany.",
         },
         emailModal: {
           title: "Wyślij e-mail",
@@ -369,7 +371,7 @@ const resources = {
       },
     },
   },
-  // english translations
+  // EN
   en: {
     translation: {
       admin: {
@@ -486,6 +488,8 @@ const resources = {
             uploadErrorFile: "Error uploading file {{name}}",
             uploadSuccess: "Files uploaded successfully!",
             uploadError: "An error occurred while uploading the file",
+            deleteOfferSuccess: "Successfully deleted service.",
+            editSuccess: "Changes saved successfully.",
           },
         },
         messages: {
@@ -499,6 +503,8 @@ const resources = {
           deleteGuestOrderError:
             "Error occurred while deleting the guest appointment.",
           editError: "Error occurred during editing. Please try again.",
+          deleteOfferSuccess: "Successfully deleted service.",
+          editSuccess: "Changes saved successfully.",
         },
         emailModal: {
           title: "Send email",
@@ -736,12 +742,12 @@ const resources = {
 
 i18n
   .use(LanguageDetector) // detects browser language
-  .use(initReactI18next) // passes i18n down to react-i18next
+  .use(initReactI18next) // integration with React
   .init({
     resources,
-    fallbackLng: "en", // default language if detected language is missing
+    fallbackLng: "en", // default language if detected is not supported
     interpolation: {
-      escapeValue: false, // react already protects from xss
+      escapeValue: false, // react handles XSS security automatically
     },
   });
 
