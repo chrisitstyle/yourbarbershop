@@ -116,6 +116,7 @@ const resources = {
           deleteLabel: "obraz",
           messages: {
             deleteError: "Usuwanie obrazu nie powiodło się",
+            deleteSuccess: "Pomyślnie usunięto obraz.",
             noFileSelected: "Nie wybrano pliku",
             uploadingFile: "Przesyłanie pliku {{name}}...",
             uploadErrorFile: "Błąd podczas przesyłania pliku {{name}}",
@@ -489,6 +490,7 @@ const resources = {
           deleteLabel: "image",
           messages: {
             deleteError: "Image deletion failed",
+            deleteSuccess: "Image deleted successfully.",
             noFileSelected: "No file selected",
             uploadingFile: "Uploading file {{name}}...",
             uploadErrorFile: "Error uploading file {{name}}",

@@ -1,9 +1,10 @@
-import { useState, useEffect, memo, useCallback } from "react";
+import { useState, memo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSupabaseClient, CDNURL } from "../api/supabaseApi";
-import { Container, Table, Modal, Button, Form, Alert } from "react-bootstrap";
+import { Container, Table, Modal, Button, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { toast } from "sonner";
 import useTableData from "../hooks/useTableData";
 import useDeleteModal from "../hooks/useDeleteModal";
 import SearchBox from "../components/common/SearchBox";
@@ -62,14 +63,6 @@ const GallerySettings = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  // messages for different scenarios
-  const [deleteImageErrorMsg, setDeleteImageErrorMsg] = useState(null);
-  const [uploadImageSuccessfulMsg, setUploadImageSuccessfulMsg] =
-    useState(null);
-  const [uploadImageErrorMsg, setUploadImageErrorMsg] = useState(null);
-  const [uploadingImageMsg, setUploadingImageMsg] = useState(null);
-  const [uploadingImageTimeout, setUploadingImageTimeout] = useState(null);
-
   // fetch the image list from supabase storage (filtered by file type)
   const { data: images = [] } = useQuery({
     queryKey: ["galleryImages"],
@@ -123,10 +116,12 @@ const GallerySettings = () => {
         .remove([`images/${image.name}`]);
 
       if (error) {
-        setDeleteImageErrorMsg(t("admin.gallery.messages.deleteError"));
+        toast.error(t("admin.gallery.messages.deleteError"));
         console.error("error removing image:", error.message);
         throw error;
       }
+
+      toast.success(t("admin.gallery.messages.deleteSuccess"));
     },
     [supabase, t],
   );
@@ -155,17 +150,12 @@ const GallerySettings = () => {
   const uploadImageMutation = useMutation({
     mutationFn: async (files) => {
       for (const file of files) {
-        // upload each file, show status message
-        setUploadingImageMsg(
-          t("admin.gallery.messages.uploadingFile", { name: file.name }),
-        );
-
         const { data, error: uploadError } = await supabase.storage
           .from("barbershopimages")
           .upload("images/" + encodeURIComponent(file.name), file);
 
         if (uploadError || !data) {
-          setUploadImageErrorMsg(
+          toast.error(
             t("admin.gallery.messages.uploadErrorFile", { name: file.name }),
           );
 
@@ -178,21 +168,14 @@ const GallerySettings = () => {
       }
     },
     onSuccess: () => {
-      setUploadImageSuccessfulMsg(t("admin.gallery.messages.uploadSuccess"));
+      toast.success(t("admin.gallery.messages.uploadSuccess"));
       const inputElement = document.getElementById("formFile");
       if (inputElement) inputElement.value = null;
-      setUploadingImageMsg(null);
-
-      const timeoutID = setTimeout(() => {
-        setUploadImageSuccessfulMsg(null);
-      }, 5000);
-      setUploadingImageTimeout(timeoutID);
 
       queryClient.invalidateQueries({ queryKey: ["galleryImages"] });
     },
     onError: (error) => {
-      setUploadImageSuccessfulMsg(null);
-      setUploadImageErrorMsg(t("admin.gallery.messages.uploadError"));
+      toast.error(t("admin.gallery.messages.uploadError"));
       console.error("file upload error:", error.message);
     },
   });
@@ -203,34 +186,16 @@ const GallerySettings = () => {
     const files = inputElement?.files;
 
     if (!files || files.length === 0) {
-      setUploadImageErrorMsg(t("admin.gallery.messages.noFileSelected"));
+      toast.error(t("admin.gallery.messages.noFileSelected"));
       return;
     }
 
     uploadImageMutation.mutate(Array.from(files));
   };
 
-  // cleanup any timeouts left from upload feedback
-  useEffect(() => {
-    return () => {
-      clearTimeout(uploadingImageTimeout);
-    };
-  }, [uploadingImageTimeout]);
-
   return (
     <>
       <h2 className="text-center mt-4">{t("admin.gallery.title")}</h2>
-      {/* feedback during upload */}
-      {uploadingImageMsg && (
-        <Alert
-          variant="info"
-          onClose={() => setUploadingImageMsg(null)}
-          dismissible
-          className="text-center"
-        >
-          {uploadingImageMsg}
-        </Alert>
-      )}
 
       {/* image upload form */}
       <Container className="mt-5 d-flex flex-column align-items-center">
@@ -256,40 +221,6 @@ const GallerySettings = () => {
           </Button>
         </Form>
       </Container>
-
-      {/* success feedback */}
-      {uploadImageSuccessfulMsg && (
-        <Alert
-          variant="success"
-          onClose={() => setUploadImageSuccessfulMsg(null)}
-          dismissible
-          className="text-center"
-        >
-          {uploadImageSuccessfulMsg}
-        </Alert>
-      )}
-      {/* error feedback */}
-      {uploadImageErrorMsg && (
-        <Alert
-          variant="danger"
-          onClose={() => setUploadImageErrorMsg(null)}
-          dismissible
-          className="text-center"
-        >
-          {uploadImageErrorMsg}
-        </Alert>
-      )}
-      {/* feedback on delete error */}
-      {deleteImageErrorMsg && (
-        <Alert
-          variant="danger"
-          onClose={() => setDeleteImageErrorMsg(null)}
-          dismissible
-          className="text-center"
-        >
-          {deleteImageErrorMsg}
-        </Alert>
-      )}
 
       {/* table with images and their actions */}
       <Container className="text-center mt-4">
