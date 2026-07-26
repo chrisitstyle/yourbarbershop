@@ -8,7 +8,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Alert } from "react-bootstrap";
 import { sendCustomEmail } from "../api/emailService";
-import { useAuth } from "../auth/AuthContextValue";
 import useUsers from "../hooks/useUsers";
 import useTableData from "../hooks/useTableData";
 import useSortableData from "../hooks/useSortableData";
@@ -73,7 +72,6 @@ const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
 
 const UsersTable = ({ onDeleteUser }) => {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
   const { users, isLoading, error, refetch } = useUsers();
   const { t } = useTranslation();
 

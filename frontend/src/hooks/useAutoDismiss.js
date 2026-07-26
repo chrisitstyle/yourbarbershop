@@ -11,14 +11,7 @@ const useAutoDismiss = (initialValue, timeout = 6000) => {
 
   useEffect(() => {
     // check if the state has any "content" (is not empty)
-    let hasContent = false;
-
-    if (Array.isArray(state)) {
-      hasContent = state.length > 0;
-    } else {
-      // for strings, objects, etc.
-      hasContent = Boolean(state);
-    }
+    const hasContent = Array.isArray(state) ? state.length > 0 : Boolean(state);
 
     // if there is content, start the timer
     if (hasContent) {

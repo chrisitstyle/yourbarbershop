@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../auth/AuthContextValue";
 import { useParams, useLocation } from "react-router-dom";
 import { Alert } from "react-bootstrap";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -35,7 +34,6 @@ const visitFields = [
 ];
 
 const Profile = () => {
-  const { user } = useAuth();
   const { id } = useParams();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
