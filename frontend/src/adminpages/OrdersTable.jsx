@@ -3,7 +3,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { Alert } from "react-bootstrap";
-import { useAuth } from "../auth/AuthContextValue";
 import useOrders from "../hooks/useOrders";
 import useTableData from "../hooks/useTableData";
 import useSortableData from "../hooks/useSortableData";
@@ -86,7 +85,6 @@ const OrderRow = memo(function OrderRow({
 });
 
 const OrdersTable = ({ onDeleteOrder }) => {
-  const { user } = useAuth();
   const { orders, isLoading, error, refetch } = useOrders();
   const navigate = useNavigate();
   const { t } = useTranslation();
