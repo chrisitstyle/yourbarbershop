@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import { useTranslation } from "react-i18next";
 
@@ -17,6 +18,7 @@ const AddUser = ({ onSubmit }) => {
     onSuccess: () => {
       // invalidate users query cache so tables automatically update
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success(t("admin.messages.addUserSuccess"));
       setFirstName("");
       setLastName("");
       setEmail("");
@@ -24,6 +26,13 @@ const AddUser = ({ onSubmit }) => {
     },
     onError: (error) => {
       console.error("error adding user:", error);
+      const errorMsg = error?.data || error?.message;
+
+      if (typeof errorMsg === "string" && errorMsg) {
+        toast.error(errorMsg);
+      } else {
+        toast.error(t("admin.messages.addUserError"));
+      }
     },
   });
 
@@ -42,94 +51,101 @@ const AddUser = ({ onSubmit }) => {
   };
 
   return (
-    <>
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <div className="col-md-4 border p-3 ">
-            <h4 className="text-center">{t("admin.users.addTitle")}</h4>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label htmlFor="inputfirstname" className="form-label">
-                  {t("auth.firstname")}
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="firstname"
-                  value={firstname}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="inputlastname" className="form-label">
-                  {t("auth.lastname")}
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="lastname"
-                  value={lastname}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="inputemail" className="form-label">
-                  {t("auth.email")}
-                </label>
-                <input
-                  type="email"
-                  className="form-control"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="inputpassword" className="form-label">
-                  {t("auth.password")}
-                </label>
-                <input
-                  type="password"
-                  className="form-control"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="inputrole" className="form-label">
-                  {t("admin.users.role")}
-                </label>
-                <select
-                  className="form-select"
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  required
-                >
-                  <option value="ADMIN">Admin</option>
-                  <option value="USER">{t("admin.users.roleUser")}</option>
-                </select>
-              </div>
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-4 border p-3">
+          <h4 className="text-center">{t("admin.users.addTitle")}</h4>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label htmlFor="firstname" className="form-label">
+                {t("auth.firstname")}
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                id="firstname"
+                value={firstname}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                disabled={addUserMutation.isPending}
+              />
+            </div>
 
-              <ButtonSpinner
-                type="submit"
-                variant="dark"
-                className="mx-auto d-block"
-                loading={addUserMutation.isPending}
-                loadingText={t("admin.common.adding")}
+            <div className="mb-3">
+              <label htmlFor="lastname" className="form-label">
+                {t("auth.lastname")}
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                id="lastname"
+                value={lastname}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                disabled={addUserMutation.isPending}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">
+                {t("auth.email")}
+              </label>
+              <input
+                type="email"
+                className="form-control"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={addUserMutation.isPending}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label">
+                {t("auth.password")}
+              </label>
+              <input
+                type="password"
+                className="form-control"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={addUserMutation.isPending}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="role" className="form-label">
+                {t("admin.users.role")}
+              </label>
+              <select
+                className="form-select"
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                required
+                disabled={addUserMutation.isPending}
               >
-                {t("admin.users.addBtn")}
-              </ButtonSpinner>
-            </form>
-          </div>
+                <option value="ADMIN">Admin</option>
+                <option value="USER">{t("admin.users.roleUser")}</option>
+              </select>
+            </div>
+
+            <ButtonSpinner
+              type="submit"
+              variant="dark"
+              className="mx-auto d-block"
+              loading={addUserMutation.isPending}
+              loadingText={t("admin.common.adding")}
+            >
+              {t("admin.users.addBtn")}
+            </ButtonSpinner>
+          </form>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

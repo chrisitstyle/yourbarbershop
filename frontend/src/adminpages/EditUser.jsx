@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "../auth/AuthContextValue.js";
-import { Alert } from "react-bootstrap";
 import { updateUser } from "../api/userService";
 import { useTranslation } from "react-i18next";
 
@@ -13,7 +13,6 @@ const EditUser = () => {
   const location = useLocation();
   const userData = location.state?.userData;
   const navigate = useNavigate();
-  const [editUserError, setEditUserError] = useState(false);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -42,10 +41,18 @@ const EditUser = () => {
     onSuccess: () => {
       // invalidate users query cache so tables automatically update
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success(t("admin.messages.editSuccess"));
       navigate("/adminpanel");
     },
-    onError: () => {
-      setEditUserError(true);
+    onError: (error) => {
+      console.error("error updating user:", error);
+      const errorMsg = error?.data || error?.message;
+
+      if (typeof errorMsg === "string" && errorMsg) {
+        toast.error(errorMsg);
+      } else {
+        toast.error(t("admin.messages.editError"));
+      }
     },
   });
 
@@ -61,95 +68,87 @@ const EditUser = () => {
   };
 
   return (
-    <>
-      <div className="container mt-5">
-        <div className="row justify-content-center">
-          <div className="col-md-4 border p-3 ">
-            <h4 className="text-center">{t("admin.users.editTitle")}</h4>
-            <Alert
-              variant="danger"
-              show={editUserError}
-              onClose={() => setEditUserError(false)}
-              dismissible
-            >
-              {t("admin.messages.editError")}
-            </Alert>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label htmlFor="firstname" className="form-label">
-                  {t("auth.firstname")}
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="firstname"
-                  value={firstname}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                  disabled={updateUserMutation.isPending}
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="lastname" className="form-label">
-                  {t("auth.lastname")}
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="lastname"
-                  value={lastname}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                  disabled={updateUserMutation.isPending}
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="email" className="form-label">
-                  {t("auth.email")}
-                </label>
-                <input
-                  type="email"
-                  className="form-control"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={updateUserMutation.isPending}
-                />
-              </div>
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-4 border p-3">
+          <h4 className="text-center">{t("admin.users.editTitle")}</h4>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label htmlFor="firstname" className="form-label">
+                {t("auth.firstname")}
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                id="firstname"
+                value={firstname}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                disabled={updateUserMutation.isPending}
+              />
+            </div>
 
-              <div className="mb-3">
-                <label htmlFor="role" className="form-label">
-                  {t("admin.users.role")}
-                </label>
-                <select
-                  className="form-select"
-                  id="role"
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  required
-                  disabled={updateUserMutation.isPending}
-                >
-                  {ROLES.map((role) => (
-                    <option key={role} value={role}>
-                      {role === "USER" ? t("admin.users.roleUser") : role}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="mb-3">
+              <label htmlFor="lastname" className="form-label">
+                {t("auth.lastname")}
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                id="lastname"
+                value={lastname}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                disabled={updateUserMutation.isPending}
+              />
+            </div>
 
-              <button
-                type="submit"
-                className="btn btn-dark mx-auto d-block"
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">
+                {t("auth.email")}
+              </label>
+              <input
+                type="email"
+                className="form-control"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={updateUserMutation.isPending}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="role" className="form-label">
+                {t("admin.users.role")}
+              </label>
+              <select
+                className="form-select"
+                id="role"
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                required
                 disabled={updateUserMutation.isPending}
               >
-                {t("admin.common.save")}
-              </button>
-            </form>
-          </div>
+                {ROLES.map((role) => (
+                  <option key={role} value={role}>
+                    {role === "USER" ? t("admin.users.roleUser") : role}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-dark mx-auto d-block"
+              disabled={updateUserMutation.isPending}
+            >
+              {t("admin.common.save")}
+            </button>
+          </form>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -7,6 +7,7 @@ import {
   faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
 import { Alert } from "react-bootstrap";
+import { toast } from "sonner";
 import { sendCustomEmail } from "../api/emailService";
 import useUsers from "../hooks/useUsers";
 import useTableData from "../hooks/useTableData";
@@ -49,6 +50,7 @@ const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
         >
           <FontAwesomeIcon icon={faEnvelope} />
         </button>
+
         <button
           className="btn btn-warning btn-sm mx-1"
           title={t("admin.common.edit")}
@@ -57,6 +59,7 @@ const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
         >
           <FontAwesomeIcon icon={faPen} />
         </button>
+
         <button
           className="btn btn-danger btn-sm mx-1"
           title={t("admin.common.delete")}
@@ -114,7 +117,26 @@ const UsersTable = ({ onDeleteUser }) => {
     itemToDelete: userToDelete,
     askDelete: handleAskDeleteUser,
     confirmDelete,
-  } = useDeleteModal((item) => onDeleteUser(item.idUser), refetch);
+  } = useDeleteModal(async (item) => {
+    try {
+      await onDeleteUser(item.idUser);
+      toast.success(
+        t(
+          "admin.messages.deleteUserSuccess",
+          "Pomyślnie usunięto użytkownika.",
+        ),
+      );
+    } catch (err) {
+      console.error("error deleting user:", err);
+      const errorMsg = err?.data || err?.message;
+
+      if (typeof errorMsg === "string" && errorMsg) {
+        toast.error(errorMsg);
+      } else {
+        toast.error(t("admin.messages.deleteUserError"));
+      }
+    }
+  }, refetch);
 
   // email handlers
   const handleEmailClick = (user) => {
@@ -122,8 +144,24 @@ const UsersTable = ({ onDeleteUser }) => {
     setShowEmailModal(true);
   };
 
-  const handleEmailSend = () => {
-    sendCustomEmail(emailTo, emailSubject, emailMessage);
+  const handleEmailSend = async () => {
+    try {
+      await sendCustomEmail(emailTo, emailSubject, emailMessage);
+      toast.success(
+        t("admin.messages.emailSentSuccess", "Pomyślnie wysłano e-mail."),
+      );
+    } catch (err) {
+      console.error("error sending email:", err);
+      const errorMsg = err?.data || err?.message;
+
+      if (typeof errorMsg === "string" && errorMsg) {
+        toast.error(errorMsg);
+      } else {
+        toast.error(
+          t("admin.messages.emailSentError", "Błąd podczas wysyłania e-maila."),
+        );
+      }
+    }
     setShowEmailModal(false);
     setEmailTo("");
     setEmailSubject("");
