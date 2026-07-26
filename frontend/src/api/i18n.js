@@ -133,7 +133,9 @@ const resources = {
           deleteUserSuccess: "Pomyślnie usunięto użytkownika.",
           deleteUserError: "Wystąpił błąd podczas usuwania użytkownika.",
           deleteSelfError: "Nie możesz usunąć własnego konta.",
+          deleteOrderSuccess: "Pomyślnie usunięto wizytę.",
           deleteOrderError: "Wystąpił błąd podczas usuwania wizyty.",
+          deleteGuestOrderSuccess: "Pomyślnie usunięto wizytę gościa.",
           deleteGuestOrderError:
             "Wystąpił błąd podczas usuwania wizyty gościa.",
           editError: "Błąd podczas edytowania. Spróbuj ponownie.",
@@ -504,7 +506,9 @@ const resources = {
           deleteUserSuccess: "Successfully deleted user.",
           deleteUserError: "Error occurred while deleting the user.",
           deleteSelfError: "You cannot delete your own account.",
+          deleteOrderSuccess: "Successfully deleted appointment.",
           deleteOrderError: "Error occurred while deleting the appointment.",
+          deleteGuestOrderSuccess: "Successfully deleted guest appointment.",
           deleteGuestOrderError:
             "Error occurred while deleting the guest appointment.",
           editError: "Error occurred during editing. Please try again.",
