@@ -1,16 +1,10 @@
 import { useState, useRef } from "react";
-
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../auth/AuthContextValue";
-
+import { toast } from "sonner";
 import ButtonSpinner from "../components/common/ButtonSpinner";
-import useAutoDismiss from "../hooks/useAutoDismiss";
-
 import { useTranslation } from "react-i18next";
-
 import ReCAPTCHA from "react-google-recaptcha";
-
 import { RECAPTCHA_SITE_KEY } from "../api/config";
 
 const Register = () => {
@@ -22,13 +16,10 @@ const Register = () => {
   const [captchaToken, setCaptchaToken] = useState(null);
   const recaptchaRef = useRef(null);
 
-  const [registerErrors, setRegisterErrors] = useAutoDismiss([], 6000);
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
-
   const { register } = useAuth();
-
   const { t } = useTranslation();
 
   const handleCaptchaChange = (token) => {
@@ -52,10 +43,18 @@ const Register = () => {
   };
 
   const getRegisterErrorMessages = (error) => {
-    const data = error.response?.data;
+    const data = error?.data || error?.response?.data;
 
     if (isValidationErrorResponse(data)) {
       return Object.values(data).flat().filter(Boolean).map(String);
+    }
+
+    if (typeof data === "string") {
+      return [data];
+    }
+
+    if (error?.message) {
+      return [error.message];
     }
 
     return [t("auth.registerError")];
@@ -73,10 +72,9 @@ const Register = () => {
     event.preventDefault();
 
     setIsLoading(true);
-    setRegisterErrors([]);
 
     if (!captchaToken) {
-      setRegisterErrors([t("auth.captchaRequired")]);
+      toast.error(t("auth.captchaRequired"));
       setIsLoading(false);
 
       return;
@@ -91,11 +89,13 @@ const Register = () => {
         captchaToken,
       });
 
-      navigate("/");
+      // trigger success toast and redirect to login page
+      toast.success(t("auth.successRegister"));
+      navigate("/login");
     } catch (error) {
       resetCaptcha();
-
-      setRegisterErrors(getRegisterErrorMessages(error));
+      const errors = getRegisterErrorMessages(error);
+      errors.forEach((msg) => toast.error(msg));
     } finally {
       setIsLoading(false);
     }
@@ -109,16 +109,6 @@ const Register = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              {registerErrors.length > 0 && (
-                <div className="alert alert-danger text-center" role="alert">
-                  <ul className="mb-0 list-unstyled">
-                    {registerErrors.map((err, index) => (
-                      <li key={index}>{err}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
               <label htmlFor="firstname" className="form-label">
                 {t("auth.firstname")}
               </label>

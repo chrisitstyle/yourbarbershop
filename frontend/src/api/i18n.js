@@ -2,9 +2,9 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
-// dictionaries
+// translation dictionaries
 const resources = {
-  // PL
+  // polish translations
   pl: {
     translation: {
       admin: {
@@ -169,6 +169,7 @@ const resources = {
       auth: {
         loginHeader: "Logowanie",
         loginTitle: "Zaloguj się",
+        loginSuccess: "Pomyślnie zalogowano!",
         registerHeader: "Rejestracja konta",
         forgotPasswordHeader: "Resetowanie hasła",
         changePasswordHeader: "Zmiana hasła",
@@ -368,7 +369,7 @@ const resources = {
       },
     },
   },
-  // EN
+  // english translations
   en: {
     translation: {
       admin: {
@@ -533,6 +534,7 @@ const resources = {
       auth: {
         loginHeader: "Sign In",
         loginTitle: "Sign In",
+        loginSuccess: "Successfully logged in!",
         registerHeader: "Create Account",
         forgotPasswordHeader: "Reset Password",
         changePasswordHeader: "Change Password",
@@ -734,12 +736,12 @@ const resources = {
 
 i18n
   .use(LanguageDetector) // detects browser language
-  .use(initReactI18next) // integration with React
+  .use(initReactI18next) // passes i18n down to react-i18next
   .init({
     resources,
-    fallbackLng: "en", // default language if detected is not supported
+    fallbackLng: "en", // default language if detected language is missing
     interpolation: {
-      escapeValue: false, // react handles XSS security automatically
+      escapeValue: false, // react already protects from xss
     },
   });
 
