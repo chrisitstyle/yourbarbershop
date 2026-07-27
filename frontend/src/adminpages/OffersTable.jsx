@@ -14,6 +14,7 @@ import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
 import { useTranslation } from "react-i18next";
+import "./styles/AdminTables.css";
 
 const offerFieldsHeaders = [
   "admin.offers.id",
@@ -23,19 +24,29 @@ const offerFieldsHeaders = [
 
 const offerFields = ["idOffer", "kind", "cost"];
 
+// map field -> header key so mobile cards can render a label per cell
+const fieldLabels = offerFields.reduce((acc, field, idx) => {
+  acc[field] = offerFieldsHeaders[idx];
+  return acc;
+}, {});
+
 const OfferRow = memo(function OfferRow({ offer, onEdit, onDelete }) {
   const { t } = useTranslation();
 
   return (
     <tr>
       {offerFields.map((field) => (
-        <td key={field} className="align-middle text-center">
+        <td
+          key={field}
+          data-label={t(fieldLabels[field])}
+          className="align-middle text-center"
+        >
           {field === "cost"
             ? `${offer[field]} ${t("common.currency")}`
             : offer[field]}
         </td>
       ))}
-      <td className="align-middle text-center">
+      <td className="align-middle text-center rtable-actions">
         <button
           className="btn btn-warning btn-sm me-2"
           style={{ minWidth: "40px" }}
@@ -127,12 +138,9 @@ const OffersTable = ({ onDeleteOffer }) => {
           placeholder={t("admin.offers.searchPlaceholder")}
         />
 
-        {/* table */}
-        <div className="table-responsive">
-          <table
-            className="table table-bordered table-hover shadow rounded mx-auto"
-            style={{ maxWidth: "900px" }}
-          >
+        {/* table (rtable-wrap + rtable enable the responsive card view) */}
+        <div className="rtable-wrap mx-auto" style={{ maxWidth: "900px" }}>
+          <table className="table table-hover align-middle rtable mb-0">
             <SortableTableHeader
               headers={offerFieldsHeaders}
               fields={offerFields}
@@ -158,7 +166,7 @@ const OffersTable = ({ onDeleteOffer }) => {
                 <tr>
                   <td
                     colSpan={offerFields.length + 1}
-                    className="text-center py-4"
+                    className="text-center py-4 rtable-empty"
                   >
                     <Alert variant="info" className="mb-0">
                       {t("admin.common.noResults")}

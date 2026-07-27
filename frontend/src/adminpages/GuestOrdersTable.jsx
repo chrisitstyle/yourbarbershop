@@ -15,6 +15,8 @@ import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
 import { useTranslation } from "react-i18next";
+import { StatusBadge } from "./utils/adminTableHelpers";
+import "./styles/AdminTables.css";
 
 const guestOrderFieldsHeaders = [
   "admin.guestOrders.id",
@@ -46,26 +48,46 @@ const guestOrderFields = [
   "paymentStatus",
 ];
 
+// fields that render as colored status pills instead of plain text
+const STATUS_FIELDS = new Set(["status", "paymentStatus"]);
+
 const GuestOrderRow = memo(function GuestOrderRow({
   guestOrder,
   onEdit,
   onDelete,
   isDeleting,
+  headerLabels,
 }) {
   const { t } = useTranslation();
 
   return (
     <tr>
-      {guestOrderFields.map((field) => (
-        <td key={field} className="align-middle text-center">
-          {getNestedValue(guestOrder, field)}
-          {field === "offer.cost" ? ` ${t("common.currency")}` : ""}
-        </td>
-      ))}
-      <td className="align-middle text-center">
-        <div className="d-flex justify-content-center">
+      {guestOrderFields.map((field, i) => {
+        const value = getNestedValue(guestOrder, field);
+        return (
+          <td
+            key={field}
+            className="align-middle text-center"
+            data-label={headerLabels[i]}
+          >
+            {STATUS_FIELDS.has(field) ? (
+              <StatusBadge value={value} />
+            ) : (
+              <>
+                {value}
+                {field === "offer.cost" ? ` ${t("common.currency")}` : ""}
+              </>
+            )}
+          </td>
+        );
+      })}
+      <td
+        className="align-middle text-center"
+        data-label={t("admin.common.action")}
+      >
+        <div className="d-flex justify-content-center gap-2">
           <button
-            className="btn btn-warning btn-sm me-2"
+            className="btn btn-warning btn-sm"
             style={{ minWidth: "40px" }}
             title={t("admin.common.edit")}
             onClick={() => onEdit(guestOrder)}
@@ -91,6 +113,8 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
   const { guestOrders, isLoading, error, refetch } = useGuestOrders();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const headerLabels = guestOrderFieldsHeaders.map((key) => t(key));
 
   const filterGuestOrders = (order, term) => {
     const searchStr = ` ${order.idGuestOrder} ${order.firstname} ${
@@ -178,12 +202,12 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
         placeholder={t("admin.guestOrders.searchPlaceholder")}
       />
 
-      {/* table */}
-      <div className="table-responsive">
-        <table
-          className="table table-bordered table-hover shadow rounded mx-auto"
-          style={{ maxWidth: "1200px" }}
-        >
+      {/* responsive table -> collapses to cards on mobile */}
+      <div
+        className="rtable-wrap shadow-sm rounded mx-auto"
+        style={{ maxWidth: "1200px" }}
+      >
+        <table className="table table-hover align-middle mb-0 rtable">
           <SortableTableHeader
             headers={guestOrderFieldsHeaders}
             fields={guestOrderFields}
@@ -203,6 +227,7 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
                   guestOrder={guestOrder}
                   onEdit={handleEditClick}
                   onDelete={handleAskDelete}
+                  headerLabels={headerLabels}
                   isDeleting={
                     isDeleting &&
                     guestOrderToDelete?.idGuestOrder === guestOrder.idGuestOrder

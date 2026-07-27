@@ -8,7 +8,7 @@ import {
   Ratio,
 } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
-
+import { Link } from "react-router-dom";
 // data kept in arrays
 const SERVICES = [
   {

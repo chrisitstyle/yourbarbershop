@@ -1,4 +1,23 @@
 {
+  "enums": {
+    "NOWE": "New",
+    "ZREALIZOWANE": "Completed",
+    "ANULOWANE": "Cancelled",
+
+    "USER": "User",
+    "ADMIN": "Administrator",
+
+    "GOTOWKA": "Cash",
+    "KARTA_ONLINE": "Card online",
+    "KARTA_NA_MIEJSCU": "Card on site",
+
+    "NIE_WYMAGANA": "Not required",
+    "OCZEKUJE_NA_PLATNOSC": "Awaiting payment",
+    "OPLACONA": "Paid",
+    "NIEUDANA": "Failed",
+    "WYGASLA": "Expired",
+    "ZWROCONA": "Refunded"
+  },
   "admin": {
     "panelTitle": "Admin Panel",
     "panelDesc": "Manage core features: users, services, appointments, and gallery.",
@@ -105,6 +124,8 @@
       "searchPlaceholder": "Search for an image...",
       "noImagesFound": "No images found",
       "deleteLabel": "image",
+      "uploadBtn": "Send",
+      "uploading": "Sending...",
       "messages": {
         "deleteError": "Image deletion failed",
         "deleteSuccess": "Image deleted successfully.",

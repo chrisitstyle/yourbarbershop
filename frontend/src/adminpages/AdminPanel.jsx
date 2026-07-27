@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import userService from "../api/userService.js";
 import offerService from "../api/offerService.js";
 import orderService from "../api/orderService.js";
@@ -9,7 +9,6 @@ import AddOffer from "./AddOffer";
 import UsersTable from "./UsersTable";
 import AddUser from "./AddUser";
 import OrdersTable from "./OrdersTable";
-import AdminMenuButton from "../components/AdminMenuButton.jsx";
 import GuestOrdersTable from "./GuestOrdersTable.jsx";
 import GallerySettings from "./GallerySettings.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -25,21 +24,48 @@ const AdminPanel = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  // table/form visibility states
-  const [showUserTable, setShowUserTable] = useState(false);
-  const [showAddUserForm, setShowAddUserForm] = useState(false);
-  const [showOfferTable, setShowOfferTable] = useState(false);
-  const [showOrderTable, setShowOrderTable] = useState(false);
-  const [showAddOfferForm, setShowAddOfferForm] = useState(false);
-  const [showGuestOrderTable, setShowGuestOrderTable] = useState(false);
-  const [showGallerySettings, setShowGallerySettings] = useState(false);
+  // single source of truth for which module/view is visible (null = nothing selected)
+  const [activeView, setActiveView] = useState(null);
+
+  // index of the currently open dropdown menu (null = all closed)
+  const [openMenu, setOpenMenu] = useState(null);
+  const menuBarRef = useRef(null);
+
+  const closeMenu = useCallback(() => setOpenMenu(null), []);
+
+  // selecting a view switches the panel and always hides the dropdown
+  const selectView = useCallback((view) => {
+    setActiveView(view);
+    setOpenMenu(null);
+  }, []);
+
+  // close the open menu on outside click and on escape
+  useEffect(() => {
+    if (openMenu === null) return undefined;
+
+    const handlePointer = (e) => {
+      if (menuBarRef.current && !menuBarRef.current.contains(e.target)) {
+        closeMenu();
+      }
+    };
+    const handleKey = (e) => {
+      if (e.key === "Escape") closeMenu();
+    };
+
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [openMenu, closeMenu]);
 
   // mutations for handling api operations with query invalidation
   const addOfferMutation = useMutation({
     mutationFn: (newOffer) => offerService.addOffer(newOffer),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["offers"] });
-      handleToggleTable("offers");
+      setActiveView("offers");
     },
     onError: (error) => {
       console.error("error adding offer:", error);
@@ -60,7 +86,7 @@ const AdminPanel = () => {
     mutationFn: (newUser) => userService.addUser(newUser),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      handleToggleTable("users");
+      setActiveView("users");
     },
     onError: (error) => {
       console.error("error adding user:", error);
@@ -108,35 +134,52 @@ const AdminPanel = () => {
   const handleDeleteGuestOrder = (idGuestOrder) =>
     deleteGuestOrderMutation.mutateAsync(idGuestOrder);
 
-  // handle switching between modules/views
-  const handleToggleTable = (table) => {
-    setShowAddUserForm(false);
-    setShowAddOfferForm(false);
-    setShowUserTable(false);
-    setShowOfferTable(false);
-    setShowOrderTable(false);
-    setShowGuestOrderTable(false);
-    setShowGallerySettings(false);
+  // data-driven menu -> each dropdown + its actions described declaratively, no duplicated jsx
+  const menus = [
+    {
+      icon: faScissors,
+      label: t("admin.menu.offers"),
+      actions: [
+        { view: "offers", label: t("admin.actions.showOffers") },
+        { view: "addOffer", label: t("admin.actions.addOffer") },
+      ],
+    },
+    {
+      icon: faUser,
+      label: t("admin.menu.users"),
+      actions: [
+        { view: "users", label: t("admin.actions.showUsers") },
+        { view: "addUser", label: t("admin.actions.addUser") },
+      ],
+    },
+    {
+      icon: faCalendarCheck,
+      label: t("admin.menu.orders"),
+      actions: [
+        { view: "orders", label: t("admin.actions.showUserOrders") },
+        { view: "guestorders", label: t("admin.actions.showGuestOrders") },
+      ],
+    },
+    {
+      icon: faImages,
+      label: t("admin.menu.gallery"),
+      actions: [
+        { view: "gallerysettings", label: t("admin.actions.gallerySettings") },
+      ],
+    },
+  ];
 
-    switch (table) {
-      case "users":
-        setShowUserTable(true);
-        break;
-      case "offers":
-        setShowOfferTable(true);
-        break;
-      case "orders":
-        setShowOrderTable(true);
-        break;
-      case "guestorders":
-        setShowGuestOrderTable(true);
-        break;
-      case "gallerysettings":
-        setShowGallerySettings(true);
-        break;
-      default:
-        break;
-    }
+  // maps each view key to the content rendered in the panel body
+  const views = {
+    addOffer: <AddOffer onAddOffer={handleAddOffer} />,
+    addUser: <AddUser onSubmit={handleAddUser} />,
+    offers: <OffersTable onDeleteOffer={handleDeleteOffer} />,
+    users: <UsersTable onDeleteUser={handleDeleteUser} />,
+    orders: <OrdersTable onDeleteOrder={handleDeleteOrder} />,
+    guestorders: (
+      <GuestOrdersTable onDeleteGuestOrder={handleDeleteGuestOrder} />
+    ),
+    gallerysettings: <GallerySettings />,
   };
 
   return (
@@ -146,189 +189,57 @@ const AdminPanel = () => {
         <p className="text-muted mb-0">{t("admin.panelDesc")}</p>
       </div>
 
-      <div className="d-flex flex-wrap justify-content-center gap-3 mb-4">
-        <div className="dropdown">
-          <AdminMenuButton
-            className="admin-menu-button"
-            title={
-              <span>
-                <FontAwesomeIcon icon={faScissors} className="me-2" />
-                {t("admin.menu.offers")}
-              </span>
-            }
-          />
-
-          <div className="dropdown-menu">
-            <button
-              type="button"
-              className="dropdown-item"
-              onClick={() => {
-                handleToggleTable("offers");
-              }}
+      <div
+        className="d-flex flex-wrap justify-content-center gap-3 mb-4"
+        ref={menuBarRef}
+      >
+        {menus.map((menu, i) => {
+          // highlight the menu that owns the currently active view
+          const isActive = menu.actions.some((a) => a.view === activeView);
+          const isOpen = openMenu === i;
+          return (
+            <div
+              className={`dropdown${isOpen ? " show" : ""}`}
+              key={menu.label}
             >
-              {t("admin.actions.showOffers")}
-            </button>
-
-            <button
-              type="button"
-              className="dropdown-item"
-              onClick={() => {
-                setShowAddOfferForm(true);
-                setShowUserTable(false);
-                setShowOfferTable(false);
-                setShowOrderTable(false);
-                setShowAddUserForm(false);
-                setShowGuestOrderTable(false);
-                setShowGallerySettings(false);
-              }}
-            >
-              {t("admin.actions.addOffer")}
-            </button>
-          </div>
-        </div>
-
-        <div className="dropdown">
-          <AdminMenuButton
-            className="admin-menu-button"
-            title={
-              <span>
-                <FontAwesomeIcon icon={faUser} className="me-2" />
-                {t("admin.menu.users")}
-              </span>
-            }
-          />
-
-          <div className="dropdown-menu">
-            <button
-              type="button"
-              className="dropdown-item"
-              onClick={() => {
-                handleToggleTable("users");
-              }}
-            >
-              {t("admin.actions.showUsers")}
-            </button>
-
-            <button
-              type="button"
-              className="dropdown-item"
-              onClick={() => {
-                setShowAddUserForm(true);
-                setShowUserTable(false);
-                setShowOfferTable(false);
-                setShowOrderTable(false);
-                setShowAddOfferForm(false);
-                setShowGuestOrderTable(false);
-                setShowGallerySettings(false);
-              }}
-            >
-              {t("admin.actions.addUser")}
-            </button>
-          </div>
-        </div>
-
-        <div className="dropdown">
-          <AdminMenuButton
-            className="admin-menu-button"
-            title={
-              <span>
-                <FontAwesomeIcon icon={faCalendarCheck} className="me-2" />
-                {t("admin.menu.orders")}
-              </span>
-            }
-          />
-
-          <div className="dropdown-menu">
-            <button
-              type="button"
-              className="dropdown-item"
-              onClick={() => {
-                handleToggleTable("orders");
-              }}
-            >
-              {t("admin.actions.showUserOrders")}
-            </button>
-
-            <button
-              type="button"
-              className="dropdown-item"
-              onClick={() => {
-                handleToggleTable("guestorders");
-              }}
-            >
-              {t("admin.actions.showGuestOrders")}
-            </button>
-          </div>
-        </div>
-
-        <div className="dropdown">
-          <AdminMenuButton
-            className="admin-menu-button"
-            title={
-              <span>
-                <FontAwesomeIcon icon={faImages} className="me-2" />
-                {t("admin.menu.gallery")}
-              </span>
-            }
-          />
-
-          <div className="dropdown-menu">
-            <button
-              type="button"
-              className="dropdown-item"
-              onClick={() => {
-                handleToggleTable("gallerysettings");
-              }}
-            >
-              {t("admin.actions.gallerySettings")}
-            </button>
-          </div>
-        </div>
+              <button
+                type="button"
+                aria-haspopup="true"
+                aria-expanded={isOpen}
+                className={`admin-menu-button dropdown-toggle${
+                  isActive ? " active" : ""
+                }`}
+                onClick={() => setOpenMenu(isOpen ? null : i)}
+              >
+                <FontAwesomeIcon icon={menu.icon} className="me-2" />
+                {menu.label}
+              </button>
+              <div className={`dropdown-menu${isOpen ? " show" : ""}`}>
+                {menu.actions.map((action) => (
+                  <button
+                    key={action.view}
+                    type="button"
+                    className={`dropdown-item${
+                      action.view === activeView ? " active" : ""
+                    }`}
+                    onClick={() => selectView(action.view)}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div
         className="admin-panel-content mx-auto"
         style={{ maxWidth: "1400px" }}
       >
-        {showAddOfferForm && (
-          <div className="fade-in card shadow p-4 mb-5">
-            <AddOffer onAddOffer={handleAddOffer} />
-          </div>
-        )}
-
-        {showAddUserForm && (
-          <div className="fade-in card shadow p-4 mb-5">
-            <AddUser onSubmit={handleAddUser} />
-          </div>
-        )}
-
-        {showOfferTable && (
-          <div className="fade-in card shadow p-4 mb-5">
-            <OffersTable onDeleteOffer={handleDeleteOffer} />
-          </div>
-        )}
-
-        {showUserTable && (
-          <div className="fade-in card shadow p-4 mb-5">
-            <UsersTable onDeleteUser={handleDeleteUser} />
-          </div>
-        )}
-
-        {showOrderTable && (
-          <div className="fade-in card shadow p-4 mb-5">
-            <OrdersTable onDeleteOrder={handleDeleteOrder} />
-          </div>
-        )}
-
-        {showGuestOrderTable && (
-          <div className="fade-in card shadow p-4 mb-5">
-            <GuestOrdersTable onDeleteGuestOrder={handleDeleteGuestOrder} />
-          </div>
-        )}
-
-        {showGallerySettings && (
-          <div className="fade-in card shadow p-4 mb-5">
-            <GallerySettings />
+        {activeView && views[activeView] && (
+          <div className="fade-in card shadow p-4 mb-5" key={activeView}>
+            {views[activeView]}
           </div>
         )}
       </div>

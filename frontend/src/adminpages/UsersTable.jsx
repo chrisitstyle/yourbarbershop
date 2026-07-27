@@ -20,6 +20,8 @@ import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
 import { useTranslation } from "react-i18next";
+import { StatusBadge } from "./utils/adminTableHelpers";
+import "./styles/AdminTables.css";
 
 const userFieldsHeaders = [
   "admin.users.id",
@@ -31,43 +33,58 @@ const userFieldsHeaders = [
 
 const userFields = ["idUser", "firstname", "lastname", "email", "role"];
 
-const UserRow = memo(function UserRow({ user, onEdit, onEmail, onDelete }) {
+const UserRow = memo(function UserRow({
+  user,
+  onEdit,
+  onEmail,
+  onDelete,
+  headerLabels,
+}) {
   const { t } = useTranslation();
 
   return (
     <tr>
-      {userFields.map((field) => (
-        <td key={field} className="align-middle text-center">
-          {user[field]}
+      {userFields.map((field, i) => (
+        <td
+          key={field}
+          className="align-middle text-center"
+          data-label={headerLabels[i]}
+        >
+          {field === "role" ? <StatusBadge value={user[field]} /> : user[field]}
         </td>
       ))}
-      <td className="align-middle text-center">
-        <button
-          className="btn btn-primary btn-sm mx-1"
-          title={t("admin.common.sendEmail")}
-          onClick={() => onEmail(user)}
-          style={{ minWidth: "38px" }}
-        >
-          <FontAwesomeIcon icon={faEnvelope} />
-        </button>
+      <td
+        className="align-middle text-center"
+        data-label={t("admin.common.action")}
+      >
+        <div className="d-flex justify-content-center gap-2">
+          <button
+            className="btn btn-primary btn-sm"
+            title={t("admin.common.sendEmail")}
+            onClick={() => onEmail(user)}
+            style={{ minWidth: "38px" }}
+          >
+            <FontAwesomeIcon icon={faEnvelope} />
+          </button>
 
-        <button
-          className="btn btn-warning btn-sm mx-1"
-          title={t("admin.common.edit")}
-          onClick={() => onEdit(user)}
-          style={{ minWidth: "38px" }}
-        >
-          <FontAwesomeIcon icon={faPen} />
-        </button>
+          <button
+            className="btn btn-warning btn-sm"
+            title={t("admin.common.edit")}
+            onClick={() => onEdit(user)}
+            style={{ minWidth: "38px" }}
+          >
+            <FontAwesomeIcon icon={faPen} />
+          </button>
 
-        <button
-          className="btn btn-danger btn-sm mx-1"
-          title={t("admin.common.delete")}
-          onClick={() => onDelete(user)}
-          style={{ minWidth: "38px" }}
-        >
-          <FontAwesomeIcon icon={faTrashAlt} />
-        </button>
+          <button
+            className="btn btn-danger btn-sm"
+            title={t("admin.common.delete")}
+            onClick={() => onDelete(user)}
+            style={{ minWidth: "38px" }}
+          >
+            <FontAwesomeIcon icon={faTrashAlt} />
+          </button>
+        </div>
       </td>
     </tr>
   );
@@ -77,6 +94,8 @@ const UsersTable = ({ onDeleteUser }) => {
   const navigate = useNavigate();
   const { users, isLoading, error, refetch } = useUsers();
   const { t } = useTranslation();
+
+  const headerLabels = userFieldsHeaders.map((key) => t(key));
 
   // email state
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -197,12 +216,12 @@ const UsersTable = ({ onDeleteUser }) => {
           placeholder={t("admin.users.searchPlaceholder")}
         />
 
-        {/* table */}
-        <div className="table-responsive">
-          <table
-            className="table border shadow table-hover mx-auto"
-            style={{ maxWidth: "900px" }}
-          >
+        {/* responsive table -> collapses to cards on mobile */}
+        <div
+          className="rtable-wrap shadow-sm rounded mx-auto"
+          style={{ maxWidth: "900px" }}
+        >
+          <table className="table table-hover align-middle mb-0 rtable">
             <SortableTableHeader
               headers={userFieldsHeaders}
               fields={userFields}
@@ -223,6 +242,7 @@ const UsersTable = ({ onDeleteUser }) => {
                     onEdit={handleEditClick}
                     onEmail={handleEmailClick}
                     onDelete={handleAskDeleteUser}
+                    headerLabels={headerLabels}
                   />
                 ))
               ) : (

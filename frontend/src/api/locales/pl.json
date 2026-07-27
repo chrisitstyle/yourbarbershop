@@ -1,4 +1,23 @@
 {
+  "enums": {
+    "NOWE": "Nowa",
+    "ZREALIZOWANE": "Zrealizowana",
+    "ANULOWANE": "Anulowana",
+
+    "USER": "Użytkownik",
+    "ADMIN": "Administrator",
+
+    "GOTOWKA": "Gotówka",
+    "KARTA_ONLINE": "Karta online",
+    "KARTA_NA_MIEJSCU": "Karta na miejscu",
+
+    "NIE_WYMAGANA": "Niewymagana",
+    "OCZEKUJE_NA_PLATNOSC": "Oczekuje na płatność",
+    "OPLACONA": "Opłacona",
+    "NIEUDANA": "Nieudana",
+    "WYGASLA": "Wygasła",
+    "ZWROCONA": "Zwrócona"
+  },
   "admin": {
     "panelTitle": "Panel administratora",
     "panelDesc": "Zarządzaj głównymi funkcjami: użytkownikami, usługami, wizytami oraz galerią.",
@@ -105,6 +124,8 @@
       "searchPlaceholder": "Szukaj obrazu...",
       "noImagesFound": "Nie znaleziono zdjęć",
       "deleteLabel": "obraz",
+      "uploadBtn": "Wyślij",
+      "uploading": "Wysyłanie...",
       "messages": {
         "deleteError": "Usuwanie obrazu nie powiodło się",
         "deleteSuccess": "Pomyślnie usunięto obraz.",
