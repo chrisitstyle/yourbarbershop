@@ -227,7 +227,8 @@
   "home": {
     "hero": {
       "title": "Welcome to Our Barbershop",
-      "lead": "Experience the best services in grooming and customer care."
+      "lead": "Experience the best services in grooming and customer care.",
+      "cta": "Book Your Visit"
     },
     "services": {
       "title": "Our Services",

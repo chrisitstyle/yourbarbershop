@@ -227,7 +227,8 @@
   "home": {
     "hero": {
       "title": "Witaj w Naszym Barbershopie",
-      "lead": "Doświadcz najlepszych usług w dziedzinie pielęgnacji i obsługi klienta."
+      "lead": "Doświadcz najlepszych usług w dziedzinie pielęgnacji i obsługi klienta.",
+      "cta": "Umów się na wizytę"
     },
     "services": {
       "title": "Nasze Usługi",
