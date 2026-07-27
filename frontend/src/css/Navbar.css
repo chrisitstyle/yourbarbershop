@@ -3,7 +3,18 @@
 }
 
 .app-navbar-toggler {
+  border: 0;
   border-radius: 0.6rem;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.5rem;
+}
+
+.app-navbar-toggler:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
 }
 
 .app-account-button {
@@ -27,17 +38,57 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background-color 0.15s ease;
 }
 
 .app-theme-toggle:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
+/* drop-down open/close animation (react-controlled, no bootstrap) */
+.app-account-menu {
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s ease;
+  pointer-events: none;
+}
+
+.app-account-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ---------------- mobile (< 992px) ---------------- */
 @media (max-width: 991.98px) {
-  .app-navbar .navbar-collapse {
+  /* react-controlled collapse: hidden by default, shown via .show */
+  .app-navbar-collapse {
+    display: none;
     margin-top: 0.75rem;
     padding-top: 0.75rem;
     border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .app-navbar-collapse.show {
+    display: block;
+    animation: navbarSlideDown 0.2s ease;
+  }
+
+  @keyframes navbarSlideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .app-navbar-main,
@@ -63,12 +114,15 @@
     width: 100%;
   }
 
+  /* on mobile the dropdown expands inline (no animation/transform needed) */
   .app-account-menu {
     position: static;
     width: 100%;
     margin-top: 0.25rem;
     background-color: #2b3035;
     border: 1px solid rgba(255, 255, 255, 0.15);
+    transform: none;
+    transition: none;
   }
 
   .app-account-menu .dropdown-item {
@@ -102,7 +156,14 @@
   }
 }
 
+/* ---------------- desktop (>= 992px) ---------------- */
 @media (min-width: 992px) {
+  /* always show the nav content on desktop regardless of React state */
+  .app-navbar-collapse {
+    display: flex !important;
+    flex-basis: auto;
+  }
+
   .app-navbar-actions {
     align-items: center;
     gap: 0.75rem;
