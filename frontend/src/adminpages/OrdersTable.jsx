@@ -14,7 +14,7 @@ import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
-import { StatusBadge } from "./utils/adminTableHelpers";
+import { StatusBadge } from "../components/common/StatusBadge";
 import { useTranslation } from "react-i18next";
 import "./styles/AdminTables.css";
 

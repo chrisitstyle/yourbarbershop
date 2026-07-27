@@ -78,7 +78,7 @@ function App() {
   const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-bs-theme", theme);
+    document.documentElement.dataset.bsTheme = theme;
     localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
@@ -90,7 +90,7 @@ function App() {
     <Router>
       <AuthProvider>
         <div className="App d-flex flex-column min-vh-100">
-          {/* global sonner toast notification container */}
+          {/* sonner toast notification container */}
           <Toaster
             theme={theme}
             richColors

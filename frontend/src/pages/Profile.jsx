@@ -10,7 +10,7 @@ import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
 import { getNestedValue } from "../utils/tableHelpers";
 import { useTranslation } from "react-i18next";
-import { StatusBadge } from "../adminpages/utils/adminTableHelpers";
+import { StatusBadge } from "../components/common/StatusBadge";
 import "../adminpages/styles/AdminTables.css";
 
 const visitHeaders = [

@@ -1,5 +1,4 @@
 // shared helpers for admin tables
-import { useTranslation } from "react-i18next";
 
 /**
  * maps exact backend enum values to a bootstrap contextual color variant.
@@ -46,27 +45,7 @@ export function toneForValue(value) {
  * @param {string} value - raw enum value with underscores
  * @returns {string} capitalized readable string fallback
  */
-function humanize(value) {
+export function humanize(value) {
   const s = String(value).replaceAll("_", " ").toLowerCase();
   return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-/**
- * small rounded pill component for statuses, roles, and payment values inside tables.
- * looks up a translated label under the "enums" namespace (e.g. enums.OCZEKUJE_NA_PLATNOSC).
- *
- * @param {object} props - component props
- * @param {string|null|undefined} props.value - raw enum value to display in badge
- * @returns {JSX.Element} styled badge element or fallback dash
- */
-export function StatusBadge({ value }) {
-  const { t } = useTranslation();
-  if (value === null || value === undefined || value === "")
-    return <span>—</span>;
-
-  const key = String(value).trim().toUpperCase();
-  const tone = toneForValue(key);
-  const label = t(`enums.${key}`, { defaultValue: humanize(value) });
-
-  return <span className={`rtable-badge text-bg-${tone}`}>{label}</span>;
 }

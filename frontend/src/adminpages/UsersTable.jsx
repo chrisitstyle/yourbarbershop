@@ -20,7 +20,7 @@ import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
 import { useTranslation } from "react-i18next";
-import { StatusBadge } from "./utils/adminTableHelpers";
+import { StatusBadge } from "../components/common/StatusBadge";
 import "./styles/AdminTables.css";
 
 const userFieldsHeaders = [
