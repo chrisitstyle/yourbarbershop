@@ -47,7 +47,7 @@ const Gallery = () => {
       return data.filter((image) => {
         const lowercasedName = image.name.toLowerCase();
         return (
-          !lowercasedName.includes(".emptyFolderPlaceholder") &&
+          !lowercasedName.includes(".emptyfolderplaceholder") &&
           (lowercasedName.endsWith(".png") ||
             lowercasedName.endsWith(".jpeg") ||
             lowercasedName.endsWith(".jpg"))
@@ -57,14 +57,18 @@ const Gallery = () => {
     enabled: !!supabase,
   });
 
-  return (
-    <Container className="text-center mt-4">
-      <h2 className="display-6">{t("gallery.title")}</h2>
-      <p className="lead">{t("gallery.lead")}</p>
+  /**
+   * renders gallery carousel content based on loading and data availability (S3358)
+   *
+   * @returns {JSX.Element|null} spinner, carousel, or null
+   */
+  const renderGalleryContent = () => {
+    if (isLoading) {
+      return <LoadingSpinner text={t("gallery.loading")} />;
+    }
 
-      {isLoading ? (
-        <LoadingSpinner text={t("gallery.loading")} />
-      ) : images.length > 0 ? (
+    if (images.length > 0) {
+      return (
         <Carousel
           nextIcon={
             <FontAwesomeIcon
@@ -87,7 +91,7 @@ const Gallery = () => {
               style={{ cursor: "pointer" }}
             >
               <Image
-                className="d-block w-100 "
+                className="d-block w-100"
                 src={CDNURL + "images/" + image.name}
                 alt={image.name}
                 style={{
@@ -99,18 +103,28 @@ const Gallery = () => {
             </Carousel.Item>
           ))}
         </Carousel>
-      ) : null}
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <Container className="text-center mt-4">
+      <h2 className="display-6">{t("gallery.title")}</h2>
+      <p className="lead">{t("gallery.lead")}</p>
+
+      {renderGalleryContent()}
 
       {/* modal */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title style={{ textAlign: "center", width: "100%" }}>
-            {selectedImage?.name &&
-              selectedImage.name.slice(0, selectedImage.name.lastIndexOf("."))}
+            {selectedImage?.name?.slice(0, selectedImage.name.lastIndexOf("."))}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {selectedImage && (
+          {selectedImage?.name && (
             <Image
               src={CDNURL + "images/" + selectedImage.name}
               alt={selectedImage.name}

@@ -90,17 +90,23 @@ const Profile = () => {
     setCurrentPage(1);
   };
 
-  // render a single cell value, using badges for enum fields and currency suffix for cost
+  /**
+   * renders a single table cell wrapped in a jsx element to maintain consistent return type (S3800)
+   *
+   * @param {object} order - visit/order object
+   * @param {string} field - field property path
+   * @returns {JSX.Element} formatted jsx cell content
+   */
   const renderCell = (order, field) => {
     const value = getNestedValue(order, field);
 
     if (BADGE_FIELDS.has(field)) {
-      return value ? <StatusBadge value={value} /> : "—";
+      return value ? <StatusBadge value={value} /> : <span>—</span>;
     }
     if (field === "offer.cost") {
-      return `${value} ${t("common.currency")}`;
+      return <span>{`${value} ${t("common.currency")}`}</span>;
     }
-    return value ?? "—";
+    return <span>{value ?? "—"}</span>;
   };
 
   if (isLoading) return <LoadingSpinner text={t("profile.loading")} />;

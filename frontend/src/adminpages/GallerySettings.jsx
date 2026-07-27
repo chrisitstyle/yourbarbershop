@@ -208,8 +208,9 @@ const GallerySettings = () => {
 
       {/* drag & drop upload zone with live preview of pending files */}
       <Container className="mt-4" style={{ maxWidth: "720px" }}>
-        <div
-          className={`gs-dropzone${isDragging ? " gs-dropzone--active" : ""}`}
+        <button
+          type="button"
+          className={`gs-dropzone w-100${isDragging ? " gs-dropzone--active" : ""}`}
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => {
             e.preventDefault();
@@ -217,12 +218,6 @@ const GallerySettings = () => {
           }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ")
-              fileInputRef.current?.click();
-          }}
         >
           <FontAwesomeIcon
             icon={faCloudArrowUp}
@@ -235,15 +230,15 @@ const GallerySettings = () => {
             )}
           </p>
           <small className="text-muted">PNG, JPG, JPEG</small>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png, image/jpeg, image/jpg"
-            multiple
-            hidden
-            onChange={handleFileInput}
-          />
-        </div>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png, image/jpeg, image/jpg"
+          multiple
+          hidden
+          onChange={handleFileInput}
+        />
 
         {/* thumbnails of files queued for upload */}
         {pendingFiles.length > 0 && (
@@ -338,15 +333,14 @@ const GallerySettings = () => {
         <Modal show={showModal} onHide={handleCloseModal} centered>
           <Modal.Header closeButton>
             <Modal.Title style={{ textAlign: "center", width: "100%" }}>
-              {selectedImage.name &&
-                selectedImage.name.slice(
-                  0,
-                  selectedImage.name.lastIndexOf("."),
-                )}
+              {selectedImage?.name?.slice(
+                0,
+                selectedImage.name.lastIndexOf("."),
+              )}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {selectedImage.name && (
+            {selectedImage?.name && (
               <img
                 src={CDNURL + "images/" + selectedImage.name}
                 alt={selectedImage.name}
