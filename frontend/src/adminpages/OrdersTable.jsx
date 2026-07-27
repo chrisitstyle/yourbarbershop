@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { Alert } from "react-bootstrap";
+import { toast } from "sonner";
 import useOrders from "../hooks/useOrders";
 import useTableData from "../hooks/useTableData";
 import useSortableData from "../hooks/useSortableData";
@@ -129,7 +130,23 @@ const OrdersTable = ({ onDeleteOrder }) => {
     askDelete: handleAskDelete,
     confirmDelete,
     isDeleting,
-  } = useDeleteModal((item) => onDeleteOrder(item.idOrder), refetch);
+  } = useDeleteModal(async (item) => {
+    try {
+      await onDeleteOrder(item.idOrder);
+      toast.success(
+        t("admin.messages.deleteOrderSuccess", "Pomyślnie usunięto wizytę."),
+      );
+    } catch (err) {
+      console.error("error deleting order:", err);
+      const errorMsg = err?.data || err?.message;
+
+      if (typeof errorMsg === "string" && errorMsg) {
+        toast.error(errorMsg);
+      } else {
+        toast.error(t("admin.messages.deleteOrderError"));
+      }
+    }
+  }, refetch);
 
   {
     /* handler */

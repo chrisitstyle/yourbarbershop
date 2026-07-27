@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { Alert } from "react-bootstrap";
+import { toast } from "sonner";
 import useOffers from "../hooks/useOffers";
 import useTableData from "../hooks/useTableData";
 import useSortableData from "../hooks/useSortableData";
@@ -94,7 +95,15 @@ const OffersTable = ({ onDeleteOffer }) => {
     itemToDelete: offerToDelete,
     askDelete: handleAskDelete,
     confirmDelete,
-  } = useDeleteModal((item) => onDeleteOffer(item.idOffer), refetch);
+  } = useDeleteModal(async (item) => {
+    try {
+      await onDeleteOffer(item.idOffer);
+      toast.success(t("admin.messages.deleteOfferSuccess"));
+    } catch (err) {
+      console.error("error deleting offer:", err);
+      toast.error(t("admin.messages.deleteOfferError"));
+    }
+  }, refetch);
 
   const handleEditClick = (offer) => {
     navigate(`/adminpanel/editoffer/${offer.idOffer}`, {

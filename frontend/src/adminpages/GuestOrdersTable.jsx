@@ -2,6 +2,7 @@ import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { toast } from "sonner";
 import useGuestOrders from "../hooks/useGuestOrders";
 import useTableData from "../hooks/useTableData";
 import useSortableData from "../hooks/useSortableData";
@@ -134,7 +135,26 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
     askDelete: handleAskDelete,
     confirmDelete,
     isDeleting,
-  } = useDeleteModal((item) => onDeleteGuestOrder(item.idGuestOrder), refetch);
+  } = useDeleteModal(async (item) => {
+    try {
+      await onDeleteGuestOrder(item.idGuestOrder);
+      toast.success(
+        t(
+          "admin.messages.deleteGuestOrderSuccess",
+          "Pomyślnie usunięto wizytę gościa.",
+        ),
+      );
+    } catch (err) {
+      console.error("error deleting guest order:", err);
+      const errorMsg = err?.data || err?.message;
+
+      if (typeof errorMsg === "string" && errorMsg) {
+        toast.error(errorMsg);
+      } else {
+        toast.error(t("admin.messages.deleteGuestOrderError"));
+      }
+    }
+  }, refetch);
 
   const handleEditClick = (guestOrder) => {
     navigate(`/adminpanel/editguestorder/${guestOrder.idGuestOrder}`, {

@@ -1,4 +1,6 @@
 import { Modal, Button, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { toast } from "sonner";
+import { sendCustomEmail } from "../api/emailService";
 import { useTranslation } from "react-i18next";
 
 const EmailMessageModal = ({
@@ -9,7 +11,6 @@ const EmailMessageModal = ({
   setEmailSubject,
   emailMessage,
   setEmailMessage,
-  handleEmailSend,
   resetEmailFields,
 }) => {
   const { t } = useTranslation();
@@ -20,6 +21,28 @@ const EmailMessageModal = ({
       {t("admin.emailModal.recipientTooltip")}
     </Tooltip>
   );
+
+  const handleEmailSend = async () => {
+    try {
+      await sendCustomEmail(emailTo, emailSubject, emailMessage);
+      toast.success(
+        t("admin.messages.emailSentSuccess", "Pomyślnie wysłano e-mail."),
+      );
+      handleClose();
+      resetEmailFields();
+    } catch (err) {
+      console.error("error sending email:", err);
+      const errorMsg = err?.data || err?.message;
+
+      if (typeof errorMsg === "string" && errorMsg) {
+        toast.error(errorMsg);
+      } else {
+        toast.error(
+          t("admin.messages.emailSentError", "Błąd podczas wysyłania e-maila."),
+        );
+      }
+    }
+  };
 
   return (
     <Modal

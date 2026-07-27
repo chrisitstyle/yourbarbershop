@@ -2,9 +2,9 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
-// dictionaries
+// translation dictionaries
 const resources = {
-  // PL
+  // polish translations
   pl: {
     translation: {
       admin: {
@@ -116,6 +116,7 @@ const resources = {
           deleteLabel: "obraz",
           messages: {
             deleteError: "Usuwanie obrazu nie powiodło się",
+            deleteSuccess: "Pomyślnie usunięto obraz.",
             noFileSelected: "Nie wybrano pliku",
             uploadingFile: "Przesyłanie pliku {{name}}...",
             uploadErrorFile: "Błąd podczas przesyłania pliku {{name}}",
@@ -126,14 +127,22 @@ const resources = {
         messages: {
           addOfferSuccess: "Pomyślnie dodano nową usługę.",
           addOfferError: "Wystąpił błąd podczas dodawania usługi.",
+          deleteOfferSuccess: "Pomyślnie usunięto usługę.",
           deleteOfferError: "Nie udało się usunąć usługi.",
           addUserSuccess: "Pomyślnie dodano nowego użytkownika.",
           addUserError: "Wystąpił błąd podczas dodawania użytkownika.",
+          deleteUserSuccess: "Pomyślnie usunięto użytkownika.",
           deleteUserError: "Wystąpił błąd podczas usuwania użytkownika.",
+          deleteSelfError: "Nie możesz usunąć własnego konta.",
+          deleteOrderSuccess: "Pomyślnie usunięto wizytę.",
           deleteOrderError: "Wystąpił błąd podczas usuwania wizyty.",
+          deleteGuestOrderSuccess: "Pomyślnie usunięto wizytę gościa.",
           deleteGuestOrderError:
             "Wystąpił błąd podczas usuwania wizyty gościa.",
           editError: "Błąd podczas edytowania. Spróbuj ponownie.",
+          editSuccess: "Pomyślnie zapisano zmiany.",
+          emailSentSuccess: "Pomyślnie wysłano e-mail.",
+          emailSentError: "Błąd podczas wysyłania e-maila.",
         },
         emailModal: {
           title: "Wyślij e-mail",
@@ -169,6 +178,7 @@ const resources = {
       auth: {
         loginHeader: "Logowanie",
         loginTitle: "Zaloguj się",
+        loginSuccess: "Pomyślnie zalogowano!",
         registerHeader: "Rejestracja konta",
         forgotPasswordHeader: "Resetowanie hasła",
         changePasswordHeader: "Zmiana hasła",
@@ -368,7 +378,7 @@ const resources = {
       },
     },
   },
-  // EN
+  // english translations
   en: {
     translation: {
       admin: {
@@ -480,6 +490,7 @@ const resources = {
           deleteLabel: "image",
           messages: {
             deleteError: "Image deletion failed",
+            deleteSuccess: "Image deleted successfully.",
             noFileSelected: "No file selected",
             uploadingFile: "Uploading file {{name}}...",
             uploadErrorFile: "Error uploading file {{name}}",
@@ -490,14 +501,22 @@ const resources = {
         messages: {
           addOfferSuccess: "Successfully added new service.",
           addOfferError: "Error occurred while adding the service.",
+          deleteOfferSuccess: "Successfully deleted service.",
           deleteOfferError: "Failed to delete the service.",
           addUserSuccess: "Successfully added new user.",
           addUserError: "Error occurred while adding the user.",
+          deleteUserSuccess: "Successfully deleted user.",
           deleteUserError: "Error occurred while deleting the user.",
+          deleteSelfError: "You cannot delete your own account.",
+          deleteOrderSuccess: "Successfully deleted appointment.",
           deleteOrderError: "Error occurred while deleting the appointment.",
+          deleteGuestOrderSuccess: "Successfully deleted guest appointment.",
           deleteGuestOrderError:
             "Error occurred while deleting the guest appointment.",
           editError: "Error occurred during editing. Please try again.",
+          editSuccess: "Changes saved successfully.",
+          emailSentSuccess: "Email sent successfully.",
+          emailSentError: "Error occurred while sending the email.",
         },
         emailModal: {
           title: "Send email",
@@ -533,6 +552,7 @@ const resources = {
       auth: {
         loginHeader: "Sign In",
         loginTitle: "Sign In",
+        loginSuccess: "Successfully logged in!",
         registerHeader: "Create Account",
         forgotPasswordHeader: "Reset Password",
         changePasswordHeader: "Change Password",
@@ -734,12 +754,12 @@ const resources = {
 
 i18n
   .use(LanguageDetector) // detects browser language
-  .use(initReactI18next) // integration with React
+  .use(initReactI18next) // passes i18n down to react-i18next
   .init({
     resources,
     fallbackLng: "en", // default language if detected is not supported
     interpolation: {
-      escapeValue: false, // react handles XSS security automatically
+      escapeValue: false, // react already protects from xss
     },
   });
 

@@ -3,7 +3,7 @@ import { apiRequest } from "./httpClient.js";
 
 export const addUser = async (newUser) => {
   try {
-    await apiRequest(`${API_BASE_URL}/register`, {
+    await apiRequest(`${API_BASE_URL}/users`, {
       method: "POST",
       data: newUser,
     });

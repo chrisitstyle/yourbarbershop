@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
 import Navbar from "./Navbar.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
@@ -42,6 +43,20 @@ function App() {
   return (
     <AuthProvider>
       <div className="App">
+        {/* global sonner notification container */}
+        <Toaster
+          theme={theme}
+          richColors
+          position="bottom-right"
+          closeButton
+          toastOptions={{
+            style: {
+              borderRadius: "6px",
+              fontSize: "0.9rem",
+            },
+          }}
+        />
+
         <Router>
           <Navbar theme={theme} onToggleTheme={handleToggleTheme} />
           <main>

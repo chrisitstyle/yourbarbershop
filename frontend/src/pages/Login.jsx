@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContextValue";
-import { Alert } from "react-bootstrap";
+import { toast } from "sonner";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { API_BASE_URL } from "../api/config";
 import GoogleIcon from "../components/common/GoogleIcon";
-import useAutoDismiss from "../hooks/useAutoDismiss";
 import { useTranslation } from "react-i18next";
 import EmailCodeLoginForm from "../components/auth/EmailCodeLoginForm";
 
@@ -22,10 +21,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
 
   const [loginMode, setLoginMode] = useState(LOGIN_MODE.PASSWORD);
-
-  const [successMessage, setSuccessMessage] = useAutoDismiss(null, 5000);
-  const [loginErrors, setLoginErrors] = useAutoDismiss(null, 6000);
-
   const [isLoading, setIsLoading] = useState(false);
 
   const location = useLocation();
@@ -35,8 +30,9 @@ const Login = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
+    // show success toast from location state if passed from navigation
     if (location.state?.message) {
-      setSuccessMessage(location.state.message);
+      toast.success(location.state.message);
 
       navigate(location.pathname, {
         replace: true,
@@ -46,33 +42,31 @@ const Login = () => {
       return;
     }
 
+    // handle query param after registration
     const searchParams = new URLSearchParams(location.search);
 
     if (searchParams.get("registrationSuccess")) {
-      setSuccessMessage(t("auth.successRegister"));
+      toast.success(t("auth.successRegister"));
 
       navigate(location.pathname, {
         replace: true,
       });
     }
-  }, [
-    location.pathname,
-    location.search,
-    location.state,
-    setSuccessMessage,
-    navigate,
-    t,
-  ]);
+  }, [location.pathname, location.search, location.state, navigate, t]);
 
   const getErrorMessages = (error) => {
-    if (error.response && error.response.data) {
-      const data = error.response.data;
+    // handle fetch/httpclient error format (error.data) as well as axios legacy (error.response?.data)
+    const data = error?.data || error?.response?.data;
 
+    if (data) {
       if (typeof data === "object") {
         return Object.values(data).flat().filter(Boolean).map(String);
       }
+      return [String(data)];
+    }
 
-      return [data];
+    if (error?.message) {
+      return [error.message];
     }
 
     return [t("validation.genericError")];
@@ -82,59 +76,31 @@ const Login = () => {
     event.preventDefault();
 
     setIsLoading(true);
-    setLoginErrors(null);
 
     try {
       await login(email, password);
+      toast.success(t("auth.loginSuccess") || t("auth.loginHeader"));
       navigate("/");
     } catch (error) {
-      setLoginErrors(getErrorMessages(error));
+      const errorMsgs = getErrorMessages(error);
+      errorMsgs.forEach((msg) => toast.error(msg));
     } finally {
       setIsLoading(false);
     }
   };
 
   const switchToEmailCodeLogin = () => {
-    setLoginErrors(null);
-    setSuccessMessage(null);
     setPassword("");
     setLoginMode(LOGIN_MODE.EMAIL_CODE);
   };
 
   const switchToPasswordLogin = () => {
-    setLoginErrors(null);
-    setSuccessMessage(null);
     setLoginMode(LOGIN_MODE.PASSWORD);
   };
 
   const renderPasswordLogin = () => (
     <form onSubmit={handleLogin}>
       <div className="mb-3">
-        {successMessage && (
-          <Alert
-            variant="success"
-            onClose={() => setSuccessMessage(null)}
-            dismissible
-            className="text-center"
-          >
-            {successMessage}
-          </Alert>
-        )}
-
-        {loginErrors && loginErrors.length > 0 && (
-          <Alert
-            variant="danger"
-            onClose={() => setLoginErrors(null)}
-            dismissible
-          >
-            <ul className="mb-0 ps-3 list-unstyled centered text-center">
-              {loginErrors.map((err, index) => (
-                <li key={index}>{err}</li>
-              ))}
-            </ul>
-          </Alert>
-        )}
-
         <label htmlFor="login" className="form-label">
           {t("auth.email")}
         </label>
