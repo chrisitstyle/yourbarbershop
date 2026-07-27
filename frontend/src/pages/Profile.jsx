@@ -10,6 +10,8 @@ import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
 import { getNestedValue } from "../utils/tableHelpers";
 import { useTranslation } from "react-i18next";
+import { StatusBadge } from "../components/common/StatusBadge";
+import "../adminpages/styles/AdminTables.css";
 
 const visitHeaders = [
   "profile.table.id",
@@ -32,6 +34,9 @@ const visitFields = [
   "paymentMethod",
   "paymentStatus",
 ];
+
+// enum fields render as colored badges instead of raw text
+const BADGE_FIELDS = new Set(["status", "paymentMethod", "paymentStatus"]);
 
 const Profile = () => {
   const { id } = useParams();
@@ -85,6 +90,25 @@ const Profile = () => {
     setCurrentPage(1);
   };
 
+  /**
+   * renders a single table cell wrapped in a jsx element to maintain consistent return type (S3800)
+   *
+   * @param {object} order - visit/order object
+   * @param {string} field - field property path
+   * @returns {JSX.Element} formatted jsx cell content
+   */
+  const renderCell = (order, field) => {
+    const value = getNestedValue(order, field);
+
+    if (BADGE_FIELDS.has(field)) {
+      return value ? <StatusBadge value={value} /> : <span>—</span>;
+    }
+    if (field === "offer.cost") {
+      return <span>{`${value} ${t("common.currency")}`}</span>;
+    }
+    return <span>{value ?? "—"}</span>;
+  };
+
   if (isLoading) return <LoadingSpinner text={t("profile.loading")} />;
 
   if (error) {
@@ -96,87 +120,85 @@ const Profile = () => {
   }
 
   return (
-    <div className="container my-5 py-4 text-center">
-      <div>
-        {showSuccessAlert && (
-          <Alert
-            variant="success"
-            className="text-center mx-auto"
-            style={{ maxWidth: 440 }}
-          >
-            {t("profile.successOrder")}
-          </Alert>
-        )}
-
-        <h2 className="mb-3">{t("profile.title")}</h2>
-        <div
-          className="mb-2"
-          style={{ fontWeight: "500", fontSize: "1.06rem" }}
+    <div className="container my-5 py-4">
+      {showSuccessAlert && (
+        <Alert
+          variant="success"
+          className="text-center mx-auto"
+          style={{ maxWidth: 440 }}
         >
-          {t("profile.loggedInAs") + " "}
-          <span className="fw-bold">
+          {t("profile.successOrder")}
+        </Alert>
+      )}
+
+      {/* profile header card */}
+      <div className="admin-panel-header text-center mb-4">
+        <h2 className="mb-3">{t("profile.title")}</h2>
+        <div className="d-inline-flex align-items-center gap-2 flex-wrap justify-content-center">
+          <span className="text-body-secondary">{t("profile.loggedInAs")}</span>
+          <span className="badge rounded-pill text-bg-dark fs-6 fw-semibold">
             {userDetails?.email ?? t("profile.noData")}
           </span>
         </div>
-        <div className="mb-4" style={{ color: "#666" }}>
+        <div className="mt-2 text-body-secondary">
           {(userDetails?.firstname ?? t("profile.defaultUser")) +
             t("profile.visitInfo")}
         </div>
+      </div>
 
-        {/* search box */}
+      {/* search box */}
+      <div className="mx-auto mb-3" style={{ maxWidth: "1100px" }}>
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
           placeholder={t("profile.searchPlaceholder")}
         />
-
-        {/* visits table */}
-        <div className="table-responsive">
-          <table
-            className="table table-bordered table-hover shadow rounded mx-auto"
-            style={{ maxWidth: "1100px" }}
-          >
-            <SortableTableHeader
-              headers={visitHeaders}
-              fields={visitFields}
-              sortConfig={sortConfig}
-              onSort={handleHeaderSort}
-            />
-
-            <tbody>
-              {currentData.length > 0 ? (
-                currentData.map((order) => (
-                  <tr key={order.idOrder}>
-                    {visitFields.map((field) => (
-                      <td key={field} className="align-middle text-center">
-                        {getNestedValue(order, field)}
-                        {field === "offer.cost"
-                          ? ` ${t("common.currency")}`
-                          : ""}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={visitFields.length} className="text-center py-4">
-                    <Alert variant="info" className="mb-0">
-                      {t("profile.noResults")}
-                    </Alert>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* pagination control */}
-        <PaginationControl
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
       </div>
+
+      {/* visits table (turns into stacked cards on mobile) */}
+      <div className="rtable-wrap mx-auto" style={{ maxWidth: "1100px" }}>
+        <table className="table table-hover align-middle rtable mb-0">
+          <SortableTableHeader
+            headers={visitHeaders}
+            fields={visitFields}
+            sortConfig={sortConfig}
+            onSort={handleHeaderSort}
+          />
+
+          <tbody>
+            {currentData.length > 0 ? (
+              currentData.map((order) => (
+                <tr key={order.idOrder}>
+                  {visitFields.map((field, i) => (
+                    <td
+                      key={field}
+                      className="text-center"
+                      data-label={t(visitHeaders[i])}
+                    >
+                      {renderCell(order, field)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={visitFields.length} className="text-center py-4">
+                  <Alert variant="info" className="mb-0">
+                    {t("profile.noResults")}
+                  </Alert>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* pagination control */}
+      <PaginationControl
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

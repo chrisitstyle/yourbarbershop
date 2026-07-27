@@ -1,0 +1,378 @@
+{
+  "enums": {
+    "NOWE": "Nowa",
+    "ZREALIZOWANE": "Zrealizowana",
+    "ANULOWANE": "Anulowana",
+
+    "USER": "Użytkownik",
+    "ADMIN": "Administrator",
+
+    "GOTOWKA": "Gotówka",
+    "KARTA_ONLINE": "Karta online",
+    "KARTA_NA_MIEJSCU": "Karta na miejscu",
+
+    "NIE_WYMAGANA": "Niewymagana",
+    "OCZEKUJE_NA_PLATNOSC": "Oczekuje na płatność",
+    "OPLACONA": "Opłacona",
+    "NIEUDANA": "Nieudana",
+    "WYGASLA": "Wygasła",
+    "ZWROCONA": "Zwrócona"
+  },
+  "admin": {
+    "panelTitle": "Panel administratora",
+    "panelDesc": "Zarządzaj głównymi funkcjami: użytkownikami, usługami, wizytami oraz galerią.",
+    "menu": {
+      "offers": "Usługi",
+      "users": "Użytkownicy",
+      "orders": "Wizyty",
+      "gallery": "Galeria"
+    },
+    "actions": {
+      "showOffers": "Pokaż usługi",
+      "addOffer": "Dodaj usługę",
+      "showUsers": "Pokaż użytkowników",
+      "addUser": "Dodaj użytkownika",
+      "showUserOrders": "Pokaż wizyty użytkowników",
+      "showGuestOrders": "Pokaż wizyty gości",
+      "gallerySettings": "Ustawienia galerii"
+    },
+    "common": {
+      "action": "Akcja",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "sendEmail": "Wyślij e-mail",
+      "noResults": "Brak wyników.",
+      "none": "brak",
+      "save": "Zapisz zmiany",
+      "add": "Dodaj",
+      "adding": "Dodawanie...",
+      "saving": "Zapisywanie...",
+      "loadingData": "Ładowanie danych...",
+      "noData": "Nie znaleziono danych.",
+      "status": "Wybierz status"
+    },
+    "users": {
+      "title": "Użytkownicy",
+      "addTitle": "Dodawanie użytkownika",
+      "editTitle": "Edycja użytkownika",
+      "loading": "Ładowanie użytkowników...",
+      "searchPlaceholder": "Szukaj użytkownika...",
+      "deleteLabel": "użytkownika",
+      "id": "Identyfikator użytkownika",
+      "firstname": "Imię",
+      "lastname": "Nazwisko",
+      "email": "E-mail",
+      "role": "Rola",
+      "roleUser": "Użytkownik",
+      "addBtn": "Dodaj użytkownika"
+    },
+    "orders": {
+      "title": "Wizyty użytkowników",
+      "editTitle": "Edycja wizyty o id {{id}}",
+      "loading": "Ładowanie zamówień...",
+      "searchPlaceholder": "Szukaj wizyty...",
+      "deleteLabel": "wizytę",
+      "id": "Identyfikator wizyty",
+      "firstname": "Imię",
+      "lastname": "Nazwisko",
+      "email": "Email",
+      "service": "Usługa",
+      "cost": "Koszt",
+      "orderDate": "Data zamówienia",
+      "visitDate": "Data wizyty",
+      "status": "Status",
+      "paymentMethod": "Metoda płatności",
+      "paymentStatus": "Status płatności"
+    },
+    "offers": {
+      "title": "Usługi",
+      "addTitle": "Dodawanie usługi",
+      "editTitle": "Edytowanie usługi",
+      "kind": "Rodzaj",
+      "cost": "Cena",
+      "loading": "Ładowanie usług...",
+      "searchPlaceholder": "Szukaj usługi...",
+      "deleteLabel": "usługę",
+      "id": "Identyfikator usługi",
+      "service": "Usługa"
+    },
+    "guestOrders": {
+      "title": "Wizyty gości",
+      "editTitle": "Edycja wizyty o id {{id}}",
+      "loading": "Ładowanie wizyt gości...",
+      "searchPlaceholder": "Szukaj wizyty...",
+      "deleteLabel": "wizytę gościa",
+      "id": "Identyfikator zamówienia",
+      "firstname": "Imię",
+      "lastname": "Nazwisko",
+      "phone": "Numer telefonu",
+      "email": "Email",
+      "service": "Usługa",
+      "cost": "Koszt",
+      "orderDate": "Data zamówienia",
+      "visitDate": "Data wizyty",
+      "status": "Status",
+      "paymentMethod": "Metoda płatności",
+      "paymentStatus": "Status płatności"
+    },
+    "gallery": {
+      "title": "Ustawienia galerii",
+      "imageName": "Nazwa obrazu",
+      "showPreview": "Pokaż podgląd obrazu",
+      "deleteImage": "Usuń obraz",
+      "uploadBtnTooltip": "Wgraj obraz(y)",
+      "searchPlaceholder": "Szukaj obrazu...",
+      "noImagesFound": "Nie znaleziono zdjęć",
+      "deleteLabel": "obraz",
+      "uploadBtn": "Wyślij",
+      "uploading": "Wysyłanie...",
+      "messages": {
+        "deleteError": "Usuwanie obrazu nie powiodło się",
+        "deleteSuccess": "Pomyślnie usunięto obraz.",
+        "noFileSelected": "Nie wybrano pliku",
+        "uploadingFile": "Przesyłanie pliku {{name}}...",
+        "uploadErrorFile": "Błąd podczas przesyłania pliku {{name}}",
+        "uploadSuccess": "Pomyślnie przesłano pliki!",
+        "uploadError": "Wystąpił błąd podczas przesyłania pliku"
+      }
+    },
+    "messages": {
+      "addOfferSuccess": "Pomyślnie dodano nową usługę.",
+      "addOfferError": "Wystąpił błąd podczas dodawania usługi.",
+      "deleteOfferSuccess": "Pomyślnie usunięto usługę.",
+      "deleteOfferError": "Nie udało się usunąć usługi.",
+      "addUserSuccess": "Pomyślnie dodano nowego użytkownika.",
+      "addUserError": "Wystąpił błąd podczas dodawania użytkownika.",
+      "deleteUserSuccess": "Pomyślnie usunięto użytkownika.",
+      "deleteUserError": "Wystąpił błąd podczas usuwania użytkownika.",
+      "deleteSelfError": "Nie możesz usunąć własnego konta.",
+      "deleteOrderSuccess": "Pomyślnie usunięto wizytę.",
+      "deleteOrderError": "Wystąpił błąd podczas usuwania wizyty.",
+      "deleteGuestOrderSuccess": "Pomyślnie usunięto wizytę gościa.",
+      "deleteGuestOrderError": "Wystąpił błąd podczas usuwania wizyty gościa.",
+      "editError": "Błąd podczas edytowania. Spróbuj ponownie.",
+      "editSuccess": "Pomyślnie zapisano zmiany.",
+      "emailSentSuccess": "Pomyślnie wysłano e-mail.",
+      "emailSentError": "Błąd podczas wysyłania e-maila."
+    },
+    "emailModal": {
+      "title": "Wyślij e-mail",
+      "recipientTooltip": "Adres e-mail odbiorcy, nie można edytować",
+      "to": "Do",
+      "subject": "Temat",
+      "subjectPlaceholder": "Temat",
+      "message": "Wiadomość",
+      "messagePlaceholder": "Wiadomość",
+      "maxChars": "Maks. 1200 znaków",
+      "send": "Wyślij"
+    },
+    "deleteModal": {
+      "title": "Potwierdzenie usunięcia",
+      "message": "Czy na pewno chcesz usunąć {{label}}: {{itemName}}?",
+      "cancel": "Anuluj"
+    }
+  },
+  "nav": {
+    "gallery": "Galeria",
+    "offers": "Nasza oferta",
+    "contact": "Kontakt",
+    "bookVisit": "Umów wizytę",
+    "account": "Konto",
+    "adminPanel": "Panel administratora",
+    "profile": "Twój profil",
+    "logout": "Wyloguj się",
+    "login": "Zaloguj się",
+    "register": "Utwórz konto",
+    "switchLight": "Włącz tryb jasny",
+    "switchDark": "Włącz tryb ciemny"
+  },
+  "auth": {
+    "loginHeader": "Logowanie",
+    "loginTitle": "Zaloguj się",
+    "loginSuccess": "Pomyślnie zalogowano!",
+    "registerHeader": "Rejestracja konta",
+    "forgotPasswordHeader": "Resetowanie hasła",
+    "changePasswordHeader": "Zmiana hasła",
+    "email": "Adres e-mail",
+    "password": "Hasło",
+    "newPassword": "Nowe hasło",
+    "confirmPassword": "Powtórz nowe hasło",
+    "firstname": "Imię",
+    "lastname": "Nazwisko",
+    "loginBtn": "Zaloguj",
+    "loginWithEmailCode": "Kontynuuj kodem z e-maila",
+    "loginWithEmailCodeHeader": "Logowanie kodem z e-maila",
+    "loginWithPassword": "Zaloguj hasłem",
+    "emailCodeSent": "Jeśli konto istnieje, kod logowania został wysłany na podany adres e-mail.",
+    "sendingCode": "Wysyłanie kodu...",
+    "continueBtn": "Kontynuuj",
+    "emailCodeInstruction": "Wpisz kod weryfikacyjny wysłany na",
+    "emailCode": "Kod",
+    "resendEmail": "Wyślij e-mail ponownie",
+    "useAnotherEmail": "Użyj innego adresu e-mail",
+    "registerBtn": "Załóż konto",
+    "changePasswordBtn": "Zmień hasło",
+    "forgotPassword": "Zapomniałem hasła",
+    "noAccount": "Nie masz konta?",
+    "hasAccount": "Masz konto?",
+    "registerLink": "Zarejestruj się",
+    "loginLink": "Zaloguj się",
+    "successRegister": "Konto zostało pomyślnie zarejestrowane. Zaloguj się.",
+    "registerError": "Nie udało się utworzyć konta. Jeśli masz już konto, spróbuj się zalogować albo zresetować hasło.",
+    "captchaRequired": "Proszę rozwiązać CAPTCHA!",
+    "githubSign": "Zaloguj przez Github",
+    "googleSign": "Zaloguj przez Google",
+    "loggingIn": "Logowanie...",
+    "registering": "Rejestracja...",
+    "saving": "Zapisywanie...",
+    "send": "Wyślij",
+    "sending": "Wysyłanie...",
+    "resetLinkSent": "Jeśli konto z tym adresem e-mail istnieje, link do resetowania hasła został wysłany.",
+    "checkEmailForResetLink": "Sprawdź skrzynkę mailową i kliknij link do resetowania hasła.",
+    "resetLinkNotArrived": "Link nie dotarł?",
+    "resendResetLink": "Wyślij link ponownie",
+    "resendingResetLink": "Ponowne wysyłanie...",
+    "resetLinkResent": "Jeśli konto z tym adresem e-mail istnieje, link resetujący został wysłany ponownie.",
+    "requestError": "Wystąpił błąd podczas wysyłania żądania.",
+    "missingToken": "Brak tokena resetowania hasła w URL.",
+    "invalidOrExpiredResetLink": "Link resetujący jest nieprawidłowy albo wygasł.",
+    "requestNewResetLinkInfo": "Poproś o nowy link resetujący i spróbuj ponownie.",
+    "requestNewResetLink": "Poproś o nowy link resetujący",
+    "passwordChangedSuccess": "Hasło zostało pomyślnie zmienione.",
+    "passwordChangedError": "Wystąpił błąd podczas zmiany hasła.",
+    "passwordsDoNotMatch": "Hasła nie są takie same."
+  },
+  "validation": {
+    "genericError": "Coś poszło nie tak. Spróbuj ponownie."
+  },
+  "home": {
+    "hero": {
+      "title": "Witaj w Naszym Barbershopie",
+      "lead": "Doświadcz najlepszych usług w dziedzinie pielęgnacji i obsługi klienta.",
+      "cta": "Umów się na wizytę"
+    },
+    "services": {
+      "title": "Nasze Usługi",
+      "haircut": "Strzyżenie",
+      "haircutDesc": "Profesjonalne i stylowe usługi strzyżenia.",
+      "beard": "Stylizacja brody",
+      "beardDesc": "Usługi wysokiej jakości w zakresie stylizacji brody.",
+      "facial": "Zabiegi na twarz",
+      "facialDesc": "Relaksujące i odmładzające zabiegi na twarz."
+    },
+    "barbers": {
+      "title": "Poznaj Naszych Barberów",
+      "marcinBio": "Doświadczony barber specjalizujący się w nowoczesnych i dostojnych stylizacjach.",
+      "monikaBio": "Ekspertka w dziedzinie pielęgnacji twarzy.",
+      "oskarBio": "Specjalizuje się w klasycznych strzyżeniach męskich i brodowych."
+    },
+    "promotions": {
+      "title": "Aktualne Promocje",
+      "combo": "Strzyżenie + zabieg na twarz",
+      "comboPrice": "Teraz tylko za 99 złotych!",
+      "discount": "Rabat dla stałych klientów",
+      "discountDesc": "Zyskaj 10% zniżki po pięciu wizytach!",
+      "products": "Promocja na produkty do pielęgnacji",
+      "productsDesc": "Kup dwa produkty, a trzeci otrzymasz gratis!"
+    }
+  },
+  "gallery": {
+    "title": "Nasze portfolio",
+    "lead": "Odkryj artystyczną i kreatywną pracę naszych utalentowanych barberów. Każde zdjęcie prezentuje precyzję i umiejętności, jakie wkładamy w każdą przemianę naszego klienta.",
+    "loading": "Ładowanie galerii..."
+  },
+  "offers": {
+    "loading": "Ładowanie usług...",
+    "title": "Nasza oferta",
+    "empty": "Brak usług w systemie.",
+    "lead": "Zapoznaj się z naszą szeroką ofertą. Nasi fryzjerzy zadbają o Twój wygląd i samopoczucie!",
+    "searchPlaceholder": "Szukaj usługi...",
+    "tableId": "Numer usługi",
+    "tableKind": "Rodzaj usługi",
+    "tablePrice": "Cena",
+    "noResults": "Nie znaleziono usług pasujących do wyszukiwania.",
+    "footerLead": "Nie zwlekaj - umów się na wizytę już dziś i poczuj się wyjątkowo!"
+  },
+  "orders": {
+    "registerTitle": "Umów wizytę",
+    "successMessage": "Udało się umówić wizytę!",
+    "errorMessage": "Błąd podczas umawiania wizyty. Spróbuj ponownie.",
+    "phoneNumber": "Numer telefonu",
+    "selectService": "Wybierz usługę",
+    "selectDate": "Wybierz datę",
+    "selectTime": "Wybierz godzinę",
+    "selectTimeFull": "Wybierz godzinę i minutę",
+    "loadingServices": "Ładowanie dostępnych usług...",
+    "registerBtn": "Umów wizytę",
+    "registeringOrder": "Rezerwowanie wizyty...",
+    "paymentMethod": "Metoda płatności",
+    "paymentCash": "Gotówka na miejscu",
+    "paymentCardOnSite": "Karta na miejscu",
+    "paymentCardOnline": "Karta online",
+    "guestSuccessTitle": "Rezerwacja potwierdzona",
+    "guestSuccessMessage": "Dziękujemy! Twoja wizyta została pomyślnie zarejestrowana. Szczegóły rezerwacji znajdziesz w wiadomości wysłanej na Twój adres e-mail."
+  },
+  "contact": {
+    "info": {
+      "title": "Dane kontaktowe",
+      "phone": "Telefon",
+      "email": "Email",
+      "address": "Adres",
+      "hoursTitle": "Godziny otwarcia",
+      "openNow": "Otwarte teraz",
+      "monFri": "Poniedziałek - Piątek:",
+      "sat": "Sobota:",
+      "sun": "Niedziela:",
+      "closed": "Zamknięte",
+      "country": ""
+    },
+    "page": {
+      "socials": "Jesteśmy dostępni również w mediach społecznościowych:",
+      "mapTitle": "Znajdź nas na mapie",
+      "mapIframeTitle": "Mapa"
+    }
+  },
+  "profile": {
+    "loading": "Ładowanie profilu...",
+    "successOrder": "Twoja wizyta została zarejestrowana",
+    "title": "Twój profil",
+    "loggedInAs": "Jesteś zalogowany jako",
+    "noData": "Brak danych",
+    "defaultUser": "Użytkownik",
+    "visitInfo": ", poniżej znajdują się wszystkie dotychczasowe wizyty",
+    "searchPlaceholder": "Szukaj wizyty...",
+    "noResults": "Brak wyników do wyświetlenia.",
+    "table": {
+      "id": "Identyfikator wizyty",
+      "service": "Usługa",
+      "cost": "Koszt",
+      "orderDate": "Data złożenia wizyty",
+      "visitDate": "Data wizyty",
+      "status": "Status",
+      "paymentMethod": "Metoda płatności",
+      "paymentStatus": "Status płatności"
+    }
+  },
+  "footer": {
+    "rights": "Wszelkie prawa zastrzeżone.",
+    "createdBy": "Projekt wykonany przez"
+  },
+  "notfound": {
+    "subtitle": "Nie znaleziono strony",
+    "text": "Przepraszamy, taka podstrona nie istnieje.",
+    "backHome": "Wróć na stronę główną"
+  },
+  "common": {
+    "close": "Zamknij",
+    "currency": "zł"
+  },
+  "payment": {
+    "successTitle": "Płatność zakończona sukcesem",
+    "successMessage": "Dziękujemy! Twoja płatność została przyjęta. Szczegóły rezerwacji zostały wysłane na adres e-mail.",
+    "cancelTitle": "Płatność nie została ukończona",
+    "cancelMessage": "Proces płatności został przerwany. Możesz wrócić i spróbować ponownie.",
+    "goToProfile": "Przejdź do profilu",
+    "goHome": "Wróć na stronę główną",
+    "tryAgain": "Spróbuj ponownie"
+  }
+}

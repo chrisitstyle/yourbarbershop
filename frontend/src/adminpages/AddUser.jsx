@@ -5,8 +5,8 @@ import ButtonSpinner from "../components/common/ButtonSpinner";
 import { useTranslation } from "react-i18next";
 
 const AddUser = ({ onSubmit }) => {
-  const [firstname, setFirstName] = useState("");
-  const [lastname, setLastName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("USER");
@@ -40,8 +40,8 @@ const AddUser = ({ onSubmit }) => {
     e.preventDefault();
 
     const newUser = {
-      firstname,
-      lastname,
+      firstname: firstName,
+      lastname: lastName,
       email,
       password,
       role,
@@ -64,7 +64,7 @@ const AddUser = ({ onSubmit }) => {
                 type="text"
                 className="form-control"
                 id="firstname"
-                value={firstname}
+                value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
                 disabled={addUserMutation.isPending}
@@ -79,7 +79,7 @@ const AddUser = ({ onSubmit }) => {
                 type="text"
                 className="form-control"
                 id="lastname"
-                value={lastname}
+                value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
                 disabled={addUserMutation.isPending}

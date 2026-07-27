@@ -1,9 +1,14 @@
-import { useState, memo, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSupabaseClient, CDNURL } from "../api/supabaseApi";
-import { Container, Table, Modal, Button, Form } from "react-bootstrap";
+import { Container, Modal, Button } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+  faTrashAlt,
+  faCloudArrowUp,
+  faXmark,
+  faImage,
+} from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import useTableData from "../hooks/useTableData";
 import useDeleteModal from "../hooks/useDeleteModal";
@@ -12,53 +17,14 @@ import PaginationControl from "../components/common/PaginationControl";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import { useTranslation } from "react-i18next";
-
-const imageFieldsHeaders = ["admin.gallery.imageName"];
-const imageFields = ["name"];
-
-const ImageRow = memo(function ImageRow({
-  image,
-  onImageClick,
-  onDelete,
-  isDeleting,
-}) {
-  const { t } = useTranslation();
-  return (
-    <tr key={image.name} style={{ cursor: "pointer" }}>
-      {imageFields.map((field) => (
-        <td
-          key={field}
-          onClick={() => onImageClick(image)}
-          title={t("admin.gallery.showPreview")}
-          className="align-middle text-center"
-        >
-          {image[field]}
-        </td>
-      ))}
-      <td className="align-middle text-center">
-        {/* delete button with tooltip */}
-        <ButtonSpinner
-          variant="danger"
-          size="sm"
-          title={t("admin.gallery.deleteImage")}
-          style={{ minWidth: "38px" }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(image);
-          }}
-          loading={isDeleting}
-          loadingText="" // no text during loading, just spinner because of small button size
-        >
-          <FontAwesomeIcon icon={faTrashAlt} />
-        </ButtonSpinner>
-      </td>
-    </tr>
-  );
-});
+import "./styles/GallerySettings.css";
 
 const GallerySettings = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
+  const [pendingFiles, setPendingFiles] = useState([]); // files chosen but not yet uploaded
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
   const supabase = useSupabaseClient();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -146,7 +112,16 @@ const GallerySettings = () => {
     setShowModal(false);
   };
 
-  // upload images sequentially, handle ui feedback and reset file input
+  // revoke object urls on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      pendingFiles.forEach((file) => {
+        if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+      });
+    };
+  }, [pendingFiles]);
+
+  // upload images sequentially, handle ui feedback and reset pending files
   const uploadImageMutation = useMutation({
     mutationFn: async (files) => {
       for (const file of files) {
@@ -169,9 +144,12 @@ const GallerySettings = () => {
     },
     onSuccess: () => {
       toast.success(t("admin.gallery.messages.uploadSuccess"));
-      const inputElement = document.getElementById("formFile");
-      if (inputElement) inputElement.value = null;
-
+      // revoke object urls to free memory before clearing pending files
+      pendingFiles.forEach((file) => {
+        if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+      });
+      setPendingFiles([]);
+      if (fileInputRef.current) fileInputRef.current.value = null;
       queryClient.invalidateQueries({ queryKey: ["galleryImages"] });
     },
     onError: (error) => {
@@ -180,51 +158,122 @@ const GallerySettings = () => {
     },
   });
 
-  const handleUploadImage = (e) => {
-    e.preventDefault();
-    const inputElement = document.getElementById("formFile");
-    const files = inputElement?.files;
+  // accept only supported image types
+  const isValidImage = (file) =>
+    ["image/png", "image/jpeg", "image/jpg"].includes(file.type);
 
-    if (!files || files.length === 0) {
+  // add newly chosen files to the pending preview list (from input or drop)
+  const addFiles = (fileList) => {
+    const valid = Array.from(fileList).filter(isValidImage);
+    if (valid.length === 0) {
       toast.error(t("admin.gallery.messages.noFileSelected"));
       return;
     }
+    // create and attach preview url to file object for easy rendering and revocation
+    const filesWithPreview = valid.map((file) =>
+      Object.assign(file, { previewUrl: URL.createObjectURL(file) }),
+    );
+    setPendingFiles((prev) => [...prev, ...filesWithPreview]);
+  };
 
-    uploadImageMutation.mutate(Array.from(files));
+  const handleFileInput = (e) => addFiles(e.target.files);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+  };
+
+  const removePendingFile = (index) => {
+    setPendingFiles((prev) => {
+      const fileToRemove = prev[index];
+      if (fileToRemove?.previewUrl) {
+        URL.revokeObjectURL(fileToRemove.previewUrl);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const handleUploadImage = () => {
+    if (pendingFiles.length === 0) {
+      toast.error(t("admin.gallery.messages.noFileSelected"));
+      return;
+    }
+    uploadImageMutation.mutate(pendingFiles);
   };
 
   return (
     <>
       <h2 className="text-center mt-4">{t("admin.gallery.title")}</h2>
 
-      {/* image upload form */}
-      <Container className="mt-5 d-flex flex-column align-items-center">
-        <Form className="mb-3 d-flex align-items-center">
-          {/* file input (multiple files) */}
-          <Form.Group controlId="formFile" className="mb-3 me-2">
-            <Form.Control
-              type="file"
-              accept="image/png, image/jpeg, image/jpg"
-              multiple
-            />
-          </Form.Group>
+      {/* drag & drop upload zone with live preview of pending files */}
+      <Container className="mt-4" style={{ maxWidth: "720px" }}>
+        <button
+          type="button"
+          className={`gs-dropzone w-100${isDragging ? " gs-dropzone--active" : ""}`}
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+        >
+          <FontAwesomeIcon
+            icon={faCloudArrowUp}
+            className="gs-dropzone__icon"
+          />
+          <p className="mb-0 fw-semibold">
+            {t(
+              "admin.gallery.dropzoneTitle",
+              "Przeciągnij zdjęcia lub kliknij, aby wybrać",
+            )}
+          </p>
+          <small className="text-muted">PNG, JPG, JPEG</small>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png, image/jpeg, image/jpg"
+          multiple
+          hidden
+          onChange={handleFileInput}
+        />
 
-          <Button
-            className="mb-3"
-            variant="primary"
-            onClick={handleUploadImage}
-            title={t("admin.gallery.uploadBtnTooltip")}
-            style={{ minWidth: "40px" }}
-            disabled={uploadImageMutation.isPending}
-          >
-            <FontAwesomeIcon icon={faPlus} style={{ color: "white" }} />
-          </Button>
-        </Form>
+        {/* thumbnails of files queued for upload */}
+        {pendingFiles.length > 0 && (
+          <div className="gs-pending mt-3">
+            <div className="gs-pending__grid">
+              {pendingFiles.map((file, i) => (
+                <div className="gs-pending__item" key={`${file.name}-${i}`}>
+                  <img src={file.previewUrl} alt={file.name} />
+                  <button
+                    type="button"
+                    className="gs-pending__remove"
+                    title={t("common.close")}
+                    onClick={() => removePendingFile(i)}
+                  >
+                    <FontAwesomeIcon icon={faXmark} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <ButtonSpinner
+              variant="primary"
+              className="mt-3"
+              onClick={handleUploadImage}
+              loading={uploadImageMutation.isPending}
+              loadingText={t("admin.gallery.uploading")}
+            >
+              <FontAwesomeIcon icon={faCloudArrowUp} className="me-2" />
+              {t("admin.gallery.uploadBtn")} ({pendingFiles.length})
+            </ButtonSpinner>
+          </div>
+        )}
       </Container>
 
-      {/* table with images and their actions */}
-      <Container className="text-center mt-4">
-        {/* search box */}
+      {/* existing images as a thumbnail grid with hover delete */}
+      <Container className="text-center mt-5">
         <SearchBox
           value={searchTerm}
           onChange={handleSearchChange}
@@ -232,47 +281,48 @@ const GallerySettings = () => {
         />
 
         {currentData.length > 0 ? (
-          <div
-            className="table-responsive mx-auto"
-            style={{ maxWidth: "500px" }}
-          >
-            <Table bordered hover size="sm" className="shadow rounded">
-              <thead className="table-dark">
-                <tr>
-                  {imageFieldsHeaders.map((header, idx) => (
-                    <th
-                      key={imageFields[idx]}
-                      scope="col"
-                      className="text-center align-middle"
-                    >
-                      {t(header)}
-                    </th>
-                  ))}
-                  <th scope="col" className="text-center align-middle">
-                    {t("admin.common.action")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentData.map((image) => (
-                  <ImageRow
-                    key={image.name}
-                    image={image}
-                    onImageClick={handleImageClick}
-                    onDelete={handleAskDeleteImage}
-                    isDeleting={
-                      isDeleting && imageToDelete?.name === image.name
-                    }
+          <div className="gs-grid mt-4">
+            {currentData.map((image) => (
+              <figure className="gs-card" key={image.name}>
+                <button
+                  type="button"
+                  className="gs-card__btn"
+                  title={t("admin.gallery.showPreview")}
+                  onClick={() => handleImageClick(image)}
+                >
+                  <img
+                    src={CDNURL + "images/" + image.name}
+                    alt={image.name}
+                    loading="lazy"
                   />
-                ))}
-              </tbody>
-            </Table>
+                </button>
+                <figcaption className="gs-card__name" title={image.name}>
+                  {image.name}
+                </figcaption>
+                <ButtonSpinner
+                  variant="danger"
+                  size="sm"
+                  className="gs-card__delete"
+                  title={t("admin.gallery.deleteImage")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAskDeleteImage(image);
+                  }}
+                  loading={isDeleting && imageToDelete?.name === image.name}
+                  loadingText=""
+                >
+                  <FontAwesomeIcon icon={faTrashAlt} />
+                </ButtonSpinner>
+              </figure>
+            ))}
           </div>
         ) : (
-          <h5 className="mt-5">{t("admin.gallery.noImagesFound")}</h5>
+          <div className="gs-empty mt-5">
+            <FontAwesomeIcon icon={faImage} className="gs-empty__icon" />
+            <h5 className="mt-3">{t("admin.gallery.noImagesFound")}</h5>
+          </div>
         )}
 
-        {/* pagination control */}
         <PaginationControl
           currentPage={currentPage}
           totalPages={totalPages}
@@ -283,15 +333,14 @@ const GallerySettings = () => {
         <Modal show={showModal} onHide={handleCloseModal} centered>
           <Modal.Header closeButton>
             <Modal.Title style={{ textAlign: "center", width: "100%" }}>
-              {selectedImage.name &&
-                selectedImage.name.slice(
-                  0,
-                  selectedImage.name.lastIndexOf("."),
-                )}
+              {selectedImage?.name?.slice(
+                0,
+                selectedImage.name.lastIndexOf("."),
+              )}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {selectedImage.name && (
+            {selectedImage?.name && (
               <img
                 src={CDNURL + "images/" + selectedImage.name}
                 alt={selectedImage.name}

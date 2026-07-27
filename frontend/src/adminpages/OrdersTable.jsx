@@ -14,7 +14,9 @@ import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
+import { StatusBadge } from "../components/common/StatusBadge";
 import { useTranslation } from "react-i18next";
+import "./styles/AdminTables.css";
 
 const orderFieldsHeaders = [
   "admin.orders.id",
@@ -44,6 +46,15 @@ const orderFields = [
   "paymentStatus",
 ];
 
+// fields that render as a colored pill instead of plain text
+const BADGE_FIELDS = new Set(["status", "paymentStatus"]);
+
+// map field -> header key so mobile cards can render a label per cell
+const fieldLabels = orderFields.reduce((acc, field, idx) => {
+  acc[field] = orderFieldsHeaders[idx];
+  return acc;
+}, {});
+
 const OrderRow = memo(function OrderRow({
   order,
   onEdit,
@@ -54,13 +65,26 @@ const OrderRow = memo(function OrderRow({
 
   return (
     <tr>
-      {orderFields.map((field) => (
-        <td key={field} className="align-middle text-center">
-          {getNestedValue(order, field)}
-          {field === "offer.cost" ? ` ${t("common.currency")}` : ""}
-        </td>
-      ))}
-      <td className="align-middle text-center">
+      {orderFields.map((field) => {
+        const value = getNestedValue(order, field);
+        return (
+          <td
+            key={field}
+            data-label={t(fieldLabels[field])}
+            className="align-middle text-center"
+          >
+            {BADGE_FIELDS.has(field) ? (
+              <StatusBadge value={value} />
+            ) : (
+              <>
+                {value}
+                {field === "offer.cost" ? ` ${t("common.currency")}` : ""}
+              </>
+            )}
+          </td>
+        );
+      })}
+      <td className="align-middle text-center rtable-actions">
         <div className="d-flex justify-content-center">
           <button
             className="btn btn-warning btn-sm me-2"
@@ -148,9 +172,6 @@ const OrdersTable = ({ onDeleteOrder }) => {
     }
   }, refetch);
 
-  {
-    /* handler */
-  }
   const handleEditClick = (order) => {
     navigate(`/adminpanel/editorder/${order.idOrder}`, {
       state: { orderData: order },
@@ -172,12 +193,9 @@ const OrdersTable = ({ onDeleteOrder }) => {
         placeholder={t("admin.orders.searchPlaceholder")}
       />
 
-      {/* table */}
-      <div className="table-responsive">
-        <table
-          className="table table-bordered table-hover shadow rounded mx-auto"
-          style={{ maxWidth: "1100px" }}
-        >
+      {/* table (rtable-wrap + rtable enable the responsive card view) */}
+      <div className="rtable-wrap mx-auto" style={{ maxWidth: "1100px" }}>
+        <table className="table table-hover align-middle rtable mb-0">
           <SortableTableHeader
             headers={orderFieldsHeaders}
             fields={orderFields}
@@ -206,7 +224,7 @@ const OrdersTable = ({ onDeleteOrder }) => {
               <tr>
                 <td
                   colSpan={orderFields.length + 1}
-                  className="text-center py-4"
+                  className="text-center py-4 rtable-empty"
                 >
                   <Alert variant="info" className="mb-0">
                     {t("admin.common.noResults")}

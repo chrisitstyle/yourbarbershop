@@ -1,6 +1,7 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./auth/AuthContextValue";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Menu, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./components/common/LanguageSwitcher";
 import "./css/Navbar.css";
@@ -8,9 +9,46 @@ import "./css/Navbar.css";
 const Navbar = ({ theme, onToggleTheme }) => {
   const { isLoggedIn, logout, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const accountRef = useRef(null);
+
+  const isAdmin = user?.role === "ADMIN";
+  const isUser = user?.role === "USER";
+
+  // close everything whenever the route changes (fixes the mobile "menu stays open" bug)
+  useEffect(() => {
+    setIsMenuOpen(false);
+    setIsAccountOpen(false);
+  }, [location.pathname]);
+
+  // close the account dropdown on outside click / Escape
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (accountRef.current && !accountRef.current.contains(event.target)) {
+        setIsAccountOpen(false);
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsAccountOpen(false);
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const handleLogout = async () => {
+    setIsAccountOpen(false);
+    setIsMenuOpen(false);
     await logout();
     navigate("/login");
   };
@@ -20,11 +58,6 @@ const Navbar = ({ theme, onToggleTheme }) => {
 
   const getDropdownLinkClass = ({ isActive }) =>
     `dropdown-item app-dropdown-link${isActive ? " active" : ""}`;
-
-  const isAdmin = user?.role === "ADMIN";
-  const isUser = user?.role === "USER";
-
-  const bookingPath = isUser ? "/registerorder" : "/registerorder";
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark app-navbar">
@@ -36,16 +69,24 @@ const Navbar = ({ theme, onToggleTheme }) => {
         <button
           className="navbar-toggler app-navbar-toggler"
           type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNavDropdown"
           aria-controls="navbarNavDropdown"
-          aria-expanded="false"
+          aria-expanded={isMenuOpen}
           aria-label={t("nav.toggleNavigation")}
+          onClick={() => setIsMenuOpen((open) => !open)}
         >
-          <span className="navbar-toggler-icon" />
+          {isMenuOpen ? (
+            <X size={22} aria-hidden="true" />
+          ) : (
+            <Menu size={22} aria-hidden="true" />
+          )}
         </button>
 
-        <div className="collapse navbar-collapse" id="navbarNavDropdown">
+        <div
+          className={`navbar-collapse app-navbar-collapse${
+            isMenuOpen ? " show" : ""
+          }`}
+          id="navbarNavDropdown"
+        >
           {/* Main navigation links */}
           <ul className="navbar-nav app-navbar-main">
             <li className="nav-item">
@@ -69,7 +110,7 @@ const Navbar = ({ theme, onToggleTheme }) => {
             {/* Visible only for users and unauthenticated visitors */}
             {!isAdmin && (
               <li className="nav-item">
-                <NavLink className={getMainNavLinkClass} to={bookingPath}>
+                <NavLink className={getMainNavLinkClass} to="/registerorder">
                   {t("nav.bookVisit")}
                 </NavLink>
               </li>
@@ -78,17 +119,24 @@ const Navbar = ({ theme, onToggleTheme }) => {
 
           {/* Account navigation */}
           <ul className="navbar-nav ms-lg-auto app-navbar-actions">
-            <li className="nav-item dropdown app-navbar-account">
+            <li
+              className="nav-item dropdown app-navbar-account"
+              ref={accountRef}
+            >
               <button
                 className="nav-link dropdown-toggle custom-nav-link app-account-button"
                 type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
+                aria-expanded={isAccountOpen}
+                onClick={() => setIsAccountOpen((open) => !open)}
               >
                 {t("nav.account")}
               </button>
 
-              <ul className="dropdown-menu dropdown-menu-lg-end app-account-menu">
+              <ul
+                className={`dropdown-menu dropdown-menu-lg-end app-account-menu${
+                  isAccountOpen ? " show" : ""
+                }`}
+              >
                 {isLoggedIn ? (
                   <>
                     {isAdmin && (
