@@ -2,9 +2,14 @@ package pl.barbershopproject.barbershop.guestorder;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
+import pl.barbershopproject.barbershop.audit.enums.ActionType;
+import pl.barbershopproject.barbershop.audit.enums.EntityType;
+import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
@@ -54,6 +59,15 @@ class GuestOrderService {
                 .build();
 
         Payment savedPayment = paymentRepository.save(paymentToSave);
+
+        eventPublisher.publishEvent(new AuditEvent(
+                savedGuestOrder.getEmail(),
+               ActionType.GUEST_ORDER_CREATED,
+                EntityType.GUEST_ORDER,
+                String.valueOf(savedGuestOrder.getIdGuestOrder()),
+                String.format("{\"offerKind\":\"%s\", \"cost\":%s, \"visitDate\":\"%s\"}",
+                        offer.getKind(), offer.getCost(), savedGuestOrder.getVisitDate())
+        ));
 
         if (savedPayment.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
             StripeCheckoutSessionResponse checkoutSession = stripeCheckoutService.createCheckoutSession(
@@ -119,6 +133,8 @@ class GuestOrderService {
                 targetStatus
         );
 
+        Status oldStatus = existingOrder.getStatus();
+
         existingOrder.setFirstname(updatedGuestOrder.firstname());
         existingOrder.setLastname(updatedGuestOrder.lastname());
         existingOrder.setPhonenumber(updatedGuestOrder.phonenumber());
@@ -128,6 +144,15 @@ class GuestOrderService {
         existingOrder.setStatus(targetStatus);
 
         GuestOrder savedOrder = guestOrderRepository.save(existingOrder);
+
+        eventPublisher.publishEvent(new AuditEvent(
+                getActorEmailSafely(),
+              ActionType.GUEST_ORDER_UPDATED,
+                EntityType.GUEST_ORDER,
+                String.valueOf(idGuestOrder),
+                String.format("{\"oldStatus\":\"%s\", \"newStatus\":\"%s\", \"visitDate\":\"%s\"}",
+                        oldStatus, targetStatus, updatedGuestOrder.visitDate())
+        ));
 
         return GuestOrderDTOMapper.toDTO(savedOrder);
     }
@@ -140,6 +165,14 @@ class GuestOrderService {
         appointmentAvailabilityService.releaseIfReserved(guestOrder.getVisitDate(), guestOrder.getStatus());
 
         guestOrderRepository.delete(guestOrder);
+
+        eventPublisher.publishEvent(new AuditEvent(
+                getActorEmailSafely(),
+             ActionType.GUEST_ORDER_DELETED,
+                EntityType.GUEST_ORDER,
+                String.valueOf(idGuestOrder),
+                null
+        ));
     }
 
     private void publishOrderCreatedEvent(GuestOrder guestOrder, Payment payment) {
@@ -152,5 +185,13 @@ class GuestOrderService {
                 payment.getPaymentMethod(),
                 payment.getPaymentStatus()
         ));
+    }
+
+    private String getActorEmailSafely() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+            return authentication.getName();
+        }
+        return "SYSTEM";
     }
 }

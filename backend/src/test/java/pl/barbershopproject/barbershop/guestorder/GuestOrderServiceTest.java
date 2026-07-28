@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
+import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
@@ -99,6 +100,7 @@ class GuestOrderServiceTest {
         verify(paymentRepository, times(1)).save(any(Payment.class));
         verify(eventPublisher, times(1)).publishEvent(any(OrderCreatedEvent.class));
         verifyNoInteractions(stripeCheckoutService);
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
     @Test
@@ -231,6 +233,7 @@ class GuestOrderServiceTest {
                 targetStatus
         );
         verify(guestOrderRepository, times(1)).save(guestOrder);
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
     @Test
@@ -316,6 +319,7 @@ class GuestOrderServiceTest {
         verify(guestOrderRepository, times(1)).findById(1L);
         verify(appointmentAvailabilityService, times(1)).releaseIfReserved(visitDate, status);
         verify(guestOrderRepository, times(1)).delete(guestOrder);
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
     @Test

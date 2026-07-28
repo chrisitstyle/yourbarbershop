@@ -4,9 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
+import pl.barbershopproject.barbershop.audit.enums.ActionType;
+import pl.barbershopproject.barbershop.audit.enums.EntityType;
+import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
@@ -63,6 +68,15 @@ class OrderService {
                 .build();
 
         Payment savedPayment = paymentRepository.save(paymentToSave);
+
+        eventPublisher.publishEvent(new AuditEvent(
+                user.getEmail(),
+                ActionType.ORDER_CREATED,
+                EntityType.ORDER,
+                String.valueOf(savedOrder.getIdOrder()),
+                String.format("{\"offerKind\":\"%s\", \"cost\":%s, \"visitDate\":\"%s\"}",
+                        offer.getKind(), offer.getCost(), savedOrder.getVisitDate())
+        ));
 
         if (savedPayment.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
             StripeCheckoutSessionResponse checkoutSession = stripeCheckoutService.createCheckoutSession(
@@ -137,11 +151,22 @@ class OrderService {
                 targetStatus
         );
 
+        Status oldStatus = existingOrder.getStatus();
+
         existingOrder.setOffer(offer);
         existingOrder.setVisitDate(updatedOrder.visitDate());
         existingOrder.setStatus(targetStatus);
 
         Order savedOrder = orderRepository.save(existingOrder);
+
+        eventPublisher.publishEvent(new AuditEvent(
+                getActorEmailSafely(),
+              ActionType.ORDER_UPDATED,
+             EntityType.ORDER,
+                String.valueOf(idOrder),
+                String.format("{\"oldStatus\":\"%s\", \"newStatus\":\"%s\", \"visitDate\":\"%s\"}",
+                        oldStatus, targetStatus, updatedOrder.visitDate())
+        ));
 
         return OrderDTOMapper.toDTO(savedOrder);
     }
@@ -155,6 +180,14 @@ class OrderService {
         appointmentAvailabilityService.releaseIfReserved(order.getVisitDate(), order.getStatus());
 
         orderRepository.delete(order);
+
+        eventPublisher.publishEvent(new AuditEvent(
+                getActorEmailSafely(),
+            ActionType.ORDER_DELETED,
+                EntityType.ORDER,
+                String.valueOf(idOrder),
+                null
+        ));
     }
 
     private NoSuchElementException offerNotFoundException(Long idOffer) {
@@ -175,5 +208,13 @@ class OrderService {
                 payment.getPaymentMethod(),
                 payment.getPaymentStatus()
         ));
+    }
+
+    private String getActorEmailSafely() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+            return authentication.getName();
+        }
+        return "SYSTEM";
     }
 }

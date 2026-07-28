@@ -25,7 +25,8 @@
       "offers": "Services",
       "users": "Users",
       "orders": "Appointments",
-      "gallery": "Gallery"
+      "gallery": "Gallery",
+      "audit": "System"
     },
     "actions": {
       "showOffers": "Show services",
@@ -34,7 +35,21 @@
       "addUser": "Add user",
       "showUserOrders": "Show user appointments",
       "showGuestOrders": "Show guest appointments",
-      "gallerySettings": "Gallery settings"
+      "gallerySettings": "Gallery settings",
+      "showAudit": "Audit Logs"
+    },
+    "audit": {
+      "title": "System Audit Logs",
+      "loading": "Loading audit logs...",
+      "searchPlaceholder": "Search history...",
+      "id": "ID",
+      "timestamp": "Date",
+      "actor": "Actor",
+      "action": "Action",
+      "entityType": "Module",
+      "entityId": "Entity ID",
+      "details": "Details",
+      "modalTitle": "Change Details"
     },
     "common": {
       "action": "Action",

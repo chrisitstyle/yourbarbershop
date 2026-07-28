@@ -7,11 +7,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.SelfDeletionException;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
@@ -25,6 +27,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,6 +45,9 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private UserService userService;
@@ -79,6 +86,7 @@ class UserServiceTest {
         assertEquals(userResponseDTO.email(), result.email());
 
         verify(userRepository).existsByEmail(userCreationDTO.email());
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
     @Test
@@ -89,6 +97,8 @@ class UserServiceTest {
                 EmailAlreadyExistsException.class,
                 () -> userService.addUser(userCreationDTO)
         );
+
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -144,6 +154,7 @@ class UserServiceTest {
 
         verify(userRepository).findById(1L);
         verify(userRepository).save(user);
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
         verify(passwordEncoder, never()).encode(anyString());
     }
 
@@ -160,6 +171,7 @@ class UserServiceTest {
 
         verify(userRepository, times(1)).findById(nonExistingId);
         verify(userRepository, never()).save(any(User.class));
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -170,6 +182,8 @@ class UserServiceTest {
                 SelfDeletionException.class,
                 () -> userService.deleteUserById(1L)
         );
+
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -182,8 +196,8 @@ class UserServiceTest {
         userService.deleteUserById(2L);
 
         verify(userRepository).deleteById(2L);
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
-
 
     private void mockSecurityContext(User user) {
         when(securityContext.getAuthentication()).thenReturn(authentication);

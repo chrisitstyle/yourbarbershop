@@ -7,24 +7,41 @@
  * @type {Record<string, string>}
  */
 const TONE_MAP = {
-  // status (appointment lifecycle)
+  // Status (appointment lifecycle)
   NOWE: "info",
   ZREALIZOWANE: "success",
   ANULOWANE: "danger",
-  // role
+  // Role
   USER: "primary",
   ADMIN: "danger",
-  // payment method
+  // PaymentMethod
   GOTOWKA: "secondary",
   KARTA_ONLINE: "info",
   KARTA_NA_MIEJSCU: "secondary",
-  // payment status
+  // PaymentStatus
   NIE_WYMAGANA: "secondary",
   OCZEKUJE_NA_PLATNOSC: "warning",
   OPLACONA: "success",
   NIEUDANA: "danger",
   WYGASLA: "dark",
   ZWROCONA: "info",
+  // ActionType (audit log actions)
+  ORDER_CREATED: "success",
+  ORDER_UPDATED: "info",
+  ORDER_DELETED: "danger",
+  GUEST_ORDER_CREATED: "success",
+  GUEST_ORDER_UPDATED: "info",
+  GUEST_ORDER_DELETED: "danger",
+  OFFER_CREATED: "success",
+  OFFER_UPDATED: "info",
+  OFFER_DELETED: "danger",
+  USER_CREATED: "success",
+  USER_UPDATED: "info",
+  USER_DELETED: "danger",
+  // EntityType (audit log entity types)
+  ORDER: "info",
+  GUEST_ORDER: "secondary",
+  OFFER: "warning",
 };
 
 /**
