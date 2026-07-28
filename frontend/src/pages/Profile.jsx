@@ -1,6 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { Alert } from "react-bootstrap";
+import { Alert, Badge } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCalendarCheck,
+  faCircleCheck,
+  faCircleXmark,
+  faCalendarDays,
+  faUserCircle,
+  faInbox,
+} from "@fortawesome/free-solid-svg-icons";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import useUserDetails from "../hooks/useUserDetails";
 import useTableData from "../hooks/useTableData";
@@ -60,16 +69,37 @@ const Profile = () => {
   }, [showSuccessAlert]);
 
   const filterVisits = (order, term) => {
+    const statusText = order.status ? t(`enums.${order.status}`) : "";
+    const paymentMethodText = order.paymentMethod
+      ? t(`enums.${order.paymentMethod}`)
+      : "";
+    const paymentStatusText = order.paymentStatus
+      ? t(`enums.${order.paymentStatus}`)
+      : "";
+
     return `${order.idOrder} ${order.offer?.kind || ""} ${
       order.offer?.cost || ""
-    } ${order.orderDate} ${order.visitDate} ${order.status} ${
+    } ${order.orderDate} ${order.visitDate} ${order.status} ${statusText} ${
       order.paymentMethod || ""
-    } ${order.paymentStatus || ""}`
+    } ${paymentMethodText} ${order.paymentStatus || ""} ${paymentStatusText}`
       .toLowerCase()
       .includes(term.toLowerCase());
   };
 
-  const safeOrders = userDetails?.userOrders || [];
+  const safeOrders = useMemo(
+    () => userDetails?.userOrders || [],
+    [userDetails?.userOrders],
+  );
+
+  // derive quick stats from all orders (not just current page)
+  const stats = useMemo(() => {
+    const completed = safeOrders.filter(
+      (o) => o.status === "ZREALIZOWANE",
+    ).length;
+    const cancelled = safeOrders.filter((o) => o.status === "ANULOWANE").length;
+    const upcoming = safeOrders.filter((o) => o.status === "NOWE").length;
+    return { total: safeOrders.length, completed, cancelled, upcoming };
+  }, [safeOrders]);
 
   const { sortedData, sortConfig, handleSort } = useSortableData(safeOrders, {
     field: "visitDate",
@@ -101,12 +131,12 @@ const Profile = () => {
     const value = getNestedValue(order, field);
 
     if (BADGE_FIELDS.has(field)) {
-      return value ? <StatusBadge value={value} /> : <span>—</span>;
+      return value ? <StatusBadge value={value} /> : "—";
     }
     if (field === "offer.cost") {
-      return <span>{`${value} ${t("common.currency")}`}</span>;
+      return `${value} ${t("common.currency")}`;
     }
-    return <span>{value ?? "—"}</span>;
+    return value ?? "—";
   };
 
   if (isLoading) return <LoadingSpinner text={t("profile.loading")} />;
@@ -132,17 +162,69 @@ const Profile = () => {
       )}
 
       {/* profile header card */}
-      <div className="admin-panel-header text-center mb-4">
-        <h2 className="mb-3">{t("profile.title")}</h2>
-        <div className="d-inline-flex align-items-center gap-2 flex-wrap justify-content-center">
-          <span className="text-body-secondary">{t("profile.loggedInAs")}</span>
-          <span className="badge rounded-pill text-bg-dark fs-6 fw-semibold">
-            {userDetails?.email ?? t("profile.noData")}
-          </span>
+      <div className="text-center mb-5">
+        {/* avatar circle with initials */}
+        <div
+          className="d-inline-flex align-items-center justify-content-center rounded-circle bg-body-secondary mb-3"
+          style={{ width: 80, height: 80 }}
+          aria-hidden="true"
+        >
+          <FontAwesomeIcon
+            icon={faUserCircle}
+            size="3x"
+            className="text-body-tertiary"
+          />
         </div>
-        <div className="mt-2 text-body-secondary">
+        <h2 className="fw-bold mb-1">{t("profile.title")}</h2>
+        <div className="d-inline-flex align-items-center gap-2 flex-wrap justify-content-center mb-1">
+          <span className="text-body-secondary">{t("profile.loggedInAs")}</span>
+          <Badge pill bg="dark" className="fs-6 fw-semibold">
+            {userDetails?.email ?? t("profile.noData")}
+          </Badge>
+        </div>
+        <p className="text-body-secondary mb-4">
           {(userDetails?.firstname ?? t("profile.defaultUser")) +
             t("profile.visitInfo")}
+        </p>
+
+        {/* quick stats row */}
+        <div className="d-flex flex-wrap justify-content-center gap-3 mb-2">
+          <div className="d-flex align-items-center gap-2 px-4 py-3 rounded-3 bg-body-secondary">
+            <FontAwesomeIcon icon={faCalendarCheck} className="text-info" />
+            <div className="text-start">
+              <div className="fw-bold lh-1">{stats.total}</div>
+              <div className="small text-body-secondary">
+                {t("profile.stats.total")}
+              </div>
+            </div>
+          </div>
+          <div className="d-flex align-items-center gap-2 px-4 py-3 rounded-3 bg-body-secondary">
+            <FontAwesomeIcon icon={faCircleCheck} className="text-success" />
+            <div className="text-start">
+              <div className="fw-bold lh-1">{stats.completed}</div>
+              <div className="small text-body-secondary">
+                {t("profile.stats.completed")}
+              </div>
+            </div>
+          </div>
+          <div className="d-flex align-items-center gap-2 px-4 py-3 rounded-3 bg-body-secondary">
+            <FontAwesomeIcon icon={faCalendarDays} className="text-primary" />
+            <div className="text-start">
+              <div className="fw-bold lh-1">{stats.upcoming}</div>
+              <div className="small text-body-secondary">
+                {t("profile.stats.upcoming")}
+              </div>
+            </div>
+          </div>
+          <div className="d-flex align-items-center gap-2 px-4 py-3 rounded-3 bg-body-secondary">
+            <FontAwesomeIcon icon={faCircleXmark} className="text-danger" />
+            <div className="text-start">
+              <div className="fw-bold lh-1">{stats.cancelled}</div>
+              <div className="small text-body-secondary">
+                {t("profile.stats.cancelled")}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -182,10 +264,11 @@ const Profile = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={visitFields.length} className="text-center py-4">
-                  <Alert variant="info" className="mb-0">
-                    {t("profile.noResults")}
-                  </Alert>
+                <td colSpan={visitFields.length} className="py-5 rtable-empty">
+                  <div className="d-flex flex-column align-items-center gap-2 text-body-secondary">
+                    <FontAwesomeIcon icon={faInbox} size="2x" />
+                    <span>{t("profile.noResults")}</span>
+                  </div>
                 </td>
               </tr>
             )}

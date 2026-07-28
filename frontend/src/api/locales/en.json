@@ -357,6 +357,12 @@
     "visitInfo": ", below are all your past visits",
     "searchPlaceholder": "Search for a visit...",
     "noResults": "No results to display.",
+    "stats": {
+      "total": "Total",
+      "completed": "Completed",
+      "upcoming": "Upcoming",
+      "cancelled": "Cancelled"
+    },
     "table": {
       "id": "Visit ID",
       "service": "Service",
@@ -369,8 +375,24 @@
     }
   },
   "footer": {
+    "tagline": "Professional haircutting and beard grooming in the heart of the city.",
+    "socialMedia": "Social media",
+    "nav": {
+      "title": "Navigation",
+      "home": "Home",
+      "offer": "Offers",
+      "gallery": "Gallery",
+      "book": "Booking"
+    },
+    "contact": {
+      "title": "Contact",
+      "address": "1 Sample Street, Warsaw",
+      "phone": "+48 000 000 000",
+      "email": "kontakt@yourbarbershop.pl",
+      "hours": "Mon-Sat: 9:00 AM - 8:00 PM"
+    },
     "rights": "All rights reserved.",
-    "createdBy": "Project created by"
+    "createdBy": "Created by"
   },
   "notfound": {
     "subtitle": "Page Not Found",
