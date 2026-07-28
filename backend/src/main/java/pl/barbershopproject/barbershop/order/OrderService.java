@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
@@ -23,12 +21,14 @@ import pl.barbershopproject.barbershop.order.mapper.OrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
 import pl.barbershopproject.barbershop.payment.*;
 import pl.barbershopproject.barbershop.user.User;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailSafely;
 
 @Service
 @RequiredArgsConstructor
@@ -161,8 +161,8 @@ class OrderService {
 
         eventPublisher.publishEvent(new AuditEvent(
                 getActorEmailSafely(),
-              ActionType.ORDER_UPDATED,
-             EntityType.ORDER,
+                ActionType.ORDER_UPDATED,
+                EntityType.ORDER,
                 String.valueOf(idOrder),
                 String.format("{\"oldStatus\":\"%s\", \"newStatus\":\"%s\", \"visitDate\":\"%s\"}",
                         oldStatus, targetStatus, updatedOrder.visitDate())
@@ -183,7 +183,7 @@ class OrderService {
 
         eventPublisher.publishEvent(new AuditEvent(
                 getActorEmailSafely(),
-            ActionType.ORDER_DELETED,
+                ActionType.ORDER_DELETED,
                 EntityType.ORDER,
                 String.valueOf(idOrder),
                 null
@@ -210,11 +210,5 @@ class OrderService {
         ));
     }
 
-    private String getActorEmailSafely() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
-            return authentication.getName();
-        }
-        return "SYSTEM";
-    }
+
 }

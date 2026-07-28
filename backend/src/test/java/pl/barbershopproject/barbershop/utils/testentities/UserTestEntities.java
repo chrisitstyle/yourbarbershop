@@ -6,7 +6,7 @@ import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.dto.*;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 
 import java.time.LocalDateTime;
 import java.time.Month;

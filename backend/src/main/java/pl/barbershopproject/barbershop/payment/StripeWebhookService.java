@@ -8,7 +8,7 @@ import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityServic
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 

@@ -8,7 +8,7 @@ import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 
 import java.time.LocalDateTime;
 import java.time.Month;

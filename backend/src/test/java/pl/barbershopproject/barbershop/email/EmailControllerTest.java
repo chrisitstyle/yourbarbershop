@@ -1,7 +1,6 @@
 package pl.barbershopproject.barbershop.email;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -18,6 +17,10 @@ import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.utils.TestClockConfig;
 import tools.jackson.databind.ObjectMapper;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 
 @WebMvcTest(value = EmailController.class,
         excludeAutoConfiguration = {
@@ -54,10 +57,10 @@ class EmailControllerTest {
                 .message("Twoja wizyta została potwierdzona.")
                 .build();
 
-        Mockito.doNothing().when(emailSenderService).sendEmail(
-                Mockito.anyString(),
-                Mockito.anyString(),
-                Mockito.anyString()
+        doNothing().when(emailSenderService).sendEmail(
+                anyString(),
+                anyString(),
+                anyString()
         );
 
         // when then
@@ -66,7 +69,7 @@ class EmailControllerTest {
                         .content(objectMapper.writeValueAsString(emailMessage)))
                 .andExpect(MockMvcResultMatchers.status().isOk());
 
-        Mockito.verify(emailSenderService).sendEmail(
+        verify(emailSenderService).sendEmail(
                 "klient@example.com",
                 "Potwierdzenie wizyty",
                 "Twoja wizyta została potwierdzona."

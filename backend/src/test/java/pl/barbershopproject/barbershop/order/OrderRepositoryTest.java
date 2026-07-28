@@ -10,7 +10,7 @@ import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 import pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities;
 import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;

@@ -9,7 +9,7 @@ import pl.barbershopproject.barbershop.order.dto.UserInOrderDTO;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.user.User;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 
 import java.time.LocalDateTime;
 import java.time.Month;

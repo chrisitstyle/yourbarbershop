@@ -263,7 +263,7 @@ class EmailLoginCodeServiceTest {
     }
 
     private User createUserForEmailSending() {
-        User user = org.mockito.Mockito.mock(User.class);
+        User user = mock(User.class);
 
         when(user.getEmail()).thenReturn(EMAIL);
 

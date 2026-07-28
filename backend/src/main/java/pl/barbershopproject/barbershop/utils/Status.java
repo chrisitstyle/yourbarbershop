@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.util;
+package pl.barbershopproject.barbershop.utils;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

@@ -2,7 +2,7 @@ package pl.barbershopproject.barbershop.order.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 
 import java.time.LocalDateTime;
 

@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.payment.Payment;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 
 import java.io.Serial;
 import java.io.Serializable;
