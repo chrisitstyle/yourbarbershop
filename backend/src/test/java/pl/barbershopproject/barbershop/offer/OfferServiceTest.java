@@ -6,6 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.offer.dto.OfferCreationDTO;
 import pl.barbershopproject.barbershop.offer.dto.UpdateOfferDTO;
 import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
@@ -23,6 +25,9 @@ class OfferServiceTest {
 
     @Mock
     private OfferRepository offerRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private OfferService offerService;
@@ -54,6 +59,7 @@ class OfferServiceTest {
                 saved.getKind().equals(offerCreationDTO.kind())
                         && saved.getCost().equals(offerCreationDTO.cost())
         ));
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
     @Test
@@ -94,6 +100,7 @@ class OfferServiceTest {
 
         verify(offerRepository, times(1)).findById(1L);
         verify(offerRepository, times(1)).save(offer);
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
     @Test
@@ -109,6 +116,7 @@ class OfferServiceTest {
 
         verify(offerRepository, times(1)).findById(1L);
         verify(offerRepository, never()).save(any(Offer.class));
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -119,6 +127,7 @@ class OfferServiceTest {
 
         verify(offerRepository, times(1)).existsById(1L);
         verify(offerRepository, times(1)).deleteById(1L);
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
     @Test
@@ -129,5 +138,6 @@ class OfferServiceTest {
 
         verify(offerRepository, times(1)).existsById(1L);
         verify(offerRepository, never()).deleteById(1L);
+        verify(eventPublisher, never()).publishEvent(any());
     }
 }

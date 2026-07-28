@@ -156,6 +156,20 @@ CREATE UNIQUE INDEX `idx_token` ON `password_reset_token` (`token`);
 CREATE INDEX `idx_user_order_status` ON `user_order` (`status`);
 CREATE INDEX `idx_guest_order_status` ON `guest_order` (`status`);
 
+CREATE TABLE IF NOT EXISTS audit_logs (
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+actor_email VARCHAR(255) NOT NULL,
+action VARCHAR(100) NOT NULL,
+entity_type VARCHAR(50) NOT NULL,
+entity_id VARCHAR(100),
+details JSON
+    );
+
+CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp DESC);
+CREATE INDEX idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX idx_audit_logs_actor ON audit_logs(actor_email)
+
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;

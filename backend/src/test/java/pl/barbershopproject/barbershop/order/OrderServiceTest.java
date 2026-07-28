@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
+import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
@@ -106,6 +107,7 @@ class OrderServiceTest {
         verify(appointmentAvailabilityService, times(1)).reserveSlot(dto.visitDate());
         verify(orderRepository, times(1)).save(any(Order.class));
         verify(paymentRepository, times(1)).save(any(Payment.class));
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
         verify(eventPublisher, times(1)).publishEvent(any(OrderCreatedEvent.class));
         verifyNoInteractions(stripeCheckoutService);
     }
@@ -265,6 +267,7 @@ class OrderServiceTest {
                 targetStatus
         );
         verify(orderRepository, times(1)).save(order);
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
     @Test
@@ -300,6 +303,7 @@ class OrderServiceTest {
                 currentStatus
         );
         verify(orderRepository, times(1)).save(order);
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
     @Test
@@ -353,6 +357,7 @@ class OrderServiceTest {
         verify(orderRepository, times(1)).findById(1L);
         verify(appointmentAvailabilityService, times(1)).releaseIfReserved(visitDate, status);
         verify(orderRepository, times(1)).delete(order);
+        verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
     @Test
@@ -366,8 +371,10 @@ class OrderServiceTest {
 
         assertEquals("Zamówienie o ID: 2 nie istnieje", exception.getMessage());
 
+
         verify(orderRepository, times(1)).findById(2L);
         verify(appointmentAvailabilityService, never()).releaseIfReserved(any(), any());
         verify(orderRepository, never()).delete(any(Order.class));
+        verify(eventPublisher, never()).publishEvent(any(AuditEvent.class));
     }
 }
