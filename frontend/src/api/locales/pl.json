@@ -25,7 +25,8 @@
       "offers": "Usługi",
       "users": "Użytkownicy",
       "orders": "Wizyty",
-      "gallery": "Galeria"
+      "gallery": "Galeria",
+      "audit": "System"
     },
     "actions": {
       "showOffers": "Pokaż usługi",
@@ -34,7 +35,21 @@
       "addUser": "Dodaj użytkownika",
       "showUserOrders": "Pokaż wizyty użytkowników",
       "showGuestOrders": "Pokaż wizyty gości",
-      "gallerySettings": "Ustawienia galerii"
+      "gallerySettings": "Ustawienia galerii",
+      "showAudit": "Dziennik Audytowy"
+    },
+    "audit": {
+      "title": "Dziennik Audytowy",
+      "loading": "Ładowanie logów...",
+      "searchPlaceholder": "Szukaj w historii...",
+      "id": "ID",
+      "timestamp": "Data",
+      "actor": "Wykonawca",
+      "action": "Akcja",
+      "entityType": "Moduł",
+      "entityId": "ID Obiektu",
+      "details": "Szczegóły",
+      "modalTitle": "Szczegółowe dane zmiany"
     },
     "common": {
       "action": "Akcja",

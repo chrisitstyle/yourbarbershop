@@ -11,12 +11,14 @@ import AddUser from "./AddUser";
 import OrdersTable from "./OrdersTable";
 import GuestOrdersTable from "./GuestOrdersTable.jsx";
 import GallerySettings from "./GallerySettings.jsx";
+import AuditLogsTable from "./AuditLogsTable.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faScissors,
   faUser,
   faCalendarCheck,
   faImages,
+  faClipboardList,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "react-i18next";
 
@@ -167,6 +169,11 @@ const AdminPanel = () => {
         { view: "gallerysettings", label: t("admin.actions.gallerySettings") },
       ],
     },
+    {
+      icon: faClipboardList,
+      label: t("admin.menu.audit"),
+      actions: [{ view: "auditlogs", label: t("admin.actions.showAudit") }],
+    },
   ];
 
   // maps each view key to the content rendered in the panel body
@@ -180,6 +187,7 @@ const AdminPanel = () => {
       <GuestOrdersTable onDeleteGuestOrder={handleDeleteGuestOrder} />
     ),
     gallerysettings: <GallerySettings />,
+    auditlogs: <AuditLogsTable />,
   };
 
   return (
