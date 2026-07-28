@@ -69,11 +69,19 @@ const Profile = () => {
   }, [showSuccessAlert]);
 
   const filterVisits = (order, term) => {
+    const statusText = order.status ? t(`enums.${order.status}`) : "";
+    const paymentMethodText = order.paymentMethod
+      ? t(`enums.${order.paymentMethod}`)
+      : "";
+    const paymentStatusText = order.paymentStatus
+      ? t(`enums.${order.paymentStatus}`)
+      : "";
+
     return `${order.idOrder} ${order.offer?.kind || ""} ${
       order.offer?.cost || ""
-    } ${order.orderDate} ${order.visitDate} ${order.status} ${
+    } ${order.orderDate} ${order.visitDate} ${order.status} ${statusText} ${
       order.paymentMethod || ""
-    } ${order.paymentStatus || ""}`
+    } ${paymentMethodText} ${order.paymentStatus || ""} ${paymentStatusText}`
       .toLowerCase()
       .includes(term.toLowerCase());
   };
@@ -183,7 +191,7 @@ const Profile = () => {
             <div className="text-start">
               <div className="fw-bold lh-1">{stats.total}</div>
               <div className="small text-body-secondary">
-                {t("profile.stats.total", "Wszystkie")}
+                {t("profile.stats.total")}
               </div>
             </div>
           </div>
@@ -192,7 +200,7 @@ const Profile = () => {
             <div className="text-start">
               <div className="fw-bold lh-1">{stats.completed}</div>
               <div className="small text-body-secondary">
-                {t("profile.stats.completed", "Zrealizowane")}
+                {t("profile.stats.completed")}
               </div>
             </div>
           </div>
@@ -201,7 +209,7 @@ const Profile = () => {
             <div className="text-start">
               <div className="fw-bold lh-1">{stats.upcoming}</div>
               <div className="small text-body-secondary">
-                {t("profile.stats.upcoming", "Nadchodzące")}
+                {t("profile.stats.upcoming")}
               </div>
             </div>
           </div>
@@ -210,7 +218,7 @@ const Profile = () => {
             <div className="text-start">
               <div className="fw-bold lh-1">{stats.cancelled}</div>
               <div className="small text-body-secondary">
-                {t("profile.stats.cancelled", "Anulowane")}
+                {t("profile.stats.cancelled")}
               </div>
             </div>
           </div>

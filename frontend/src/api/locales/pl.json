@@ -357,6 +357,12 @@
     "visitInfo": ", poniżej znajdują się wszystkie dotychczasowe wizyty",
     "searchPlaceholder": "Szukaj wizyty...",
     "noResults": "Brak wyników do wyświetlenia.",
+    "stats": {
+      "total": "Wszystkie",
+      "completed": "Zrealizowane",
+      "upcoming": "Nadchodzące",
+      "cancelled": "Anulowane"
+    },
     "table": {
       "id": "Identyfikator wizyty",
       "service": "Usługa",

@@ -357,6 +357,12 @@
     "visitInfo": ", below are all your past visits",
     "searchPlaceholder": "Search for a visit...",
     "noResults": "No results to display.",
+    "stats": {
+      "total": "Total",
+      "completed": "Completed",
+      "upcoming": "Upcoming",
+      "cancelled": "Cancelled"
+    },
     "table": {
       "id": "Visit ID",
       "service": "Service",
