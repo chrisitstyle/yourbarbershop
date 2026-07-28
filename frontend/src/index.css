@@ -56,8 +56,11 @@ textarea {
 }
 
 main {
-  flex: 1;
+  flex: 1 0 auto; /* allows main to grow, but prevents unnatural shrinking */
+  display: flex;
+  flex-direction: column; /* maintains layout context, prevents padding clipping */
   padding-top: var(--app-navbar-height);
+  padding-bottom: 3rem; /* additional safe spacing between forms and footer */
 }
 
 /* =========================
@@ -78,22 +81,6 @@ main {
   display: flex;
   width: 100%;
   gap: 50px;
-}
-
-/* =========================
-   Footer
-   ========================= */
-
-.footer {
-  width: 100%;
-  margin-top: auto;
-  padding: 1rem 0;
-  color: #ffffff;
-  background-color: #343a40;
-}
-
-.footer a {
-  color: inherit;
 }
 
 /* =========================

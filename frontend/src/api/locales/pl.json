@@ -369,8 +369,24 @@
     }
   },
   "footer": {
+    "tagline": "Profesjonalne strzyżenie i pielęgnacja brody w sercu miasta.",
+    "socialMedia": "Media społecznościowe",
+    "nav": {
+      "title": "Nawigacja",
+      "home": "Strona główna",
+      "offer": "Oferta",
+      "gallery": "Galeria",
+      "book": "Rezerwacja"
+    },
+    "contact": {
+      "title": "Kontakt",
+      "address": "ul. Przykładowa 1, Warszawa",
+      "phone": "+48 000 000 000",
+      "email": "kontakt@yourbarbershop.pl",
+      "hours": "Pon-Sob: 9:00 - 20:00"
+    },
     "rights": "Wszelkie prawa zastrzeżone.",
-    "createdBy": "Projekt wykonany przez"
+    "createdBy": "Stworzone przez"
   },
   "notfound": {
     "subtitle": "Nie znaleziono strony",
