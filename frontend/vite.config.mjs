@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -44,6 +45,14 @@ export default defineConfig({
         },
       },
     },
+  },
+
+  // vitest testing configuration
+  test: {
+    globals: true, // use describe, it, expect without importing them
+    environment: "jsdom", // simulate browser environment
+    setupFiles: "./src/setupTests.js", // path to the setup file
+    css: true, // enable css parsing for visibility assertions
   },
 
   plugins: [react()],
