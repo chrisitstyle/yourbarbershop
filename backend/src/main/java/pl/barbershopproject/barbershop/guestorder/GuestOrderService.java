@@ -2,8 +2,6 @@ package pl.barbershopproject.barbershop.guestorder;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
@@ -20,12 +18,14 @@ import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.payment.*;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailSafely;
 
 @Service
 @RequiredArgsConstructor
@@ -62,7 +62,7 @@ class GuestOrderService {
 
         eventPublisher.publishEvent(new AuditEvent(
                 savedGuestOrder.getEmail(),
-               ActionType.GUEST_ORDER_CREATED,
+                ActionType.GUEST_ORDER_CREATED,
                 EntityType.GUEST_ORDER,
                 String.valueOf(savedGuestOrder.getIdGuestOrder()),
                 String.format("{\"offerKind\":\"%s\", \"cost\":%s, \"visitDate\":\"%s\"}",
@@ -147,7 +147,7 @@ class GuestOrderService {
 
         eventPublisher.publishEvent(new AuditEvent(
                 getActorEmailSafely(),
-              ActionType.GUEST_ORDER_UPDATED,
+                ActionType.GUEST_ORDER_UPDATED,
                 EntityType.GUEST_ORDER,
                 String.valueOf(idGuestOrder),
                 String.format("{\"oldStatus\":\"%s\", \"newStatus\":\"%s\", \"visitDate\":\"%s\"}",
@@ -168,7 +168,7 @@ class GuestOrderService {
 
         eventPublisher.publishEvent(new AuditEvent(
                 getActorEmailSafely(),
-             ActionType.GUEST_ORDER_DELETED,
+                ActionType.GUEST_ORDER_DELETED,
                 EntityType.GUEST_ORDER,
                 String.valueOf(idGuestOrder),
                 null
@@ -185,13 +185,5 @@ class GuestOrderService {
                 payment.getPaymentMethod(),
                 payment.getPaymentStatus()
         ));
-    }
-
-    private String getActorEmailSafely() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
-            return authentication.getName();
-        }
-        return "SYSTEM";
     }
 }

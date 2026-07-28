@@ -21,6 +21,8 @@ import pl.barbershopproject.barbershop.user.mapper.UserDTOMapper;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailSafely;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -147,11 +149,4 @@ public class UserService {
         existing.setEmail(updated.email());
     }
 
-    private String getActorEmailSafely() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
-            return authentication.getName();
-        }
-        return "SYSTEM";
-    }
 }

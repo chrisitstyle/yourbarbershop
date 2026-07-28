@@ -20,7 +20,7 @@ import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponse
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
 import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderDTOMapper;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 import pl.barbershopproject.barbershop.utils.TestClockConfig;
 import pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities;
 import tools.jackson.databind.ObjectMapper;

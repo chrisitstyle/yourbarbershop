@@ -8,7 +8,7 @@ import pl.barbershopproject.barbershop.appointment.AppointmentSlot;
 import pl.barbershopproject.barbershop.appointment.AppointmentSlotRepository;
 import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
 import pl.barbershopproject.barbershop.integration.BaseIntegrationTest;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 
 import java.time.LocalDateTime;
 import java.time.Month;

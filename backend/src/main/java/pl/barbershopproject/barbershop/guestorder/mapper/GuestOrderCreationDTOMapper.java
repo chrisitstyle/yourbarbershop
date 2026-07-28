@@ -3,7 +3,7 @@ package pl.barbershopproject.barbershop.guestorder.mapper;
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.offer.Offer;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 
 import java.time.Clock;
 import java.time.LocalDateTime;

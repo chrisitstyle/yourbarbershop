@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.audit.enums.ActionType;
@@ -17,6 +15,8 @@ import pl.barbershopproject.barbershop.offer.dto.UpdateOfferDTO;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailSafely;
 
 @Service
 @RequiredArgsConstructor
@@ -97,13 +97,5 @@ class OfferService {
                 String.valueOf(idOffer),
                 null
         ));
-    }
-
-    private String getActorEmailSafely() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
-            return authentication.getName();
-        }
-        return "SYSTEM";
     }
 }

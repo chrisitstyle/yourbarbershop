@@ -18,7 +18,7 @@ import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.payment.*;
-import pl.barbershopproject.barbershop.util.Status;
+import pl.barbershopproject.barbershop.utils.Status;
 import pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities;
 import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 
