@@ -12,15 +12,17 @@ vi.mock("../../api/guestOrderService", () => ({
 
 describe("useGuestOrders hook", () => {
   it("should fetch and return guest orders successfully", async () => {
+    // given
     const mockGuestOrders = [{ id: 1, guestEmail: "guest@test.com" }];
     guestOrderService.getGuestOrders.mockResolvedValueOnce(mockGuestOrders);
 
+    // when
     const { result } = renderHook(() => useGuestOrders(), {
       wrapper: QueryWrapper,
     });
 
+    // then
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-
     expect(result.current.guestOrders).toEqual(mockGuestOrders);
   });
 });
