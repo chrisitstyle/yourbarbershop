@@ -1,0 +1,278 @@
+/* ---------------------------------------------------------------
+   Gallery — warm barbershop palette: warm-black, brass, worn cream
+   These custom properties live on :root (not .gallery) because the
+   lightbox is portalled to <body> by react-bootstrap's Modal, so it
+   sits outside the .gallery DOM subtree and needs access to them too.
+   ---------------------------------------------------------------- */
+:root {
+  --gallery-ink: #1c1712;
+  --gallery-paper: #f6f1e7;
+  --gallery-brass: #c9a463;
+  --gallery-brass-dark: #a9814a;
+  --gallery-muted: #8a8378;
+  --gallery-red: #7d2c2c;
+}
+
+.gallery {
+  padding-bottom: 1rem;
+}
+
+/* ---------- grid ---------- */
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+.gallery-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--gallery-ink);
+  cursor: pointer;
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.gallery-tile:hover,
+.gallery-tile:focus-visible {
+  border-color: var(--gallery-brass);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.55);
+}
+
+.gallery-tile:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(201, 164, 99, 0.5);
+}
+
+.gallery-tile__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.04);
+  transition:
+    opacity 0.4s ease,
+    transform 0.6s ease;
+}
+
+.gallery-tile.is-loaded .gallery-tile__image {
+  opacity: 1;
+}
+
+.gallery-tile:hover .gallery-tile__image {
+  transform: scale(1.08);
+}
+
+.gallery-tile__fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--gallery-muted);
+  font-size: 1.5rem;
+}
+
+.gallery-tile__overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  color: var(--gallery-brass);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.gallery-tile:hover .gallery-tile__overlay,
+.gallery-tile:focus-visible .gallery-tile__overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.gallery-tile__icon {
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.gallery-tile__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- loading / error / empty states ---------- */
+
+.gallery-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem;
+  color: var(--gallery-muted);
+}
+
+.gallery-state__icon {
+  font-size: 2rem;
+  color: var(--gallery-brass);
+}
+
+.gallery-state--error .gallery-state__icon {
+  color: var(--gallery-red);
+}
+
+.gallery-state__text {
+  margin: 0;
+}
+
+/* ---------- lightbox ---------- */
+
+.gallery-lightbox .modal-content {
+  background: var(--gallery-ink);
+  border: none;
+  border-radius: 10px;
+}
+
+.gallery-lightbox__body {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 55vh;
+  padding: 2.5rem 3.5rem;
+}
+
+.gallery-lightbox__figure {
+  margin: 0;
+  max-width: 100%;
+  text-align: center;
+}
+
+.gallery-lightbox__image {
+  max-width: 100%;
+  max-height: 65vh;
+  border-radius: 4px;
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.7);
+}
+
+.gallery-lightbox__caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: var(--gallery-brass);
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.gallery-lightbox__count {
+  color: var(--gallery-muted);
+  white-space: nowrap;
+}
+
+.gallery-lightbox__close,
+.gallery-lightbox__nav {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(201, 164, 99, 0.4);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--gallery-paper);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.gallery-lightbox__close:hover,
+.gallery-lightbox__nav:hover {
+  background: rgba(201, 164, 99, 0.15);
+  border-color: var(--gallery-brass);
+}
+
+.gallery-lightbox__close {
+  top: 1rem;
+  right: 1rem;
+  z-index: 1;
+}
+
+.gallery-lightbox__nav--prev {
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.gallery-lightbox__nav--next {
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.gallery-lightbox__nav--prev:hover {
+  transform: translateY(-50%) scale(1.08);
+}
+
+.gallery-lightbox__nav--next:hover {
+  transform: translateY(-50%) scale(1.08);
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 576px) {
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .gallery-lightbox__body {
+    padding: 2.5rem 1rem;
+  }
+
+  .gallery-lightbox__close,
+  .gallery-lightbox__nav {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* ---------- respect reduced motion preferences ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-tile,
+  .gallery-tile__image,
+  .gallery-tile__overlay,
+  .gallery-lightbox__nav,
+  .gallery-lightbox__close {
+    transition: none;
+  }
+}

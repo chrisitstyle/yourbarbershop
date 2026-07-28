@@ -86,7 +86,10 @@ const Profile = () => {
       .includes(term.toLowerCase());
   };
 
-  const safeOrders = userDetails?.userOrders || [];
+  const safeOrders = useMemo(
+    () => userDetails?.userOrders || [],
+    [userDetails?.userOrders],
+  );
 
   // derive quick stats from all orders (not just current page)
   const stats = useMemo(() => {
