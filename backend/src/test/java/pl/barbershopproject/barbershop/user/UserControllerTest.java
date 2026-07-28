@@ -3,7 +3,6 @@ package pl.barbershopproject.barbershop.user;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -30,6 +29,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -67,8 +68,8 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        Mockito.lenient().when(clock.getZone()).thenReturn(TEST_ZONE);
-        Mockito.lenient().when(clock.instant()).thenReturn(TEST_INSTANT);
+        lenient().when(clock.getZone()).thenReturn(TEST_ZONE);
+        lenient().when(clock.instant()).thenReturn(TEST_INSTANT);
     }
 
     @Test
@@ -78,7 +79,7 @@ class UserControllerTest {
         UserResponseDTO userResponseDTO = UserTestEntities.createUserResponseDTO();
 
 
-        Mockito.when(userService.addUser(Mockito.any(UserCreationDTO.class))).thenReturn(userResponseDTO);
+        when(userService.addUser(any(UserCreationDTO.class))).thenReturn(userResponseDTO);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -99,7 +100,7 @@ class UserControllerTest {
                 Role.USER
         );
 
-        Mockito.when(userService.getCurrentUser(USER_EMAIL))
+        when(userService.getCurrentUser(USER_EMAIL))
                 .thenReturn(currentUser);
 
         // when + then
@@ -112,7 +113,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.email").value(USER_EMAIL))
                 .andExpect(jsonPath("$.role").value("USER"));
 
-        Mockito.verify(userService).getCurrentUser(USER_EMAIL);
+        verify(userService).getCurrentUser(USER_EMAIL);
     }
 
     @Test
@@ -122,7 +123,7 @@ class UserControllerTest {
 
         List<UserDTO> usersList = List.of(user);
 
-        Mockito.when(userService.getAllUsers()).thenReturn(usersList);
+        when(userService.getAllUsers()).thenReturn(usersList);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users"))
                 .andExpect(status().isOk())
@@ -139,7 +140,7 @@ class UserControllerTest {
 
         UserDTO user = UserTestEntities.createUserDTO();
 
-        Mockito.when(userService.getUserById(1L)).thenReturn(user);
+        when(userService.getUserById(1L)).thenReturn(user);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users/1"))
                 .andExpect(status().isOk())
@@ -169,7 +170,7 @@ class UserControllerTest {
         );
 
 
-        Mockito.when(userService.updateUser(Mockito.any(UserProfileUpdateRequestDTO.class), Mockito.eq(1L)))
+        when(userService.updateUser(any(UserProfileUpdateRequestDTO.class), eq(1L)))
                 .thenReturn(returnedUser);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/users/1")
@@ -184,7 +185,7 @@ class UserControllerTest {
 
     @Test
     void deleteUserById_ReturnsNoContent() throws Exception {
-        Mockito.doNothing().when(userService).deleteUserById(4L);
+        doNothing().when(userService).deleteUserById(4L);
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/users/4"))
                 .andExpect(status().isNoContent());
@@ -192,7 +193,7 @@ class UserControllerTest {
 
     @Test
     void getSingleUser_ReturnsNotFound_WhenNoSuchElementException() throws Exception {
-        Mockito.when(userService.getUserById(99L))
+        when(userService.getUserById(99L))
                 .thenThrow(new java.util.NoSuchElementException("User not found"));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users/99"))
@@ -203,7 +204,7 @@ class UserControllerTest {
 
     @Test
     void getSingleUser_ReturnsBadRequest_WhenIllegalArgumentException() throws Exception {
-        Mockito.when(userService.getUserById(98L))
+        when(userService.getUserById(98L))
                 .thenThrow(new IllegalArgumentException("Illegal argument"));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users/98"))
@@ -216,7 +217,7 @@ class UserControllerTest {
     void addUser_ReturnsUnprocessableEntity_WhenEmailAlreadyExistsException() throws Exception {
         UserCreationDTO userCreationDTO = UserTestEntities.createUserCreationDTO();
 
-        Mockito.when(userService.addUser(Mockito.any(UserCreationDTO.class)))
+        when(userService.addUser(any(UserCreationDTO.class)))
                 .thenThrow(new EmailAlreadyExistsException("Email exists"));
 
         mockMvc.perform(MockMvcRequestBuilders.post("/users")
@@ -229,7 +230,7 @@ class UserControllerTest {
 
     @Test
     void deleteUserById_ReturnsForbidden_WhenAccessDeniedException() throws Exception {
-        Mockito.doThrow(new AccessDeniedException("Permission denied"))
+        doThrow(new AccessDeniedException("Permission denied"))
                 .when(userService).deleteUserById(123L);
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/users/123"))
@@ -240,7 +241,7 @@ class UserControllerTest {
 
     @Test
     void deleteUserById_ReturnsForbidden_WhenSelfDeletionException() throws Exception {
-        Mockito.doThrow(new SelfDeletionException("Cannot remove yourself"))
+        doThrow(new SelfDeletionException("Cannot remove yourself"))
                 .when(userService).deleteUserById(321L);
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/users/321"))

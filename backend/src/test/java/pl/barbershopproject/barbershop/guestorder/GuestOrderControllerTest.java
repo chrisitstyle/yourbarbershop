@@ -1,7 +1,6 @@
 package pl.barbershopproject.barbershop.guestorder;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -27,6 +26,9 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @WebMvcTest(controllers = GuestOrderController.class,
         excludeAutoConfiguration = {
@@ -59,7 +61,7 @@ class GuestOrderControllerTest {
         GuestOrderCreationResponseDTO responseDTO =
                 GuestOrderTestEntities.createGuestOrderCreationResponseDTO();
 
-        Mockito.when(guestOrderService.addGuestOrder(Mockito.any(GuestOrderCreationDTO.class)))
+        when(guestOrderService.addGuestOrder(any(GuestOrderCreationDTO.class)))
                 .thenReturn(responseDTO);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/guestorders")
@@ -76,7 +78,7 @@ class GuestOrderControllerTest {
     void getAllGuestOrders_ReturnsAll_WhenNoStatusParam() throws Exception {
         // given
         GuestOrderDTO guestOrderDTO = GuestOrderTestEntities.createGuestOrderDTO();
-        Mockito.when(guestOrderService.getAllGuestOrders()).thenReturn(List.of(guestOrderDTO));
+        when(guestOrderService.getAllGuestOrders()).thenReturn(List.of(guestOrderDTO));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders"))
@@ -86,7 +88,7 @@ class GuestOrderControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].paymentMethod").value("GOTOWKA"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
 
-        Mockito.verify(guestOrderService).getAllGuestOrders();
+        verify(guestOrderService).getAllGuestOrders();
     }
 
     @Test
@@ -95,7 +97,7 @@ class GuestOrderControllerTest {
         GuestOrderDTO guestOrderDTO = GuestOrderTestEntities.createGuestOrderDTO();
         Status statusParam = Status.NOWE;
 
-        Mockito.when(guestOrderService.getGuestOrdersByStatus(statusParam))
+        when(guestOrderService.getGuestOrdersByStatus(statusParam))
                 .thenReturn(List.of(guestOrderDTO));
 
         // when then
@@ -106,7 +108,7 @@ class GuestOrderControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].status").value("NOWE"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].paymentMethod").value("GOTOWKA"));
 
-        Mockito.verify(guestOrderService).getGuestOrdersByStatus(statusParam);
+        verify(guestOrderService).getGuestOrdersByStatus(statusParam);
     }
 
     @Test
@@ -114,7 +116,7 @@ class GuestOrderControllerTest {
         // given
         GuestOrderDTO guestOrderDTO = GuestOrderTestEntities.createGuestOrderDTO();
 
-        Mockito.when(guestOrderService.getGuestOrder(1L)).thenReturn(guestOrderDTO);
+        when(guestOrderService.getGuestOrder(1L)).thenReturn(guestOrderDTO);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders/1"))
@@ -135,10 +137,10 @@ class GuestOrderControllerTest {
 
         GuestOrderDTO responseDTO = GuestOrderDTOMapper.toDTO(updatedOrder);
 
-        Mockito.when(guestOrderService.updateGuestOrder(
-                        Mockito.any(GuestOrderUpdateRequestDTO.class),
-                        Mockito.eq(1L)
-                ))
+        when(guestOrderService.updateGuestOrder(
+                any(GuestOrderUpdateRequestDTO.class),
+                eq(1L)
+        ))
                 .thenReturn(responseDTO);
 
         // when then
@@ -153,7 +155,7 @@ class GuestOrderControllerTest {
     @Test
     void deleteGuestOrderById_ReturnsNoContent() throws Exception {
         // given
-        Mockito.doNothing().when(guestOrderService).deleteGuestOrderById(1L);
+        doNothing().when(guestOrderService).deleteGuestOrderById(1L);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.delete("/guestorders/1"))
@@ -163,7 +165,7 @@ class GuestOrderControllerTest {
     @Test
     void getGuestOrder_ReturnsNotFound_WhenNoSuchElementException() throws Exception {
         // given
-        Mockito.when(guestOrderService.getGuestOrder(99L))
+        when(guestOrderService.getGuestOrder(99L))
                 .thenThrow(new NoSuchElementException("Nie znaleziono zamówienia"));
 
         // when then
@@ -178,7 +180,7 @@ class GuestOrderControllerTest {
         // given
         GuestOrderCreationDTO invalidDto = GuestOrderTestEntities.createGuestOrderCreationDTO();
 
-        Mockito.when(guestOrderService.addGuestOrder(Mockito.any(GuestOrderCreationDTO.class)))
+        when(guestOrderService.addGuestOrder(any(GuestOrderCreationDTO.class)))
                 .thenThrow(new IllegalArgumentException("Nieprawidłowy numer telefonu"));
 
         // when then

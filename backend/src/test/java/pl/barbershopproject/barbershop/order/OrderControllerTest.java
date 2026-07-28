@@ -1,7 +1,6 @@
 package pl.barbershopproject.barbershop.order;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -27,6 +26,10 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @WebMvcTest(controllers = OrderController.class,
         excludeAutoConfiguration = {
@@ -65,7 +68,7 @@ class OrderControllerTest {
                 null
         );
 
-        Mockito.when(orderService.addOrder(Mockito.any(OrderCreationDTO.class), Mockito.any()))
+        when(orderService.addOrder(any(OrderCreationDTO.class), any()))
                 .thenReturn(responseDTO);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/orders")
@@ -83,7 +86,7 @@ class OrderControllerTest {
         // given
         OrderDTO orderDTO = OrderTestEntities.createOrderDTO();
 
-        Mockito.when(orderService.getAllOrders()).thenReturn(List.of(orderDTO));
+        when(orderService.getAllOrders()).thenReturn(List.of(orderDTO));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/orders"))
@@ -101,7 +104,7 @@ class OrderControllerTest {
         OrderDTO orderDTO = OrderTestEntities.createOrderDTO();
         String statusParam = "NOWE";
 
-        Mockito.when(orderService.getOrdersByStatus(statusParam)).thenReturn(List.of(orderDTO));
+        when(orderService.getOrdersByStatus(statusParam)).thenReturn(List.of(orderDTO));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/orders")
@@ -110,7 +113,7 @@ class OrderControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.size()").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].status").value("NOWE"));
 
-        Mockito.verify(orderService).getOrdersByStatus(statusParam);
+        verify(orderService).getOrdersByStatus(statusParam);
     }
 
     @Test
@@ -118,7 +121,7 @@ class OrderControllerTest {
         // given
         OrderDTO orderDTO = OrderTestEntities.createOrderDTO();
 
-        Mockito.when(orderService.getSingleOrder(1L)).thenReturn(orderDTO);
+        when(orderService.getSingleOrder(1L)).thenReturn(orderDTO);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/orders/1"))
@@ -134,10 +137,10 @@ class OrderControllerTest {
         OrderUpdatedRequestDTO inputDto = OrderTestEntities.createOrderUpdatedRequestDTO();
         OrderDTO responseDTO = OrderTestEntities.createOrderDTO();
 
-        Mockito.when(orderService.updateOrder(
-                        Mockito.any(OrderUpdatedRequestDTO.class),
-                        Mockito.eq(10L)
-                ))
+        when(orderService.updateOrder(
+                any(OrderUpdatedRequestDTO.class),
+                eq(10L)
+        ))
                 .thenReturn(responseDTO);
 
         // when then
@@ -147,16 +150,16 @@ class OrderControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.idOrder").value(responseDTO.idOrder()));
 
-        Mockito.verify(orderService).updateOrder(
-                Mockito.any(OrderUpdatedRequestDTO.class),
-                Mockito.eq(10L)
+        verify(orderService).updateOrder(
+                any(OrderUpdatedRequestDTO.class),
+                eq(10L)
         );
     }
 
     @Test
     void deleteOrderById_ReturnsNoContent() throws Exception {
         // given
-        Mockito.doNothing().when(orderService).deleteOrderById(10L);
+        doNothing().when(orderService).deleteOrderById(10L);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.delete("/orders/10"))
@@ -166,7 +169,7 @@ class OrderControllerTest {
     @Test
     void getSingleOrder_ReturnsNotFound_WhenNoSuchElementException() throws Exception {
         // given
-        Mockito.when(orderService.getSingleOrder(99L))
+        when(orderService.getSingleOrder(99L))
                 .thenThrow(new NoSuchElementException("Zamówienie o ID: 99 nie istnieje"));
 
         // when then
@@ -181,7 +184,7 @@ class OrderControllerTest {
         // given
         OrderCreationDTO invalidDto = OrderTestEntities.createOrderCreationDTO();
 
-        Mockito.when(orderService.addOrder(Mockito.any(OrderCreationDTO.class), Mockito.any()))
+        when(orderService.addOrder(any(OrderCreationDTO.class), any()))
                 .thenThrow(new IllegalArgumentException("Nieprawidłowa data wizyty"));
 
         // when then
