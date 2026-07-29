@@ -54,6 +54,9 @@ The application provides comprehensive management tools:
 - **React** - Modern UI library
 - **Bootstrap** - Responsive design framework
 - **Vite** - Fast build tool and development server
+- **Package Manager** - pnpm
+- **State & Data Fetching** - TanStack Query, React Context
+- **Testing** - Vitest & RTL
 - **React Google reCAPTCHA** - Component for easy reCAPTCHA integration
 
 ### Infrastructure
@@ -548,6 +551,15 @@ yourbarbershop/
 ├── .env                               # Docker environment variables (not in git)
 └── Makefile                           # Docker shortcuts and commands
 ```
+
+## 🧪 Frontend Testing
+
+Frontend unit tests are written using **Vitest** and **React Testing Library (RTL)**.
+
+To run the frontend tests, navigate to the `frontend` directory and execute:
+
+- `pnpm test` - runs tests in watch mode.
+- `pnpm test:run` - runs all tests once.
 
 ## 🗄️ Database Management (Flyway)
 
