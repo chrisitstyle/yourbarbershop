@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { clearAccessToken, setAccessToken } from "../api/httpClient.js";
 import {
   loginUser,
@@ -68,52 +68,73 @@ export const AuthProvider = ({ children }) => {
     };
   }, [applyAuthResponse, clearAuthState]);
 
-  const login = async (email, password) => {
-    const authResponse = await loginUser(email, password);
-    applyAuthResponse(authResponse);
-    return authResponse;
-  };
+  // wrap methods in useCallback to keep their references stable
+  const login = useCallback(
+    async (email, password) => {
+      const authResponse = await loginUser(email, password);
+      applyAuthResponse(authResponse);
+      return authResponse;
+    },
+    [applyAuthResponse],
+  );
 
-  const register = async (userData) => {
-    const authResponse = await registerUser(userData);
-    applyAuthResponse(authResponse);
-    return authResponse;
-  };
+  const register = useCallback(
+    async (userData) => {
+      const authResponse = await registerUser(userData);
+      applyAuthResponse(authResponse);
+      return authResponse;
+    },
+    [applyAuthResponse],
+  );
 
-  const loginWithEmailCode = async (email, code) => {
-    const authResponse = await verifyEmailLoginCode(email, code);
-    applyAuthResponse(authResponse);
-    return authResponse;
-  };
+  const loginWithEmailCode = useCallback(
+    async (email, code) => {
+      const authResponse = await verifyEmailLoginCode(email, code);
+      applyAuthResponse(authResponse);
+      return authResponse;
+    },
+    [applyAuthResponse],
+  );
 
-  const refreshAuth = async () => {
+  const refreshAuth = useCallback(async () => {
     const authResponse = await refreshSession();
     applyAuthResponse(authResponse);
     return authResponse;
-  };
+  }, [applyAuthResponse]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await logoutUser();
     } finally {
       clearAuthState();
     }
-  };
+  }, [clearAuthState]);
+
+  // use useMemo to prevent recreating the context object on every render
+  const contextValue = useMemo(
+    () => ({
+      isLoggedIn,
+      user,
+      authLoading,
+      login,
+      register,
+      loginWithEmailCode,
+      refreshAuth,
+      logout,
+    }),
+    [
+      isLoggedIn,
+      user,
+      authLoading,
+      login,
+      register,
+      loginWithEmailCode,
+      refreshAuth,
+      logout,
+    ],
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        isLoggedIn,
-        user,
-        authLoading,
-        login,
-        register,
-        loginWithEmailCode,
-        refreshAuth,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };
