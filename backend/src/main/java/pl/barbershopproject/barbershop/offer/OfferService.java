@@ -20,7 +20,7 @@ import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailS
 
 @Service
 @RequiredArgsConstructor
-class OfferService {
+class OfferService implements OfferQuery {
 
     private final OfferRepository offerRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -39,7 +39,11 @@ class OfferService {
                 ActionType.OFFER_CREATED,
                 EntityType.OFFER,
                 String.valueOf(savedOffer.getIdOffer()),
-                String.format("{\"kind\":\"%s\", \"cost\":%s}", savedOffer.getKind(), savedOffer.getCost())
+                String.format(
+                        "{\"kind\":\"%s\", \"cost\":%s}",
+                        savedOffer.getKind(),
+                        savedOffer.getCost()
+                )
         ));
 
         return savedOffer;
@@ -52,15 +56,21 @@ class OfferService {
 
     @Cacheable(value = "offers", key = "#idOffer")
     public Offer getSingleOffer(Long idOffer) {
+        return getRequiredOffer(idOffer);
+    }
+
+    @Override
+    public Offer getRequiredOffer(Long idOffer) {
         return offerRepository.findById(idOffer)
-                .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje"));
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Oferta o ID: " + idOffer + " nie istnieje"
+                ));
     }
 
     @Transactional
     @CacheEvict(value = "offers", allEntries = true)
     public Offer updateOffer(UpdateOfferDTO updatedOffer, Long idOffer) {
-        Offer existingOffer = offerRepository.findById(idOffer)
-                .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje"));
+        Offer existingOffer = getRequiredOffer(idOffer);
 
         String oldKind = existingOffer.getKind();
         BigDecimal oldCost = existingOffer.getCost();
@@ -75,8 +85,13 @@ class OfferService {
                 ActionType.OFFER_UPDATED,
                 EntityType.OFFER,
                 String.valueOf(idOffer),
-                String.format("{\"oldKind\":\"%s\", \"newKind\":\"%s\", \"oldCost\":%s, \"newCost\":%s}",
-                        oldKind, updatedOffer.kind(), oldCost, updatedOffer.cost())
+                String.format(
+                        "{\"oldKind\":\"%s\", \"newKind\":\"%s\", \"oldCost\":%s, \"newCost\":%s}",
+                        oldKind,
+                        updatedOffer.kind(),
+                        oldCost,
+                        updatedOffer.cost()
+                )
         ));
 
         return savedOffer;
@@ -86,8 +101,11 @@ class OfferService {
     @CacheEvict(value = "offers", allEntries = true)
     public void deleteOfferById(Long idOffer) {
         if (!offerRepository.existsById(idOffer)) {
-            throw new NoSuchElementException("Oferta o ID: " + idOffer + " nie istnieje");
+            throw new NoSuchElementException(
+                    "Oferta o ID: " + idOffer + " nie istnieje"
+            );
         }
+
         offerRepository.deleteById(idOffer);
 
         eventPublisher.publishEvent(new AuditEvent(

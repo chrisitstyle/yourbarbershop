@@ -1,13 +1,9 @@
 package pl.barbershopproject.barbershop.guestorder;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
-import pl.barbershopproject.barbershop.audit.enums.ActionType;
-import pl.barbershopproject.barbershop.audit.enums.EntityType;
-import pl.barbershopproject.barbershop.audit.event.AuditEvent;
+import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
@@ -15,84 +11,63 @@ import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO
 import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderDTOMapper;
 import pl.barbershopproject.barbershop.offer.Offer;
-import pl.barbershopproject.barbershop.offer.OfferRepository;
-import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
-import pl.barbershopproject.barbershop.payment.*;
+import pl.barbershopproject.barbershop.offer.OfferQuery;
+import pl.barbershopproject.barbershop.payment.PaymentCreationResult;
+import pl.barbershopproject.barbershop.payment.PaymentCreator;
 import pl.barbershopproject.barbershop.utils.Status;
 
 import java.time.Clock;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
-
-import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailSafely;
 
 @Service
 @RequiredArgsConstructor
 class GuestOrderService {
-    private static final String ORDER_NOT_FOUND_MSG = "Nie znaleziono zamówienia o ID: ";
+
+    private static final String ORDER_NOT_FOUND_MSG =
+            "Nie znaleziono zamówienia o ID: ";
+
     private final GuestOrderRepository guestOrderRepository;
-    private final OfferRepository offerRepository;
-    private final AppointmentAvailabilityService appointmentAvailabilityService;
-    private final StripeCheckoutService stripeCheckoutService;
-    private final PaymentRepository paymentRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OfferQuery offerQuery;
+    private final AppointmentReservation appointmentReservation;
+    private final PaymentCreator paymentCreator;
+    private final GuestOrderEvents guestOrderEvents;
     private final Clock clock;
 
     @Transactional
-    public GuestOrderCreationResponseDTO addGuestOrder(GuestOrderCreationDTO guestOrderCreationDTO) {
-        Offer offer = offerRepository.findById(guestOrderCreationDTO.idOffer())
-                .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + guestOrderCreationDTO.idOffer() + " nie istnieje"));
+    public GuestOrderCreationResponseDTO addGuestOrder(
+            GuestOrderCreationDTO request
+    ) {
+        Offer offer = offerQuery.getRequiredOffer(request.idOffer());
 
-        GuestOrder guestOrderToSave = GuestOrderCreationDTOMapper.toEntity(guestOrderCreationDTO, offer, clock);
-        appointmentAvailabilityService.reserveSlot(guestOrderToSave.getVisitDate());
+        GuestOrder guestOrder = GuestOrderCreationDTOMapper.toEntity(
+                request,
+                offer,
+                clock
+        );
 
-        GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrderToSave);
+        appointmentReservation.reserveSlot(guestOrder.getVisitDate());
 
-        Payment paymentToSave = Payment.builder()
-                .guestOrder(savedGuestOrder)
-                .paymentMethod(guestOrderCreationDTO.paymentMethod())
-                .paymentStatus(PaymentStatus.OCZEKUJE_NA_PLATNOSC)
-                .amount(offer.getCost())
-                .currency("PLN")
-                .createdAt(LocalDateTime.now(clock))
-                .build();
+        GuestOrder savedGuestOrder =
+                guestOrderRepository.save(guestOrder);
 
-        Payment savedPayment = paymentRepository.save(paymentToSave);
+        PaymentCreationResult paymentResult =
+                paymentCreator.createForGuestOrder(
+                        savedGuestOrder,
+                        offer,
+                        request.paymentMethod()
+                );
 
-        eventPublisher.publishEvent(new AuditEvent(
-                savedGuestOrder.getEmail(),
-                ActionType.GUEST_ORDER_CREATED,
-                EntityType.GUEST_ORDER,
-                String.valueOf(savedGuestOrder.getIdGuestOrder()),
-                String.format("{\"offerKind\":\"%s\", \"cost\":%s, \"visitDate\":\"%s\"}",
-                        offer.getKind(), offer.getCost(), savedGuestOrder.getVisitDate())
-        ));
-
-        if (savedPayment.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
-            StripeCheckoutSessionResponse checkoutSession = stripeCheckoutService.createCheckoutSession(
-                    savedPayment,
-                    offer
-            );
-
-            savedPayment.setStripeCheckoutSessionId(checkoutSession.sessionId());
-            paymentRepository.save(savedPayment);
-
-            return new GuestOrderCreationResponseDTO(
-                    savedGuestOrder.getIdGuestOrder(),
-                    savedPayment.getPaymentMethod(),
-                    savedPayment.getPaymentStatus(),
-                    checkoutSession.checkoutUrl()
-            );
-        }
-
-        publishOrderCreatedEvent(savedGuestOrder, savedPayment);
+        guestOrderEvents.created(
+                savedGuestOrder,
+                paymentResult.payment()
+        );
 
         return new GuestOrderCreationResponseDTO(
                 savedGuestOrder.getIdGuestOrder(),
-                savedPayment.getPaymentMethod(),
-                savedPayment.getPaymentStatus(),
-                null
+                paymentResult.payment().getPaymentMethod(),
+                paymentResult.payment().getPaymentStatus(),
+                paymentResult.checkoutUrl()
         );
     }
 
@@ -103,9 +78,9 @@ class GuestOrderService {
     }
 
     public GuestOrderDTO getGuestOrder(Long idGuestOrder) {
-        return guestOrderRepository.findById(idGuestOrder)
-                .map(GuestOrderDTOMapper::toDTO)
-                .orElseThrow(() -> new NoSuchElementException(ORDER_NOT_FOUND_MSG + idGuestOrder));
+        return GuestOrderDTOMapper.toDTO(
+                getRequiredGuestOrder(idGuestOrder)
+        );
     }
 
     public List<GuestOrderDTO> getGuestOrdersByStatus(Status status) {
@@ -115,75 +90,76 @@ class GuestOrderService {
     }
 
     @Transactional
-    public GuestOrderDTO updateGuestOrder(GuestOrderUpdateRequestDTO updatedGuestOrder, Long idGuestOrder) {
-        GuestOrder existingOrder = guestOrderRepository.findById(idGuestOrder)
-                .orElseThrow(() -> new NoSuchElementException(ORDER_NOT_FOUND_MSG + idGuestOrder));
+    public GuestOrderDTO updateGuestOrder(
+            GuestOrderUpdateRequestDTO request,
+            Long idGuestOrder
+    ) {
+        GuestOrder guestOrder =
+                getRequiredGuestOrder(idGuestOrder);
 
-        Offer offer = offerRepository.findById(updatedGuestOrder.idOffer())
-                .orElseThrow(() -> new NoSuchElementException("Oferta o ID: " + updatedGuestOrder.idOffer() + " nie istnieje"));
+        Offer offer =
+                offerQuery.getRequiredOffer(request.idOffer());
 
-        Status targetStatus = updatedGuestOrder.status() != null
-                ? updatedGuestOrder.status()
-                : existingOrder.getStatus();
+        Status oldStatus = guestOrder.getStatus();
+        Status targetStatus = request.status() != null
+                ? request.status()
+                : oldStatus;
 
-        appointmentAvailabilityService.updateSlotReservation(
-                existingOrder.getVisitDate(),
-                existingOrder.getStatus(),
-                updatedGuestOrder.visitDate(),
+        appointmentReservation.updateSlotReservation(
+                guestOrder.getVisitDate(),
+                oldStatus,
+                request.visitDate(),
                 targetStatus
         );
 
-        Status oldStatus = existingOrder.getStatus();
+        applyUpdate(
+                guestOrder,
+                request,
+                offer,
+                targetStatus
+        );
 
-        existingOrder.setFirstname(updatedGuestOrder.firstname());
-        existingOrder.setLastname(updatedGuestOrder.lastname());
-        existingOrder.setPhonenumber(updatedGuestOrder.phonenumber());
-        existingOrder.setEmail(updatedGuestOrder.email());
-        existingOrder.setOffer(offer);
-        existingOrder.setVisitDate(updatedGuestOrder.visitDate());
-        existingOrder.setStatus(targetStatus);
+        GuestOrder savedGuestOrder =
+                guestOrderRepository.save(guestOrder);
 
-        GuestOrder savedOrder = guestOrderRepository.save(existingOrder);
+        guestOrderEvents.updated(savedGuestOrder, oldStatus);
 
-        eventPublisher.publishEvent(new AuditEvent(
-                getActorEmailSafely(),
-                ActionType.GUEST_ORDER_UPDATED,
-                EntityType.GUEST_ORDER,
-                String.valueOf(idGuestOrder),
-                String.format("{\"oldStatus\":\"%s\", \"newStatus\":\"%s\", \"visitDate\":\"%s\"}",
-                        oldStatus, targetStatus, updatedGuestOrder.visitDate())
-        ));
-
-        return GuestOrderDTOMapper.toDTO(savedOrder);
+        return GuestOrderDTOMapper.toDTO(savedGuestOrder);
     }
 
     @Transactional
     public void deleteGuestOrderById(Long idGuestOrder) {
-        GuestOrder guestOrder = guestOrderRepository.findById(idGuestOrder)
-                .orElseThrow(() -> new NoSuchElementException(ORDER_NOT_FOUND_MSG + idGuestOrder));
+        GuestOrder guestOrder =
+                getRequiredGuestOrder(idGuestOrder);
 
-        appointmentAvailabilityService.releaseIfReserved(guestOrder.getVisitDate(), guestOrder.getStatus());
+        appointmentReservation.releaseIfReserved(
+                guestOrder.getVisitDate(),
+                guestOrder.getStatus()
+        );
 
         guestOrderRepository.delete(guestOrder);
-
-        eventPublisher.publishEvent(new AuditEvent(
-                getActorEmailSafely(),
-                ActionType.GUEST_ORDER_DELETED,
-                EntityType.GUEST_ORDER,
-                String.valueOf(idGuestOrder),
-                null
-        ));
+        guestOrderEvents.deleted(idGuestOrder);
     }
 
-    private void publishOrderCreatedEvent(GuestOrder guestOrder, Payment payment) {
-        eventPublisher.publishEvent(new OrderCreatedEvent(
-                guestOrder.getEmail(),
-                guestOrder.getFirstname(),
-                guestOrder.getVisitDate(),
-                guestOrder.getOffer().getKind(),
-                guestOrder.getOffer().getCost(),
-                payment.getPaymentMethod(),
-                payment.getPaymentStatus()
-        ));
+    private GuestOrder getRequiredGuestOrder(Long idGuestOrder) {
+        return guestOrderRepository.findById(idGuestOrder)
+                .orElseThrow(() -> new NoSuchElementException(
+                        ORDER_NOT_FOUND_MSG + idGuestOrder
+                ));
+    }
+
+    private void applyUpdate(
+            GuestOrder guestOrder,
+            GuestOrderUpdateRequestDTO request,
+            Offer offer,
+            Status targetStatus
+    ) {
+        guestOrder.setFirstname(request.firstname());
+        guestOrder.setLastname(request.lastname());
+        guestOrder.setPhonenumber(request.phonenumber());
+        guestOrder.setEmail(request.email());
+        guestOrder.setOffer(offer);
+        guestOrder.setVisitDate(request.visitDate());
+        guestOrder.setStatus(targetStatus);
     }
 }
