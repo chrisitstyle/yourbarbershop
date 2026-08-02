@@ -12,7 +12,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-public class AppointmentAvailabilityService {
+public class AppointmentAvailabilityService implements AppointmentReservation {
 
     private final AppointmentSlotRepository appointmentSlotRepository;
 
@@ -20,6 +20,7 @@ public class AppointmentAvailabilityService {
      * Reserves an appointment slot for the given visit date.
      * Throws AppointmentSlotTakenException if the slot is already taken.
      */
+    @Override
     @Transactional
     public void reserveSlot(LocalDateTime visitDate) {
         validateVisitDate(visitDate);
@@ -39,6 +40,7 @@ public class AppointmentAvailabilityService {
      * Updates the appointment slot reservation when the visit date or status changes.
      * Reserves a new slot, releases the old one, or does nothing if no slot change is required.
      */
+    @Override
     @Transactional
     public void updateSlotReservation(
             LocalDateTime currentVisitDate,
@@ -72,6 +74,7 @@ public class AppointmentAvailabilityService {
     /**
      * Releases the appointment slot if the given status represents an active reservation.
      */
+    @Override
     @Transactional
     public void releaseIfReserved(LocalDateTime visitDate, Status status) {
         if (reservesSlot(status)) {
