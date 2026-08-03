@@ -6,6 +6,7 @@ import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponse
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.offer.dto.BookedOfferDTO;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.utils.Status;
@@ -13,6 +14,7 @@ import pl.barbershopproject.barbershop.utils.Status;
 import java.time.LocalDateTime;
 import java.time.Month;
 
+import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createBookedOffer;
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createOffer;
 
 /**
@@ -42,6 +44,7 @@ public final class GuestOrderTestEntities {
                 .phonenumber("123456789")
                 .email("guestjohndoe@example.com")
                 .offer(createOffer())
+                .bookedOffer(createBookedOffer(createOffer()))
                 .orderDate(LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0))
                 .visitDate(LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0))
                 .status(Status.NOWE);
@@ -89,11 +92,13 @@ public final class GuestOrderTestEntities {
      * Hibernate requires ID to be null for a successful INSERT.
      */
     public static GuestOrder createUnsavedGuestOrder() {
+        Offer offer = createOffer();
         return GuestOrder.builder()
                 .firstname("GuestJohn")
                 .lastname("GuestDoe")
                 .phonenumber("123456789")
                 .email("guestjohndoe@example.com")
+                .offer(offer)
                 .orderDate(LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0))
                 .visitDate(LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0))
                 .status(Status.NOWE)
@@ -161,24 +166,32 @@ public final class GuestOrderTestEntities {
         return new GuestOrderCreationResponseDTO(
                 1L,
                 PaymentMethod.GOTOWKA,
-                PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                PaymentStatus.NIE_WYMAGANA,
                 null
         );
     }
 
     public static GuestOrderDTO createGuestOrderDTO() {
+        Offer offer = createOffer();
+
+        BookedOfferDTO bookedOfferDTO = new BookedOfferDTO(
+                offer.getIdOffer(),
+                offer.getKind(),
+                offer.getCost()
+        );
+
         return new GuestOrderDTO(
                 1L,
                 "GuestJohn",
                 "GuestDoe",
                 "123456789",
                 "guestjohndoe@example.com",
-                createOffer(),
+                bookedOfferDTO,
                 LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0),
                 LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0),
                 Status.NOWE,
                 PaymentMethod.GOTOWKA,
-                PaymentStatus.OCZEKUJE_NA_PLATNOSC
+                PaymentStatus.NIE_WYMAGANA
         );
     }
 

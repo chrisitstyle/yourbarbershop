@@ -1,5 +1,6 @@
 package pl.barbershopproject.barbershop.guestorder;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,131 +8,291 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.utils.Status;
-import pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities;
-import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities.createUnsavedGuestOrder;
+import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createBookedOffer;
+import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createUnsavedOffer;
 
 @DataJpaTest
 class GuestOrderRepositoryTest {
 
     @Autowired
     private GuestOrderRepository guestOrderRepository;
+
     @Autowired
     private OfferRepository offerRepository;
 
+    @Autowired
+    private EntityManager entityManager;
+
     @Test
-    @DisplayName("save method should persist guest order and assign id")
-    void save_persistsGuestOrder_andAssignsId() {
-        Offer offer = offerRepository.save(OfferTestEntities.createUnsavedOffer());
+    @DisplayName("save should persist guest order and assign id")
+    void save_persistsGuestOrderAndAssignsId() {
+        Offer savedOffer = saveOffer();
 
-        GuestOrder guestOrder = GuestOrderTestEntities.createUnsavedGuestOrder();
-        guestOrder.setOffer(offer);
+        GuestOrder guestOrder = createGuestOrder(
+                savedOffer,
+                Status.NOWE
+        );
 
-        GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
+        GuestOrder savedGuestOrder =
+                guestOrderRepository.saveAndFlush(guestOrder);
 
-        assertThat(savedGuestOrder.getIdGuestOrder()).isGreaterThan(0);
-        assertThat(savedGuestOrder.getOffer().getKind()).isEqualTo("test_kind");
+        assertThat(savedGuestOrder.getIdGuestOrder()).isPositive();
+
+        assertThat(savedGuestOrder.getOffer()).isNotNull();
+
+        assertThat(savedGuestOrder.getOffer().getKind()).isEqualTo(savedOffer.getKind());
+
+        assertThat(savedGuestOrder.getBookedOffer()).isNotNull();
+
+        assertThat(savedGuestOrder.getBookedOffer().getName()).isEqualTo(savedOffer.getKind());
+
+        assertThat(savedGuestOrder.getBookedOffer().getPrice()).isEqualByComparingTo(savedOffer.getCost());
+
         assertThat(savedGuestOrder.getStatus()).isEqualTo(Status.NOWE);
+
         assertThat(savedGuestOrder.getEmail()).isEqualTo("guestjohndoe@example.com");
+
         assertThat(savedGuestOrder.getFirstname()).isEqualTo("GuestJohn");
+
         assertThat(savedGuestOrder.getLastname()).isEqualTo("GuestDoe");
+
         assertThat(savedGuestOrder.getPhonenumber()).isEqualTo("123456789");
     }
 
     @Test
-    @DisplayName("findById should return saved guest order with offer")
+    @DisplayName("findById should return saved guest order with offer and snapshot")
     void findById_returnsGuestOrder() {
-        Offer offer = offerRepository.save(OfferTestEntities.createUnsavedOffer());
-        GuestOrder guestOrder = GuestOrderTestEntities.createUnsavedGuestOrder();
-        guestOrder.setOffer(offer);
-        guestOrder.setIdGuestOrder(null);
-        guestOrder.setStatus(Status.ANULOWANE);
+        Offer savedOffer = saveOffer();
 
-        GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
+        GuestOrder guestOrder = createGuestOrder(
+                savedOffer,
+                Status.ANULOWANE
+        );
 
-        Optional<GuestOrder> foundGuestOrder = guestOrderRepository.findById(savedGuestOrder.getIdGuestOrder());
+        GuestOrder savedGuestOrder =
+                guestOrderRepository.saveAndFlush(guestOrder);
+
+        Long guestOrderId =
+                savedGuestOrder.getIdGuestOrder();
+
+        entityManager.clear();
+
+        Optional<GuestOrder> foundGuestOrder =
+                guestOrderRepository.findById(guestOrderId);
 
         assertThat(foundGuestOrder).isPresent();
-        assertThat(foundGuestOrder.get().getOffer().getKind()).isEqualTo("test_kind");
-        assertThat(foundGuestOrder.get().getStatus()).isEqualTo(Status.ANULOWANE);
-        assertThat(foundGuestOrder.get().getEmail()).isEqualTo("guestjohndoe@example.com");
-        assertThat(foundGuestOrder.get().getFirstname()).isEqualTo("GuestJohn");
-        assertThat(foundGuestOrder.get().getLastname()).isEqualTo("GuestDoe");
-        assertThat(foundGuestOrder.get().getPhonenumber()).isEqualTo("123456789");
+
+        GuestOrder result = foundGuestOrder.orElseThrow();
+
+        assertThat(result.getOffer()).isNotNull();
+
+        assertThat(result.getOffer().getKind()).isEqualTo(savedOffer.getKind());
+
+        assertThat(result.getBookedOffer()).isNotNull();
+
+        assertThat(result.getBookedOffer().getName()).isEqualTo(savedOffer.getKind());
+
+        assertThat(result.getBookedOffer().getPrice()).isEqualByComparingTo(savedOffer.getCost());
+
+        assertThat(result.getStatus()).isEqualTo(Status.ANULOWANE);
+
+        assertThat(result.getEmail()).isEqualTo("guestjohndoe@example.com");
+
+        assertThat(result.getFirstname()).isEqualTo("GuestJohn");
+
+        assertThat(result.getLastname()).isEqualTo("GuestDoe");
+
+        assertThat(result.getPhonenumber()).isEqualTo("123456789");
     }
 
     @Test
-    @DisplayName("findAll should return all saved guest orders with offers")
+    @DisplayName("save should persist historical booked offer snapshot")
+    void save_persistsHistoricalBookedOfferSnapshot() {
+        Offer savedOffer = saveOffer();
+
+        GuestOrder guestOrder = createGuestOrder(
+                savedOffer,
+                Status.NOWE
+        );
+
+        guestOrder.setBookedOffer(createBookedOffer(
+                "Booked strzyżenie gościa",
+                new BigDecimal("130.00")
+        ));
+
+        GuestOrder savedGuestOrder =
+                guestOrderRepository.saveAndFlush(guestOrder);
+
+        Long guestOrderId =
+                savedGuestOrder.getIdGuestOrder();
+
+        entityManager.clear();
+
+        GuestOrder foundGuestOrder =
+                guestOrderRepository.findById(guestOrderId)
+                        .orElseThrow();
+
+        assertThat(foundGuestOrder.getBookedOffer())
+                .isNotNull();
+
+        assertThat(foundGuestOrder.getBookedOffer().getName())
+                .isEqualTo("Booked strzyżenie gościa");
+
+        assertThat(foundGuestOrder.getBookedOffer().getPrice())
+                .isEqualByComparingTo("130.00");
+
+        assertThat(foundGuestOrder.getOffer().getKind())
+                .isEqualTo(savedOffer.getKind());
+
+        assertThat(foundGuestOrder.getOffer().getCost())
+                .isEqualByComparingTo(savedOffer.getCost());
+    }
+
+    @Test
+    @DisplayName("findAll should return all saved guest orders with snapshots")
     void findAll_returnsAllGuestOrders() {
-        Offer offer = offerRepository.save(OfferTestEntities.createUnsavedOffer());
+        Offer savedOffer = saveOffer();
 
-        GuestOrder o1 = GuestOrderTestEntities.createUnsavedGuestOrder();
-        o1.setOffer(offer);
-        o1.setStatus(Status.NOWE);
+        GuestOrder firstGuestOrder = createGuestOrder(
+                savedOffer,
+                Status.NOWE
+        );
 
-        GuestOrder o2 = GuestOrderTestEntities.createGuestOrder();
-        o2.setIdGuestOrder(null);
-        o2.setOffer(offer);
-        o2.setStatus(Status.ZREALIZOWANE);
+        GuestOrder secondGuestOrder = createGuestOrder(savedOffer, Status.ZREALIZOWANE);
 
-        guestOrderRepository.saveAll(List.of(o1, o2));
+        guestOrderRepository.saveAllAndFlush(List.of(firstGuestOrder,secondGuestOrder)
+        );
 
-        List<GuestOrder> guestOrders = guestOrderRepository.findAll();
+        entityManager.clear();
+
+        List<GuestOrder> guestOrders =
+                guestOrderRepository.findAll();
 
         assertThat(guestOrders)
                 .hasSize(2)
-                .allSatisfy(ord -> {
-                    assertThat(ord.getOffer()).isNotNull();
-                    assertThat(ord.getEmail()).isEqualTo("guestjohndoe@example.com");
-                    assertThat(ord.getFirstname()).isEqualTo("GuestJohn");
-                    assertThat(ord.getLastname()).isEqualTo("GuestDoe");
-                    assertThat(ord.getPhonenumber()).isEqualTo("123456789");
-                })
+                .allSatisfy(guestOrder -> {
+                    assertThat(guestOrder.getOffer())
+                            .isNotNull();
+
+                    assertThat(guestOrder.getBookedOffer())
+                            .isNotNull();
+
+                    assertThat(guestOrder.getBookedOffer().getName())
+                            .isEqualTo(savedOffer.getKind());
+
+                    assertThat(guestOrder.getBookedOffer().getPrice())
+                            .isEqualByComparingTo(savedOffer.getCost());
+
+                    assertThat(guestOrder.getEmail())
+                            .isEqualTo("guestjohndoe@example.com");
+
+                    assertThat(guestOrder.getFirstname())
+                            .isEqualTo("GuestJohn");
+
+                    assertThat(guestOrder.getLastname())
+                            .isEqualTo("GuestDoe");
+
+                    assertThat(guestOrder.getPhonenumber())
+                            .isEqualTo("123456789");
+                });
+
+        assertThat(guestOrders)
                 .extracting(GuestOrder::getStatus)
-                .contains(Status.NOWE, Status.ZREALIZOWANE);
+                .containsExactlyInAnyOrder(
+                        Status.NOWE,
+                        Status.ZREALIZOWANE
+                );
     }
 
     @Test
     @DisplayName("deleteById should remove guest order from repository")
     void deleteById_removesGuestOrder() {
-        Offer offer = offerRepository.save(OfferTestEntities.createUnsavedOffer());
-        GuestOrder guestOrder = GuestOrderTestEntities.createUnsavedGuestOrder();
-        guestOrder.setOffer(offer);
+        Offer savedOffer = saveOffer();
 
-        GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
-        Long guestOrderId = savedGuestOrder.getIdGuestOrder();
+        GuestOrder guestOrder = createGuestOrder(
+                savedOffer,
+                Status.NOWE
+        );
+
+        GuestOrder savedGuestOrder =
+                guestOrderRepository.saveAndFlush(guestOrder);
+
+        Long guestOrderId =
+                savedGuestOrder.getIdGuestOrder();
 
         guestOrderRepository.deleteById(guestOrderId);
+        guestOrderRepository.flush();
 
-        Optional<GuestOrder> found = guestOrderRepository.findById(guestOrderId);
-        assertThat(found).isEmpty();
+        entityManager.clear();
+
+        Optional<GuestOrder> foundGuestOrder =
+                guestOrderRepository.findById(guestOrderId);
+
+        assertThat(foundGuestOrder).isEmpty();
     }
 
     @Test
-    @DisplayName("findGuestOrdersByStatus should return only guest orders with specific status")
-    void findGuestOrdersByStatus_returnsOrdersWithNOWEStatus() {
+    @DisplayName("findGuestOrdersByStatus should return only orders with specific status")
+    void findGuestOrdersByStatus_returnsOrdersWithGivenStatus() {
+        Offer savedOffer = saveOffer();
 
-        Offer offer = offerRepository.save(OfferTestEntities.createUnsavedOffer());
+        GuestOrder newGuestOrder = createGuestOrder(savedOffer, Status.NOWE);
 
-        GuestOrder o1 = GuestOrderTestEntities.createUnsavedGuestOrder();
-        o1.setOffer(offer);
-        o1.setStatus(Status.NOWE);
+        GuestOrder cancelledGuestOrder = createGuestOrder(savedOffer,Status.ANULOWANE);
 
-        GuestOrder o2 = GuestOrderTestEntities.createUnsavedGuestOrder();
-        o2.setOffer(offer);
-        o2.setStatus(Status.ANULOWANE);
+        guestOrderRepository.saveAllAndFlush(
+                List.of(newGuestOrder, cancelledGuestOrder)
+        );
 
-        guestOrderRepository.saveAll(List.of(o1, o2));
+        entityManager.clear();
 
-        List<GuestOrder> noweOrders = guestOrderRepository.findGuestOrdersByStatus(Status.NOWE);
+        List<GuestOrder> newGuestOrders =
+                guestOrderRepository.findGuestOrdersByStatus(
+                        Status.NOWE
+                );
 
-        assertThat(noweOrders)
+        assertThat(newGuestOrders)
                 .hasSize(1)
-                .allMatch(ord -> ord.getStatus() == Status.NOWE);
+                .allSatisfy(guestOrder -> {
+                    assertThat(guestOrder.getStatus()).isEqualTo(Status.NOWE);
+
+                    assertThat(guestOrder.getOffer()).isNotNull();
+
+                    assertThat(guestOrder.getBookedOffer()).isNotNull();
+
+                    assertThat(guestOrder.getBookedOffer().getName()).isEqualTo(savedOffer.getKind());
+
+                    assertThat(guestOrder.getBookedOffer().getPrice()).isEqualByComparingTo(savedOffer.getCost());
+                });
     }
 
+    private Offer saveOffer() {
+        return offerRepository.saveAndFlush(
+                createUnsavedOffer()
+        );
+    }
+
+    private GuestOrder createGuestOrder(
+            Offer offer,
+            Status status
+    ) {
+        GuestOrder guestOrder =
+                createUnsavedGuestOrder();
+
+        guestOrder.setIdGuestOrder(null);
+        guestOrder.setOffer(offer);
+        guestOrder.setBookedOffer(
+                createBookedOffer(offer)
+        );
+        guestOrder.setStatus(status);
+
+        return guestOrder;
+    }
 }

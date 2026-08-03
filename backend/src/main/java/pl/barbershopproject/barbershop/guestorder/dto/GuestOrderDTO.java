@@ -1,7 +1,7 @@
 package pl.barbershopproject.barbershop.guestorder.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.offer.dto.BookedOfferDTO;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.utils.Status;
@@ -26,7 +26,7 @@ public record GuestOrderDTO(
         String email,
 
         @Schema(description = "Reserved service offer details")
-        Offer offer,
+        BookedOfferDTO offer,
 
         @Schema(description = "Timestamp when the order was placed", example = "2026-07-21T09:15:00")
         LocalDateTime orderDate,

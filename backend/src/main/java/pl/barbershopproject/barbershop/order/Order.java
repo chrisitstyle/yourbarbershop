@@ -4,6 +4,7 @@ package pl.barbershopproject.barbershop.order;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.user.User;
@@ -34,6 +35,13 @@ public class Order implements Serializable {
     @ManyToOne
     @JoinColumn(name = "id_offer")
     private Offer offer;
+
+    /**
+     * Stores the historical name and price of the offer selected
+     * for this order.
+     */
+    @Embedded
+    private BookedOffer bookedOffer;
 
     @Column(name = "order_date")
     private LocalDateTime orderDate;
