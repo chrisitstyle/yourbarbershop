@@ -21,6 +21,7 @@ class PaymentCheckoutSessionUpdateServiceTest {
 
     private static final Long PAYMENT_ID = 10L;
     private static final String SESSION_ID = "cs_test_123";
+    private static final String OTHER_SESSION_ID = "cs_test_456";
 
     @Mock
     private PaymentRepository paymentRepository;
@@ -159,5 +160,46 @@ class PaymentCheckoutSessionUpdateServiceTest {
                 .paymentMethod(paymentMethod)
                 .paymentStatus(paymentStatus)
                 .build();
+    }
+
+    @Test
+    void shouldDoNothingWhenTheSameSessionIsAlreadyAssigned() {
+        Payment payment = createPayment(PaymentMethod.KARTA_ONLINE);
+        payment.setStripeCheckoutSessionId(SESSION_ID);
+
+        when(paymentRepository.findById(PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+
+        checkoutSessionUpdateService.assignSession(PAYMENT_ID, SESSION_ID);
+
+        assertThat(payment.getStripeCheckoutSessionId())
+                .isEqualTo(SESSION_ID);
+
+        verify(paymentRepository).findById(PAYMENT_ID);
+        verify(paymentRepository, never()).save(any(Payment.class));
+    }
+
+    @Test
+    void shouldRejectOverwritingExistingSessionWithAnotherSession() {
+        Payment payment = createPayment(PaymentMethod.KARTA_ONLINE);
+        payment.setStripeCheckoutSessionId(SESSION_ID);
+
+        when(paymentRepository.findById(PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+
+        assertThatThrownBy(() ->
+                checkoutSessionUpdateService.assignSession(
+                        PAYMENT_ID,
+                        OTHER_SESSION_ID
+                )
+        )
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Płatność o ID: " + PAYMENT_ID + " ma już przypisaną inną sesję Stripe");
+
+        assertThat(payment.getStripeCheckoutSessionId())
+                .isEqualTo(SESSION_ID);
+
+        verify(paymentRepository).findById(PAYMENT_ID);
+        verify(paymentRepository, never()).save(any(Payment.class));
     }
 }

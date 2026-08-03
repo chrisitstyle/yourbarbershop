@@ -38,7 +38,19 @@ class PaymentCheckoutSessionUpdateService implements PaymentCheckoutSessionUpdat
             throw new IllegalStateException("Sesję Stripe można przypisać tylko do płatności online");
         }
 
-        payment.setStripeCheckoutSessionId(requiredSessionId);
-        paymentRepository.save(payment);
+        String currentSessionId = payment.getStripeCheckoutSessionId();
+
+        if (currentSessionId == null) {
+            payment.setStripeCheckoutSessionId(requiredSessionId);
+            paymentRepository.save(payment);
+            return;
+        }
+
+        if (currentSessionId.equals(requiredSessionId)) {
+            return;
+        }
+
+        throw new IllegalStateException("Płatność o ID: " + paymentId + " ma już przypisaną inną sesję Stripe"
+        );
     }
 }
