@@ -25,6 +25,7 @@ const EditOffer = () => {
       setKind(offerData.kind);
       setCost(offerData.cost);
     }
+
     setIsInitialLoading(false);
   }, [offerData]);
 
@@ -38,6 +39,7 @@ const EditOffer = () => {
       toast.success(
         t("admin.messages.editSuccess", "Pomyślnie zapisano zmiany."),
       );
+
       navigate("/adminpanel");
     },
     onError: (error) => {
@@ -55,7 +57,11 @@ const EditOffer = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    updateOfferMutation.mutate({ kind, cost });
+
+    updateOfferMutation.mutate({
+      kind,
+      cost,
+    });
   };
 
   if (isInitialLoading) {
@@ -75,8 +81,24 @@ const EditOffer = () => {
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
-        <div className="col-md-4 border p-3">
-          <h4 className="text-center">{t("admin.offers.editTitle")}</h4>
+        <div className="col-md-5 border rounded p-4">
+          <h4 className="text-center mb-3">{t("admin.offers.editTitle")}</h4>
+
+          <div className="alert alert-warning" role="alert">
+            <strong>
+              {t(
+                "admin.offers.editNoticeTitle",
+                "Zmiana dotyczy tylko nowych zamówień.",
+              )}
+            </strong>
+
+            <div className="mt-1">
+              {t(
+                "admin.offers.editNoticeDescription",
+                "Istniejące zamówienia zachowają nazwę i cenę oferty obowiązującą w chwili rezerwacji. Utworzone wcześniej płatności online również zachowają pierwotną kwotę.",
+              )}
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
@@ -102,15 +124,24 @@ const EditOffer = () => {
               </label>
 
               <input
-                type="text"
+                type="number"
                 className="form-control"
                 id="cost"
                 name="cost"
                 value={cost}
                 onChange={(e) => setCost(e.target.value)}
+                min="0"
+                step="0.01"
                 required
                 disabled={updateOfferMutation.isPending}
               />
+
+              <div className="form-text">
+                {t(
+                  "admin.offers.costHint",
+                  "Nowa cena będzie używana przy kolejnych rezerwacjach.",
+                )}
+              </div>
             </div>
 
             <ButtonSpinner

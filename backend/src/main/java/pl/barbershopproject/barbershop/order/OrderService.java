@@ -6,6 +6,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
+import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferQuery;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
@@ -17,12 +18,14 @@ import pl.barbershopproject.barbershop.order.mapper.OrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
 import pl.barbershopproject.barbershop.payment.PaymentCreationResult;
 import pl.barbershopproject.barbershop.payment.PaymentCreator;
+import pl.barbershopproject.barbershop.payment.PaymentOfferUpdater;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.utils.Status;
 
 import java.time.Clock;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ class OrderService {
     private final OfferQuery offerQuery;
     private final AppointmentReservation appointmentReservation;
     private final PaymentCreator paymentCreator;
+    private final PaymentOfferUpdater paymentOfferUpdater;
     private final OrderEvents orderEvents;
     private final Clock clock;
 
@@ -105,12 +109,14 @@ class OrderService {
             Long idOrder
     ) {
         Order order = getRequiredOrder(idOrder);
-        Offer offer = offerQuery.getRequiredOffer(request.idOffer());
+        Offer targetOffer = offerQuery.getRequiredOffer(request.idOffer());
 
         Status oldStatus = order.getStatus();
         Status targetStatus = request.status() != null
                 ? request.status()
                 : oldStatus;
+
+        updateOfferIfChanged(order, targetOffer);
 
         appointmentReservation.updateSlotReservation(
                 order.getVisitDate(),
@@ -119,7 +125,6 @@ class OrderService {
                 targetStatus
         );
 
-        order.setOffer(offer);
         order.setVisitDate(request.visitDate());
         order.setStatus(targetStatus);
 
@@ -144,6 +149,37 @@ class OrderService {
         orderEvents.deleted(idOrder);
     }
 
+    private void updateOfferIfChanged(
+            Order order,
+            Offer targetOffer
+    ) {
+        if (!hasOfferChanged(order.getOffer(), targetOffer)) {
+            return;
+        }
+
+        paymentOfferUpdater.updateAfterOfferChange(
+                order.getPayment(),
+                targetOffer
+        );
+
+        order.setOffer(targetOffer);
+        order.setBookedOffer(BookedOffer.from(targetOffer));
+    }
+
+    private boolean hasOfferChanged(
+            Offer currentOffer,
+            Offer targetOffer
+    ) {
+        if (currentOffer == null) {
+            return true;
+        }
+
+        return !Objects.equals(
+                currentOffer.getIdOffer(),
+                targetOffer.getIdOffer()
+        );
+    }
+
     private Order getRequiredOrder(Long idOrder) {
         return orderRepository.findById(idOrder)
                 .orElseThrow(() -> new NoSuchElementException(
@@ -156,7 +192,7 @@ class OrderService {
     private Status parseStatus(String status) {
         try {
             return Status.valueOf(status.toUpperCase());
-        } catch (IllegalArgumentException _) {
+        } catch (IllegalArgumentException ignored) {
             throw new IllegalArgumentException(
                     AVAILABLE_STATUSES_MSG + List.of(Status.values())
             );

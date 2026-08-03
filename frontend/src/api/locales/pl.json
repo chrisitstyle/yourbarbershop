@@ -109,7 +109,11 @@
       "searchPlaceholder": "Szukaj usługi...",
       "deleteLabel": "usługę",
       "id": "Identyfikator usługi",
-      "service": "Usługa"
+      "service": "Usługa",
+
+      "editNoticeTitle": "Zmiana dotyczy tylko nowych zamówień.",
+      "editNoticeDescription": "Istniejące zamówienia zachowają nazwę i cenę usługi obowiązującą w chwili rezerwacji. Utworzone wcześniej płatności online również zachowają pierwotną kwotę.",
+      "costHint": "Nowa cena będzie używana przy kolejnych rezerwacjach."
     },
     "guestOrders": {
       "title": "Wizyty gości",

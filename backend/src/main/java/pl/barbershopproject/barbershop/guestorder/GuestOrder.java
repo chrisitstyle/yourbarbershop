@@ -3,6 +3,7 @@ package pl.barbershopproject.barbershop.guestorder;
 
 import jakarta.persistence.*;
 import lombok.*;
+import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.utils.Status;
@@ -33,6 +34,13 @@ public class GuestOrder implements Serializable {
     @ManyToOne
     @JoinColumn(name = "id_offer")
     private Offer offer;
+
+    /**
+     * Stores the historical name and price of the offer selected
+     * for this order.
+     */
+    @Embedded
+    private BookedOffer bookedOffer;
 
     @Column(name = "order_date")
     private LocalDateTime orderDate;

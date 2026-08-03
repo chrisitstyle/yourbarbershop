@@ -100,4 +100,14 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorDTO, status);
     }
+
+    @ExceptionHandler(OrderOfferChangeNotAllowedException.class)
+    public ResponseEntity<ErrorDTO> handleOrderOfferChangeNotAllowed(
+            OrderOfferChangeNotAllowedException ex
+    ) {
+        return createErrorResponse(
+                ex.getMessage(),
+                HttpStatus.CONFLICT
+        );
+    }
 }

@@ -1,7 +1,7 @@
 package pl.barbershopproject.barbershop.order.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.offer.dto.BookedOfferDTO;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.utils.Status;
@@ -18,7 +18,7 @@ public record OrderDTO(
         UserInOrderDTO user,
 
         @Schema(description = "Reserved barber service offer")
-        Offer offer,
+        BookedOfferDTO offer,
 
         @Schema(description = "Timestamp when the order was placed", example = "2026-07-20T12:00:00")
         LocalDateTime orderDate,
@@ -32,7 +32,7 @@ public record OrderDTO(
         @Schema(description = "Selected payment method", example = "GOTOWKA_NA_MIEJSCU")
         PaymentMethod paymentMethod,
 
-        @Schema(description = "Status of the payment", example = "PENDING")
+        @Schema(description = "Status of the payment", example = "NIE_WYMAGANA")
         PaymentStatus paymentStatus
 ) implements Serializable {
 }

@@ -17,11 +17,21 @@ CREATE TABLE USER_ORDER (
                             ID_ORDER BIGINT AUTO_INCREMENT PRIMARY KEY,
                             ID_USER BIGINT,
                             ID_OFFER BIGINT,
+                            BOOKED_OFFER_NAME VARCHAR(255) NOT NULL,
+                            BOOKED_OFFER_PRICE DECIMAL(10, 2) NOT NULL,
                             ORDER_DATE TIMESTAMP NOT NULL,
                             VISIT_DATE TIMESTAMP NOT NULL,
                             STATUS VARCHAR(15) NOT NULL,
-                            CONSTRAINT FK_CUSTOMER_ORDER_USER FOREIGN KEY (ID_USER) REFERENCES "user"(ID_USER) ON DELETE CASCADE,
-                            CONSTRAINT FK_CUSTOMER_ORDER_OFFER FOREIGN KEY (ID_OFFER) REFERENCES OFFER(ID_OFFER) ON DELETE SET NULL
+
+                            CONSTRAINT FK_CUSTOMER_ORDER_USER
+                                FOREIGN KEY (ID_USER)
+                                    REFERENCES "user"(ID_USER)
+                                    ON DELETE CASCADE,
+
+                            CONSTRAINT FK_CUSTOMER_ORDER_OFFER
+                                FOREIGN KEY (ID_OFFER)
+                                    REFERENCES OFFER(ID_OFFER)
+                                    ON DELETE SET NULL
 );
 
 CREATE TABLE GUEST_ORDER (
@@ -31,10 +41,16 @@ CREATE TABLE GUEST_ORDER (
                              PHONENUMBER VARCHAR(45) NOT NULL,
                              EMAIL VARCHAR(45) NOT NULL,
                              ID_OFFER BIGINT,
+                             BOOKED_OFFER_NAME VARCHAR(255) NOT NULL,
+                             BOOKED_OFFER_PRICE DECIMAL(10, 2) NOT NULL,
                              ORDER_DATE TIMESTAMP NOT NULL,
                              VISIT_DATE TIMESTAMP NOT NULL,
                              STATUS VARCHAR(15) NOT NULL,
-                             CONSTRAINT FK_GUEST_ORDER_OFFER FOREIGN KEY (ID_OFFER) REFERENCES OFFER(ID_OFFER) ON DELETE SET NULL
+
+                             CONSTRAINT FK_GUEST_ORDER_OFFER
+                                 FOREIGN KEY (ID_OFFER)
+                                     REFERENCES OFFER(ID_OFFER)
+                                     ON DELETE SET NULL
 );
 
 CREATE TABLE PAYMENT (

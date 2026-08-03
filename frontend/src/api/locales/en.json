@@ -109,7 +109,11 @@
       "searchPlaceholder": "Search for a service...",
       "deleteLabel": "service",
       "id": "Service ID",
-      "service": "Service"
+      "service": "Service",
+
+      "editNoticeTitle": "The change applies only to new orders.",
+      "editNoticeDescription": "Existing orders will retain the offer name and price applicable at the time of booking. Existing online payments will also retain their original amount.",
+      "costHint": "The new price will be used for future bookings."
     },
     "guestOrders": {
       "title": "Guest Appointments",
