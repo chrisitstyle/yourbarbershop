@@ -2,9 +2,10 @@ package pl.barbershopproject.barbershop.payment;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
-import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.order.Order;
 
 import java.time.Clock;
@@ -13,31 +14,22 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Creates and persists payments for registered-user and guest orders.
+ * Creates and persists payments inside an existing order transaction.
  *
- * <p>For online card payments, the service additionally creates a Stripe
- * Checkout session and assigns its identifier to the payment entity.</p>
+ * <p>This service does not communicate with Stripe. It only prepares
+ * immutable checkout data that can be used after the database transaction
+ * has been committed.</p>
  */
 @Service
-@Transactional
+@Transactional(propagation = Propagation.MANDATORY) // requires an already active order transaction when creating and persisting a payment
 class PaymentCreationService implements PaymentCreator {
 
     private final PaymentRepository paymentRepository;
-    private final StripeCheckoutService stripeCheckoutService;
     private final Clock clock;
     private final String currency;
 
-    /**
-     * Creates a payment creation service.
-     *
-     * @param paymentRepository repository used to persist payments
-     * @param stripeCheckoutService service used to create Stripe Checkout sessions
-     * @param clock clock used to determine the payment creation time
-     * @param currency configured payment currency
-     */
     PaymentCreationService(
             PaymentRepository paymentRepository,
-            StripeCheckoutService stripeCheckoutService,
             Clock clock,
             @Value("${stripe.currency:pln}") String currency
     ) {
@@ -45,62 +37,30 @@ class PaymentCreationService implements PaymentCreator {
                 paymentRepository,
                 "PaymentRepository nie może być null"
         );
-        this.stripeCheckoutService = Objects.requireNonNull(
-                stripeCheckoutService,
-                "StripeCheckoutService nie może być null"
-        );
-        this.clock = Objects.requireNonNull(
-                clock,
-                "Clock nie może być null"
-        );
+
+        this.clock = Objects.requireNonNull(clock,"Clock nie może być null");
+
         this.currency = normalizeCurrency(currency);
     }
 
-    /**
-     * Creates a payment associated with a registered-user order.
-     *
-     * <p>The method maintains both sides of the relationship between
-     * the order and the payment.</p>
-     *
-     * @param order order for which the payment is created
-     * @param offer offer used to determine the payment amount
-     * @param paymentMethod selected payment method
-     * @return created payment together with an optional checkout URL
-     * @throws NullPointerException if any argument is {@code null}
-     */
     @Override
-    public PaymentCreationResult createForOrder(
-            Order order,
-            Offer offer,
-            PaymentMethod paymentMethod
-    ) {
+    public PaymentCreationResult createForOrder(Order order, PaymentMethod paymentMethod) {
         Objects.requireNonNull(order, "Order nie może być null");
 
-        Payment payment = createPayment(offer, paymentMethod)
+        BookedOffer bookedOffer = getRequiredBookedOffer(order.getBookedOffer());
+
+        Payment payment = createPayment(bookedOffer, paymentMethod)
                 .order(order)
                 .build();
 
         order.setPayment(payment);
 
-        return saveAndCreateCheckoutIfRequired(payment, offer);
+        return savePayment(payment, bookedOffer.getName());
     }
 
-    /**
-     * Creates a payment associated with a guest order.
-     *
-     * <p>The method maintains both sides of the relationship between
-     * the guest order and the payment.</p>
-     *
-     * @param guestOrder guest order for which the payment is created
-     * @param offer offer used to determine the payment amount
-     * @param paymentMethod selected payment method
-     * @return created payment together with an optional checkout URL
-     * @throws NullPointerException if any argument is {@code null}
-     */
     @Override
     public PaymentCreationResult createForGuestOrder(
             GuestOrder guestOrder,
-            Offer offer,
             PaymentMethod paymentMethod
     ) {
         Objects.requireNonNull(
@@ -108,33 +68,23 @@ class PaymentCreationService implements PaymentCreator {
                 "GuestOrder nie może być null"
         );
 
-        Payment payment = createPayment(offer, paymentMethod)
+        BookedOffer bookedOffer = getRequiredBookedOffer(
+                guestOrder.getBookedOffer()
+        );
+
+        Payment payment = createPayment(bookedOffer,paymentMethod)
                 .guestOrder(guestOrder)
                 .build();
 
         guestOrder.setPayment(payment);
 
-        return saveAndCreateCheckoutIfRequired(payment, offer);
+        return savePayment(payment, bookedOffer.getName());
     }
 
-    /**
-     * Creates a payment builder initialized with common payment data.
-     *
-     * @param offer offer used to determine the payment amount
-     * @param paymentMethod selected payment method
-     * @return initialized payment builder
-     * @throws NullPointerException if the offer, its cost or payment method
-     *                              is {@code null}
-     */
     private Payment.PaymentBuilder createPayment(
-            Offer offer,
+            BookedOffer bookedOffer,
             PaymentMethod paymentMethod
     ) {
-        Objects.requireNonNull(offer, "Offer nie może być null");
-        Objects.requireNonNull(
-                offer.getCost(),
-                "Koszt oferty nie może być null"
-        );
         Objects.requireNonNull(
                 paymentMethod,
                 "PaymentMethod nie może być null"
@@ -143,95 +93,55 @@ class PaymentCreationService implements PaymentCreator {
         return Payment.builder()
                 .paymentMethod(paymentMethod)
                 .paymentStatus(initialStatus(paymentMethod))
-                .amount(offer.getCost())
+                .amount(bookedOffer.getPrice())
                 .currency(currency)
                 .createdAt(LocalDateTime.now(clock));
     }
 
-    /**
-     * Persists the payment and creates a Stripe Checkout session when required.
-     *
-     * <p>For payment methods that do not require online checkout, the returned
-     * checkout URL is {@code null}. The Stripe session identifier is persisted
-     * through JPA dirty checking when the transaction is committed.</p>
-     *
-     * @param payment payment to persist
-     * @param offer offer used to create the checkout session
-     * @return payment creation result
-     */
-    private PaymentCreationResult saveAndCreateCheckoutIfRequired(
+    private PaymentCreationResult savePayment(
             Payment payment,
-            Offer offer
+            String productName
     ) {
-        Payment savedPayment = paymentRepository.save(payment);
+        Payment savedPayment = paymentRepository.saveAndFlush(payment);
 
-        if (!requiresOnlineCheckout(savedPayment.getPaymentMethod())) {
-            return new PaymentCreationResult(savedPayment, null);
-        }
+        PaymentCheckoutRequest checkoutRequest = PaymentCheckoutRequest.from(savedPayment, productName);
 
-        StripeCheckoutSessionResponse checkoutSession =
-                Objects.requireNonNull(
-                        stripeCheckoutService.createCheckoutSession(
-                                savedPayment,
-                                offer
-                        ),
-                        "Stripe Checkout session nie może być null"
-                );
-
-        String sessionId = Objects.requireNonNull(
-                checkoutSession.sessionId(),
-                "Stripe Checkout session ID nie może być null"
-        );
-
-        savedPayment.setStripeCheckoutSessionId(sessionId);
-
-        return new PaymentCreationResult(
-                savedPayment,
-                checkoutSession.checkoutUrl()
-        );
+        return new PaymentCreationResult(savedPayment, checkoutRequest);
     }
 
-    /**
-     * Determines the initial payment status.
-     *
-     * @param paymentMethod selected payment method
-     * @return pending status for an online payment or not-required status
-     *         for other payment methods
-     */
-    private PaymentStatus initialStatus(PaymentMethod paymentMethod) {
+    private BookedOffer getRequiredBookedOffer(BookedOffer bookedOffer) {
+        BookedOffer requiredBookedOffer = Objects.requireNonNull(bookedOffer,"BookedOffer nie może być null");
+
+        Objects.requireNonNull(requiredBookedOffer.getName(),"Nazwa zarezerwowanej oferty nie może być null");
+
+        Objects.requireNonNull(
+                requiredBookedOffer.getPrice(),
+                "Cena zarezerwowanej oferty nie może być null"
+        );
+
+        return requiredBookedOffer;
+    }
+
+    private PaymentStatus initialStatus(
+            PaymentMethod paymentMethod
+    ) {
         return requiresOnlineCheckout(paymentMethod)
                 ? PaymentStatus.OCZEKUJE_NA_PLATNOSC
                 : PaymentStatus.NIE_WYMAGANA;
     }
 
-    /**
-     * Checks whether the payment method requires a Stripe Checkout session.
-     *
-     * @param paymentMethod selected payment method
-     * @return {@code true} when online card payment is selected
-     */
-    private boolean requiresOnlineCheckout(PaymentMethod paymentMethod) {
+    private boolean requiresOnlineCheckout(
+            PaymentMethod paymentMethod
+    ) {
         return paymentMethod == PaymentMethod.KARTA_ONLINE;
     }
 
-    /**
-     * Validates and normalizes the configured currency code.
-     *
-     * @param currency configured currency code
-     * @return trimmed, uppercase currency code
-     * @throws NullPointerException if the currency is {@code null}
-     * @throws IllegalArgumentException if the currency is blank
-     */
     private String normalizeCurrency(String currency) {
-        String normalizedCurrency = Objects.requireNonNull(
-                currency,
-                "Waluta nie może być null"
-        ).trim();
+        String normalizedCurrency = Objects.requireNonNull(currency, "Waluta nie może być null")
+                .trim();
 
         if (normalizedCurrency.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Waluta nie może być pusta"
-            );
+            throw new IllegalArgumentException("Waluta nie może być pusta");
         }
 
         return normalizedCurrency.toUpperCase(Locale.ROOT);

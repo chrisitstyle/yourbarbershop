@@ -7,54 +7,86 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
-import pl.barbershopproject.barbershop.offer.Offer;
 import tools.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Locale;
+import java.util.Objects;
 
 @Service
 public class StripeCheckoutService {
 
+    private static final String CHECKOUT_SESSION_ERROR =
+            "Stripe nie zwrócił identyfikatora albo adresu Checkout Session";
+
     private final RestClient restClient;
-    private final String currency;
     private final String successUrl;
     private final String cancelUrl;
 
     public StripeCheckoutService(
             RestClient.Builder restClientBuilder,
-            @Value("${stripe.api-base-url:https://api.stripe.com}") String apiBaseUrl,
-            @Value("${stripe.secret-key:}") String secretKey,
-            @Value("${stripe.currency:pln}") String currency,
-            @Value("${stripe.success-url:http://localhost:3000?payment=success}") String successUrl,
-            @Value("${stripe.cancel-url:http://localhost:3000?payment=cancel}") String cancelUrl
+            @Value("${stripe.api-base-url:https://api.stripe.com}")
+            String apiBaseUrl,
+            @Value("${stripe.secret-key:}")
+            String secretKey,
+            @Value("${stripe.success-url:http://localhost:3000?payment=success}")
+            String successUrl,
+            @Value("${stripe.cancel-url:http://localhost:3000?payment=cancel}")
+            String cancelUrl
     ) {
         this.restClient = restClientBuilder
                 .baseUrl(apiBaseUrl)
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + secretKey)
                 .build();
-        this.currency = currency;
+
         this.successUrl = successUrl;
         this.cancelUrl = cancelUrl;
     }
 
     public StripeCheckoutSessionResponse createCheckoutSession(
-            Payment payment,
-            Offer offer
+            PaymentCheckoutRequest request
     ) {
+        Objects.requireNonNull(
+                request,
+                "PaymentCheckoutRequest nie może być null"
+        );
+
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+
         body.add("mode", "payment");
-        body.add("payment_method_types[0]", "card"); // only card payment (without BLIK, Klarna etc.)
+        body.add("payment_method_types[0]", "card");
         body.add("success_url", successUrl);
         body.add("cancel_url", cancelUrl);
 
         body.add("line_items[0][quantity]", "1");
-        body.add("line_items[0][price_data][currency]", currency);
-        body.add("line_items[0][price_data][unit_amount]", toSmallestCurrencyUnit(payment.getAmount()).toString());
-        body.add("line_items[0][price_data][product_data][name]", offer.getKind());
 
-        body.add("metadata[paymentId]", payment.getIdPayment().toString());
-        body.add("payment_intent_data[metadata][paymentId]", payment.getIdPayment().toString());
+        body.add(
+                "line_items[0][price_data][currency]",
+                request.currency().toLowerCase(Locale.ROOT)
+        );
+
+        body.add(
+                "line_items[0][price_data][unit_amount]",
+                toSmallestCurrencyUnit(request.amount()).toString()
+        );
+
+        body.add(
+                "line_items[0][price_data][product_data][name]",
+                request.productName()
+        );
+
+        String paymentId = request.paymentId().toString();
+
+        body.add(
+                "metadata[paymentId]",
+                paymentId
+        );
+
+        body.add(
+                "payment_intent_data[metadata][paymentId]",
+                paymentId
+        );
 
         JsonNode response = restClient.post()
                 .uri("/v1/checkout/sessions")
@@ -63,13 +95,31 @@ public class StripeCheckoutService {
                 .retrieve()
                 .body(JsonNode.class);
 
-        if (response == null || response.path("id").isMissingNode() || response.path("url").isMissingNode()) {
-            throw new IllegalStateException("Stripe nie zwrócił identyfikatora albo adresu Checkout Session");
+        return mapResponse(response);
+    }
+
+    private StripeCheckoutSessionResponse mapResponse(
+            JsonNode response
+    ) {
+        if (response == null) {
+            throw new IllegalStateException(
+                    CHECKOUT_SESSION_ERROR
+            );
+        }
+
+        String sessionId = response.path("id").asString(null);
+        String checkoutUrl = response.path("url").asString(null);
+
+        if (sessionId == null
+                || sessionId.isBlank()
+                || checkoutUrl == null
+                || checkoutUrl.isBlank()) {
+            throw new IllegalStateException(CHECKOUT_SESSION_ERROR);
         }
 
         return new StripeCheckoutSessionResponse(
-                response.path("id").asString(),
-                response.path("url").asString()
+                sessionId,
+                checkoutUrl
         );
     }
 

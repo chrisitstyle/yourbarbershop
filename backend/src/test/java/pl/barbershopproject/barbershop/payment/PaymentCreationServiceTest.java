@@ -20,434 +20,191 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities.guestOrderBuilder;
+import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createBookedOffer;
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createOffer;
-import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.offerBuilder;
 import static pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities.orderBuilder;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentCreationServiceTest {
 
-    private static final LocalDateTime PAYMENT_CREATED_AT =
-            LocalDateTime.of(2026, Month.AUGUST, 2, 20, 0);
+    private static final Long PAYMENT_ID = 15L;
 
-    private static final String STRIPE_SESSION_ID = "cs_test_123";
-
-    private static final String CHECKOUT_URL =
-            "https://checkout.stripe.com/c/pay/cs_test_123";
+    private static final LocalDateTime PAYMENT_CREATED_AT = LocalDateTime
+            .of(2026, Month.AUGUST, 2, 20, 0);
 
     @Mock
     private PaymentRepository paymentRepository;
-
-    @Mock
-    private StripeCheckoutService stripeCheckoutService;
 
     private PaymentCreationService paymentCreationService;
 
     @BeforeEach
     void setUp() {
-        Clock clock = Clock.fixed(
-                PAYMENT_CREATED_AT.toInstant(ZoneOffset.UTC),
-                ZoneOffset.UTC
-        );
+        Clock clock = Clock.fixed(PAYMENT_CREATED_AT.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
 
-        paymentCreationService = new PaymentCreationService(
-                paymentRepository,
-                stripeCheckoutService,
-                clock,
-                " pln "
-        );
+        paymentCreationService = new PaymentCreationService(paymentRepository, clock, " pln ");
     }
 
     @Test
-    void shouldCreateOnlinePaymentForOrderAndReturnCheckoutUrl() {
+    void shouldCreateOnlinePaymentForOrder() {
         Offer offer = createOffer();
 
-        Order order = orderBuilder()
-                .offer(offer)
-                .build();
+        Order order = orderBuilder().offer(offer).bookedOffer(createBookedOffer(offer)).build();
 
-        givenRepositoryReturnsPassedPayment();
-        givenStripeReturnsCheckoutSession(offer);
+        givenRepositoryReturnsPaymentWithId();
 
-        PaymentCreationResult result =
-                paymentCreationService.createForOrder(
-                        order,
-                        offer,
-                        PaymentMethod.KARTA_ONLINE
-                );
+        PaymentCreationResult result = paymentCreationService.createForOrder(order, PaymentMethod.KARTA_ONLINE);
 
         Payment payment = result.payment();
+        PaymentCheckoutRequest checkoutRequest = result.checkoutRequest();
 
+        assertThat(payment.getIdPayment()).isEqualTo(PAYMENT_ID);
         assertThat(payment.getOrder()).isSameAs(order);
         assertThat(payment.getGuestOrder()).isNull();
-
-        assertThat(payment.getPaymentMethod())
-                .isEqualTo(PaymentMethod.KARTA_ONLINE);
-
-        assertThat(payment.getPaymentStatus())
-                .isEqualTo(PaymentStatus.OCZEKUJE_NA_PLATNOSC);
-
-        assertThat(payment.getAmount())
-                .isEqualByComparingTo(offer.getCost());
-
+        assertThat(payment.getPaymentMethod()).isEqualTo(PaymentMethod.KARTA_ONLINE);
+        assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.OCZEKUJE_NA_PLATNOSC);
+        assertThat(payment.getAmount()).isEqualByComparingTo(order.getBookedOffer().getPrice());
         assertThat(payment.getCurrency()).isEqualTo("PLN");
         assertThat(payment.getCreatedAt()).isEqualTo(PAYMENT_CREATED_AT);
-
-        assertThat(payment.getStripeCheckoutSessionId())
-                .isEqualTo(STRIPE_SESSION_ID);
+        assertThat(payment.getStripeCheckoutSessionId()).isNull();
 
         assertThat(payment.isForOrder()).isTrue();
         assertThat(payment.isForGuestOrder()).isFalse();
-
         assertThat(order.getPayment()).isSameAs(payment);
-        assertThat(result.checkoutUrl()).isEqualTo(CHECKOUT_URL);
 
-        verify(paymentRepository, times(1)).save(same(payment));
+        assertThat(checkoutRequest.paymentId()).isEqualTo(PAYMENT_ID);
+        assertThat(checkoutRequest.paymentMethod()).isEqualTo(PaymentMethod.KARTA_ONLINE);
+        assertThat(checkoutRequest.paymentStatus()).isEqualTo(PaymentStatus.OCZEKUJE_NA_PLATNOSC);
+        assertThat(checkoutRequest.amount()).isEqualByComparingTo(order.getBookedOffer().getPrice());
+        assertThat(checkoutRequest.currency()).isEqualTo("PLN");
+        assertThat(checkoutRequest.productName()).isEqualTo(order.getBookedOffer().getName());
+        assertThat(checkoutRequest.requiresOnlineCheckout()).isTrue();
 
-        verify(stripeCheckoutService).createCheckoutSession(
-                same(payment),
-                same(offer)
-        );
+        verify(paymentRepository).saveAndFlush(same(payment));
     }
 
     @Test
-    void shouldCreateOnlinePaymentForGuestOrderAndReturnCheckoutUrl() {
+    void shouldCreateOnlinePaymentForGuestOrder() {
         Offer offer = createOffer();
 
-        GuestOrder guestOrder = guestOrderBuilder()
-                .offer(offer)
-                .build();
+        GuestOrder guestOrder = guestOrderBuilder().offer(offer).bookedOffer(createBookedOffer(offer)).build();
 
-        givenRepositoryReturnsPassedPayment();
-        givenStripeReturnsCheckoutSession(offer);
+        givenRepositoryReturnsPaymentWithId();
 
-        PaymentCreationResult result =
-                paymentCreationService.createForGuestOrder(
-                        guestOrder,
-                        offer,
-                        PaymentMethod.KARTA_ONLINE
-                );
+        PaymentCreationResult result = paymentCreationService
+                .createForGuestOrder(guestOrder, PaymentMethod.KARTA_ONLINE);
 
         Payment payment = result.payment();
+        PaymentCheckoutRequest checkoutRequest = result.checkoutRequest();
 
+        assertThat(payment.getIdPayment()).isEqualTo(PAYMENT_ID);
         assertThat(payment.getOrder()).isNull();
         assertThat(payment.getGuestOrder()).isSameAs(guestOrder);
-
-        assertThat(payment.getPaymentMethod())
-                .isEqualTo(PaymentMethod.KARTA_ONLINE);
-
-        assertThat(payment.getPaymentStatus())
-                .isEqualTo(PaymentStatus.OCZEKUJE_NA_PLATNOSC);
-
-        assertThat(payment.getAmount())
-                .isEqualByComparingTo(offer.getCost());
-
+        assertThat(payment.getPaymentMethod()).isEqualTo(PaymentMethod.KARTA_ONLINE);
+        assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.OCZEKUJE_NA_PLATNOSC);
+        assertThat(payment.getAmount()).isEqualByComparingTo(guestOrder.getBookedOffer().getPrice());
         assertThat(payment.getCurrency()).isEqualTo("PLN");
         assertThat(payment.getCreatedAt()).isEqualTo(PAYMENT_CREATED_AT);
-
-        assertThat(payment.getStripeCheckoutSessionId())
-                .isEqualTo(STRIPE_SESSION_ID);
+        assertThat(payment.getStripeCheckoutSessionId()).isNull();
 
         assertThat(payment.isForOrder()).isFalse();
         assertThat(payment.isForGuestOrder()).isTrue();
-
         assertThat(guestOrder.getPayment()).isSameAs(payment);
-        assertThat(result.checkoutUrl()).isEqualTo(CHECKOUT_URL);
 
-        verify(paymentRepository, times(1)).save(same(payment));
+        assertThat(checkoutRequest.paymentId()).isEqualTo(PAYMENT_ID);
+        assertThat(checkoutRequest.productName()).isEqualTo(guestOrder.getBookedOffer().getName());
+        assertThat(checkoutRequest.requiresOnlineCheckout()).isTrue();
 
-        verify(stripeCheckoutService).createCheckoutSession(
-                same(payment),
-                same(offer)
-        );
+        verify(paymentRepository).saveAndFlush(same(payment));
     }
 
     @ParameterizedTest
-    @EnumSource(
-            value = PaymentMethod.class,
-            names = {
-                    "GOTOWKA",
-                    "KARTA_NA_MIEJSCU"
-            }
-    )
-    void shouldCreateOfflinePaymentWithoutCallingStripe(
-            PaymentMethod paymentMethod
-    ) {
+    @EnumSource(value = PaymentMethod.class, names = {"GOTOWKA", "KARTA_NA_MIEJSCU"})
+    void shouldCreateOfflinePaymentWithCheckoutRequest(PaymentMethod paymentMethod) {
         Offer offer = createOffer();
 
-        Order order = orderBuilder()
-                .offer(offer)
-                .build();
+        Order order = orderBuilder().offer(offer).bookedOffer(createBookedOffer(offer)).build();
 
-        givenRepositoryReturnsPassedPayment();
+        givenRepositoryReturnsPaymentWithId();
 
-        PaymentCreationResult result =
-                paymentCreationService.createForOrder(
-                        order,
-                        offer,
-                        paymentMethod
-                );
+        PaymentCreationResult result = paymentCreationService.createForOrder(order, paymentMethod);
 
         Payment payment = result.payment();
+        PaymentCheckoutRequest checkoutRequest = result.checkoutRequest();
 
-        assertThat(payment.getOrder()).isSameAs(order);
-        assertThat(payment.getGuestOrder()).isNull();
-
-        assertThat(payment.getPaymentMethod())
-                .isEqualTo(paymentMethod);
-
-        assertThat(payment.getPaymentStatus())
-                .isEqualTo(PaymentStatus.NIE_WYMAGANA);
-
-        assertThat(payment.getAmount())
-                .isEqualByComparingTo(offer.getCost());
-
-        assertThat(payment.getCurrency()).isEqualTo("PLN");
-        assertThat(payment.getCreatedAt()).isEqualTo(PAYMENT_CREATED_AT);
-
+        assertThat(payment.getPaymentMethod()).isEqualTo(paymentMethod);
+        assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.NIE_WYMAGANA);
         assertThat(payment.getStripeCheckoutSessionId()).isNull();
-        assertThat(result.checkoutUrl()).isNull();
 
-        assertThat(order.getPayment()).isSameAs(payment);
+        assertThat(checkoutRequest.paymentMethod()).isEqualTo(paymentMethod);
+        assertThat(checkoutRequest.paymentStatus()).isEqualTo(PaymentStatus.NIE_WYMAGANA);
+        assertThat(checkoutRequest.requiresOnlineCheckout()).isFalse();
 
-        verify(paymentRepository, times(1)).save(same(payment));
-        verifyNoInteractions(stripeCheckoutService);
+        verify(paymentRepository).saveAndFlush(same(payment));
     }
 
     @Test
     void shouldThrowExceptionWhenOrderIsNull() {
-        Offer offer = createOffer();
+        assertThatThrownBy(() -> paymentCreationService.createForOrder(
+                null,
+                PaymentMethod.GOTOWKA))
+                .isInstanceOf(NullPointerException.class).hasMessage("Order nie może być null");
 
-        assertThatThrownBy(() ->
-                paymentCreationService.createForOrder(
-                        null,
-                        offer,
-                        PaymentMethod.GOTOWKA
-                )
-        )
-                .isInstanceOf(NullPointerException.class)
-                .hasMessage("Order nie może być null");
-
-        verifyNoInteractions(
-                paymentRepository,
-                stripeCheckoutService
-        );
+        verifyNoInteractions(paymentRepository);
     }
 
     @Test
     void shouldThrowExceptionWhenGuestOrderIsNull() {
-        Offer offer = createOffer();
+        assertThatThrownBy(() -> paymentCreationService.createForGuestOrder(null, PaymentMethod.GOTOWKA))
+                .isInstanceOf(NullPointerException.class).hasMessage("GuestOrder nie może być null");
 
-        assertThatThrownBy(() ->
-                paymentCreationService.createForGuestOrder(
-                        null,
-                        offer,
-                        PaymentMethod.GOTOWKA
-                )
-        )
-                .isInstanceOf(NullPointerException.class)
-                .hasMessage("GuestOrder nie może być null");
-
-        verifyNoInteractions(
-                paymentRepository,
-                stripeCheckoutService
-        );
+        verifyNoInteractions(paymentRepository);
     }
 
     @Test
-    void shouldThrowExceptionWhenOfferIsNull() {
-        Order order = orderBuilder().build();
+    void shouldThrowExceptionWhenOrderHasNoBookedOffer() {
+        Order order = orderBuilder().bookedOffer(null).build();
 
-        assertThatThrownBy(() ->
-                paymentCreationService.createForOrder(
-                        order,
-                        null,
-                        PaymentMethod.GOTOWKA
-                )
-        )
-                .isInstanceOf(NullPointerException.class)
-                .hasMessage("Offer nie może być null");
+        assertThatThrownBy(() -> paymentCreationService.createForOrder(order, PaymentMethod.GOTOWKA))
+                .isInstanceOf(NullPointerException.class).hasMessage("BookedOffer nie może być null");
 
-        verifyNoInteractions(
-                paymentRepository,
-                stripeCheckoutService
-        );
-    }
-
-    @Test
-    void shouldThrowExceptionWhenOfferCostIsNull() {
-        Offer offer = offerBuilder()
-                .cost(null)
-                .build();
-
-        Order order = orderBuilder()
-                .offer(offer)
-                .build();
-
-        assertThatThrownBy(() ->
-                paymentCreationService.createForOrder(
-                        order,
-                        offer,
-                        PaymentMethod.GOTOWKA
-                )
-        )
-                .isInstanceOf(NullPointerException.class)
-                .hasMessage("Koszt oferty nie może być null");
-
-        verifyNoInteractions(
-                paymentRepository,
-                stripeCheckoutService
-        );
+        verifyNoInteractions(paymentRepository);
     }
 
     @Test
     void shouldThrowExceptionWhenPaymentMethodIsNull() {
         Offer offer = createOffer();
 
-        Order order = orderBuilder()
-                .offer(offer)
-                .build();
+        Order order = orderBuilder().offer(offer).bookedOffer(createBookedOffer(offer)).build();
 
-        assertThatThrownBy(() ->
-                paymentCreationService.createForOrder(
-                        order,
-                        offer,
-                        null
-                )
-        )
-                .isInstanceOf(NullPointerException.class)
-                .hasMessage("PaymentMethod nie może być null");
+        assertThatThrownBy(() -> paymentCreationService.createForOrder(order, null))
+                .isInstanceOf(NullPointerException.class).hasMessage("PaymentMethod nie może być null");
 
-        verifyNoInteractions(
-                paymentRepository,
-                stripeCheckoutService
-        );
-    }
-
-    @Test
-    void shouldThrowExceptionWhenStripeReturnsNullResponse() {
-        Offer offer = createOffer();
-
-        Order order = orderBuilder()
-                .offer(offer)
-                .build();
-
-        givenRepositoryReturnsPassedPayment();
-
-        when(stripeCheckoutService.createCheckoutSession(
-                any(Payment.class),
-                same(offer)
-        )).thenReturn(null);
-
-        assertThatThrownBy(() ->
-                paymentCreationService.createForOrder(
-                        order,
-                        offer,
-                        PaymentMethod.KARTA_ONLINE
-                )
-        )
-                .isInstanceOf(NullPointerException.class)
-                .hasMessage("Stripe Checkout session nie może być null");
-
-        verify(paymentRepository).save(any(Payment.class));
-
-        verify(stripeCheckoutService).createCheckoutSession(
-                any(Payment.class),
-                same(offer)
-        );
-    }
-
-    @Test
-    void shouldThrowExceptionWhenStripeSessionIdIsNull() {
-        Offer offer = createOffer();
-
-        Order order = orderBuilder()
-                .offer(offer)
-                .build();
-
-        givenRepositoryReturnsPassedPayment();
-
-        when(stripeCheckoutService.createCheckoutSession(
-                any(Payment.class),
-                same(offer)
-        )).thenReturn(new StripeCheckoutSessionResponse(
-                null,
-                CHECKOUT_URL
-        ));
-
-        assertThatThrownBy(() ->
-                paymentCreationService.createForOrder(
-                        order,
-                        offer,
-                        PaymentMethod.KARTA_ONLINE
-                )
-        )
-                .isInstanceOf(NullPointerException.class)
-                .hasMessage("Stripe Checkout session ID nie może być null");
-
-        verify(paymentRepository).save(any(Payment.class));
-
-        verify(stripeCheckoutService).createCheckoutSession(
-                any(Payment.class),
-                same(offer)
-        );
+        verifyNoInteractions(paymentRepository);
     }
 
     @Test
     void shouldRejectNullCurrency() {
-        Clock clock = Clock.fixed(
-                PAYMENT_CREATED_AT.toInstant(ZoneOffset.UTC),
-                ZoneOffset.UTC
-        );
+        Clock clock = Clock.fixed(PAYMENT_CREATED_AT.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
 
-        assertThatThrownBy(() ->
-                new PaymentCreationService(
-                        paymentRepository,
-                        stripeCheckoutService,
-                        clock,
-                        null
-                )
-        )
-                .isInstanceOf(NullPointerException.class)
-                .hasMessage("Waluta nie może być null");
+        assertThatThrownBy(() -> new PaymentCreationService(paymentRepository, clock, null))
+                .isInstanceOf(NullPointerException.class).hasMessage("Waluta nie może być null");
     }
 
     @Test
     void shouldRejectBlankCurrency() {
-        Clock clock = Clock.fixed(
-                PAYMENT_CREATED_AT.toInstant(ZoneOffset.UTC),
-                ZoneOffset.UTC
-        );
+        Clock clock = Clock.fixed(PAYMENT_CREATED_AT.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
 
-        assertThatThrownBy(() ->
-                new PaymentCreationService(
-                        paymentRepository,
-                        stripeCheckoutService,
-                        clock,
-                        "   "
-                )
-        )
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Waluta nie może być pusta");
+        assertThatThrownBy(() -> new PaymentCreationService(paymentRepository, clock, "   "))
+                .isInstanceOf(IllegalArgumentException.class).hasMessage("Waluta nie może być pusta");
     }
 
-    private void givenRepositoryReturnsPassedPayment() {
-        when(paymentRepository.save(any(Payment.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-    }
-
-    private void givenStripeReturnsCheckoutSession(Offer offer) {
-        when(stripeCheckoutService.createCheckoutSession(
-                any(Payment.class),
-                same(offer)
-        )).thenReturn(new StripeCheckoutSessionResponse(
-                STRIPE_SESSION_ID,
-                CHECKOUT_URL
-        ));
+    private void givenRepositoryReturnsPaymentWithId() {
+        when(paymentRepository.saveAndFlush(any(Payment.class))).thenAnswer(invocation -> {
+            Payment payment = invocation.getArgument(0);
+            payment.setIdPayment(PAYMENT_ID);
+            return payment;
+        });
     }
 }

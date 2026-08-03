@@ -24,7 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/guestorders")
 @Tag(name = "Guest Orders", description = "Management of orders and reservations created by unauthenticated guest users")
-class GuestOrderController {
+public class GuestOrderController {
 
     private final GuestOrderService guestOrderService;
 

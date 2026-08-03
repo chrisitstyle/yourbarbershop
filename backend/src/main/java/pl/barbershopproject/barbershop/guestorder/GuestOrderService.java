@@ -1,6 +1,7 @@
 package pl.barbershopproject.barbershop.guestorder;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
@@ -8,70 +9,49 @@ import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
-import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderDTOMapper;
 import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferQuery;
-import pl.barbershopproject.barbershop.payment.PaymentCreationResult;
-import pl.barbershopproject.barbershop.payment.PaymentCreator;
+import pl.barbershopproject.barbershop.payment.PaymentCheckout;
+import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 import pl.barbershopproject.barbershop.payment.PaymentOfferUpdater;
 import pl.barbershopproject.barbershop.utils.Status;
 
-import java.time.Clock;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-class GuestOrderService {
+public class GuestOrderService {
 
-    private static final String ORDER_NOT_FOUND_MSG =
-            "Nie znaleziono zamówienia o ID: ";
+    private static final String ORDER_NOT_FOUND_MSG = "Nie znaleziono zamówienia o ID: ";
 
     private final GuestOrderRepository guestOrderRepository;
     private final OfferQuery offerQuery;
     private final AppointmentReservation appointmentReservation;
-    private final PaymentCreator paymentCreator;
     private final PaymentOfferUpdater paymentOfferUpdater;
     private final GuestOrderEvents guestOrderEvents;
-    private final Clock clock;
+    private final GuestOrderCreationTransaction guestOrderCreationTransaction;
+    private final PaymentCheckout paymentCheckout;
 
-    @Transactional
+    @CacheEvict(value = "guestOrders", allEntries = true)
     public GuestOrderCreationResponseDTO addGuestOrder(
-            GuestOrderCreationDTO request
+            GuestOrderCreationDTO guestOrderCreationDTO
     ) {
-        Offer offer = offerQuery.getRequiredOffer(request.idOffer());
+        GuestOrderCreationTransactionResult transactionResult =
+                guestOrderCreationTransaction.create(guestOrderCreationDTO);
 
-        GuestOrder guestOrder = GuestOrderCreationDTOMapper.toEntity(
-                request,
-                offer,
-                clock
-        );
+        PaymentCheckoutRequest checkoutRequest = transactionResult.checkoutRequest();
 
-        appointmentReservation.reserveSlot(guestOrder.getVisitDate());
-
-        GuestOrder savedGuestOrder =
-                guestOrderRepository.save(guestOrder);
-
-        PaymentCreationResult paymentResult =
-                paymentCreator.createForGuestOrder(
-                        savedGuestOrder,
-                        offer,
-                        request.paymentMethod()
-                );
-
-        guestOrderEvents.created(
-                savedGuestOrder,
-                paymentResult.payment()
-        );
+        String checkoutUrl = paymentCheckout.createCheckoutIfRequired(checkoutRequest);
 
         return new GuestOrderCreationResponseDTO(
-                savedGuestOrder.getIdGuestOrder(),
-                paymentResult.payment().getPaymentMethod(),
-                paymentResult.payment().getPaymentStatus(),
-                paymentResult.checkoutUrl()
+                transactionResult.guestOrderId(),
+                checkoutRequest.paymentMethod(),
+                checkoutRequest.paymentStatus(),
+                checkoutUrl
         );
     }
 
@@ -101,8 +81,7 @@ class GuestOrderService {
         GuestOrder guestOrder =
                 getRequiredGuestOrder(idGuestOrder);
 
-        Offer targetOffer =
-                offerQuery.getRequiredOffer(request.idOffer());
+        Offer targetOffer = offerQuery.getRequiredOffer(request.idOffer());
 
         Status oldStatus = guestOrder.getStatus();
         Status targetStatus = request.status() != null
