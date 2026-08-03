@@ -14,15 +14,13 @@ import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderUpdatedRequestDTO;
 import pl.barbershopproject.barbershop.order.event.OrderEvents;
-import pl.barbershopproject.barbershop.order.mapper.OrderCreationDTOMapper;
 import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
-import pl.barbershopproject.barbershop.payment.PaymentCreationResult;
-import pl.barbershopproject.barbershop.payment.PaymentCreator;
+import pl.barbershopproject.barbershop.payment.PaymentCheckout;
+import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 import pl.barbershopproject.barbershop.payment.PaymentOfferUpdater;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.utils.Status;
 
-import java.time.Clock;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -38,43 +36,24 @@ class OrderService {
     private final OrderRepository orderRepository;
     private final OfferQuery offerQuery;
     private final AppointmentReservation appointmentReservation;
-    private final PaymentCreator paymentCreator;
     private final PaymentOfferUpdater paymentOfferUpdater;
     private final OrderEvents orderEvents;
-    private final Clock clock;
+    private final OrderCreationTransaction orderCreationTransaction;
+    private final PaymentCheckout paymentCheckout;
 
-    @Transactional
     @CacheEvict(value = "orders", allEntries = true)
-    public OrderCreationResponseDTO addOrder(
-            OrderCreationDTO request,
-            User user
-    ) {
-        Offer offer = offerQuery.getRequiredOffer(request.idOffer());
+    public OrderCreationResponseDTO addOrder(OrderCreationDTO orderCreationDTO, User user) {
+        OrderCreationTransactionResult transactionResult = orderCreationTransaction.create(orderCreationDTO, user);
 
-        Order order = OrderCreationDTOMapper.toEntity(
-                request,
-                user,
-                offer,
-                clock
-        );
+        PaymentCheckoutRequest checkoutRequest = transactionResult.checkoutRequest();
 
-        appointmentReservation.reserveSlot(order.getVisitDate());
-
-        Order savedOrder = orderRepository.save(order);
-
-        PaymentCreationResult paymentResult = paymentCreator.createForOrder(
-                savedOrder,
-                offer,
-                request.paymentMethod()
-        );
-
-        orderEvents.created(savedOrder, paymentResult.payment());
+        String checkoutUrl = paymentCheckout.createCheckoutIfRequired(checkoutRequest);
 
         return new OrderCreationResponseDTO(
-                savedOrder.getIdOrder(),
-                paymentResult.payment().getPaymentMethod(),
-                paymentResult.payment().getPaymentStatus(),
-                paymentResult.checkoutUrl()
+                transactionResult.orderId(),
+                checkoutRequest.paymentMethod(),
+                checkoutRequest.paymentStatus(),
+                checkoutUrl
         );
     }
 
@@ -90,10 +69,7 @@ class OrderService {
         return OrderDTOMapper.toDTO(getRequiredOrder(idOrder));
     }
 
-    @Cacheable(
-            value = "orders",
-            key = "'status_' + #status.toUpperCase()"
-    )
+    @Cacheable(value = "orders", key = "'status_' + #status.toUpperCase()")
     public List<OrderDTO> getOrdersByStatus(String status) {
         Status parsedStatus = parseStatus(status);
 
@@ -149,18 +125,12 @@ class OrderService {
         orderEvents.deleted(idOrder);
     }
 
-    private void updateOfferIfChanged(
-            Order order,
-            Offer targetOffer
-    ) {
+    private void updateOfferIfChanged(Order order, Offer targetOffer) {
         if (!hasOfferChanged(order.getOffer(), targetOffer)) {
             return;
         }
 
-        paymentOfferUpdater.updateAfterOfferChange(
-                order.getPayment(),
-                targetOffer
-        );
+        paymentOfferUpdater.updateAfterOfferChange(order.getPayment(), targetOffer);
 
         order.setOffer(targetOffer);
         order.setBookedOffer(BookedOffer.from(targetOffer));
@@ -192,7 +162,7 @@ class OrderService {
     private Status parseStatus(String status) {
         try {
             return Status.valueOf(status.toUpperCase());
-        } catch (IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException _) {
             throw new IllegalArgumentException(
                     AVAILABLE_STATUSES_MSG + List.of(Status.values())
             );

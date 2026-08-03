@@ -1,17 +1,23 @@
 package pl.barbershopproject.barbershop.payment;
 
+import java.util.Objects;
+
 /**
- * Represents the result of the payment creation process.
+ * Represents a payment persisted as part of an order transaction together
+ * with immutable data required for optional checkout creation.
  *
- * <p>The result contains the persisted payment and, when an online
- * payment is required, the URL of the external checkout session.</p>
- *
- * @param payment created and persisted payment
- * @param checkoutUrl checkout session URL, or {@code null} when the selected
- *                    payment method does not require online checkout
+ * @param payment persisted payment
+ * @param checkoutRequest immutable checkout data prepared inside the transaction
  */
 public record PaymentCreationResult(
         Payment payment,
-        String checkoutUrl
+        PaymentCheckoutRequest checkoutRequest
 ) {
+
+    public PaymentCreationResult {
+       Objects.requireNonNull(payment, "Payment nie może być null");
+
+        Objects.requireNonNull(checkoutRequest,"PaymentCheckoutRequest nie może być null"
+        );
+    }
 }
