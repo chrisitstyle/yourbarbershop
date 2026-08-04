@@ -49,6 +49,9 @@ jobs:
       FLYWAY_URL: jdbc:mysql://127.0.0.1:3306/barbershop
       FLYWAY_USER: user
       FLYWAY_PASSWORD: password
+      # Include both locations so Flyway can resolve sample data before and after
+      # moving it out of the main migration directory.
+      FLYWAY_LOCATIONS: filesystem:src/main/resources/db/migration,filesystem:src/main/resources/db/dev-migration
 
     services:
       mysql:
@@ -112,6 +115,7 @@ jobs:
             -Dflyway.url="$FLYWAY_URL" \
             -Dflyway.user="$FLYWAY_USER" \
             -Dflyway.password="$FLYWAY_PASSWORD" \
+            -Dflyway.locations="$FLYWAY_LOCATIONS" \
             -Dflyway.validateOnMigrate=true
 
       # This catches modified checksums, invalid SQL and migrations that cannot be
@@ -123,6 +127,7 @@ jobs:
             -Dflyway.url="$FLYWAY_URL" \
             -Dflyway.user="$FLYWAY_USER" \
             -Dflyway.password="$FLYWAY_PASSWORD" \
+            -Dflyway.locations="$FLYWAY_LOCATIONS" \
             -Dflyway.validateOnMigrate=true
 
       # Explicit validation makes the final schema-history verification visible
@@ -133,12 +138,12 @@ jobs:
           ./gradlew flywayValidate --no-daemon --stacktrace \
             -Dflyway.url="$FLYWAY_URL" \
             -Dflyway.user="$FLYWAY_USER" \
-            -Dflyway.password="$FLYWAY_PASSWORD"
+            -Dflyway.password="$FLYWAY_PASSWORD" \
+            -Dflyway.locations="$FLYWAY_LOCATIONS"
 
   validate-current-migrations:
-    name:
-      Validate current migrations on clean database
-      # Validate the current revision from an empty schema for every workflow run.
+    # Validate the current revision from an empty schema for every workflow run.
+    name: Validate current migrations on clean database
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -146,6 +151,9 @@ jobs:
       FLYWAY_URL: jdbc:mysql://127.0.0.1:3306/barbershop
       FLYWAY_USER: user
       FLYWAY_PASSWORD: password
+      # Include the separate development migration directory when validating the
+      # complete migration chain from an empty database.
+      FLYWAY_LOCATIONS: filesystem:src/main/resources/db/migration,filesystem:src/main/resources/db/dev-migration
 
     services:
       mysql:
@@ -194,6 +202,7 @@ jobs:
             -Dflyway.url="$FLYWAY_URL" \
             -Dflyway.user="$FLYWAY_USER" \
             -Dflyway.password="$FLYWAY_PASSWORD" \
+            -Dflyway.locations="$FLYWAY_LOCATIONS" \
             -Dflyway.validateOnMigrate=true
 
       - name: Validate resulting migration history
@@ -202,4 +211,5 @@ jobs:
           ./gradlew flywayValidate --no-daemon --stacktrace \
             -Dflyway.url="$FLYWAY_URL" \
             -Dflyway.user="$FLYWAY_USER" \
-            -Dflyway.password="$FLYWAY_PASSWORD"
+            -Dflyway.password="$FLYWAY_PASSWORD" \
+            -Dflyway.locations="$FLYWAY_LOCATIONS"
