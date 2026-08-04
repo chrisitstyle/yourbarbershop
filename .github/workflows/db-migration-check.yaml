@@ -49,9 +49,6 @@ jobs:
       FLYWAY_URL: jdbc:mysql://127.0.0.1:3306/barbershop
       FLYWAY_USER: user
       FLYWAY_PASSWORD: password
-      # Include both locations so Flyway can resolve sample data before and after
-      # moving it out of the main migration directory.
-      FLYWAY_LOCATIONS: filesystem:src/main/resources/db/migration,filesystem:src/main/resources/db/dev-migration
 
     services:
       mysql:
@@ -107,7 +104,12 @@ jobs:
           chmod +x base/backend/gradlew
           chmod +x pr/backend/gradlew
 
-      # Build the exact database state expected by the target branch.
+      # The base branch still stores development seed data inside db/migration.
+      # Remove it so this job validates only production migration compatibility.
+      - name: Exclude development seed migrations from base commit
+        run: rm -rf base/backend/src/main/resources/db/migration/dev
+
+      # Build the exact production database state expected by the target branch.
       - name: Apply migrations from base commit
         working-directory: ./base/backend
         run: |
@@ -115,7 +117,7 @@ jobs:
             -Dflyway.url="$FLYWAY_URL" \
             -Dflyway.user="$FLYWAY_USER" \
             -Dflyway.password="$FLYWAY_PASSWORD" \
-            -Dflyway.locations="$FLYWAY_LOCATIONS" \
+            -Dflyway.locations="filesystem:$GITHUB_WORKSPACE/base/backend/src/main/resources/db/migration" \
             -Dflyway.validateOnMigrate=true
 
       # This catches modified checksums, invalid SQL and migrations that cannot be
@@ -127,7 +129,7 @@ jobs:
             -Dflyway.url="$FLYWAY_URL" \
             -Dflyway.user="$FLYWAY_USER" \
             -Dflyway.password="$FLYWAY_PASSWORD" \
-            -Dflyway.locations="$FLYWAY_LOCATIONS" \
+            -Dflyway.locations="filesystem:$GITHUB_WORKSPACE/pr/backend/src/main/resources/db/migration" \
             -Dflyway.validateOnMigrate=true
 
       # Explicit validation makes the final schema-history verification visible
@@ -139,7 +141,7 @@ jobs:
             -Dflyway.url="$FLYWAY_URL" \
             -Dflyway.user="$FLYWAY_USER" \
             -Dflyway.password="$FLYWAY_PASSWORD" \
-            -Dflyway.locations="$FLYWAY_LOCATIONS"
+            -Dflyway.locations="filesystem:$GITHUB_WORKSPACE/pr/backend/src/main/resources/db/migration"
 
   validate-current-migrations:
     # Validate the current revision from an empty schema for every workflow run.
@@ -151,9 +153,6 @@ jobs:
       FLYWAY_URL: jdbc:mysql://127.0.0.1:3306/barbershop
       FLYWAY_USER: user
       FLYWAY_PASSWORD: password
-      # Include the separate development migration directory when validating the
-      # complete migration chain from an empty database.
-      FLYWAY_LOCATIONS: filesystem:src/main/resources/db/migration,filesystem:src/main/resources/db/dev-migration
 
     services:
       mysql:
@@ -194,7 +193,7 @@ jobs:
         run: chmod +x gradlew
 
       # Rebuilding the schema from zero verifies the complete migration chain,
-      # not only an upgrade from an already prepared database.
+      # including the separate development sample-data migrations.
       - name: Apply migrations to clean database
         working-directory: ./backend
         run: |
@@ -202,7 +201,7 @@ jobs:
             -Dflyway.url="$FLYWAY_URL" \
             -Dflyway.user="$FLYWAY_USER" \
             -Dflyway.password="$FLYWAY_PASSWORD" \
-            -Dflyway.locations="$FLYWAY_LOCATIONS" \
+            -Dflyway.locations="filesystem:$GITHUB_WORKSPACE/backend/src/main/resources/db/migration,filesystem:$GITHUB_WORKSPACE/backend/src/main/resources/db/dev-migration" \
             -Dflyway.validateOnMigrate=true
 
       - name: Validate resulting migration history
@@ -212,4 +211,4 @@ jobs:
             -Dflyway.url="$FLYWAY_URL" \
             -Dflyway.user="$FLYWAY_USER" \
             -Dflyway.password="$FLYWAY_PASSWORD" \
-            -Dflyway.locations="$FLYWAY_LOCATIONS"
+            -Dflyway.locations="filesystem:$GITHUB_WORKSPACE/backend/src/main/resources/db/migration,filesystem:$GITHUB_WORKSPACE/backend/src/main/resources/db/dev-migration"
