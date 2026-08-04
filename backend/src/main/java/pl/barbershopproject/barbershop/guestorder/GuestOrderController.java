@@ -36,16 +36,26 @@ public class GuestOrderController {
     @SecurityRequirements()
     @PostMapping
     public ResponseEntity<GuestOrderCreationResponseDTO> addGuestOrder(
-            @Valid @RequestBody GuestOrderCreationDTO guestOrderCreationDTO
-    ) {
-        GuestOrderCreationResponseDTO response = guestOrderService.addGuestOrder(guestOrderCreationDTO);
+            @Parameter(description = "Unique key used to safely retry guest-order creation",
+                    required = true,
+                    example = "88fa85f2-0569-4da0-9152-68ef69478036")
+            @RequestHeader("Idempotency-Key")
+            String idempotencyKey,
+
+            @Valid
+            @RequestBody
+            GuestOrderCreationDTO guestOrderCreationDTO) {
+        GuestOrderCreationResponseDTO addedGuestOrder = guestOrderService.addGuestOrder(
+                        guestOrderCreationDTO,
+                        idempotencyKey
+                );
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(response.guestOrderId())
+                .buildAndExpand(addedGuestOrder.guestOrderId())
                 .toUri();
 
-        return ResponseEntity.created(location).body(response);
+        return ResponseEntity.created(location).body(addedGuestOrder);
     }
 
     @Operation(summary = "Get all guest orders", description = "Retrieves a list of all guest orders with optional status filtering. Restricted to ADMIN users.")

@@ -36,10 +36,22 @@ class OrderController {
     @ApiResponse(responseCode = "409", description = "Conflict - Selected appointment slot is already taken")
     @PostMapping
     public ResponseEntity<OrderCreationResponseDTO> addOrder(
-            @Valid @RequestBody OrderCreationDTO order,
-            @Parameter(hidden = true) @AuthenticationPrincipal User user
+            @Parameter(description = "Unique key used to safely retry order creation",
+                    required = true,
+                    example = "88fa85f2-0569-4da0-9152-68ef69478036"
+            )
+            @RequestHeader("Idempotency-Key")
+            String idempotencyKey,
+
+            @Valid
+            @RequestBody
+            OrderCreationDTO order,
+
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal
+            User user
     ) {
-        OrderCreationResponseDTO response = orderService.addOrder(order, user);
+        OrderCreationResponseDTO response = orderService.addOrder(order, user, idempotencyKey);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")

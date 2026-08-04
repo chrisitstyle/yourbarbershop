@@ -1,10 +1,16 @@
 import { API_BASE_URL } from "./config.js";
 import { apiRequest } from "./httpClient.js";
 
-export const createGuestOrder = async (guestOrderCreationData) => {
+export const createGuestOrder = async (
+  guestOrderCreationData,
+  idempotencyKey,
+) => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/guestorders`, {
       method: "POST",
+      headers: {
+        "Idempotency-Key": idempotencyKey,
+      },
       data: guestOrderCreationData,
     });
 

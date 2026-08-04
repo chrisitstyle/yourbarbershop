@@ -25,8 +25,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-@Sql(
-        scripts = "/sql/security-access-cleanup.sql",
+@Sql(scripts = "/sql/security-access-cleanup.sql",
         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD,
         config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
 )
@@ -34,8 +33,12 @@ class SecurityAccessIntegrationTest extends BaseIntegrationTest {
 
     private static final String ADMIN_EMAIL = "admin@test.com";
     private static final String USER_EMAIL = "johndoe@example.com";
-    private static final LocalDateTime FUTURE_VISIT_DATE =
-            LocalDateTime.of(2030, Month.JANUARY, 16, 12, 0);
+    private static final LocalDateTime FUTURE_VISIT_DATE = LocalDateTime
+            .of(2030, Month.JANUARY, 16, 12, 0);
+
+    private static final String ORDER_IDEMPOTENCY_KEY = "security-order-test-key";
+    private static final String GUEST_ORDER_IDEMPOTENCY_KEY = "security-guest-order-test-key";
+
     private MockMvc mockMvc;
 
     @Autowired
@@ -81,6 +84,7 @@ class SecurityAccessIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$").isArray());
 
         mockMvc.perform(post("/guestorders")
+                        .header("Idempotency-Key", GUEST_ORDER_IDEMPOTENCY_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(guestOrderData)))
                 .andExpect(status().isCreated())
@@ -221,6 +225,7 @@ class SecurityAccessIntegrationTest extends BaseIntegrationTest {
         // when + then
         mockMvc.perform(post("/orders")
                         .header("Authorization", bearer(userToken))
+                        .header("Idempotency-Key", ORDER_IDEMPOTENCY_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(orderData)))
                 .andExpect(status().isCreated())

@@ -28,43 +28,53 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-@WebMvcTest(controllers = GuestOrderController.class,
+@WebMvcTest(
+        controllers = GuestOrderController.class,
         excludeAutoConfiguration = {
                 OAuth2ClientWebSecurityAutoConfiguration.class
-        })
+        }
+)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestClockConfig.class)
 class GuestOrderControllerTest {
+
+    private static final String IDEMPOTENCY_KEY = "guest-order-controller-test-key";
+
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
 
     @MockitoBean
     private GuestOrderService guestOrderService;
-
     @MockitoBean
     private JwtService jwtService;
-
     @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
-
     @MockitoBean
     private StringRedisTemplate stringRedisTemplate;
 
     @Test
     void addGuestOrder_ReturnsCreated() throws Exception {
+        // given
         GuestOrderCreationDTO inputDto = GuestOrderTestEntities.createGuestOrderCreationDTO();
-        GuestOrderCreationResponseDTO responseDTO =
-                GuestOrderTestEntities.createGuestOrderCreationResponseDTO();
 
-        when(guestOrderService.addGuestOrder(any(GuestOrderCreationDTO.class)))
-                .thenReturn(responseDTO);
+        GuestOrderCreationResponseDTO responseDTO = GuestOrderTestEntities.createGuestOrderCreationResponseDTO();
 
+        when(guestOrderService.addGuestOrder(
+                any(GuestOrderCreationDTO.class),
+                eq(IDEMPOTENCY_KEY)
+        )).thenReturn(responseDTO);
+
+        // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/guestorders")
+                        .header(
+                                "Idempotency-Key",
+                                IDEMPOTENCY_KEY
+                        )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
@@ -72,13 +82,35 @@ class GuestOrderControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.guestOrderId").value(1L))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.paymentMethod").value("GOTOWKA"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("NIE_WYMAGANA"));
+
+        verify(guestOrderService).addGuestOrder(
+                any(GuestOrderCreationDTO.class),
+                eq(IDEMPOTENCY_KEY)
+        );
+    }
+
+    @Test
+    void addGuestOrder_ReturnsBadRequest_WhenIdempotencyKeyIsMissing()
+            throws Exception {
+        // given
+        GuestOrderCreationDTO inputDto = GuestOrderTestEntities.createGuestOrderCreationDTO();
+
+        // when then
+        mockMvc.perform(MockMvcRequestBuilders.post("/guestorders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
+
+        verifyNoInteractions(guestOrderService);
     }
 
     @Test
     void getAllGuestOrders_ReturnsAll_WhenNoStatusParam() throws Exception {
         // given
         GuestOrderDTO guestOrderDTO = GuestOrderTestEntities.createGuestOrderDTO();
-        when(guestOrderService.getAllGuestOrders()).thenReturn(List.of(guestOrderDTO));
+
+        when(guestOrderService.getAllGuestOrders())
+                .thenReturn(List.of(guestOrderDTO));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders"))
@@ -95,6 +127,7 @@ class GuestOrderControllerTest {
     void getAllGuestOrders_ReturnsFiltered_WhenStatusParamProvided() throws Exception {
         // given
         GuestOrderDTO guestOrderDTO = GuestOrderTestEntities.createGuestOrderDTO();
+
         Status statusParam = Status.NOWE;
 
         when(guestOrderService.getGuestOrdersByStatus(statusParam))
@@ -116,7 +149,8 @@ class GuestOrderControllerTest {
         // given
         GuestOrderDTO guestOrderDTO = GuestOrderTestEntities.createGuestOrderDTO();
 
-        when(guestOrderService.getGuestOrder(1L)).thenReturn(guestOrderDTO);
+        when(guestOrderService.getGuestOrder(1L))
+                .thenReturn(guestOrderDTO);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders/1"))
@@ -135,13 +169,13 @@ class GuestOrderControllerTest {
                 .firstname("updated_firstname")
                 .build();
 
-        GuestOrderDTO responseDTO = GuestOrderDTOMapper.toDTO(updatedOrder);
+        GuestOrderDTO responseDTO =
+                GuestOrderDTOMapper.toDTO(updatedOrder);
 
         when(guestOrderService.updateGuestOrder(
                 any(GuestOrderUpdateRequestDTO.class),
                 eq(1L)
-        ))
-                .thenReturn(responseDTO);
+        )).thenReturn(responseDTO);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.put("/guestorders/1")
@@ -155,7 +189,9 @@ class GuestOrderControllerTest {
     @Test
     void deleteGuestOrderById_ReturnsNoContent() throws Exception {
         // given
-        doNothing().when(guestOrderService).deleteGuestOrderById(1L);
+        doNothing()
+                .when(guestOrderService)
+                .deleteGuestOrderById(1L);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.delete("/guestorders/1"))
@@ -163,32 +199,43 @@ class GuestOrderControllerTest {
     }
 
     @Test
-    void getGuestOrder_ReturnsNotFound_WhenNoSuchElementException() throws Exception {
+    void getGuestOrder_ReturnsNotFound_WhenNoSuchElementException()
+            throws Exception {
         // given
         when(guestOrderService.getGuestOrder(99L))
-                .thenThrow(new NoSuchElementException("Nie znaleziono zamówienia"));
+                .thenThrow(new NoSuchElementException(
+                        "Nie znaleziono zamówienia"));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders/99"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Nie znaleziono zamówienia"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("NOT_FOUND"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message")
+                        .value("Nie znaleziono zamówienia"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status")
+                        .value("NOT_FOUND"));
     }
 
     @Test
     void addGuestOrder_ReturnsBadRequest_WhenIllegalArgumentException() throws Exception {
         // given
-        GuestOrderCreationDTO invalidDto = GuestOrderTestEntities.createGuestOrderCreationDTO();
+        GuestOrderCreationDTO invalidDto =
+                GuestOrderTestEntities.createGuestOrderCreationDTO();
 
-        when(guestOrderService.addGuestOrder(any(GuestOrderCreationDTO.class)))
-                .thenThrow(new IllegalArgumentException("Nieprawidłowy numer telefonu"));
+        when(guestOrderService.addGuestOrder(
+                any(GuestOrderCreationDTO.class),
+                eq(IDEMPOTENCY_KEY)
+        )).thenThrow(new IllegalArgumentException(
+                "Nieprawidłowy numer telefonu"));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/guestorders")
+                        .header("Idempotency-Key", IDEMPOTENCY_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Nieprawidłowy numer telefonu"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message")
+                        .value("Nieprawidłowy numer telefonu"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status")
+                        .value("BAD_REQUEST"));
     }
 }

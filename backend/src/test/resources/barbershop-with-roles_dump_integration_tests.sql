@@ -170,9 +170,64 @@ entity_id VARCHAR(100),
 details JSON
     );
 
-CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp DESC);
-CREATE INDEX idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
-CREATE INDEX idx_audit_logs_actor ON audit_logs(actor_email)
+CREATE INDEX idx_audit_logs_timestamp
+    ON audit_logs(timestamp DESC);
+
+CREATE INDEX idx_audit_logs_entity
+    ON audit_logs(entity_type, entity_id);
+
+CREATE INDEX idx_audit_logs_actor
+    ON audit_logs(actor_email);
+
+CREATE TABLE IF NOT EXISTS idempotency_request (
+   id_idempotency_request BIGINT NOT NULL AUTO_INCREMENT,
+   operation VARCHAR(50) NOT NULL,
+    idempotency_key VARCHAR(255) NOT NULL,
+    request_hash CHAR(64) NOT NULL,
+    owner_user_id BIGINT DEFAULT NULL,
+    status VARCHAR(30) NOT NULL,
+    resource_id BIGINT DEFAULT NULL,
+    payment_id BIGINT DEFAULT NULL,
+    payment_method VARCHAR(50) DEFAULT NULL,
+    payment_status VARCHAR(50) DEFAULT NULL,
+    amount DECIMAL(10, 2) DEFAULT NULL,
+    currency VARCHAR(3) DEFAULT NULL,
+    product_name VARCHAR(255) DEFAULT NULL,
+    checkout_url VARCHAR(2048) DEFAULT NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    completed_at DATETIME(6) DEFAULT NULL,
+
+    PRIMARY KEY (id_idempotency_request),
+
+    UNIQUE KEY uk_idempotency_operation_key (
+operation,
+idempotency_key
+),
+
+UNIQUE KEY uk_idempotency_payment (
+payment_id),
+
+UNIQUE KEY uk_idempotency_resource (
+operation,
+resource_id),
+
+KEY idx_idempotency_created_at
+(created_at),
+
+KEY idx_idempotency_owner_user (
+owner_user_id),
+
+    CONSTRAINT fk_idempotency_owner_user
+    FOREIGN KEY (owner_user_id)
+    REFERENCES user (id_user)
+    ON DELETE SET NULL
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_0900_ai_ci;
+
+
+
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

@@ -31,54 +31,82 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-@WebMvcTest(controllers = OrderController.class,
+@WebMvcTest(
+        controllers = OrderController.class,
         excludeAutoConfiguration = {
                 OAuth2ClientWebSecurityAutoConfiguration.class
-        })
+        }
+)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestClockConfig.class)
 class OrderControllerTest {
 
+    private static final String IDEMPOTENCY_KEY = "order-controller-test-key";
+
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
 
     @MockitoBean
     private OrderService orderService;
-
     @MockitoBean
     private JwtService jwtService;
-
     @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
-
     @MockitoBean
     private StringRedisTemplate stringRedisTemplate;
 
     @Test
     void addOrder_ReturnsCreated() throws Exception {
+        // given
         OrderCreationDTO inputDto = OrderTestEntities.createOrderCreationDTO();
 
-        OrderCreationResponseDTO responseDTO = new OrderCreationResponseDTO(
-                10L,
-                PaymentMethod.GOTOWKA,
-                PaymentStatus.OCZEKUJE_NA_PLATNOSC,
-                null
-        );
+        OrderCreationResponseDTO responseDTO =
+                new OrderCreationResponseDTO(
+                        10L,
+                        PaymentMethod.GOTOWKA,
+                        PaymentStatus.NIE_WYMAGANA,
+                        null
+                );
 
-        when(orderService.addOrder(any(OrderCreationDTO.class), any()))
-                .thenReturn(responseDTO);
+        when(orderService.addOrder(
+                any(OrderCreationDTO.class),
+                any(),
+                eq(IDEMPOTENCY_KEY)
+        )).thenReturn(responseDTO);
 
+        // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/orders")
+                        .header("Idempotency-Key", IDEMPOTENCY_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.orderId").value(10L))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.paymentMethod").value("GOTOWKA"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("NIE_WYMAGANA"));
+
+        verify(orderService).addOrder(
+                any(OrderCreationDTO.class),
+                any(),
+                eq(IDEMPOTENCY_KEY)
+        );
+    }
+
+    @Test
+    void addOrder_ReturnsBadRequest_WhenIdempotencyKeyIsMissing()
+            throws Exception {
+        // given
+        OrderCreationDTO inputDto = OrderTestEntities.createOrderCreationDTO();
+
+        // when then
+        mockMvc.perform(MockMvcRequestBuilders.post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
+
+        verifyNoInteractions(orderService);
     }
 
     @Test
@@ -104,7 +132,8 @@ class OrderControllerTest {
         OrderDTO orderDTO = OrderTestEntities.createOrderDTO();
         String statusParam = "NOWE";
 
-        when(orderService.getOrdersByStatus(statusParam)).thenReturn(List.of(orderDTO));
+        when(orderService.getOrdersByStatus(statusParam))
+                .thenReturn(List.of(orderDTO));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/orders")
@@ -135,20 +164,21 @@ class OrderControllerTest {
     void updateOrder_ReturnsUpdatedOrder() throws Exception {
         // given
         OrderUpdatedRequestDTO inputDto = OrderTestEntities.createOrderUpdatedRequestDTO();
+
         OrderDTO responseDTO = OrderTestEntities.createOrderDTO();
 
         when(orderService.updateOrder(
                 any(OrderUpdatedRequestDTO.class),
                 eq(10L)
-        ))
-                .thenReturn(responseDTO);
+        )).thenReturn(responseDTO);
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.put("/orders/10")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.idOrder").value(responseDTO.idOrder()));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.idOrder")
+                        .value(responseDTO.idOrder()));
 
         verify(orderService).updateOrder(
                 any(OrderUpdatedRequestDTO.class),
@@ -167,32 +197,44 @@ class OrderControllerTest {
     }
 
     @Test
-    void getSingleOrder_ReturnsNotFound_WhenNoSuchElementException() throws Exception {
+    void getSingleOrder_ReturnsNotFound_WhenNoSuchElementException()
+            throws Exception {
         // given
         when(orderService.getSingleOrder(99L))
-                .thenThrow(new NoSuchElementException("Zamówienie o ID: 99 nie istnieje"));
+                .thenThrow(new NoSuchElementException(
+                        "Zamówienie o ID: 99 nie istnieje"
+                ));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/orders/99"))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Zamówienie o ID: 99 nie istnieje"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("NOT_FOUND"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message")
+                        .value("Zamówienie o ID: 99 nie istnieje"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status")
+                        .value("NOT_FOUND"));
     }
 
     @Test
-    void addOrder_ReturnsBadRequest_WhenIllegalArgumentException() throws Exception {
+    void addOrder_ReturnsBadRequest_WhenIllegalArgumentException()
+            throws Exception {
         // given
         OrderCreationDTO invalidDto = OrderTestEntities.createOrderCreationDTO();
 
-        when(orderService.addOrder(any(OrderCreationDTO.class), any()))
-                .thenThrow(new IllegalArgumentException("Nieprawidłowa data wizyty"));
+        when(orderService.addOrder(
+                any(OrderCreationDTO.class),
+                any(),
+                eq(IDEMPOTENCY_KEY)
+        )).thenThrow(new IllegalArgumentException("Nieprawidłowa data wizyty"));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.post("/orders")
+                        .header("Idempotency-Key", IDEMPOTENCY_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Nieprawidłowa data wizyty"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("BAD_REQUEST"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message")
+                        .value("Nieprawidłowa data wizyty"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status")
+                        .value("BAD_REQUEST"));
     }
 }

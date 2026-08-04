@@ -170,26 +170,19 @@ class StripeCheckoutServiceTest {
                                 "success_url=http%3A%2F%2Flocalhost%3A3000%2Fpayment%2Fsuccess"
                         ))
                         .withRequestBody(containing(
-                                "cancel_url=http%3A%2F%2Flocalhost%3A3000%2Fpayment%2Fcancel"
-                        ))
+                                "cancel_url=http%3A%2F%2Flocalhost%3A3000%2Fpayment%2Fcancel"))
                         .withRequestBody(containing(
-                                "line_items%5B0%5D%5Bquantity%5D=1"
-                        ))
+                                "line_items%5B0%5D%5Bquantity%5D=1"))
                         .withRequestBody(containing(
-                                "line_items%5B0%5D%5Bprice_data%5D%5Bcurrency%5D=pln"
-                        ))
+                                "line_items%5B0%5D%5Bprice_data%5D%5Bcurrency%5D=pln"))
                         .withRequestBody(containing(
-                                "line_items%5B0%5D%5Bprice_data%5D%5Bunit_amount%5D=8000"
-                        ))
+                                "line_items%5B0%5D%5Bprice_data%5D%5Bunit_amount%5D=8000"))
                         .withRequestBody(containing(
-                                "line_items%5B0%5D%5Bprice_data%5D%5Bproduct_data%5D%5Bname%5D=Strzy%C5%BCenie"
-                        ))
+                                "line_items%5B0%5D%5Bprice_data%5D%5Bproduct_data%5D%5Bname%5D=Strzy%C5%BCenie"))
                         .withRequestBody(containing(
-                                "metadata%5BpaymentId%5D=15"
-                        ))
+                                "metadata%5BpaymentId%5D=15"))
                         .withRequestBody(containing(
-                                "payment_intent_data%5Bmetadata%5D%5BpaymentId%5D=15"
-                        ))
+                                "payment_intent_data%5Bmetadata%5D%5BpaymentId%5D=15"))
         );
     }
 }

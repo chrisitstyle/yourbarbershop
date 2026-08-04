@@ -8,11 +8,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
 import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestManager;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestResult;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyResolution;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferQuery;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.event.OrderEvents;
-import pl.barbershopproject.barbershop.payment.*;
+import pl.barbershopproject.barbershop.payment.Payment;
+import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
+import pl.barbershopproject.barbershop.payment.PaymentCreationResult;
+import pl.barbershopproject.barbershop.payment.PaymentCreator;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.user.User;
 
 import java.time.Clock;
@@ -24,7 +31,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createOffer;
 import static pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities.createOrderCreationDTO;
 import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUser;
@@ -32,8 +43,12 @@ import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntitie
 @ExtendWith(MockitoExtension.class)
 class OrderCreationTransactionServiceTest {
 
+    private static final Long IDEMPOTENCY_REQUEST_ID = 100L;
     private static final Long ORDER_ID = 1L;
     private static final Long PAYMENT_ID = 10L;
+    private static final String IDEMPOTENCY_KEY = "order-transaction-test-key";
+    private static final String REQUEST_HASH = "a".repeat(64);
+    private static final String CHECKOUT_URL = "https://checkout.stripe.com/c/pay/cs_test_123";
     private static final ZoneId TEST_ZONE = ZoneId.of("Europe/Warsaw");
     private static final Instant TEST_INSTANT = Instant.parse("2026-01-16T12:00:00Z");
 
@@ -47,21 +62,27 @@ class OrderCreationTransactionServiceTest {
     private PaymentCreator paymentCreator;
     @Mock
     private OrderEvents orderEvents;
+    @Mock
+    private IdempotencyRequestManager idempotencyRequestManager;
 
     private OrderCreationTransactionService orderCreationTransactionService;
 
     @BeforeEach
     void setUp() {
-        Clock clock = Clock.fixed(TEST_INSTANT, TEST_ZONE);
+        Clock clock = Clock.fixed(
+                TEST_INSTANT,
+                TEST_ZONE
+        );
 
         orderCreationTransactionService = new OrderCreationTransactionService(
-                orderRepository,
-                offerQuery,
-                appointmentReservation,
-                paymentCreator,
-                orderEvents,
-                clock
-        );
+                        orderRepository,
+                        offerQuery,
+                        appointmentReservation,
+                        paymentCreator,
+                        orderEvents,
+                        idempotencyRequestManager,
+                        clock
+                );
     }
 
     @Test
@@ -79,18 +100,23 @@ class OrderCreationTransactionServiceTest {
                 .build();
 
         PaymentCheckoutRequest checkoutRequest = new PaymentCheckoutRequest(
-                PAYMENT_ID,
-                orderCreationDTO.paymentMethod(),
-                PaymentStatus.NIE_WYMAGANA,
-                offer.getCost(),
-                "PLN",
-                offer.getKind()
-        );
+                        PAYMENT_ID,
+                        orderCreationDTO.paymentMethod(),
+                        PaymentStatus.NIE_WYMAGANA,
+                        offer.getCost(),
+                        "PLN",
+                        offer.getKind());
 
-        PaymentCreationResult paymentCreationResult = new PaymentCreationResult(payment, checkoutRequest);
+        PaymentCreationResult paymentCreationResult = new PaymentCreationResult(
+                        payment,
+                        checkoutRequest
+                );
 
-        when(offerQuery.getRequiredOffer(orderCreationDTO.idOffer()))
-                .thenReturn(offer);
+        givenNewIdempotencyRequest(user);
+
+        when(offerQuery.getRequiredOffer(
+                orderCreationDTO.idOffer()
+        )).thenReturn(offer);
 
         givenRepositorySavesOrderWithId();
 
@@ -99,12 +125,26 @@ class OrderCreationTransactionServiceTest {
                 eq(orderCreationDTO.paymentMethod())
         )).thenReturn(paymentCreationResult);
 
-        OrderCreationTransactionResult result = orderCreationTransactionService.create(orderCreationDTO, user);
+        OrderCreationTransactionResult result =
+                orderCreationTransactionService.create(
+                        orderCreationDTO,
+                        user,
+                        IDEMPOTENCY_KEY,
+                        REQUEST_HASH
+                );
+
+        assertThat(result.idempotencyRequestId())
+                .isEqualTo(IDEMPOTENCY_REQUEST_ID);
+
+        assertThat(result.resolution())
+                .isEqualTo(IdempotencyResolution.RESOURCE_CREATED);
 
         assertThat(result.orderId()).isEqualTo(ORDER_ID);
-        assertThat(result.checkoutRequest()).isSameAs(checkoutRequest);
+        assertThat(result.checkoutRequest())
+                .isSameAs(checkoutRequest);
 
-        ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+        ArgumentCaptor<Order> orderCaptor =
+                ArgumentCaptor.forClass(Order.class);
 
         verify(orderRepository).save(orderCaptor.capture());
 
@@ -119,8 +159,16 @@ class OrderCreationTransactionServiceTest {
         assertThat(savedOrder.getBookedOffer()).isNotNull();
         assertThat(savedOrder.getBookedOffer().getName())
                 .isEqualTo(offer.getKind());
+
         assertThat(savedOrder.getBookedOffer().getPrice())
                 .isEqualByComparingTo(offer.getCost());
+
+        verify(idempotencyRequestManager)
+                .startOrderCreation(
+                        IDEMPOTENCY_KEY,
+                        REQUEST_HASH,
+                        user.getIdUser()
+                );
 
         verify(offerQuery)
                 .getRequiredOffer(orderCreationDTO.idOffer());
@@ -133,7 +181,116 @@ class OrderCreationTransactionServiceTest {
                 orderCreationDTO.paymentMethod()
         );
 
-        verify(orderEvents).created(savedOrder, payment);
+        verify(orderEvents).created(
+                savedOrder,
+                payment
+        );
+
+        verify(idempotencyRequestManager)
+                .markResourceCreated(
+                        IDEMPOTENCY_REQUEST_ID,
+                        ORDER_ID,
+                        checkoutRequest
+                );
+    }
+
+    @Test
+    void create_ShouldReturnStoredResourceWithoutCreatingAnotherOrder() {
+        OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
+        User user = createUser();
+
+        PaymentCheckoutRequest checkoutRequest = createCheckoutRequest(orderCreationDTO);
+
+        when(idempotencyRequestManager.startOrderCreation(
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH,
+                user.getIdUser()
+        )).thenReturn(new IdempotencyRequestResult(
+                IDEMPOTENCY_REQUEST_ID,
+                IdempotencyResolution.RESOURCE_CREATED,
+                ORDER_ID,
+                checkoutRequest,
+                null
+        ));
+
+        OrderCreationTransactionResult result = orderCreationTransactionService.create(
+                        orderCreationDTO,
+                        user,
+                        IDEMPOTENCY_KEY,
+                        REQUEST_HASH
+                );
+
+        assertThat(result.resolution())
+                .isEqualTo(IdempotencyResolution.RESOURCE_CREATED);
+
+        assertThat(result.orderId()).isEqualTo(ORDER_ID);
+        assertThat(result.checkoutRequest())
+                .isEqualTo(checkoutRequest);
+
+        verifyNoInteractions(
+                offerQuery,
+                appointmentReservation,
+                orderRepository,
+                paymentCreator,
+                orderEvents
+        );
+
+        verify(idempotencyRequestManager, never())
+                .markResourceCreated(
+                        any(),
+                        any(),
+                        any()
+                );
+    }
+
+    @Test
+    void create_ShouldReturnCompletedResultWithoutCreatingAnotherOrder() {
+        OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
+        User user = createUser();
+
+        PaymentCheckoutRequest checkoutRequest =
+                createCheckoutRequest(orderCreationDTO);
+
+        when(idempotencyRequestManager.startOrderCreation(
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH,
+                user.getIdUser()
+        )).thenReturn(new IdempotencyRequestResult(
+                IDEMPOTENCY_REQUEST_ID,
+                IdempotencyResolution.COMPLETED,
+                ORDER_ID,
+                checkoutRequest,
+                CHECKOUT_URL
+        ));
+
+        OrderCreationTransactionResult result = orderCreationTransactionService.create(
+                        orderCreationDTO,
+                        user,
+                        IDEMPOTENCY_KEY,
+                        REQUEST_HASH
+                );
+
+        assertThat(result.resolution())
+                .isEqualTo(IdempotencyResolution.COMPLETED);
+
+        assertThat(result.orderId()).isEqualTo(ORDER_ID);
+        assertThat(result.checkoutUrl())
+                .isEqualTo(CHECKOUT_URL);
+
+        verifyNoInteractions(
+                offerQuery,
+                appointmentReservation,
+                orderRepository,
+                paymentCreator,
+                orderEvents
+        );
+
+        verify(idempotencyRequestManager, never())
+                .markResourceCreated(
+                        any(),
+                        any(),
+                        any()
+                );
     }
 
     @Test
@@ -141,15 +298,22 @@ class OrderCreationTransactionServiceTest {
         OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
         User user = createUser();
 
-        when(offerQuery.getRequiredOffer(orderCreationDTO.idOffer()))
-                .thenThrow(new NoSuchElementException(
-                        "Oferta o ID: "
-                                + orderCreationDTO.idOffer()
-                                + " nie istnieje"
-                ));
+        givenNewIdempotencyRequest(user);
 
-        assertThatThrownBy(() ->
-                orderCreationTransactionService.create(orderCreationDTO, user)
+        when(offerQuery.getRequiredOffer(
+                orderCreationDTO.idOffer()
+        )).thenThrow(new NoSuchElementException(
+                "Oferta o ID: "
+                        + orderCreationDTO.idOffer()
+                        + " nie istnieje"
+        ));
+
+        assertThatThrownBy(() -> orderCreationTransactionService.create(
+                        orderCreationDTO,
+                        user,
+                        IDEMPOTENCY_KEY,
+                        REQUEST_HASH
+                )
         )
                 .isInstanceOf(NoSuchElementException.class)
                 .hasMessage(
@@ -167,6 +331,13 @@ class OrderCreationTransactionServiceTest {
                 paymentCreator,
                 orderEvents
         );
+
+        verify(idempotencyRequestManager, never())
+                .markResourceCreated(
+                        any(),
+                        any(),
+                        any()
+                );
     }
 
     @Test
@@ -175,8 +346,11 @@ class OrderCreationTransactionServiceTest {
         Offer offer = createOffer();
         User user = createUser();
 
-        when(offerQuery.getRequiredOffer(orderCreationDTO.idOffer()))
-                .thenReturn(offer);
+        givenNewIdempotencyRequest(user);
+
+        when(offerQuery.getRequiredOffer(
+                orderCreationDTO.idOffer()
+        )).thenReturn(offer);
 
         doThrow(new AppointmentSlotTakenException(
                 orderCreationDTO.visitDate()
@@ -184,10 +358,11 @@ class OrderCreationTransactionServiceTest {
                 .when(appointmentReservation)
                 .reserveSlot(orderCreationDTO.visitDate());
 
-        assertThatThrownBy(() ->
-                orderCreationTransactionService.create(
+        assertThatThrownBy(() -> orderCreationTransactionService.create(
                         orderCreationDTO,
-                        user
+                        user,
+                        IDEMPOTENCY_KEY,
+                        REQUEST_HASH
                 )
         ).isInstanceOf(AppointmentSlotTakenException.class);
 
@@ -202,6 +377,13 @@ class OrderCreationTransactionServiceTest {
                 paymentCreator,
                 orderEvents
         );
+
+        verify(idempotencyRequestManager, never())
+                .markResourceCreated(
+                        any(),
+                        any(),
+                        any()
+                );
     }
 
     @Test
@@ -210,8 +392,11 @@ class OrderCreationTransactionServiceTest {
         Offer offer = createOffer();
         User user = createUser();
 
-        when(offerQuery.getRequiredOffer(orderCreationDTO.idOffer()))
-                .thenReturn(offer);
+        givenNewIdempotencyRequest(user);
+
+        when(offerQuery.getRequiredOffer(
+                orderCreationDTO.idOffer()
+        )).thenReturn(offer);
 
         givenRepositorySavesOrderWithId();
 
@@ -225,16 +410,21 @@ class OrderCreationTransactionServiceTest {
         assertThatThrownBy(() ->
                 orderCreationTransactionService.create(
                         orderCreationDTO,
-                        user
+                        user,
+                        IDEMPOTENCY_KEY,
+                        REQUEST_HASH
                 )
         )
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Nie udało się utworzyć płatności");
+                .hasMessage(
+                        "Nie udało się utworzyć płatności"
+                );
 
         verify(appointmentReservation)
                 .reserveSlot(orderCreationDTO.visitDate());
 
-        verify(orderRepository).save(any(Order.class));
+        verify(orderRepository)
+                .save(any(Order.class));
 
         verify(paymentCreator).createForOrder(
                 any(Order.class),
@@ -244,6 +434,42 @@ class OrderCreationTransactionServiceTest {
         verify(orderEvents, never()).created(
                 any(Order.class),
                 any(Payment.class)
+        );
+
+        verify(idempotencyRequestManager, never())
+                .markResourceCreated(
+                        any(),
+                        any(),
+                        any()
+                );
+    }
+
+    private void givenNewIdempotencyRequest(User user) {
+        when(idempotencyRequestManager.startOrderCreation(
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH,
+                user.getIdUser()
+        )).thenReturn(new IdempotencyRequestResult(
+                IDEMPOTENCY_REQUEST_ID,
+                IdempotencyResolution.NEW,
+                null,
+                null,
+                null
+        ));
+    }
+
+    private PaymentCheckoutRequest createCheckoutRequest(
+            OrderCreationDTO orderCreationDTO
+    ) {
+        Offer offer = createOffer();
+
+        return new PaymentCheckoutRequest(
+                PAYMENT_ID,
+                orderCreationDTO.paymentMethod(),
+                PaymentStatus.NIE_WYMAGANA,
+                offer.getCost(),
+                "PLN",
+                offer.getKind()
         );
     }
 

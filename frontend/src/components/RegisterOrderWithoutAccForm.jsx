@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -11,16 +11,17 @@ import { createGuestOrder } from "../api/guestOrderService";
 import { getPaymentMethods } from "../utils/paymentMethods";
 
 const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
-  const [firstname, setFirstName] = useState("");
-  const [lastname, setLastName] = useState("");
-  const [phonenumber, setPhoneNumber] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [selectedOffer, setSelectedOffer] = useState("");
-
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("GOTOWKA");
+
+  const idempotencyRequestRef = useRef(null);
 
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -29,9 +30,11 @@ const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
   const paymentMethods = getPaymentMethods(t);
 
   const createGuestOrderMutation = useMutation({
-    mutationFn: (guestOrderCreationData) =>
-      createGuestOrder(guestOrderCreationData),
+    mutationFn: ({ guestOrderCreationData, idempotencyKey }) =>
+      createGuestOrder(guestOrderCreationData, idempotencyKey),
     onSuccess: (response) => {
+      idempotencyRequestRef.current = null;
+
       // invalidate guest orders query cache so admin tables update automatically
       queryClient.invalidateQueries({ queryKey: ["guestOrders"] });
 
@@ -48,7 +51,7 @@ const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
     },
     onError: (error) => {
       // extract backend error message or fallback to generic i18n message
-      const errorMsg = error?.data || error?.message;
+      const errorMsg = error?.response?.data || error?.message;
 
       if (typeof errorMsg === "string" && errorMsg) {
         toast.error(errorMsg);
@@ -58,14 +61,32 @@ const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
     },
   });
 
+  const resolveIdempotencyKey = (guestOrderCreationData) => {
+    const requestSignature = JSON.stringify(guestOrderCreationData);
+    const previousRequest = idempotencyRequestRef.current;
+
+    if (previousRequest?.requestSignature === requestSignature) {
+      return previousRequest.idempotencyKey;
+    }
+
+    const idempotencyKey = globalThis.crypto.randomUUID();
+
+    idempotencyRequestRef.current = {
+      requestSignature,
+      idempotencyKey,
+    };
+
+    return idempotencyKey;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const guestOrderCreationData = {
-      firstname,
-      lastname,
-      phonenumber,
-      email,
+      firstname: firstName,
+      lastname: lastName,
+      phonenumber: phoneNumber,
+      email: email,
       idOffer: Number(selectedOffer),
       visitDate: formatSelectedDateTime(
         selectedDate,
@@ -75,7 +96,12 @@ const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
       paymentMethod,
     };
 
-    createGuestOrderMutation.mutate(guestOrderCreationData);
+    const idempotencyKey = resolveIdempotencyKey(guestOrderCreationData);
+
+    createGuestOrderMutation.mutate({
+      guestOrderCreationData,
+      idempotencyKey,
+    });
   };
 
   if (isLoadingOffers) {
@@ -92,7 +118,7 @@ const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
           type="text"
           className="form-control"
           id="firstname"
-          value={firstname}
+          value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           required
           disabled={createGuestOrderMutation.isPending}
@@ -107,7 +133,7 @@ const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
           type="text"
           className="form-control"
           id="lastname"
-          value={lastname}
+          value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           required
           disabled={createGuestOrderMutation.isPending}
@@ -122,7 +148,7 @@ const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
           type="text"
           className="form-control"
           id="phonenumber"
-          value={phonenumber}
+          value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
           required
           disabled={createGuestOrderMutation.isPending}
@@ -190,11 +216,13 @@ const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
             className="form-select me-1"
             id="selecthour"
             value={selectedHour}
-            onChange={(e) => setSelectedHour(parseInt(e.target.value, 10))}
+            onChange={(e) =>
+              setSelectedHour(Number.parseInt(e.target.value, 10))
+            }
             required
             disabled={createGuestOrderMutation.isPending}
           >
-            {[...Array(12).keys()].map((hour) => (
+            {[...new Array(12).keys()].map((hour) => (
               <option key={hour} value={hour + 8}>
                 {String(hour + 8).padStart(2, "0")}
               </option>
@@ -205,11 +233,13 @@ const RegisterOrderWithoutAccForm = ({ onSuccess }) => {
             className="form-select me-1"
             id="selectminute"
             value={selectedMinute}
-            onChange={(e) => setSelectedMinute(parseInt(e.target.value, 10))}
+            onChange={(e) =>
+              setSelectedMinute(Number.parseInt(e.target.value, 10))
+            }
             required
             disabled={createGuestOrderMutation.isPending}
           >
-            {[...Array(2).keys()].map((half) => (
+            {[...new Array(2).keys()].map((half) => (
               <option key={half * 30} value={half * 30}>
                 {String(half * 30).padStart(2, "0")}
               </option>

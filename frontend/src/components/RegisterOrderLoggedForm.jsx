@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "../auth/AuthContextValue";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -18,6 +18,8 @@ const RegisterOrderLoggedForm = ({ onSuccess }) => {
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("GOTOWKA");
 
+  const idempotencyRequestRef = useRef(null);
+
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -25,9 +27,11 @@ const RegisterOrderLoggedForm = ({ onSuccess }) => {
   const paymentMethods = getPaymentMethods(t);
 
   const createOrderMutation = useMutation({
-    mutationFn: (orderCreationData) =>
-      createOrder(orderCreationData, user?.token),
+    mutationFn: ({ orderCreationData, idempotencyKey }) =>
+      createOrder(orderCreationData, idempotencyKey),
     onSuccess: (response) => {
+      idempotencyRequestRef.current = null;
+
       // invalidate order queries so profile and admin tables refresh
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       if (user?.id) {
@@ -47,7 +51,7 @@ const RegisterOrderLoggedForm = ({ onSuccess }) => {
     },
     onError: (error) => {
       // extract backend error message or fallback to generic i18n message
-      const errorMsg = error?.data || error?.message;
+      const errorMsg = error?.response?.data || error?.message;
 
       if (typeof errorMsg === "string" && errorMsg) {
         toast.error(errorMsg);
@@ -56,6 +60,24 @@ const RegisterOrderLoggedForm = ({ onSuccess }) => {
       }
     },
   });
+
+  const resolveIdempotencyKey = (orderCreationData) => {
+    const requestSignature = JSON.stringify(orderCreationData);
+    const previousRequest = idempotencyRequestRef.current;
+
+    if (previousRequest?.requestSignature === requestSignature) {
+      return previousRequest.idempotencyKey;
+    }
+
+    const idempotencyKey = globalThis.crypto.randomUUID();
+
+    idempotencyRequestRef.current = {
+      requestSignature,
+      idempotencyKey,
+    };
+
+    return idempotencyKey;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -70,7 +92,12 @@ const RegisterOrderLoggedForm = ({ onSuccess }) => {
       paymentMethod,
     };
 
-    createOrderMutation.mutate(orderCreationData);
+    const idempotencyKey = resolveIdempotencyKey(orderCreationData);
+
+    createOrderMutation.mutate({
+      orderCreationData,
+      idempotencyKey,
+    });
   };
 
   if (isLoadingOffers) {
@@ -125,11 +152,13 @@ const RegisterOrderLoggedForm = ({ onSuccess }) => {
             className="form-select me-2"
             id="selecthour"
             value={selectedHour}
-            onChange={(e) => setSelectedHour(parseInt(e.target.value, 10))}
+            onChange={(e) =>
+              setSelectedHour(Number.parseInt(e.target.value, 10))
+            }
             required
             disabled={createOrderMutation.isPending}
           >
-            {[...Array(12).keys()].map((hour) => (
+            {[...new Array(12).keys()].map((hour) => (
               <option key={hour} value={hour + 8}>
                 {String(hour + 8).padStart(2, "0")}
               </option>
@@ -140,11 +169,13 @@ const RegisterOrderLoggedForm = ({ onSuccess }) => {
             className="form-select"
             id="selectminute"
             value={selectedMinute}
-            onChange={(e) => setSelectedMinute(parseInt(e.target.value, 10))}
+            onChange={(e) =>
+              setSelectedMinute(Number.parseInt(e.target.value, 10))
+            }
             required
             disabled={createOrderMutation.isPending}
           >
-            {[...Array(2).keys()].map((half) => (
+            {[...new Array(2).keys()].map((half) => (
               <option key={half * 30} value={half * 30}>
                 {String(half * 30).padStart(2, "0")}
               </option>

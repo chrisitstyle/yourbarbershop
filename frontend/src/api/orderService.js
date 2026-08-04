@@ -1,11 +1,14 @@
 import { API_BASE_URL } from "./config.js";
 import { apiRequest } from "./httpClient.js";
 
-export const createOrder = async (orderCreationData) => {
+export const createOrder = async (orderCreationData, idempotencyKey) => {
   try {
     const response = await apiRequest(`${API_BASE_URL}/orders`, {
       method: "POST",
       credentials: "include",
+      headers: {
+        "Idempotency-Key": idempotencyKey,
+      },
       data: orderCreationData,
     });
 

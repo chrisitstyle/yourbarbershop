@@ -6,6 +6,10 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
+import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestCollisionException;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestHasher;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestManager;
 import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferQuery;
@@ -40,19 +44,56 @@ class OrderService {
     private final OrderEvents orderEvents;
     private final OrderCreationTransaction orderCreationTransaction;
     private final PaymentCheckout paymentCheckout;
+    private final IdempotencyRequestHasher idempotencyRequestHasher;
+    private final IdempotencyRequestManager idempotencyRequestManager;
 
     @CacheEvict(value = "orders", allEntries = true)
-    public OrderCreationResponseDTO addOrder(OrderCreationDTO orderCreationDTO, User user) {
-        OrderCreationTransactionResult transactionResult = orderCreationTransaction.create(orderCreationDTO, user);
+    public OrderCreationResponseDTO addOrder(
+            OrderCreationDTO orderCreationDTO,
+            User user,
+            String idempotencyKey
+    ) {
+        String requestHash = idempotencyRequestHasher.hash(
+                "order-creation-v1",
+                "idOffer",
+                orderCreationDTO.idOffer(),
+                "visitDate",
+                orderCreationDTO.visitDate(),
+                "paymentMethod",
+                orderCreationDTO.paymentMethod().name()
+        );
 
-        PaymentCheckoutRequest checkoutRequest = transactionResult.checkoutRequest();
+        OrderCreationTransactionResult transactionResult = createOrderTransaction(
+                        orderCreationDTO,
+                        user,
+                        idempotencyKey,
+                        requestHash
+                );
 
-        String checkoutUrl = paymentCheckout.createCheckoutIfRequired(checkoutRequest);
+        if (transactionResult.isInProgress()) {
+            throw new IdempotencyConflictException(
+                    "Żądanie z tym Idempotency-Key jest nadal przetwarzane"
+            );
+        }
 
-        return new OrderCreationResponseDTO(
-                transactionResult.orderId(),
-                checkoutRequest.paymentMethod(),
-                checkoutRequest.paymentStatus(),
+        if (transactionResult.isCompleted()) {
+            return createResponse(
+                    transactionResult,
+                    transactionResult.checkoutUrl()
+            );
+        }
+
+        String checkoutUrl = paymentCheckout.createCheckoutIfRequired(
+                transactionResult.checkoutRequest()
+        );
+
+        idempotencyRequestManager.markCompleted(
+                transactionResult.idempotencyRequestId(),
+                checkoutUrl
+        );
+
+        return createResponse(
+                transactionResult,
                 checkoutUrl
         );
     }
@@ -167,5 +208,46 @@ class OrderService {
                     AVAILABLE_STATUSES_MSG + List.of(Status.values())
             );
         }
+    }
+
+    private OrderCreationTransactionResult createOrderTransaction(
+            OrderCreationDTO orderCreationDTO,
+            User user,
+            String idempotencyKey,
+            String requestHash
+    ) {
+        try {
+            return orderCreationTransaction.create(
+                    orderCreationDTO,
+                    user,
+                    idempotencyKey,
+                    requestHash
+            );
+        } catch (IdempotencyRequestCollisionException _) {
+            try {
+                return orderCreationTransaction.create(
+                        orderCreationDTO,
+                        user,
+                        idempotencyKey,
+                        requestHash
+                );
+            } catch (IdempotencyRequestCollisionException _) {
+                throw new IdempotencyConflictException(
+                        "Żądanie z tym Idempotency-Key jest już przetwarzane"
+                );
+            }
+        }
+    }
+
+    private OrderCreationResponseDTO createResponse(
+            OrderCreationTransactionResult transactionResult,
+            String checkoutUrl
+    ) {
+        return new OrderCreationResponseDTO(
+                transactionResult.orderId(),
+                transactionResult.checkoutRequest().paymentMethod(),
+                transactionResult.checkoutRequest().paymentStatus(),
+                checkoutUrl
+        );
     }
 }
