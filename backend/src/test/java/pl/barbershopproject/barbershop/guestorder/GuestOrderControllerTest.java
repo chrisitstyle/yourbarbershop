@@ -71,7 +71,7 @@ class GuestOrderControllerTest {
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.guestOrderId").value(1L))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.paymentMethod").value("GOTOWKA"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("NIE_WYMAGANA"));
     }
 
     @Test
@@ -86,7 +86,7 @@ class GuestOrderControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.size()").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].firstname").value("GuestJohn"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].paymentMethod").value("GOTOWKA"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].paymentStatus").value("NIE_WYMAGANA"));
 
         verify(guestOrderService).getAllGuestOrders();
     }
@@ -123,7 +123,7 @@ class GuestOrderControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.idGuestOrder").value(1L))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.lastname").value("GuestDoe"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.paymentStatus").value("NIE_WYMAGANA"));
     }
 
     @Test
