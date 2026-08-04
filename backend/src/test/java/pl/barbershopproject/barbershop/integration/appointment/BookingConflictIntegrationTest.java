@@ -105,7 +105,7 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.guestOrderId").exists())
                 .andExpect(jsonPath("$.paymentMethod").value("GOTOWKA"))
-                .andExpect(jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
+                .andExpect(jsonPath("$.paymentStatus").value("NIE_WYMAGANA"));
 
         mockMvc.perform(post("/guestorders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -144,7 +144,7 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.guestOrderId").exists())
                 .andExpect(jsonPath("$.paymentMethod").value("GOTOWKA"))
-                .andExpect(jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
+                .andExpect(jsonPath("$.paymentStatus").value("NIE_WYMAGANA"));
 
         mockMvc.perform(post("/orders")
                         .header("Authorization", "Bearer " + token)
@@ -185,7 +185,7 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.orderId").exists())
                 .andExpect(jsonPath("$.paymentMethod").value("GOTOWKA"))
-                .andExpect(jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
+                .andExpect(jsonPath("$.paymentStatus").value("NIE_WYMAGANA"));
 
         mockMvc.perform(post("/guestorders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -218,7 +218,7 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.orderId").exists())
                 .andExpect(jsonPath("$.paymentMethod").value("GOTOWKA"))
-                .andExpect(jsonPath("$.paymentStatus").value("OCZEKUJE_NA_PLATNOSC"));
+                .andExpect(jsonPath("$.paymentStatus").value("NIE_WYMAGANA"));
 
         mockMvc.perform(post("/orders")
                         .header("Authorization", "Bearer " + token)

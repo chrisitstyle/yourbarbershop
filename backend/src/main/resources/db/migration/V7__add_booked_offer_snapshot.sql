@@ -1,3 +1,5 @@
+-- Stores a snapshot of the booked offer so order history remains unchanged
+-- even if the original offer is later edited or deleted.
 ALTER TABLE user_order
     ADD COLUMN booked_offer_name VARCHAR(255),
     ADD COLUMN booked_offer_price DECIMAL(10, 2);
