@@ -1,3 +1,9 @@
+DELETE FROM idempotency_request
+WHERE idempotency_key IN (
+  'security-order-test-key',
+  'security-guest-order-test-key'
+);
+
 DELETE FROM guest_order
 WHERE email = 'guestjohn.security@example.com';
 

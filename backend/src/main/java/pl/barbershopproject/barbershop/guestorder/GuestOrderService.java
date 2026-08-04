@@ -5,16 +5,19 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
+import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
 import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderDTOMapper;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestCollisionException;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestHasher;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestManager;
 import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferQuery;
 import pl.barbershopproject.barbershop.payment.PaymentCheckout;
-import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 import pl.barbershopproject.barbershop.payment.PaymentOfferUpdater;
 import pl.barbershopproject.barbershop.utils.Status;
 
@@ -35,22 +38,63 @@ public class GuestOrderService {
     private final GuestOrderEvents guestOrderEvents;
     private final GuestOrderCreationTransaction guestOrderCreationTransaction;
     private final PaymentCheckout paymentCheckout;
+    private final IdempotencyRequestHasher idempotencyRequestHasher;
+    private final IdempotencyRequestManager idempotencyRequestManager;
 
     @CacheEvict(value = "guestOrders", allEntries = true)
     public GuestOrderCreationResponseDTO addGuestOrder(
-            GuestOrderCreationDTO guestOrderCreationDTO
+            GuestOrderCreationDTO guestOrderCreationDTO,
+            String idempotencyKey
     ) {
+        String requestHash = idempotencyRequestHasher.hash(
+                "guest-order-creation-v1",
+                "firstname",
+                guestOrderCreationDTO.firstname(),
+                "lastname",
+                guestOrderCreationDTO.lastname(),
+                "phonenumber",
+                guestOrderCreationDTO.phonenumber(),
+                "email",
+                guestOrderCreationDTO.email(),
+                "idOffer",
+                guestOrderCreationDTO.idOffer(),
+                "visitDate",
+                guestOrderCreationDTO.visitDate(),
+                "paymentMethod",
+                guestOrderCreationDTO.paymentMethod().name()
+        );
+
         GuestOrderCreationTransactionResult transactionResult =
-                guestOrderCreationTransaction.create(guestOrderCreationDTO);
+                createGuestOrderTransaction(
+                        guestOrderCreationDTO,
+                        idempotencyKey,
+                        requestHash
+                );
 
-        PaymentCheckoutRequest checkoutRequest = transactionResult.checkoutRequest();
+        if (transactionResult.isInProgress()) {
+            throw new IdempotencyConflictException(
+                    "Żądanie z tym Idempotency-Key jest nadal przetwarzane"
+            );
+        }
 
-        String checkoutUrl = paymentCheckout.createCheckoutIfRequired(checkoutRequest);
+        if (transactionResult.isCompleted()) {
+            return createResponse(
+                    transactionResult,
+                    transactionResult.checkoutUrl()
+            );
+        }
 
-        return new GuestOrderCreationResponseDTO(
-                transactionResult.guestOrderId(),
-                checkoutRequest.paymentMethod(),
-                checkoutRequest.paymentStatus(),
+        String checkoutUrl = paymentCheckout.createCheckoutIfRequired(
+                transactionResult.checkoutRequest()
+        );
+
+        idempotencyRequestManager.markCompleted(
+                transactionResult.idempotencyRequestId(),
+                checkoutUrl
+        );
+
+        return createResponse(
+                transactionResult,
                 checkoutUrl
         );
     }
@@ -78,17 +122,21 @@ public class GuestOrderService {
             GuestOrderUpdateRequestDTO request,
             Long idGuestOrder
     ) {
-        GuestOrder guestOrder =
-                getRequiredGuestOrder(idGuestOrder);
+        GuestOrder guestOrder = getRequiredGuestOrder(idGuestOrder);
 
-        Offer targetOffer = offerQuery.getRequiredOffer(request.idOffer());
+        Offer targetOffer = offerQuery.getRequiredOffer(
+                request.idOffer()
+        );
 
         Status oldStatus = guestOrder.getStatus();
         Status targetStatus = request.status() != null
                 ? request.status()
                 : oldStatus;
 
-        updateOfferIfChanged(guestOrder, targetOffer);
+        updateOfferIfChanged(
+                guestOrder,
+                targetOffer
+        );
 
         appointmentReservation.updateSlotReservation(
                 guestOrder.getVisitDate(),
@@ -106,7 +154,10 @@ public class GuestOrderService {
         GuestOrder savedGuestOrder =
                 guestOrderRepository.save(guestOrder);
 
-        guestOrderEvents.updated(savedGuestOrder, oldStatus);
+        guestOrderEvents.updated(
+                savedGuestOrder,
+                oldStatus
+        );
 
         return GuestOrderDTOMapper.toDTO(savedGuestOrder);
     }
@@ -125,11 +176,52 @@ public class GuestOrderService {
         guestOrderEvents.deleted(idGuestOrder);
     }
 
+    private GuestOrderCreationTransactionResult createGuestOrderTransaction(
+            GuestOrderCreationDTO guestOrderCreationDTO,
+            String idempotencyKey,
+            String requestHash
+    ) {
+        try {
+            return guestOrderCreationTransaction.create(
+                    guestOrderCreationDTO,
+                    idempotencyKey,
+                    requestHash
+            );
+        } catch (IdempotencyRequestCollisionException firstCollision) {
+            try {
+                return guestOrderCreationTransaction.create(
+                        guestOrderCreationDTO,
+                        idempotencyKey,
+                        requestHash
+                );
+            } catch (IdempotencyRequestCollisionException secondCollision) {
+                throw new IdempotencyConflictException(
+                        "Żądanie z tym Idempotency-Key jest już przetwarzane"
+                );
+            }
+        }
+    }
+
+    private GuestOrderCreationResponseDTO createResponse(
+            GuestOrderCreationTransactionResult transactionResult,
+            String checkoutUrl
+    ) {
+        return new GuestOrderCreationResponseDTO(
+                transactionResult.guestOrderId(),
+                transactionResult.checkoutRequest().paymentMethod(),
+                transactionResult.checkoutRequest().paymentStatus(),
+                checkoutUrl
+        );
+    }
+
     private void updateOfferIfChanged(
             GuestOrder guestOrder,
             Offer targetOffer
     ) {
-        if (!hasOfferChanged(guestOrder.getOffer(), targetOffer)) {
+        if (!hasOfferChanged(
+                guestOrder.getOffer(),
+                targetOffer
+        )) {
             return;
         }
 
@@ -139,7 +231,9 @@ public class GuestOrderService {
         );
 
         guestOrder.setOffer(targetOffer);
-        guestOrder.setBookedOffer(BookedOffer.from(targetOffer));
+        guestOrder.setBookedOffer(
+                BookedOffer.from(targetOffer)
+        );
     }
 
     private boolean hasOfferChanged(

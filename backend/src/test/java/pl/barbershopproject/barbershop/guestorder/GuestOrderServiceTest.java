@@ -7,11 +7,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
+import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
 import pl.barbershopproject.barbershop.exception.OrderOfferChangeNotAllowedException;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestHasher;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestManager;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferQuery;
 import pl.barbershopproject.barbershop.payment.*;
@@ -33,6 +36,10 @@ import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntiti
 @ExtendWith(MockitoExtension.class)
 class GuestOrderServiceTest {
 
+    private static final Long IDEMPOTENCY_REQUEST_ID = 100L;
+    private static final String IDEMPOTENCY_KEY = "guest-order-service-test-key";
+    private static final String REQUEST_HASH = "a".repeat(64);
+
     @Mock
     private GuestOrderRepository guestOrderRepository;
     @Mock
@@ -47,6 +54,11 @@ class GuestOrderServiceTest {
     private GuestOrderCreationTransaction guestOrderCreationTransaction;
     @Mock
     private PaymentCheckout paymentCheckout;
+
+    @Mock
+    private IdempotencyRequestHasher idempotencyRequestHasher;
+    @Mock
+    private IdempotencyRequestManager idempotencyRequestManager;
 
     @InjectMocks
     private GuestOrderService guestOrderService;
@@ -67,79 +79,239 @@ class GuestOrderServiceTest {
 
     @Test
     void addGuestOrder_ShouldReturnResponseWithoutCheckoutUrl_ForOfflinePayment() {
-        GuestOrderCreationDTO guestOrderCreationDTO = createGuestOrderCreationDTO();
+        GuestOrderCreationDTO guestOrderCreationDTO =
+                createGuestOrderCreationDTO();
 
         PaymentCheckoutRequest checkoutRequest = new PaymentCheckoutRequest(
-                10L,
-                PaymentMethod.GOTOWKA,
-                PaymentStatus.NIE_WYMAGANA,
-                offer.getCost(), "PLN", offer.getKind());
+                        10L,
+                        PaymentMethod.GOTOWKA,
+                        PaymentStatus.NIE_WYMAGANA,
+                        offer.getCost(),
+                        "PLN",
+                        offer.getKind()
+                );
 
-        GuestOrderCreationTransactionResult transactionResult = new GuestOrderCreationTransactionResult(
-                1L, checkoutRequest);
+        GuestOrderCreationTransactionResult transactionResult = GuestOrderCreationTransactionResult.resourceCreated(
+                        IDEMPOTENCY_REQUEST_ID,
+                        1L,
+                        checkoutRequest
+                );
 
-        when(guestOrderCreationTransaction.create(guestOrderCreationDTO)).thenReturn(transactionResult);
-        when(paymentCheckout.createCheckoutIfRequired(checkoutRequest)).thenReturn(null);
+        givenRequestHash(guestOrderCreationDTO);
 
-        GuestOrderCreationResponseDTO result = guestOrderService.addGuestOrder(guestOrderCreationDTO);
+        when(guestOrderCreationTransaction.create(
+                guestOrderCreationDTO,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        )).thenReturn(transactionResult);
+
+        when(paymentCheckout.createCheckoutIfRequired(checkoutRequest))
+                .thenReturn(null);
+
+        GuestOrderCreationResponseDTO result =
+                guestOrderService.addGuestOrder(
+                        guestOrderCreationDTO,
+                        IDEMPOTENCY_KEY
+                );
 
         assertNotNull(result);
+        assertEquals(1L, result.guestOrderId());
         assertEquals(PaymentMethod.GOTOWKA, result.paymentMethod());
         assertEquals(PaymentStatus.NIE_WYMAGANA, result.paymentStatus());
         assertNull(result.checkoutUrl());
 
-        verify(guestOrderCreationTransaction).create(guestOrderCreationDTO);
+        verify(guestOrderCreationTransaction).create(
+                guestOrderCreationDTO,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        );
 
-        verify(paymentCheckout).createCheckoutIfRequired(checkoutRequest);
+        verify(paymentCheckout)
+                .createCheckoutIfRequired(checkoutRequest);
+
+        verify(idempotencyRequestManager).markCompleted(IDEMPOTENCY_REQUEST_ID, null);
     }
 
     @Test
     void addGuestOrder_ShouldReturnCheckoutUrl_ForOnlinePayment() {
-        GuestOrderCreationDTO guestOrderCreationDTO = createGuestOrderCreationDTO();
+        GuestOrderCreationDTO guestOrderCreationDTO =
+                createGuestOrderCreationDTO();
 
         PaymentCheckoutRequest checkoutRequest = new PaymentCheckoutRequest(
-                10L,
-                PaymentMethod.KARTA_ONLINE,
-                PaymentStatus.OCZEKUJE_NA_PLATNOSC,
-                offer.getCost(),
-                "PLN", offer.getKind());
+                        10L,
+                        PaymentMethod.KARTA_ONLINE,
+                        PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                        offer.getCost(),
+                        "PLN",
+                        offer.getKind()
+                );
 
-        GuestOrderCreationTransactionResult transactionResult = new GuestOrderCreationTransactionResult(
-                1L, checkoutRequest);
+        GuestOrderCreationTransactionResult transactionResult = GuestOrderCreationTransactionResult.resourceCreated(
+                        IDEMPOTENCY_REQUEST_ID,
+                        1L,
+                        checkoutRequest
+                );
 
         String checkoutUrl = "https://checkout.stripe.com/c/pay/cs_test_123";
 
-        when(guestOrderCreationTransaction.create(guestOrderCreationDTO)).thenReturn(transactionResult);
+        givenRequestHash(guestOrderCreationDTO);
 
-        when(paymentCheckout.createCheckoutIfRequired(checkoutRequest)).thenReturn(checkoutUrl);
+        when(guestOrderCreationTransaction.create(
+                guestOrderCreationDTO,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        )).thenReturn(transactionResult);
 
-        GuestOrderCreationResponseDTO result = guestOrderService.addGuestOrder(guestOrderCreationDTO);
+        when(paymentCheckout.createCheckoutIfRequired(checkoutRequest))
+                .thenReturn(checkoutUrl);
+
+        GuestOrderCreationResponseDTO result =
+                guestOrderService.addGuestOrder(
+                        guestOrderCreationDTO,
+                        IDEMPOTENCY_KEY
+                );
 
         assertNotNull(result);
-        assertEquals(PaymentMethod.KARTA_ONLINE, result.paymentMethod());
-        assertEquals(PaymentStatus.OCZEKUJE_NA_PLATNOSC, result.paymentStatus());
+        assertEquals(1L, result.guestOrderId());
+        assertEquals(
+                PaymentMethod.KARTA_ONLINE,
+                result.paymentMethod()
+        );
+        assertEquals(
+                PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                result.paymentStatus()
+        );
         assertEquals(checkoutUrl, result.checkoutUrl());
 
-        verify(guestOrderCreationTransaction).create(guestOrderCreationDTO);
+        verify(guestOrderCreationTransaction).create(
+                guestOrderCreationDTO,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        );
 
         verify(paymentCheckout).createCheckoutIfRequired(checkoutRequest);
+
+        verify(idempotencyRequestManager)
+                .markCompleted(
+                        IDEMPOTENCY_REQUEST_ID,
+                        checkoutUrl);
     }
 
     @Test
     void addGuestOrder_ShouldNotCreateCheckout_WhenTransactionFails() {
+        GuestOrderCreationDTO guestOrderCreationDTO =
+                createGuestOrderCreationDTO();
+
+        givenRequestHash(guestOrderCreationDTO);
+
+        when(guestOrderCreationTransaction.create(
+                guestOrderCreationDTO,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        )).thenThrow(new NoSuchElementException(
+                "Oferta o ID: "
+                        + guestOrderCreationDTO.idOffer()
+                        + " nie istnieje"
+        ));
+
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> guestOrderService.addGuestOrder(
+                        guestOrderCreationDTO,
+                        IDEMPOTENCY_KEY
+                )
+        );
+
+        assertEquals("Oferta o ID: "
+                        + guestOrderCreationDTO.idOffer()
+                        + " nie istnieje",
+                exception.getMessage());
+
+        verify(guestOrderCreationTransaction).create(
+                guestOrderCreationDTO,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH);
+
+        verifyNoInteractions(
+                paymentCheckout,
+                idempotencyRequestManager);
+    }
+
+    @Test
+    void addGuestOrder_ShouldReturnStoredResponse_WhenRequestIsCompleted() {
         GuestOrderCreationDTO guestOrderCreationDTO = createGuestOrderCreationDTO();
 
-        when(guestOrderCreationTransaction.create(guestOrderCreationDTO))
-                .thenThrow(new NoSuchElementException("Oferta o ID: " + guestOrderCreationDTO.idOffer() + " nie istnieje"));
+        PaymentCheckoutRequest checkoutRequest = new PaymentCheckoutRequest(
+                        10L,
+                        PaymentMethod.KARTA_ONLINE,
+                        PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                        offer.getCost(),
+                        "PLN",
+                        offer.getKind());
 
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
-                () -> guestOrderService.addGuestOrder(guestOrderCreationDTO));
+        String checkoutUrl = "https://checkout.stripe.com/c/pay/cs_test_123";
 
-        assertEquals("Oferta o ID: " + guestOrderCreationDTO.idOffer() + " nie istnieje", exception.getMessage());
+        GuestOrderCreationTransactionResult transactionResult = GuestOrderCreationTransactionResult.completed(
+                        IDEMPOTENCY_REQUEST_ID,
+                        1L,
+                        checkoutRequest,
+                        checkoutUrl);
 
-        verify(guestOrderCreationTransaction).create(guestOrderCreationDTO);
+        givenRequestHash(guestOrderCreationDTO);
 
-        verifyNoInteractions(paymentCheckout);
+        when(guestOrderCreationTransaction.create(
+                guestOrderCreationDTO,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        )).thenReturn(transactionResult);
+
+        GuestOrderCreationResponseDTO result = guestOrderService.addGuestOrder(
+                        guestOrderCreationDTO,
+                        IDEMPOTENCY_KEY);
+
+        assertEquals(1L, result.guestOrderId());
+        assertEquals(
+                PaymentMethod.KARTA_ONLINE,
+                result.paymentMethod());
+        assertEquals(
+                PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                result.paymentStatus());
+        assertEquals(checkoutUrl, result.checkoutUrl());
+
+        verifyNoInteractions(
+                paymentCheckout,
+                idempotencyRequestManager);
+    }
+
+    @Test
+    void addGuestOrder_ShouldRejectRequest_WhenSameKeyIsStillProcessing() {
+        GuestOrderCreationDTO guestOrderCreationDTO = createGuestOrderCreationDTO();
+
+        GuestOrderCreationTransactionResult transactionResult = GuestOrderCreationTransactionResult.inProgress(
+                        IDEMPOTENCY_REQUEST_ID);
+
+        givenRequestHash(guestOrderCreationDTO);
+
+        when(guestOrderCreationTransaction.create(
+                guestOrderCreationDTO,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        )).thenReturn(transactionResult);
+
+        IdempotencyConflictException exception = assertThrows(
+                IdempotencyConflictException.class,
+                () -> guestOrderService.addGuestOrder(
+                        guestOrderCreationDTO,
+                        IDEMPOTENCY_KEY
+                ));
+
+        assertEquals(
+                "Żądanie z tym Idempotency-Key jest nadal przetwarzane",
+                exception.getMessage());
+
+        verifyNoInteractions(
+                paymentCheckout,
+                idempotencyRequestManager);
     }
 
     @Test
@@ -466,5 +638,27 @@ class GuestOrderServiceTest {
         verifyNoInteractions(appointmentReservation, guestOrderEvents);
 
         verify(guestOrderRepository, never()).delete(any(GuestOrder.class));
+    }
+
+    private void givenRequestHash(
+            GuestOrderCreationDTO guestOrderCreationDTO
+    ) {
+        when(idempotencyRequestHasher.hash(
+                "guest-order-creation-v1",
+                "firstname",
+                guestOrderCreationDTO.firstname(),
+                "lastname",
+                guestOrderCreationDTO.lastname(),
+                "phonenumber",
+                guestOrderCreationDTO.phonenumber(),
+                "email",
+                guestOrderCreationDTO.email(),
+                "idOffer",
+                guestOrderCreationDTO.idOffer(),
+                "visitDate",
+                guestOrderCreationDTO.visitDate(),
+                "paymentMethod",
+                guestOrderCreationDTO.paymentMethod().name()
+        )).thenReturn(REQUEST_HASH);
     }
 }

@@ -85,6 +85,24 @@ public class GlobalExceptionHandler {
         return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(OrderOfferChangeNotAllowedException.class)
+    public ResponseEntity<ErrorDTO> handleOrderOfferChangeNotAllowed(
+            OrderOfferChangeNotAllowedException ex
+    ) {
+        return createErrorResponse(
+                ex.getMessage(),
+                HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(IdempotencyConflictException.class)
+    public ResponseEntity<ErrorDTO> handleIdempotencyConflict(
+            IdempotencyConflictException ex
+    ) {
+        return createErrorResponse(
+                ex.getMessage(),
+                HttpStatus.CONFLICT);
+    }
+
     /**
      * Helper method to construct a standard {@link ResponseEntity} containing an {@link ErrorDTO}.
      *
@@ -99,15 +117,5 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now(clock)
         );
         return new ResponseEntity<>(errorDTO, status);
-    }
-
-    @ExceptionHandler(OrderOfferChangeNotAllowedException.class)
-    public ResponseEntity<ErrorDTO> handleOrderOfferChangeNotAllowed(
-            OrderOfferChangeNotAllowedException ex
-    ) {
-        return createErrorResponse(
-                ex.getMessage(),
-                HttpStatus.CONFLICT
-        );
     }
 }

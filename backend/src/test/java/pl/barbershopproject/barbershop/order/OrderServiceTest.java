@@ -7,7 +7,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
+import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
 import pl.barbershopproject.barbershop.exception.OrderOfferChangeNotAllowedException;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestHasher;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestManager;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferQuery;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
@@ -53,6 +56,10 @@ import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntitie
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
+    private static final Long IDEMPOTENCY_REQUEST_ID = 100L;
+    private static final String IDEMPOTENCY_KEY = "order-service-test-key";
+    private static final String REQUEST_HASH = "a".repeat(64);
+
     @Mock
     private OrderRepository orderRepository;
     @Mock
@@ -67,6 +74,11 @@ class OrderServiceTest {
     private OrderCreationTransaction orderCreationTransaction;
     @Mock
     private PaymentCheckout paymentCheckout;
+
+    @Mock
+    private IdempotencyRequestHasher idempotencyRequestHasher;
+    @Mock
+    private IdempotencyRequestManager idempotencyRequestManager;
 
     @InjectMocks
     private OrderService orderService;
@@ -98,23 +110,54 @@ class OrderServiceTest {
                 10L,
                 PaymentMethod.GOTOWKA,
                 PaymentStatus.NIE_WYMAGANA,
-                offer.getCost(), "PLN", offer.getKind());
+                offer.getCost(),
+                "PLN",
+                offer.getKind()
+        );
 
-        OrderCreationTransactionResult transactionResult = new OrderCreationTransactionResult(
-                1L, checkoutRequest);
+        OrderCreationTransactionResult transactionResult =
+                OrderCreationTransactionResult.resourceCreated(
+                        IDEMPOTENCY_REQUEST_ID,
+                        1L,
+                        checkoutRequest
+                );
 
-        when(orderCreationTransaction.create(orderCreationDTO, user)).thenReturn(transactionResult);
-        when(paymentCheckout.createCheckoutIfRequired(checkoutRequest)).thenReturn(null);
+        givenRequestHash(orderCreationDTO);
 
-        OrderCreationResponseDTO result = orderService.addOrder(orderCreationDTO, user);
+        when(orderCreationTransaction.create(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        )).thenReturn(transactionResult);
+
+        when(paymentCheckout.createCheckoutIfRequired(checkoutRequest))
+                .thenReturn(null);
+
+        OrderCreationResponseDTO result = orderService.addOrder(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY
+        );
 
         assertNotNull(result);
+        assertEquals(1L, result.orderId());
         assertEquals(PaymentMethod.GOTOWKA, result.paymentMethod());
         assertEquals(PaymentStatus.NIE_WYMAGANA, result.paymentStatus());
         assertNull(result.checkoutUrl());
 
-        verify(orderCreationTransaction).create(orderCreationDTO, user);
-        verify(paymentCheckout).createCheckoutIfRequired(checkoutRequest);
+        verify(orderCreationTransaction).create(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        );
+
+        verify(paymentCheckout)
+                .createCheckoutIfRequired(checkoutRequest);
+
+        verify(idempotencyRequestManager)
+                .markCompleted(IDEMPOTENCY_REQUEST_ID, null);
     }
 
     @Test
@@ -125,40 +168,200 @@ class OrderServiceTest {
                 10L,
                 PaymentMethod.KARTA_ONLINE,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC,
-                offer.getCost(), "PLN", offer.getKind());
+                offer.getCost(),
+                "PLN",
+                offer.getKind()
+        );
 
-        OrderCreationTransactionResult transactionResult = new OrderCreationTransactionResult(
-                1L, checkoutRequest);
+        OrderCreationTransactionResult transactionResult =
+                OrderCreationTransactionResult.resourceCreated(
+                        IDEMPOTENCY_REQUEST_ID,
+                        1L,
+                        checkoutRequest
+                );
 
-        String checkoutUrl = "https://checkout.stripe.com/c/pay/cs_test_123";
+        String checkoutUrl =
+                "https://checkout.stripe.com/c/pay/cs_test_123";
 
-        when(orderCreationTransaction.create(orderCreationDTO, user)).thenReturn(transactionResult);
-        when(paymentCheckout.createCheckoutIfRequired(checkoutRequest)).thenReturn(checkoutUrl);
+        givenRequestHash(orderCreationDTO);
 
-        OrderCreationResponseDTO result = orderService.addOrder(orderCreationDTO, user);
+        when(orderCreationTransaction.create(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        )).thenReturn(transactionResult);
+
+        when(paymentCheckout.createCheckoutIfRequired(checkoutRequest))
+                .thenReturn(checkoutUrl);
+
+        OrderCreationResponseDTO result = orderService.addOrder(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY
+        );
 
         assertNotNull(result);
+        assertEquals(1L, result.orderId());
         assertEquals(PaymentMethod.KARTA_ONLINE, result.paymentMethod());
-        assertEquals(PaymentStatus.OCZEKUJE_NA_PLATNOSC, result.paymentStatus());
+        assertEquals(
+                PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                result.paymentStatus()
+        );
         assertEquals(checkoutUrl, result.checkoutUrl());
 
-        verify(orderCreationTransaction).create(orderCreationDTO, user);
-        verify(paymentCheckout).createCheckoutIfRequired(checkoutRequest);
+        verify(orderCreationTransaction).create(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        );
+
+        verify(paymentCheckout)
+                .createCheckoutIfRequired(checkoutRequest);
+
+        verify(idempotencyRequestManager)
+                .markCompleted(
+                        IDEMPOTENCY_REQUEST_ID,
+                        checkoutUrl
+                );
     }
 
     @Test
     void addOrder_ShouldNotCreateCheckout_WhenTransactionFails() {
         OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
 
-        when(orderCreationTransaction.create(orderCreationDTO, user)).thenThrow(new NoSuchElementException("Oferta o ID: " + orderCreationDTO.idOffer() + " nie istnieje"));
+        givenRequestHash(orderCreationDTO);
 
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
-                () -> orderService.addOrder(orderCreationDTO, user));
+        when(orderCreationTransaction.create(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        )).thenThrow(new NoSuchElementException(
+                "Oferta o ID: "
+                        + orderCreationDTO.idOffer()
+                        + " nie istnieje"
+        ));
 
-        assertEquals("Oferta o ID: " + orderCreationDTO.idOffer() + " nie istnieje", exception.getMessage());
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> orderService.addOrder(
+                        orderCreationDTO,
+                        user,
+                        IDEMPOTENCY_KEY
+                )
+        );
 
-        verify(orderCreationTransaction).create(orderCreationDTO, user);
-        verifyNoInteractions(paymentCheckout);
+        assertEquals(
+                "Oferta o ID: "
+                        + orderCreationDTO.idOffer()
+                        + " nie istnieje",
+                exception.getMessage()
+        );
+
+        verify(orderCreationTransaction).create(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        );
+
+        verifyNoInteractions(
+                paymentCheckout,
+                idempotencyRequestManager
+        );
+    }
+
+    @Test
+    void addOrder_ShouldReturnStoredResponse_WhenRequestIsCompleted() {
+        OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
+
+        PaymentCheckoutRequest checkoutRequest = new PaymentCheckoutRequest(
+                10L,
+                PaymentMethod.KARTA_ONLINE,
+                PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                offer.getCost(),
+                "PLN",
+                offer.getKind()
+        );
+
+        String checkoutUrl =
+                "https://checkout.stripe.com/c/pay/cs_test_123";
+
+        OrderCreationTransactionResult transactionResult =
+                OrderCreationTransactionResult.completed(
+                        IDEMPOTENCY_REQUEST_ID,
+                        1L,
+                        checkoutRequest,
+                        checkoutUrl
+                );
+
+        givenRequestHash(orderCreationDTO);
+
+        when(orderCreationTransaction.create(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        )).thenReturn(transactionResult);
+
+        OrderCreationResponseDTO result = orderService.addOrder(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY
+        );
+
+        assertEquals(1L, result.orderId());
+        assertEquals(PaymentMethod.KARTA_ONLINE, result.paymentMethod());
+        assertEquals(
+                PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                result.paymentStatus()
+        );
+        assertEquals(checkoutUrl, result.checkoutUrl());
+
+        verifyNoInteractions(
+                paymentCheckout,
+                idempotencyRequestManager
+        );
+    }
+
+    @Test
+    void addOrder_ShouldRejectRequest_WhenSameKeyIsStillProcessing() {
+        OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
+
+        OrderCreationTransactionResult transactionResult =
+                OrderCreationTransactionResult.inProgress(
+                        IDEMPOTENCY_REQUEST_ID
+                );
+
+        givenRequestHash(orderCreationDTO);
+
+        when(orderCreationTransaction.create(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH
+        )).thenReturn(transactionResult);
+
+        IdempotencyConflictException exception = assertThrows(
+                IdempotencyConflictException.class,
+                () -> orderService.addOrder(
+                        orderCreationDTO,
+                        user,
+                        IDEMPOTENCY_KEY
+                )
+        );
+
+        assertEquals(
+                "Żądanie z tym Idempotency-Key jest nadal przetwarzane",
+                exception.getMessage()
+        );
+
+        verifyNoInteractions(
+                paymentCheckout,
+                idempotencyRequestManager
+        );
     }
 
     @Test
@@ -489,5 +692,19 @@ class OrderServiceTest {
         verifyNoInteractions(appointmentReservation, orderEvents);
 
         verify(orderRepository, never()).delete(any(Order.class));
+    }
+
+    private void givenRequestHash(
+            OrderCreationDTO orderCreationDTO
+    ) {
+        when(idempotencyRequestHasher.hash(
+                "order-creation-v1",
+                "idOffer",
+                orderCreationDTO.idOffer(),
+                "visitDate",
+                orderCreationDTO.visitDate(),
+                "paymentMethod",
+                orderCreationDTO.paymentMethod().name()
+        )).thenReturn(REQUEST_HASH);
     }
 }

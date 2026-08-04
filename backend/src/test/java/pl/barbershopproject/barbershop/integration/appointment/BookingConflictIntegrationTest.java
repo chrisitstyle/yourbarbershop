@@ -38,25 +38,18 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private WebApplicationContext context;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @Autowired
     private JwtService jwtService;
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private OfferRepository offerRepository;
-
     @Autowired
     private OrderRepository orderRepository;
-
     @Autowired
     private GuestOrderRepository guestOrderRepository;
-
     @Autowired
     private AppointmentSlotRepository appointmentSlotRepository;
 
@@ -98,8 +91,9 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                 visitDate
         );
 
-        // when + then
+        // when, then
         mockMvc.perform(post("/guestorders")
+                        .header("Idempotency-Key", idempotencyKey("guest-guest-first"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(firstGuestOrder)))
                 .andExpect(status().isCreated())
@@ -108,6 +102,7 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.paymentStatus").value("NIE_WYMAGANA"));
 
         mockMvc.perform(post("/guestorders")
+                        .header("Idempotency-Key", idempotencyKey("guest-guest-second"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondGuestOrder)))
                 .andExpect(status().isConflict())
@@ -137,8 +132,9 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
 
         ObjectNode userOrder = createUserOrderRequest(offerId, visitDate);
 
-        // when + then
+        // when, then
         mockMvc.perform(post("/guestorders")
+                        .header("Idempotency-Key", idempotencyKey("guest-user-guest"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(guestOrder)))
                 .andExpect(status().isCreated())
@@ -148,6 +144,7 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(post("/orders")
                         .header("Authorization", "Bearer " + token)
+                        .header("Idempotency-Key", idempotencyKey("guest-user-user"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userOrder)))
                 .andExpect(status().isConflict())
@@ -177,9 +174,10 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
                 visitDate
         );
 
-        // when + then
+        // when, then
         mockMvc.perform(post("/orders")
                         .header("Authorization", "Bearer " + token)
+                        .header("Idempotency-Key", idempotencyKey("user-guest-user"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userOrder)))
                 .andExpect(status().isCreated())
@@ -189,6 +187,7 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(post("/guestorders")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("Idempotency-Key", idempotencyKey("user-guest-guest"))
                         .content(objectMapper.writeValueAsString(guestOrder)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Termin " + visitDate + " jest już zajęty"))
@@ -210,9 +209,10 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
         ObjectNode firstUserOrder = createUserOrderRequest(offerId, visitDate);
         ObjectNode secondUserOrder = createUserOrderRequest(offerId, visitDate);
 
-        // when + then
+        // when, then
         mockMvc.perform(post("/orders")
                         .header("Authorization", "Bearer " + token)
+                        .header("Idempotency-Key", idempotencyKey("user-user-first"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(firstUserOrder)))
                 .andExpect(status().isCreated())
@@ -222,6 +222,7 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(post("/orders")
                         .header("Authorization", "Bearer " + token)
+                        .header("Idempotency-Key", idempotencyKey("user-user-second"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondUserOrder)))
                 .andExpect(status().isConflict())
@@ -281,5 +282,9 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
         guestOrderRepository.deleteAll();
         orderRepository.deleteAll();
         appointmentSlotRepository.deleteAll();
+    }
+
+    private String idempotencyKey(String suffix) {
+        return "booking-conflict-" + suffix;
     }
 }

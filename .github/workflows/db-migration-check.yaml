@@ -44,7 +44,6 @@ jobs:
     timeout-minutes: 15
 
     # These credentials belong only to the disposable MySQL service on the runner.
-    # Production credentials must never be stored directly in a workflow file.
     env:
       FLYWAY_URL: jdbc:mysql://127.0.0.1:3306/barbershop
       FLYWAY_USER: user

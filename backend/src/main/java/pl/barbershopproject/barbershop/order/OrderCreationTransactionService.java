@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestManager;
+import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestResult;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferQuery;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
@@ -24,16 +26,61 @@ class OrderCreationTransactionService implements OrderCreationTransaction {
     private final AppointmentReservation appointmentReservation;
     private final PaymentCreator paymentCreator;
     private final OrderEvents orderEvents;
+    private final IdempotencyRequestManager idempotencyRequestManager;
     private final Clock clock;
 
     @Override
-    // persists the order, appointment slot and payment atomically in one transaction.
+    // Resolves idempotency and persists the order, slot and payment atomically.
     @Transactional
     public OrderCreationTransactionResult create(
             OrderCreationDTO orderCreationDTO,
+            User user,
+            String idempotencyKey,
+            String requestHash
+    ) {
+        IdempotencyRequestResult idempotencyResult = idempotencyRequestManager.startOrderCreation(
+                        idempotencyKey,
+                        requestHash,
+                        user.getIdUser()
+                );
+
+        return switch (idempotencyResult.resolution()) {
+            case NEW -> createNewOrder(
+                    idempotencyResult.requestId(),
+                    orderCreationDTO,
+                    user
+            );
+
+            case IN_PROGRESS ->
+                    OrderCreationTransactionResult.inProgress(
+                            idempotencyResult.requestId()
+                    );
+
+            case RESOURCE_CREATED ->
+                    OrderCreationTransactionResult.resourceCreated(
+                            idempotencyResult.requestId(),
+                            idempotencyResult.resourceId(),
+                            idempotencyResult.checkoutRequest()
+                    );
+
+            case COMPLETED ->
+                    OrderCreationTransactionResult.completed(
+                            idempotencyResult.requestId(),
+                            idempotencyResult.resourceId(),
+                            idempotencyResult.checkoutRequest(),
+                            idempotencyResult.checkoutUrl()
+                    );
+        };
+    }
+
+    private OrderCreationTransactionResult createNewOrder(
+            Long idempotencyRequestId,
+            OrderCreationDTO orderCreationDTO,
             User user
     ) {
-        Offer offer = offerQuery.getRequiredOffer(orderCreationDTO.idOffer());
+        Offer offer = offerQuery.getRequiredOffer(
+                orderCreationDTO.idOffer()
+        );
 
         Order order = OrderCreationDTOMapper.toEntity(
                 orderCreationDTO,
@@ -42,17 +89,31 @@ class OrderCreationTransactionService implements OrderCreationTransaction {
                 clock
         );
 
-        appointmentReservation.reserveSlot(order.getVisitDate());
+        appointmentReservation.reserveSlot(
+                order.getVisitDate()
+        );
 
         Order savedOrder = orderRepository.save(order);
 
-        PaymentCreationResult paymentCreationResult = paymentCreator.createForOrder(savedOrder,
-                orderCreationDTO.paymentMethod()
+        PaymentCreationResult paymentCreationResult =
+                paymentCreator.createForOrder(
+                        savedOrder,
+                        orderCreationDTO.paymentMethod()
+                );
+
+        orderEvents.created(
+                savedOrder,
+                paymentCreationResult.payment()
         );
 
-        orderEvents.created(savedOrder, paymentCreationResult.payment());
+        idempotencyRequestManager.markResourceCreated(
+                idempotencyRequestId,
+                savedOrder.getIdOrder(),
+                paymentCreationResult.checkoutRequest()
+        );
 
-        return new OrderCreationTransactionResult(
+        return OrderCreationTransactionResult.resourceCreated(
+                idempotencyRequestId,
                 savedOrder.getIdOrder(),
                 paymentCreationResult.checkoutRequest()
         );
