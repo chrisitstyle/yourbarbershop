@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - "backend/src/main/resources/db/migration/**"
+      - "backend/src/main/resources/db/dev-migration/**"
       - "backend/build.gradle"
       - "backend/settings.gradle"
       - "backend/gradle/**"
@@ -17,6 +18,7 @@ on:
     branches: [main]
     paths:
       - "backend/src/main/resources/db/migration/**"
+      - "backend/src/main/resources/db/dev-migration/**"
       - "backend/build.gradle"
       - "backend/settings.gradle"
       - "backend/gradle/**"
@@ -134,9 +136,9 @@ jobs:
             -Dflyway.password="$FLYWAY_PASSWORD"
 
   validate-current-migrations:
-    name: Validate current migrations on clean database
-    # Pushes and manual runs validate the current revision from an empty schema.
-    if: github.event_name != 'pull_request'
+    name:
+      Validate current migrations on clean database
+      # Validate the current revision from an empty schema for every workflow run.
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
