@@ -17,6 +17,9 @@ import java.util.Objects;
 @Service
 public class StripeCheckoutService {
 
+    private static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
+    private static final String IDEMPOTENCY_KEY_PREFIX = "checkout-session-payment-";
+
     private static final String CHECKOUT_SESSION_ERROR =
             "Stripe nie zwrócił identyfikatora albo adresu Checkout Session";
 
@@ -66,8 +69,7 @@ public class StripeCheckoutService {
                 request.currency().toLowerCase(Locale.ROOT)
         );
 
-        body.add(
-                "line_items[0][price_data][unit_amount]",
+        body.add("line_items[0][price_data][unit_amount]",
                 toSmallestCurrencyUnit(request.amount()).toString()
         );
 
@@ -88,8 +90,12 @@ public class StripeCheckoutService {
                 paymentId
         );
 
+        String idempotencyKey =
+                IDEMPOTENCY_KEY_PREFIX + paymentId;
+
         JsonNode response = restClient.post()
                 .uri("/v1/checkout/sessions")
+                .header(IDEMPOTENCY_KEY_HEADER, idempotencyKey)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(body)
                 .retrieve()

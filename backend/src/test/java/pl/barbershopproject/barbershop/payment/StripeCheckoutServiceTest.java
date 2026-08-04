@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StripeCheckoutServiceTest {
 
+    private static final String IDEMPOTENCY_KEY = "checkout-session-payment-15";
     private static final String CHECKOUT_ENDPOINT = "/v1/checkout/sessions";
     private static final String SECRET_KEY = "sk_test_123";
     private static final String SESSION_ID = "cs_test_123";
@@ -162,6 +163,7 @@ class StripeCheckoutServiceTest {
         stripeMock.verify(
                 postRequestedFor(urlEqualTo(CHECKOUT_ENDPOINT))
                         .withHeader("Authorization", equalTo("Bearer " + SECRET_KEY))
+                        .withHeader("Idempotency-Key", equalTo(IDEMPOTENCY_KEY))
                         .withRequestBody(containing("mode=payment"))
                         .withRequestBody(containing("payment_method_types%5B0%5D=card"))
                         .withRequestBody(containing(
