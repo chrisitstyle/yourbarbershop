@@ -15,6 +15,7 @@ import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
+import pl.barbershopproject.barbershop.idempotency.ValidIdempotencyKey;
 import pl.barbershopproject.barbershop.utils.Status;
 
 import java.net.URI;
@@ -39,6 +40,8 @@ public class GuestOrderController {
             @Parameter(description = "Unique key used to safely retry guest-order creation",
                     required = true,
                     example = "88fa85f2-0569-4da0-9152-68ef69478036")
+
+            @ValidIdempotencyKey
             @RequestHeader("Idempotency-Key")
             String idempotencyKey,
 
