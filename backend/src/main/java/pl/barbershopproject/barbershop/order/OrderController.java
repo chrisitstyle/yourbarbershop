@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import pl.barbershopproject.barbershop.idempotency.ValidIdempotencyKey;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
@@ -36,16 +37,17 @@ class OrderController {
     @ApiResponse(responseCode = "409", description = "Conflict - Selected appointment slot is already taken")
     @PostMapping
     public ResponseEntity<OrderCreationResponseDTO> addOrder(
-            @Parameter(description = "Unique key used to safely retry order creation",
+            @Parameter(
+                    description = "Unique non-blank key used to safely retry order creation. Maximum length: 255 characters.",
                     required = true,
                     example = "88fa85f2-0569-4da0-9152-68ef69478036"
             )
+
+            @ValidIdempotencyKey
             @RequestHeader("Idempotency-Key")
             String idempotencyKey,
 
-            @Valid
-            @RequestBody
-            OrderCreationDTO order,
+            @Valid @RequestBody OrderCreationDTO order,
 
             @Parameter(hidden = true)
             @AuthenticationPrincipal

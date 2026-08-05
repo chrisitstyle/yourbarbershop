@@ -42,6 +42,7 @@ import static org.mockito.Mockito.*;
 class OrderControllerTest {
 
     private static final String IDEMPOTENCY_KEY = "order-controller-test-key";
+    private static final String TOO_LONG_IDEMPOTENCY_KEY = "a".repeat(256);
 
     @Autowired
     private MockMvc mockMvc;
@@ -105,6 +106,53 @@ class OrderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());
+
+        verifyNoInteractions(orderService);
+    }
+
+    @Test
+    void addOrder_ReturnsBadRequest_WhenIdempotencyKeyIsBlank()
+            throws Exception {
+        // given
+        OrderCreationDTO inputDto =
+                OrderTestEntities.createOrderCreationDTO();
+
+        // when then
+        mockMvc.perform(MockMvcRequestBuilders.post("/orders")
+                        .header("Idempotency-Key", "   ")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].fieldName")
+                        .value("Idempotency-Key"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].errorMessage")
+                        .value("Idempotency-Key nie może być pusty"));
+
+        verifyNoInteractions(orderService);
+    }
+
+    @Test
+    void addOrder_ReturnsBadRequest_WhenIdempotencyKeyIsTooLong()
+            throws Exception {
+        // given
+        OrderCreationDTO inputDto =
+                OrderTestEntities.createOrderCreationDTO();
+
+        // when then
+        mockMvc.perform(MockMvcRequestBuilders.post("/orders")
+                        .header(
+                                "Idempotency-Key",
+                                TOO_LONG_IDEMPOTENCY_KEY
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].fieldName")
+                        .value("Idempotency-Key"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].errorMessage")
+                        .value(
+                                "Idempotency-Key nie może przekraczać 255 znaków"
+                        ));
 
         verifyNoInteractions(orderService);
     }
