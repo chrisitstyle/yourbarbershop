@@ -134,6 +134,12 @@
       "paymentMethod": "Metoda płatności",
       "paymentStatus": "Status płatności"
     },
+    "orderRules": {
+      "terminal": "Zrealizowanej ani anulowanej wizyty nie można już edytować.",
+      "offerLocked": "Nie można zmienić usługi dla opłaconej, zwróconej ani aktywnej płatności online.",
+      "cannotComplete": "Wizyty nie można oznaczyć jako zrealizowanej przed rozliczeniem płatności.",
+      "cannotCancel": "Wizyty nie można anulować, gdy płatność online jest aktywna albo opłacone zamówienie wymaga zwrotu."
+    },
     "gallery": {
       "title": "Ustawienia galerii",
       "imageName": "Nazwa obrazu",
@@ -377,7 +383,7 @@
       "cost": "Koszt",
       "orderDate": "Data złożenia wizyty",
       "visitDate": "Data wizyty",
-      "status": "Status",
+      "orderStatus": "Status zamówienia",
       "paymentMethod": "Metoda płatności",
       "paymentStatus": "Status płatności"
     }

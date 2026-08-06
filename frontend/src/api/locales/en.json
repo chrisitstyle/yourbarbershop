@@ -130,9 +130,15 @@
       "cost": "Cost",
       "orderDate": "Order Date",
       "visitDate": "Visit Date",
-      "status": "Status",
+      "orderStatus": "Order Status",
       "paymentMethod": "Payment Method",
       "paymentStatus": "Payment Status"
+    },
+    "orderRules": {
+      "terminal": "A completed or cancelled appointment can no longer be edited.",
+      "offerLocked": "The service cannot be changed for a paid, refunded, or active online payment.",
+      "cannotComplete": "The appointment cannot be marked as completed before the payment is settled.",
+      "cannotCancel": "The appointment cannot be cancelled while an online payment is active or a paid order requires a refund."
     },
     "gallery": {
       "title": "Gallery Settings",

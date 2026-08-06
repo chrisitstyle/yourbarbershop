@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useAuth } from "../auth/AuthContextValue";
 import { updateGuestOrder } from "../api/guestOrderService";
 import { format } from "date-fns-tz";
 import { formatSelectedDateTime } from "../api/dataParser";
@@ -11,12 +10,23 @@ import useOffers from "../hooks/useOffers";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useTranslation } from "react-i18next";
+import { getOrderModificationRules } from "./utils/orderModificationRules";
 import "./styles/AdminForms.css";
 
+const ORDER_STATUSES = ["NOWE", "ZREALIZOWANE", "ANULOWANE"];
+
+const getErrorMessage = (error) => {
+  if (typeof error?.data === "string") {
+    return error.data;
+  }
+
+  return error?.data?.message ?? error?.data?.error ?? error?.message ?? null;
+};
+
 const EditGuestOrder = () => {
-  const { user } = useAuth();
   const location = useLocation();
   const guestOrderData = location.state?.guestOrderData;
+
   const navigate = useNavigate();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -33,67 +43,89 @@ const EditGuestOrder = () => {
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [selectedStatus, setSelectedStatus] = useState("");
 
+  const { isTerminalOrder, isOfferChangeBlocked, canComplete, canCancel } =
+    getOrderModificationRules(guestOrderData);
+
   useEffect(() => {
-    if (guestOrderData) {
-      setFirstname(guestOrderData.firstname || "");
-      setLastname(guestOrderData.lastname || "");
-      setPhonenumber(guestOrderData.phonenumber || "");
-      setEmail(guestOrderData.email || "");
-      setSelectedOffer(guestOrderData?.offer?.idOffer || "");
-
-      if (guestOrderData?.visitDate) {
-        setSelectedDate(
-          format(new Date(guestOrderData.visitDate), "yyyy-MM-dd"),
-        );
-        const hours = new Date(guestOrderData.visitDate).getHours();
-        const minutes = new Date(guestOrderData.visitDate).getMinutes();
-        setSelectedHour(hours);
-        setSelectedMinute(minutes);
-      }
-
-      setSelectedStatus(guestOrderData?.status || "");
+    if (!guestOrderData) {
+      return;
     }
+
+    setFirstname(guestOrderData.firstname || "");
+    setLastname(guestOrderData.lastname || "");
+    setPhonenumber(guestOrderData.phonenumber || "");
+    setEmail(guestOrderData.email || "");
+    setSelectedOffer(guestOrderData.offer?.idOffer || "");
+
+    if (guestOrderData.visitDate) {
+      const visitDate = new Date(guestOrderData.visitDate);
+
+      setSelectedDate(format(visitDate, "yyyy-MM-dd"));
+      setSelectedHour(visitDate.getHours());
+      setSelectedMinute(visitDate.getMinutes());
+    }
+
+    setSelectedStatus(guestOrderData.orderStatus || "");
   }, [guestOrderData]);
 
-  const handleHourChange = (e) => {
-    setSelectedHour(Number.parseInt(e.target.value, 10));
+  const handleHourChange = (event) => {
+    setSelectedHour(Number.parseInt(event.target.value, 10));
   };
 
-  const handleMinuteChange = (e) => {
-    setSelectedMinute(Number.parseInt(e.target.value, 10));
+  const handleMinuteChange = (event) => {
+    setSelectedMinute(Number.parseInt(event.target.value, 10));
   };
 
   const editGuestOrderMutation = useMutation({
     mutationFn: (updatedData) =>
-      updateGuestOrder(guestOrderData.idGuestOrder, updatedData, user?.token),
+      updateGuestOrder(guestOrderData.idGuestOrder, updatedData),
     onSuccess: () => {
       // invalidate guest orders query cache so tables automatically update
-      queryClient.invalidateQueries({ queryKey: ["guestOrders"] });
+      queryClient.invalidateQueries({
+        queryKey: ["guestOrders"],
+      });
+
       toast.success(
         t("admin.messages.editSuccess", "Pomyślnie zapisano zmiany."),
       );
+
       navigate("/adminpanel");
     },
     onError: (error) => {
       console.error("error updating guest order:", error);
-      const errorMsg = error?.data || error?.message;
 
-      if (typeof errorMsg === "string" && errorMsg) {
-        toast.error(errorMsg);
-      } else {
-        toast.error(t("admin.messages.editError"));
-      }
+      const errorMessage = getErrorMessage(error);
+
+      toast.error(errorMessage || t("admin.messages.editError"));
     },
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault();
 
-    const statusToSend = selectedStatus
-      ? selectedStatus
-      : guestOrderData.status;
+    if (isTerminalOrder) {
+      toast.error(t("admin.orderRules.terminal"));
+      return;
+    }
 
-    // payload
+    const offerChanged =
+      Number(selectedOffer) !== Number(guestOrderData.offer?.idOffer);
+
+    if (offerChanged && isOfferChangeBlocked) {
+      toast.error(t("admin.orderRules.offerLocked"));
+      return;
+    }
+
+    if (selectedStatus === "ZREALIZOWANE" && !canComplete) {
+      toast.error(t("admin.orderRules.cannotComplete"));
+      return;
+    }
+
+    if (selectedStatus === "ANULOWANE" && !canCancel) {
+      toast.error(t("admin.orderRules.cannotCancel"));
+      return;
+    }
+
     editGuestOrderMutation.mutate({
       firstname,
       lastname,
@@ -105,7 +137,7 @@ const EditGuestOrder = () => {
         selectedHour,
         selectedMinute,
       ),
-      status: statusToSend,
+      orderStatus: selectedStatus,
     });
   };
 
@@ -121,6 +153,8 @@ const EditGuestOrder = () => {
     return <LoadingSpinner text={t("admin.common.loadingData")} />;
   }
 
+  const isFormDisabled = isTerminalOrder || editGuestOrderMutation.isPending;
+
   return (
     <div className="container mt-4">
       <div className="row justify-content-center">
@@ -129,12 +163,24 @@ const EditGuestOrder = () => {
             <div className="card-header py-3">
               <h5 className="card-title text-center mb-0 fw-semibold">
                 {t("admin.guestOrders.editTitle", {
-                  id: guestOrderData?.idGuestOrder,
+                  id: guestOrderData.idGuestOrder,
                 })}
               </h5>
             </div>
 
             <div className="card-body p-4">
+              {isTerminalOrder && (
+                <Alert variant="warning">
+                  {t("admin.orderRules.terminal")}
+                </Alert>
+              )}
+
+              {!isTerminalOrder && isOfferChangeBlocked && (
+                <Alert variant="info">
+                  {t("admin.orderRules.offerLocked")}
+                </Alert>
+              )}
+
               <form onSubmit={handleSubmit}>
                 {/* guest details */}
                 <div className="row g-3 mb-3">
@@ -142,14 +188,15 @@ const EditGuestOrder = () => {
                     <label htmlFor="ego-firstname" className="form-label">
                       {t("auth.firstname")}
                     </label>
+
                     <input
                       type="text"
                       id="ego-firstname"
                       className="form-control"
                       value={firstname}
-                      onChange={(e) => setFirstname(e.target.value)}
+                      onChange={(event) => setFirstname(event.target.value)}
                       required
-                      disabled={editGuestOrderMutation.isPending}
+                      disabled={isFormDisabled}
                     />
                   </div>
 
@@ -157,14 +204,15 @@ const EditGuestOrder = () => {
                     <label htmlFor="ego-lastname" className="form-label">
                       {t("auth.lastname")}
                     </label>
+
                     <input
                       type="text"
                       id="ego-lastname"
                       className="form-control"
                       value={lastname}
-                      onChange={(e) => setLastname(e.target.value)}
+                      onChange={(event) => setLastname(event.target.value)}
                       required
-                      disabled={editGuestOrderMutation.isPending}
+                      disabled={isFormDisabled}
                     />
                   </div>
                 </div>
@@ -172,16 +220,17 @@ const EditGuestOrder = () => {
                 <div className="row g-3 mb-4">
                   <div className="col">
                     <label htmlFor="ego-phone" className="form-label">
-                      {t("orders.phonenumber")}
+                      {t("orders.phoneNumber")}
                     </label>
+
                     <input
                       type="tel"
                       id="ego-phone"
                       className="form-control"
                       value={phonenumber}
-                      onChange={(e) => setPhonenumber(e.target.value)}
+                      onChange={(event) => setPhonenumber(event.target.value)}
                       required
-                      disabled={editGuestOrderMutation.isPending}
+                      disabled={isFormDisabled}
                     />
                   </div>
 
@@ -189,14 +238,15 @@ const EditGuestOrder = () => {
                     <label htmlFor="ego-email" className="form-label">
                       {t("auth.email")}
                     </label>
+
                     <input
                       type="email"
                       id="ego-email"
                       className="form-control"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(event) => setEmail(event.target.value)}
                       required
-                      disabled={editGuestOrderMutation.isPending}
+                      disabled={isFormDisabled}
                     />
                   </div>
                 </div>
@@ -208,17 +258,19 @@ const EditGuestOrder = () => {
                   <label htmlFor="ego-offer" className="form-label">
                     {t("orders.selectService")}
                   </label>
+
                   <select
                     id="ego-offer"
                     className="form-select"
                     value={selectedOffer}
-                    onChange={(e) => setSelectedOffer(e.target.value)}
+                    onChange={(event) => setSelectedOffer(event.target.value)}
                     required
-                    disabled={editGuestOrderMutation.isPending}
+                    disabled={isFormDisabled || isOfferChangeBlocked}
                   >
                     <option value="" disabled>
                       {t("orders.selectService")}
                     </option>
+
                     {offers.map((offer) => (
                       <option key={offer.idOffer} value={offer.idOffer}>
                         {offer.kind} - {offer.cost} {t("common.currency")}
@@ -231,14 +283,15 @@ const EditGuestOrder = () => {
                   <label htmlFor="ego-date" className="form-label">
                     {t("orders.selectDate")}
                   </label>
+
                   <input
                     type="date"
                     id="ego-date"
                     className="form-control"
                     value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                    onChange={(event) => setSelectedDate(event.target.value)}
                     required
-                    disabled={editGuestOrderMutation.isPending}
+                    disabled={isFormDisabled}
                   />
                 </div>
 
@@ -246,6 +299,7 @@ const EditGuestOrder = () => {
                   <label className="form-label">
                     {t("orders.selectTimeFull")}
                   </label>
+
                   <div className="input-group">
                     <select
                       id="ego-hour"
@@ -253,7 +307,7 @@ const EditGuestOrder = () => {
                       value={selectedHour}
                       onChange={handleHourChange}
                       required
-                      disabled={editGuestOrderMutation.isPending}
+                      disabled={isFormDisabled}
                     >
                       {[...new Array(12).keys()].map((hour) => (
                         <option key={hour} value={hour + 8}>
@@ -270,7 +324,7 @@ const EditGuestOrder = () => {
                       value={selectedMinute}
                       onChange={handleMinuteChange}
                       required
-                      disabled={editGuestOrderMutation.isPending}
+                      disabled={isFormDisabled}
                     >
                       {[...new Array(2).keys()].map((half) => (
                         <option key={half * 30} value={half * 30}>
@@ -285,20 +339,49 @@ const EditGuestOrder = () => {
                   <label htmlFor="ego-status" className="form-label">
                     {t("admin.common.status")}
                   </label>
+
                   <select
                     id="ego-status"
                     className="form-select"
                     value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    onChange={(event) => setSelectedStatus(event.target.value)}
                     required
-                    disabled={editGuestOrderMutation.isPending}
+                    disabled={isFormDisabled}
                   >
-                    {["NOWE", "ZREALIZOWANE", "ANULOWANE"].map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
+                    {ORDER_STATUSES.map((status) => {
+                      const isCompletionBlocked =
+                        status === "ZREALIZOWANE" && !canComplete;
+
+                      const isCancellationBlocked =
+                        status === "ANULOWANE" && !canCancel;
+
+                      return (
+                        <option
+                          key={status}
+                          value={status}
+                          disabled={
+                            isCompletionBlocked || isCancellationBlocked
+                          }
+                        >
+                          {t(`enums.${status}`, {
+                            defaultValue: status,
+                          })}
+                        </option>
+                      );
+                    })}
                   </select>
+
+                  {!isTerminalOrder && !canComplete && (
+                    <div className="form-text">
+                      {t("admin.orderRules.cannotComplete")}
+                    </div>
+                  )}
+
+                  {!isTerminalOrder && !canCancel && (
+                    <div className="form-text">
+                      {t("admin.orderRules.cannotCancel")}
+                    </div>
+                  )}
                 </div>
 
                 <ButtonSpinner
@@ -307,6 +390,7 @@ const EditGuestOrder = () => {
                   className="d-block mx-auto px-4"
                   loading={editGuestOrderMutation.isPending}
                   loadingText={t("admin.common.saving")}
+                  disabled={isFormDisabled}
                 >
                   {t("admin.common.save")}
                 </ButtonSpinner>

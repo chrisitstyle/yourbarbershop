@@ -39,13 +39,13 @@ const visitFields = [
   "offer.cost",
   "orderDate",
   "visitDate",
-  "status",
+  "orderStatus",
   "paymentMethod",
   "paymentStatus",
 ];
 
 // enum fields render as colored badges instead of raw text
-const BADGE_FIELDS = new Set(["status", "paymentMethod", "paymentStatus"]);
+const BADGE_FIELDS = new Set(["orderStatus", "paymentMethod", "paymentStatus"]);
 
 const Profile = () => {
   const { id } = useParams();
@@ -62,26 +62,34 @@ const Profile = () => {
 
   useEffect(() => {
     let timeout;
+
     if (showSuccessAlert) {
       timeout = setTimeout(() => setShowSuccessAlert(false), 3000);
     }
+
     return () => clearTimeout(timeout);
   }, [showSuccessAlert]);
 
   const filterVisits = (order, term) => {
-    const statusText = order.status ? t(`enums.${order.status}`) : "";
+    const orderStatusText = order.orderStatus
+      ? t(`enums.${order.orderStatus}`)
+      : "";
+
     const paymentMethodText = order.paymentMethod
       ? t(`enums.${order.paymentMethod}`)
       : "";
+
     const paymentStatusText = order.paymentStatus
       ? t(`enums.${order.paymentStatus}`)
       : "";
 
     return `${order.idOrder} ${order.offer?.kind || ""} ${
       order.offer?.cost || ""
-    } ${order.orderDate} ${order.visitDate} ${order.status} ${statusText} ${
-      order.paymentMethod || ""
-    } ${paymentMethodText} ${order.paymentStatus || ""} ${paymentStatusText}`
+    } ${order.orderDate} ${order.visitDate} ${
+      order.orderStatus || ""
+    } ${orderStatusText} ${order.paymentMethod || ""} ${paymentMethodText} ${
+      order.paymentStatus || ""
+    } ${paymentStatusText}`
       .toLowerCase()
       .includes(term.toLowerCase());
   };
@@ -94,11 +102,23 @@ const Profile = () => {
   // derive quick stats from all orders (not just current page)
   const stats = useMemo(() => {
     const completed = safeOrders.filter(
-      (o) => o.status === "ZREALIZOWANE",
+      (order) => order.orderStatus === "ZREALIZOWANE",
     ).length;
-    const cancelled = safeOrders.filter((o) => o.status === "ANULOWANE").length;
-    const upcoming = safeOrders.filter((o) => o.status === "NOWE").length;
-    return { total: safeOrders.length, completed, cancelled, upcoming };
+
+    const cancelled = safeOrders.filter(
+      (order) => order.orderStatus === "ANULOWANE",
+    ).length;
+
+    const upcoming = safeOrders.filter(
+      (order) => order.orderStatus === "NOWE",
+    ).length;
+
+    return {
+      total: safeOrders.length,
+      completed,
+      cancelled,
+      upcoming,
+    };
   }, [safeOrders]);
 
   const { sortedData, sortConfig, handleSort } = useSortableData(safeOrders, {
@@ -125,7 +145,7 @@ const Profile = () => {
    *
    * @param {object} order - visit/order object
    * @param {string} field - field property path
-   * @returns {JSX.Element} formatted jsx cell content
+   * @returns {JSX.Element|string|number} formatted jsx cell content
    */
   const renderCell = (order, field) => {
     const value = getNestedValue(order, field);
@@ -133,13 +153,19 @@ const Profile = () => {
     if (BADGE_FIELDS.has(field)) {
       return value ? <StatusBadge value={value} /> : "—";
     }
+
     if (field === "offer.cost") {
-      return `${value} ${t("common.currency")}`;
+      return value !== null && value !== undefined
+        ? `${value} ${t("common.currency")}`
+        : "—";
     }
+
     return value ?? "—";
   };
 
-  if (isLoading) return <LoadingSpinner text={t("profile.loading")} />;
+  if (isLoading) {
+    return <LoadingSpinner text={t("profile.loading")} />;
+  }
 
   if (error) {
     return (
@@ -175,13 +201,17 @@ const Profile = () => {
             className="text-body-tertiary"
           />
         </div>
+
         <h2 className="fw-bold mb-1">{t("profile.title")}</h2>
+
         <div className="d-inline-flex align-items-center gap-2 flex-wrap justify-content-center mb-1">
           <span className="text-body-secondary">{t("profile.loggedInAs")}</span>
+
           <Badge pill bg="dark" className="fs-6 fw-semibold">
             {userDetails?.email ?? t("profile.noData")}
           </Badge>
         </div>
+
         <p className="text-body-secondary mb-4">
           {(userDetails?.firstname ?? t("profile.defaultUser")) +
             t("profile.visitInfo")}
@@ -191,6 +221,7 @@ const Profile = () => {
         <div className="d-flex flex-wrap justify-content-center gap-3 mb-2">
           <div className="d-flex align-items-center gap-2 px-4 py-3 rounded-3 bg-body-secondary">
             <FontAwesomeIcon icon={faCalendarCheck} className="text-info" />
+
             <div className="text-start">
               <div className="fw-bold lh-1">{stats.total}</div>
               <div className="small text-body-secondary">
@@ -198,8 +229,10 @@ const Profile = () => {
               </div>
             </div>
           </div>
+
           <div className="d-flex align-items-center gap-2 px-4 py-3 rounded-3 bg-body-secondary">
             <FontAwesomeIcon icon={faCircleCheck} className="text-success" />
+
             <div className="text-start">
               <div className="fw-bold lh-1">{stats.completed}</div>
               <div className="small text-body-secondary">
@@ -207,8 +240,10 @@ const Profile = () => {
               </div>
             </div>
           </div>
+
           <div className="d-flex align-items-center gap-2 px-4 py-3 rounded-3 bg-body-secondary">
             <FontAwesomeIcon icon={faCalendarDays} className="text-primary" />
+
             <div className="text-start">
               <div className="fw-bold lh-1">{stats.upcoming}</div>
               <div className="small text-body-secondary">
@@ -216,8 +251,10 @@ const Profile = () => {
               </div>
             </div>
           </div>
+
           <div className="d-flex align-items-center gap-2 px-4 py-3 rounded-3 bg-body-secondary">
             <FontAwesomeIcon icon={faCircleXmark} className="text-danger" />
+
             <div className="text-start">
               <div className="fw-bold lh-1">{stats.cancelled}</div>
               <div className="small text-body-secondary">
@@ -251,11 +288,11 @@ const Profile = () => {
             {currentData.length > 0 ? (
               currentData.map((order) => (
                 <tr key={order.idOrder}>
-                  {visitFields.map((field, i) => (
+                  {visitFields.map((field, index) => (
                     <td
                       key={field}
                       className="text-center"
-                      data-label={t(visitHeaders[i])}
+                      data-label={t(visitHeaders[index])}
                     >
                       {renderCell(order, field)}
                     </td>
