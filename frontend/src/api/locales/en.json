@@ -259,7 +259,8 @@
     "requestNewResetLink": "Request a new password reset link",
     "passwordChangedSuccess": "Password has been successfully changed.",
     "passwordChangedError": "An error occurred while changing the password.",
-    "passwordsDoNotMatch": "Passwords do not match."
+    "passwordsDoNotMatch": "Passwords do not match.",
+    "emailCodeDescription": "Enter your email address and we will send you a one-time login code."
   },
   "validation": {
     "genericError": "Something went wrong. Please try again."

@@ -259,7 +259,8 @@
     "requestNewResetLink": "Poproś o nowy link resetujący",
     "passwordChangedSuccess": "Hasło zostało pomyślnie zmienione.",
     "passwordChangedError": "Wystąpił błąd podczas zmiany hasła.",
-    "passwordsDoNotMatch": "Hasła nie są takie same."
+    "passwordsDoNotMatch": "Hasła nie są takie same.",
+    "emailCodeDescription": "Wpisz swój adres e-mail, a my wyślemy Ci jednorazowy kod logowania."
   },
   "validation": {
     "genericError": "Coś poszło nie tak. Spróbuj ponownie."

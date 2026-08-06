@@ -1,17 +1,10 @@
 import { useState } from "react";
-
 import { Alert } from "react-bootstrap";
-
 import { useNavigate } from "react-router-dom";
-
 import { useTranslation } from "react-i18next";
-
 import { useAuth } from "../../auth/AuthContextValue";
-
 import { requestEmailLoginCode } from "../../api/authService";
-
 import ButtonSpinner from "../common/ButtonSpinner";
-
 import useAutoDismiss from "../../hooks/useAutoDismiss";
 
 const EMAIL_CODE_STEP = {
@@ -33,14 +26,20 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
   const { t } = useTranslation();
 
   const getErrorMessages = (error) => {
-    if (error.response && error.response.data) {
-      const data = error.response.data;
+    const data = error?.data || error?.response?.data;
 
+    if (data) {
       if (typeof data === "object") {
-        return Object.values(data).flat().filter(Boolean).map(String);
+        const messages = Object.values(data).flat().filter(Boolean).map(String);
+
+        return [...new Set(messages)];
       }
 
-      return [data];
+      return [String(data)];
+    }
+
+    if (error?.message) {
+      return [error.message];
     }
 
     return [t("validation.genericError")];
@@ -57,12 +56,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
       await requestEmailLoginCode(email);
 
       setStep(EMAIL_CODE_STEP.CODE);
-      setSuccessMessage(
-        t("auth.emailCodeSent", {
-          defaultValue:
-            "If the account exists, a login code has been sent to the email address.",
-        }),
-      );
+      setSuccessMessage(t("auth.emailCodeSent"));
     } catch (error) {
       setErrors(getErrorMessages(error));
     } finally {
@@ -111,7 +105,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
         </Alert>
       )}
 
-      {errors && errors.length > 0 && (
+      {errors?.length > 0 && (
         <Alert
           variant="danger"
           onClose={() => setErrors(null)}
@@ -119,8 +113,8 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
           className="mb-3"
         >
           <ul className="mb-0 ps-0 list-unstyled text-center">
-            {errors.map((error, index) => (
-              <li key={index}>{error}</li>
+            {errors.map((error) => (
+              <li key={error}>{error}</li>
             ))}
           </ul>
         </Alert>
@@ -134,17 +128,13 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
         {renderAlerts()}
 
         <p className="text-muted small mb-3">
-          {t("auth.emailCodeInstruction", {
-            defaultValue: "Enter the verification code sent to",
-          })}{" "}
+          {t("auth.emailCodeInstruction")}{" "}
           <strong className="text-body">{email}</strong>
         </p>
 
         <div className="mb-3">
           <label htmlFor="emailLoginCode" className="form-label">
-            {t("auth.emailCode", {
-              defaultValue: "Code",
-            })}
+            {t("auth.emailCode")}
           </label>
 
           <input
@@ -169,9 +159,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
           loadingText={t("auth.loggingIn")}
           disabled={code.length !== 6 || isLoading}
         >
-          {t("auth.continueBtn", {
-            defaultValue: "Continue",
-          })}
+          {t("auth.continueBtn")}
         </ButtonSpinner>
 
         <div className="d-flex flex-column align-items-center gap-2 mt-3">
@@ -181,9 +169,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
             disabled={isLoading}
             onClick={() => handleRequestCode()}
           >
-            {t("auth.resendEmail", {
-              defaultValue: "Resend email",
-            })}
+            {t("auth.resendEmail")}
           </button>
 
           <button
@@ -192,9 +178,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
             disabled={isLoading}
             onClick={handleUseAnotherEmail}
           >
-            {t("auth.useAnotherEmail", {
-              defaultValue: "Use another email",
-            })}
+            {t("auth.useAnotherEmail")}
           </button>
 
           <button
@@ -203,10 +187,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
             disabled={isLoading}
             onClick={onBackToPassword}
           >
-            ←{" "}
-            {t("auth.loginWithPassword", {
-              defaultValue: "Log in with password",
-            })}
+            {t("auth.loginWithPassword")}
           </button>
         </div>
       </form>
@@ -217,12 +198,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
     <form onSubmit={handleRequestCode}>
       {renderAlerts()}
 
-      <p className="text-muted small mb-3">
-        {t("auth.emailCodeDescription", {
-          defaultValue:
-            "Enter your email address and we will send you a one-time login code.",
-        })}
-      </p>
+      <p className="text-muted small mb-3">{t("auth.emailCodeDescription")}</p>
 
       <div className="mb-3">
         <label htmlFor="emailCodeLoginEmail" className="form-label">
@@ -246,14 +222,10 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
         variant="primary"
         className="w-100 py-2 fw-semibold mb-3"
         loading={isLoading}
-        loadingText={t("auth.sendingCode", {
-          defaultValue: "Sending code...",
-        })}
+        loadingText={t("auth.sendingCode")}
         disabled={isLoading}
       >
-        {t("auth.continueBtn", {
-          defaultValue: "Continue",
-        })}
+        {t("auth.continueBtn")}
       </ButtonSpinner>
 
       <button
@@ -262,10 +234,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
         disabled={isLoading}
         onClick={onBackToPassword}
       >
-        ←{" "}
-        {t("auth.loginWithPassword", {
-          defaultValue: "Log in with password",
-        })}
+        {t("auth.loginWithPassword")}
       </button>
     </form>
   );
