@@ -394,10 +394,10 @@
     },
     "contact": {
       "title": "Kontakt",
-      "address": "ul. Przykładowa 1, Warszawa",
-      "phone": "+48 000 000 000",
+      "address": "ul. Testowa 123, Bydgoszcz",
+      "phone": "+48 123 123 123",
       "email": "kontakt@yourbarbershop.pl",
-      "hours": "Pon-Sob: 9:00 - 20:00"
+      "hours": "Pon-Pt: 9:00 - 20:00, Sob: 10:00 - 18:00, Niedz: Zamknięte"
     },
     "rights": "Wszelkie prawa zastrzeżone.",
     "createdBy": "Stworzone przez"

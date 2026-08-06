@@ -394,10 +394,10 @@
     },
     "contact": {
       "title": "Contact",
-      "address": "1 Sample Street, Warsaw",
-      "phone": "+48 000 000 000",
+      "address": "Testowa 123 St., Bydgoszcz, Poland",
+      "phone": "+48 123 123 123",
       "email": "kontakt@yourbarbershop.pl",
-      "hours": "Mon-Sat: 9:00 AM - 8:00 PM"
+      "hours": "Mon-Fri: 9:00 AM - 8:00 PM, Sat: 10:00 AM - 6:00 PM, Sun: Closed"
     },
     "rights": "All rights reserved.",
     "createdBy": "Created by"
