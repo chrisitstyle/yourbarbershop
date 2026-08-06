@@ -105,17 +105,22 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
           variant="success"
           onClose={() => setSuccessMessage(null)}
           dismissible
-          className="text-center"
+          className="text-center mb-3"
         >
           {successMessage}
         </Alert>
       )}
 
       {errors && errors.length > 0 && (
-        <Alert variant="danger" onClose={() => setErrors(null)} dismissible>
-          <ul className="mb-0 ps-3 list-unstyled centered text-center">
-            {errors.map((err, index) => (
-              <li key={index}>{err}</li>
+        <Alert
+          variant="danger"
+          onClose={() => setErrors(null)}
+          dismissible
+          className="mb-3"
+        >
+          <ul className="mb-0 ps-0 list-unstyled text-center">
+            {errors.map((error, index) => (
+              <li key={index}>{error}</li>
             ))}
           </ul>
         </Alert>
@@ -126,16 +131,16 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
   if (step === EMAIL_CODE_STEP.CODE) {
     return (
       <form onSubmit={handleVerifyCode}>
+        {renderAlerts()}
+
+        <p className="text-muted small mb-3">
+          {t("auth.emailCodeInstruction", {
+            defaultValue: "Enter the verification code sent to",
+          })}{" "}
+          <strong className="text-body">{email}</strong>
+        </p>
+
         <div className="mb-3">
-          {renderAlerts()}
-
-          <p className="text-center">
-            {t("auth.emailCodeInstruction", {
-              defaultValue: "Enter the verification code sent to",
-            })}{" "}
-            <strong>{email}</strong>
-          </p>
-
           <label htmlFor="emailLoginCode" className="form-label">
             {t("auth.emailCode", {
               defaultValue: "Code",
@@ -152,13 +157,14 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
             value={code}
             onChange={handleCodeChange}
             required
+            disabled={isLoading}
           />
         </div>
 
         <ButtonSpinner
           type="submit"
-          variant="dark"
-          className="mx-auto d-block"
+          variant="primary"
+          className="w-100 py-2 fw-semibold"
           loading={isLoading}
           loadingText={t("auth.loggingIn")}
           disabled={code.length !== 6 || isLoading}
@@ -168,47 +174,57 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
           })}
         </ButtonSpinner>
 
-        <button
-          type="button"
-          className="btn btn-link w-100 mt-3"
-          disabled={isLoading}
-          onClick={() => handleRequestCode()}
-        >
-          {t("auth.resendEmail", {
-            defaultValue: "Resend email",
-          })}
-        </button>
+        <div className="d-flex flex-column align-items-center gap-2 mt-3">
+          <button
+            type="button"
+            className="btn btn-link p-0 text-muted small"
+            disabled={isLoading}
+            onClick={() => handleRequestCode()}
+          >
+            {t("auth.resendEmail", {
+              defaultValue: "Resend email",
+            })}
+          </button>
 
-        <button
-          type="button"
-          className="btn btn-link w-100"
-          disabled={isLoading}
-          onClick={handleUseAnotherEmail}
-        >
-          {t("auth.useAnotherEmail", {
-            defaultValue: "Use another email",
-          })}
-        </button>
+          <button
+            type="button"
+            className="btn btn-link p-0 text-muted small"
+            disabled={isLoading}
+            onClick={handleUseAnotherEmail}
+          >
+            {t("auth.useAnotherEmail", {
+              defaultValue: "Use another email",
+            })}
+          </button>
 
-        <button
-          type="button"
-          className="btn btn-link w-100"
-          disabled={isLoading}
-          onClick={onBackToPassword}
-        >
-          {t("auth.loginWithPassword", {
-            defaultValue: "Log in with password",
-          })}
-        </button>
+          <button
+            type="button"
+            className="btn btn-link p-0 text-muted small"
+            disabled={isLoading}
+            onClick={onBackToPassword}
+          >
+            ←{" "}
+            {t("auth.loginWithPassword", {
+              defaultValue: "Log in with password",
+            })}
+          </button>
+        </div>
       </form>
     );
   }
 
   return (
     <form onSubmit={handleRequestCode}>
-      <div className="mb-3">
-        {renderAlerts()}
+      {renderAlerts()}
 
+      <p className="text-muted small mb-3">
+        {t("auth.emailCodeDescription", {
+          defaultValue:
+            "Enter your email address and we will send you a one-time login code.",
+        })}
+      </p>
+
+      <div className="mb-3">
         <label htmlFor="emailCodeLoginEmail" className="form-label">
           {t("auth.email")}
         </label>
@@ -221,17 +237,19 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
           required
+          disabled={isLoading}
         />
       </div>
 
       <ButtonSpinner
         type="submit"
-        variant="dark"
-        className="mx-auto d-block"
+        variant="primary"
+        className="w-100 py-2 fw-semibold mb-3"
         loading={isLoading}
         loadingText={t("auth.sendingCode", {
           defaultValue: "Sending code...",
         })}
+        disabled={isLoading}
       >
         {t("auth.continueBtn", {
           defaultValue: "Continue",
@@ -240,10 +258,11 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
 
       <button
         type="button"
-        className="btn btn-link w-100 mt-3"
+        className="btn btn-link p-0 text-muted small"
         disabled={isLoading}
         onClick={onBackToPassword}
       >
+        ←{" "}
         {t("auth.loginWithPassword", {
           defaultValue: "Log in with password",
         })}

@@ -329,7 +329,10 @@
     "paymentCardOnSite": "Karta na miejscu",
     "paymentCardOnline": "Karta online",
     "guestSuccessTitle": "Rezerwacja potwierdzona",
-    "guestSuccessMessage": "Dziękujemy! Twoja wizyta została pomyślnie zarejestrowana. Szczegóły rezerwacji znajdziesz w wiadomości wysłanej na Twój adres e-mail."
+    "guestSuccessMessage": "Dziękujemy! Twoja wizyta została pomyślnie zarejestrowana. Szczegóły rezerwacji znajdziesz w wiadomości wysłanej na Twój adres e-mail.",
+    "bookAppointment": "Zarezerwuj wizytę",
+    "selectServicePlaceholder": "Wybierz usługę...",
+    "guestReservation": "Rezerwacja bez konta"
   },
   "contact": {
     "info": {
@@ -405,7 +408,8 @@
   },
   "common": {
     "close": "Zamknij",
-    "currency": "zł"
+    "currency": "zł",
+    "or": "lub"
   },
   "payment": {
     "successTitle": "Płatność zakończona sukcesem",

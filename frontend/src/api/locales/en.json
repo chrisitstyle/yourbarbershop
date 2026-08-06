@@ -329,7 +329,10 @@
     "paymentCardOnSite": "Card on site",
     "paymentCardOnline": "Online card payment",
     "guestSuccessTitle": "Reservation confirmed",
-    "guestSuccessMessage": "Thank you! Your visit has been successfully booked. Reservation details can be found in the email sent to you."
+    "guestSuccessMessage": "Thank you! Your visit has been successfully booked. Reservation details can be found in the email sent to you.",
+    "bookAppointment": "Book an Appointment",
+    "selectServicePlaceholder": "Select a service...",
+    "guestReservation": "Reservation without an account"
   },
   "contact": {
     "info": {
@@ -405,7 +408,8 @@
   },
   "common": {
     "close": "Close",
-    "currency": "PLN"
+    "currency": "PLN",
+    "or": "or"
   },
   "payment": {
     "successTitle": "Payment completed successfully",

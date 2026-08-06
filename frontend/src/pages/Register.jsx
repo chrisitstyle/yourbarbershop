@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContextValue";
 import { toast } from "sonner";
@@ -6,10 +6,11 @@ import ButtonSpinner from "../components/common/ButtonSpinner";
 import { useTranslation } from "react-i18next";
 import ReCAPTCHA from "react-google-recaptcha";
 import { RECAPTCHA_SITE_KEY } from "../api/config";
+import "../adminpages/styles/AdminForms.css";
 
 const Register = () => {
-  const [firstname, setFirstName] = useState("");
-  const [lastname, setLastName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -82,8 +83,8 @@ const Register = () => {
 
     try {
       await register({
-        firstname,
-        lastname,
+        firstname: firstName,
+        lastname: lastName,
         email,
         password,
         captchaToken,
@@ -104,102 +105,113 @@ const Register = () => {
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
-        <div className="col-md-4 border p-3">
-          <h4 className="display-6 text-center">{t("auth.registerHeader")}</h4>
+        {/* picks up dark-theme gradient and shadow from AdminForms.css */}
+        <div className="col-md-4">
+          <div className="card card-accent-top">
+            <div className="card-body p-4">
+              <h4 className="card-title fw-bold text-center mb-4">
+                {t("auth.registerHeader")}
+              </h4>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label htmlFor="firstname" className="form-label">
-                {t("auth.firstname")}
-              </label>
+              <form onSubmit={handleSubmit}>
+                {/* first + last name side by side on wider viewports */}
+                <div className="row g-3 mb-3">
+                  <div className="col-sm-6">
+                    <label htmlFor="firstname" className="form-label">
+                      {t("auth.firstname")}
+                    </label>
 
-              <input
-                type="text"
-                className="form-control"
-                id="firstname"
-                value={firstname}
-                onChange={(event) => setFirstName(event.target.value)}
-                autoComplete="given-name"
-                required
-                disabled={isLoading}
-              />
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="firstname"
+                      value={firstName}
+                      onChange={(event) => setFirstName(event.target.value)}
+                      autoComplete="given-name"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <div className="col-sm-6">
+                    <label htmlFor="lastname" className="form-label">
+                      {t("auth.lastname")}
+                    </label>
+
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="lastname"
+                      value={lastName}
+                      onChange={(event) => setLastName(event.target.value)}
+                      autoComplete="family-name"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label htmlFor="email" className="form-label">
+                    {t("auth.email")}
+                  </label>
+
+                  <input
+                    type="email"
+                    className="form-control"
+                    id="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    autoComplete="email"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label htmlFor="password" className="form-label">
+                    {t("auth.password")}
+                  </label>
+
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete="new-password"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="mb-4 d-flex justify-content-center">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    onChange={handleCaptchaChange}
+                  />
+                </div>
+
+                {/* primary submit - matches btn-primary gold accent in dark mode */}
+                <ButtonSpinner
+                  type="submit"
+                  variant="primary"
+                  className="w-100 py-2 fw-semibold"
+                  loading={isLoading}
+                  loadingText={t("auth.registering")}
+                  disabled={!captchaToken || isLoading}
+                >
+                  {t("auth.registerBtn")}
+                </ButtonSpinner>
+
+                <p className="mt-3 text-center small text-muted">
+                  {t("auth.hasAccount")}{" "}
+                  <Link to="/login">{t("auth.loginLink")}</Link>
+                </p>
+              </form>
             </div>
-
-            <div className="mb-3">
-              <label htmlFor="lastname" className="form-label">
-                {t("auth.lastname")}
-              </label>
-
-              <input
-                type="text"
-                className="form-control"
-                id="lastname"
-                value={lastname}
-                onChange={(event) => setLastName(event.target.value)}
-                autoComplete="family-name"
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="email" className="form-label">
-                {t("auth.email")}
-              </label>
-
-              <input
-                type="email"
-                className="form-control"
-                id="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                autoComplete="email"
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="password" className="form-label">
-                {t("auth.password")}
-              </label>
-
-              <input
-                type="password"
-                className="form-control"
-                id="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete="new-password"
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="mb-3 d-flex justify-content-center">
-              <ReCAPTCHA
-                ref={recaptchaRef}
-                sitekey={RECAPTCHA_SITE_KEY}
-                onChange={handleCaptchaChange}
-              />
-            </div>
-
-            <ButtonSpinner
-              type="submit"
-              variant="dark"
-              className="mx-auto d-block"
-              loading={isLoading}
-              loadingText={t("auth.registering")}
-              disabled={!captchaToken || isLoading}
-            >
-              {t("auth.registerBtn")}
-            </ButtonSpinner>
-
-            <p className="mt-3 text-center">
-              {t("auth.hasAccount")}{" "}
-              <Link to="/login">{t("auth.loginLink")}</Link>
-            </p>
-          </form>
+          </div>
         </div>
       </div>
     </div>
