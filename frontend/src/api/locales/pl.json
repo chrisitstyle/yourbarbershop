@@ -138,7 +138,8 @@
       "terminal": "Zrealizowanej ani anulowanej wizyty nie można już edytować.",
       "offerLocked": "Nie można zmienić usługi dla opłaconej, zwróconej ani aktywnej płatności online.",
       "cannotComplete": "Wizyty nie można oznaczyć jako zrealizowanej przed rozliczeniem płatności.",
-      "cannotCancel": "Wizyty nie można anulować, gdy płatność online jest aktywna albo opłacone zamówienie wymaga zwrotu."
+      "cannotCancel": "Wizyty nie można anulować, gdy płatność online jest aktywna albo opłacone zamówienie wymaga zwrotu.",
+      "missingOffer": "Nie udało się odczytać aktualnej usługi dla tej wizyty."
     },
     "gallery": {
       "title": "Ustawienia galerii",

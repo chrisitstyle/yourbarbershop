@@ -46,6 +46,14 @@ const EditGuestOrder = () => {
   const { isTerminalOrder, isOfferChangeBlocked, canComplete, canCancel } =
     getOrderModificationRules(guestOrderData);
 
+  const currentOfferId = guestOrderData?.offer?.idOffer ?? null;
+
+  const currentOfferLabel = guestOrderData?.offer
+    ? `${guestOrderData.offer.kind} - ${guestOrderData.offer.cost} ${t(
+        "common.currency",
+      )}`
+    : t("admin.common.none");
+
   useEffect(() => {
     if (!guestOrderData) {
       return;
@@ -108,14 +116,6 @@ const EditGuestOrder = () => {
       return;
     }
 
-    const offerChanged =
-      Number(selectedOffer) !== Number(guestOrderData.offer?.idOffer);
-
-    if (offerChanged && isOfferChangeBlocked) {
-      toast.error(t("admin.orderRules.offerLocked"));
-      return;
-    }
-
     if (selectedStatus === "ZREALIZOWANE" && !canComplete) {
       toast.error(t("admin.orderRules.cannotComplete"));
       return;
@@ -126,12 +126,21 @@ const EditGuestOrder = () => {
       return;
     }
 
+    const offerIdToSend = Number(
+      isOfferChangeBlocked ? currentOfferId : selectedOffer,
+    );
+
+    if (!Number.isInteger(offerIdToSend) || offerIdToSend <= 0) {
+      toast.error(t("admin.orderRules.missingOffer"));
+      return;
+    }
+
     editGuestOrderMutation.mutate({
       firstname,
       lastname,
       phonenumber,
       email,
-      idOffer: Number(selectedOffer),
+      idOffer: offerIdToSend,
       visitDate: formatSelectedDateTime(
         selectedDate,
         selectedHour,
@@ -149,7 +158,7 @@ const EditGuestOrder = () => {
     );
   }
 
-  if (isLoadingOffers) {
+  if (isLoadingOffers && !isOfferChangeBlocked) {
     return <LoadingSpinner text={t("admin.common.loadingData")} />;
   }
 
@@ -259,24 +268,41 @@ const EditGuestOrder = () => {
                     {t("orders.selectService")}
                   </label>
 
-                  <select
-                    id="ego-offer"
-                    className="form-select"
-                    value={selectedOffer}
-                    onChange={(event) => setSelectedOffer(event.target.value)}
-                    required
-                    disabled={isFormDisabled || isOfferChangeBlocked}
-                  >
-                    <option value="" disabled>
-                      {t("orders.selectService")}
-                    </option>
-
-                    {offers.map((offer) => (
-                      <option key={offer.idOffer} value={offer.idOffer}>
-                        {offer.kind} - {offer.cost} {t("common.currency")}
+                  {isOfferChangeBlocked ? (
+                    <input
+                      type="text"
+                      id="ego-offer"
+                      className="form-control"
+                      value={currentOfferLabel}
+                      readOnly
+                      aria-describedby="ego-offer-help"
+                    />
+                  ) : (
+                    <select
+                      id="ego-offer"
+                      className="form-select"
+                      value={selectedOffer}
+                      onChange={(event) => setSelectedOffer(event.target.value)}
+                      required
+                      disabled={isFormDisabled}
+                    >
+                      <option value="" disabled>
+                        {t("orders.selectService")}
                       </option>
-                    ))}
-                  </select>
+
+                      {offers.map((offer) => (
+                        <option key={offer.idOffer} value={offer.idOffer}>
+                          {offer.kind} - {offer.cost} {t("common.currency")}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {isOfferChangeBlocked && (
+                    <div id="ego-offer-help" className="form-text">
+                      {t("admin.orderRules.offerLocked")}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-3">

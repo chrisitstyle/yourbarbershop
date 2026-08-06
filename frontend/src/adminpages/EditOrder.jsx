@@ -41,6 +41,14 @@ const EditOrder = () => {
   const { isTerminalOrder, isOfferChangeBlocked, canComplete, canCancel } =
     getOrderModificationRules(orderData);
 
+  const currentOfferId = orderData?.offer?.idOffer ?? null;
+
+  const currentOfferLabel = orderData?.offer
+    ? `${orderData.offer.kind} - ${orderData.offer.cost} ${t(
+        "common.currency",
+      )}`
+    : t("admin.common.none");
+
   useEffect(() => {
     if (!orderData) {
       return;
@@ -100,14 +108,6 @@ const EditOrder = () => {
       return;
     }
 
-    const offerChanged =
-      Number(selectedOffer) !== Number(orderData.offer?.idOffer);
-
-    if (offerChanged && isOfferChangeBlocked) {
-      toast.error(t("admin.orderRules.offerLocked"));
-      return;
-    }
-
     if (selectedStatus === "ZREALIZOWANE" && !canComplete) {
       toast.error(t("admin.orderRules.cannotComplete"));
       return;
@@ -118,8 +118,17 @@ const EditOrder = () => {
       return;
     }
 
+    const offerIdToSend = Number(
+      isOfferChangeBlocked ? currentOfferId : selectedOffer,
+    );
+
+    if (!Number.isInteger(offerIdToSend) || offerIdToSend <= 0) {
+      toast.error(t("admin.orderRules.missingOffer"));
+      return;
+    }
+
     updateOrderMutation.mutate({
-      idOffer: Number(selectedOffer),
+      idOffer: offerIdToSend,
       visitDate: formatSelectedDateTime(
         selectedDate,
         selectedHour,
@@ -137,7 +146,7 @@ const EditOrder = () => {
     );
   }
 
-  if (isLoadingOffers) {
+  if (isLoadingOffers && !isOfferChangeBlocked) {
     return <LoadingSpinner text={t("admin.common.loadingData")} />;
   }
 
@@ -175,24 +184,41 @@ const EditOrder = () => {
                     {t("orders.selectService")}
                   </label>
 
-                  <select
-                    className="form-select"
-                    id="selectOffer"
-                    value={selectedOffer}
-                    onChange={(event) => setSelectedOffer(event.target.value)}
-                    required
-                    disabled={isFormDisabled || isOfferChangeBlocked}
-                  >
-                    <option value="" disabled>
-                      {t("orders.selectService")}
-                    </option>
-
-                    {offers.map((offer) => (
-                      <option key={offer.idOffer} value={offer.idOffer}>
-                        {offer.kind} - {offer.cost} {t("common.currency")}
+                  {isOfferChangeBlocked ? (
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="selectOffer"
+                      value={currentOfferLabel}
+                      readOnly
+                      aria-describedby="selectOfferHelp"
+                    />
+                  ) : (
+                    <select
+                      className="form-select"
+                      id="selectOffer"
+                      value={selectedOffer}
+                      onChange={(event) => setSelectedOffer(event.target.value)}
+                      required
+                      disabled={isFormDisabled}
+                    >
+                      <option value="" disabled>
+                        {t("orders.selectService")}
                       </option>
-                    ))}
-                  </select>
+
+                      {offers.map((offer) => (
+                        <option key={offer.idOffer} value={offer.idOffer}>
+                          {offer.kind} - {offer.cost} {t("common.currency")}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {isOfferChangeBlocked && (
+                    <div id="selectOfferHelp" className="form-text">
+                      {t("admin.orderRules.offerLocked")}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-3">
