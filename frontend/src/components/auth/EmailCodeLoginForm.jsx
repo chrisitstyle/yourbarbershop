@@ -1,17 +1,10 @@
 import { useState } from "react";
-
 import { Alert } from "react-bootstrap";
-
 import { useNavigate } from "react-router-dom";
-
 import { useTranslation } from "react-i18next";
-
 import { useAuth } from "../../auth/AuthContextValue";
-
 import { requestEmailLoginCode } from "../../api/authService";
-
 import ButtonSpinner from "../common/ButtonSpinner";
-
 import useAutoDismiss from "../../hooks/useAutoDismiss";
 
 const EMAIL_CODE_STEP = {
@@ -33,14 +26,20 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
   const { t } = useTranslation();
 
   const getErrorMessages = (error) => {
-    if (error.response && error.response.data) {
-      const data = error.response.data;
+    const data = error?.data || error?.response?.data;
 
+    if (data) {
       if (typeof data === "object") {
-        return Object.values(data).flat().filter(Boolean).map(String);
+        const messages = Object.values(data).flat().filter(Boolean).map(String);
+
+        return [...new Set(messages)];
       }
 
-      return [data];
+      return [String(data)];
+    }
+
+    if (error?.message) {
+      return [error.message];
     }
 
     return [t("validation.genericError")];
@@ -57,12 +56,7 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
       await requestEmailLoginCode(email);
 
       setStep(EMAIL_CODE_STEP.CODE);
-      setSuccessMessage(
-        t("auth.emailCodeSent", {
-          defaultValue:
-            "If the account exists, a login code has been sent to the email address.",
-        }),
-      );
+      setSuccessMessage(t("auth.emailCodeSent"));
     } catch (error) {
       setErrors(getErrorMessages(error));
     } finally {
@@ -105,17 +99,22 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
           variant="success"
           onClose={() => setSuccessMessage(null)}
           dismissible
-          className="text-center"
+          className="text-center mb-3"
         >
           {successMessage}
         </Alert>
       )}
 
-      {errors && errors.length > 0 && (
-        <Alert variant="danger" onClose={() => setErrors(null)} dismissible>
-          <ul className="mb-0 ps-3 list-unstyled centered text-center">
-            {errors.map((err, index) => (
-              <li key={index}>{err}</li>
+      {errors?.length > 0 && (
+        <Alert
+          variant="danger"
+          onClose={() => setErrors(null)}
+          dismissible
+          className="mb-3"
+        >
+          <ul className="mb-0 ps-0 list-unstyled text-center">
+            {errors.map((error) => (
+              <li key={error}>{error}</li>
             ))}
           </ul>
         </Alert>
@@ -126,20 +125,16 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
   if (step === EMAIL_CODE_STEP.CODE) {
     return (
       <form onSubmit={handleVerifyCode}>
+        {renderAlerts()}
+
+        <p className="text-muted small mb-3">
+          {t("auth.emailCodeInstruction")}{" "}
+          <strong className="text-body">{email}</strong>
+        </p>
+
         <div className="mb-3">
-          {renderAlerts()}
-
-          <p className="text-center">
-            {t("auth.emailCodeInstruction", {
-              defaultValue: "Enter the verification code sent to",
-            })}{" "}
-            <strong>{email}</strong>
-          </p>
-
           <label htmlFor="emailLoginCode" className="form-label">
-            {t("auth.emailCode", {
-              defaultValue: "Code",
-            })}
+            {t("auth.emailCode")}
           </label>
 
           <input
@@ -152,63 +147,60 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
             value={code}
             onChange={handleCodeChange}
             required
+            disabled={isLoading}
           />
         </div>
 
         <ButtonSpinner
           type="submit"
-          variant="dark"
-          className="mx-auto d-block"
+          variant="primary"
+          className="w-100 py-2 fw-semibold"
           loading={isLoading}
           loadingText={t("auth.loggingIn")}
           disabled={code.length !== 6 || isLoading}
         >
-          {t("auth.continueBtn", {
-            defaultValue: "Continue",
-          })}
+          {t("auth.continueBtn")}
         </ButtonSpinner>
 
-        <button
-          type="button"
-          className="btn btn-link w-100 mt-3"
-          disabled={isLoading}
-          onClick={() => handleRequestCode()}
-        >
-          {t("auth.resendEmail", {
-            defaultValue: "Resend email",
-          })}
-        </button>
+        <div className="d-flex flex-column align-items-center gap-2 mt-3">
+          <button
+            type="button"
+            className="btn btn-link p-0 text-muted small"
+            disabled={isLoading}
+            onClick={() => handleRequestCode()}
+          >
+            {t("auth.resendEmail")}
+          </button>
 
-        <button
-          type="button"
-          className="btn btn-link w-100"
-          disabled={isLoading}
-          onClick={handleUseAnotherEmail}
-        >
-          {t("auth.useAnotherEmail", {
-            defaultValue: "Use another email",
-          })}
-        </button>
+          <button
+            type="button"
+            className="btn btn-link p-0 text-muted small"
+            disabled={isLoading}
+            onClick={handleUseAnotherEmail}
+          >
+            {t("auth.useAnotherEmail")}
+          </button>
 
-        <button
-          type="button"
-          className="btn btn-link w-100"
-          disabled={isLoading}
-          onClick={onBackToPassword}
-        >
-          {t("auth.loginWithPassword", {
-            defaultValue: "Log in with password",
-          })}
-        </button>
+          <button
+            type="button"
+            className="btn btn-link p-0 text-muted small"
+            disabled={isLoading}
+            onClick={onBackToPassword}
+          >
+            {t("auth.loginWithPassword")}
+          </button>
+        </div>
       </form>
     );
   }
 
   return (
     <form onSubmit={handleRequestCode}>
-      <div className="mb-3">
-        {renderAlerts()}
+      {renderAlerts()}
 
+      <p className="text-muted small mb-3">{t("auth.emailCodeDescription")}</p>
+
+      <div className="mb-3">
         <label htmlFor="emailCodeLoginEmail" className="form-label">
           {t("auth.email")}
         </label>
@@ -221,32 +213,28 @@ const EmailCodeLoginForm = ({ email, setEmail, onBackToPassword }) => {
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
           required
+          disabled={isLoading}
         />
       </div>
 
       <ButtonSpinner
         type="submit"
-        variant="dark"
-        className="mx-auto d-block"
+        variant="primary"
+        className="w-100 py-2 fw-semibold mb-3"
         loading={isLoading}
-        loadingText={t("auth.sendingCode", {
-          defaultValue: "Sending code...",
-        })}
+        loadingText={t("auth.sendingCode")}
+        disabled={isLoading}
       >
-        {t("auth.continueBtn", {
-          defaultValue: "Continue",
-        })}
+        {t("auth.continueBtn")}
       </ButtonSpinner>
 
       <button
         type="button"
-        className="btn btn-link w-100 mt-3"
+        className="btn btn-link p-0 text-muted small"
         disabled={isLoading}
         onClick={onBackToPassword}
       >
-        {t("auth.loginWithPassword", {
-          defaultValue: "Log in with password",
-        })}
+        {t("auth.loginWithPassword")}
       </button>
     </form>
   );

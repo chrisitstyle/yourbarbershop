@@ -22,7 +22,7 @@ const RegisterOrder = () => {
           </div>
         ) : (
           /* render form box */
-          <div className="col-md-4 border p-3">
+          <div className="col-md-4">
             <h4 className="display-6 text-center mb-4">
               {t("orders.registerTitle")}
             </h4>

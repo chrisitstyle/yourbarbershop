@@ -259,7 +259,8 @@
     "requestNewResetLink": "Poproś o nowy link resetujący",
     "passwordChangedSuccess": "Hasło zostało pomyślnie zmienione.",
     "passwordChangedError": "Wystąpił błąd podczas zmiany hasła.",
-    "passwordsDoNotMatch": "Hasła nie są takie same."
+    "passwordsDoNotMatch": "Hasła nie są takie same.",
+    "emailCodeDescription": "Wpisz swój adres e-mail, a my wyślemy Ci jednorazowy kod logowania."
   },
   "validation": {
     "genericError": "Coś poszło nie tak. Spróbuj ponownie."
@@ -329,7 +330,10 @@
     "paymentCardOnSite": "Karta na miejscu",
     "paymentCardOnline": "Karta online",
     "guestSuccessTitle": "Rezerwacja potwierdzona",
-    "guestSuccessMessage": "Dziękujemy! Twoja wizyta została pomyślnie zarejestrowana. Szczegóły rezerwacji znajdziesz w wiadomości wysłanej na Twój adres e-mail."
+    "guestSuccessMessage": "Dziękujemy! Twoja wizyta została pomyślnie zarejestrowana. Szczegóły rezerwacji znajdziesz w wiadomości wysłanej na Twój adres e-mail.",
+    "bookAppointment": "Zarezerwuj wizytę",
+    "selectServicePlaceholder": "Wybierz usługę...",
+    "guestReservation": "Rezerwacja bez konta"
   },
   "contact": {
     "info": {
@@ -390,10 +394,10 @@
     },
     "contact": {
       "title": "Kontakt",
-      "address": "ul. Przykładowa 1, Warszawa",
-      "phone": "+48 000 000 000",
+      "address": "ul. Testowa 123, Bydgoszcz",
+      "phone": "+48 123 123 123",
       "email": "kontakt@yourbarbershop.pl",
-      "hours": "Pon-Sob: 9:00 - 20:00"
+      "hours": "Pon-Pt: 9:00 - 20:00, Sob: 10:00 - 18:00, Niedz: Zamknięte"
     },
     "rights": "Wszelkie prawa zastrzeżone.",
     "createdBy": "Stworzone przez"
@@ -405,7 +409,8 @@
   },
   "common": {
     "close": "Zamknij",
-    "currency": "zł"
+    "currency": "zł",
+    "or": "lub"
   },
   "payment": {
     "successTitle": "Płatność zakończona sukcesem",

@@ -82,20 +82,18 @@ const Footer = () => {
 
           {/* contact column */}
           <div className="footer-col">
-            <h6 className="footer-col-heading">
-              {t("footer.contact.title", "Kontakt")}
-            </h6>
+            <h6 className="footer-col-heading">{t("footer.contact.title")}</h6>
             <ul className="footer-links">
               <li>{t("footer.contact.address")}</li>
               <li>
-                <a href="tel:+48000000000">{t("footer.contact.phone")}</a>
+                <a href="tel:+48123123123">{t("footer.contact.phone")}</a>
               </li>
               <li>
                 <a href="mailto:kontakt@yourbarbershop.pl">
-                  {t("footer.contact.email", "kontakt@yourbarbershop.pl")}
+                  {t("footer.contact.email")}
                 </a>
               </li>
-              <li>{t("footer.contact.hours", "Pon–Sob: 9:00 – 20:00")}</li>
+              <li>{t("footer.contact.hours")}</li>
             </ul>
           </div>
         </div>

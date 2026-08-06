@@ -1,0 +1,109 @@
+/* login-form.css
+   Styles specific to the login form.
+   Bootstrap remains the base; these rules only match the app's dark theme.
+*/
+
+html[data-bs-theme="dark"] .login-page {
+  color-scheme: dark;
+  --login-surface: #16191e;
+  --login-surface-elevated: #1c2026;
+  --login-input: #101318;
+  --login-input-focus: #12161b;
+  --login-border: rgba(255, 255, 255, 0.1);
+  --login-border-strong: rgba(255, 255, 255, 0.16);
+  --login-text: #f2efe9;
+  --login-muted: #a9afb8;
+  --login-accent: #d0a15e;
+  --login-accent-hover: #e1b575;
+  --login-accent-active: #b98949;
+  --login-accent-rgb: 208, 161, 94;
+}
+
+html[data-bs-theme="dark"] .login-page .card {
+  color: var(--login-text);
+  background: linear-gradient(
+    145deg,
+    var(--login-surface-elevated),
+    var(--login-surface)
+  );
+  border: 1px solid var(--login-border);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+html[data-bs-theme="dark"] .login-page .card-header {
+  background-color: rgba(255, 255, 255, 0.025);
+  border-color: var(--login-border);
+}
+
+html[data-bs-theme="dark"] .login-page .card-title,
+html[data-bs-theme="dark"] .login-page .form-label {
+  color: #fff;
+}
+
+html[data-bs-theme="dark"] .login-page .text-muted,
+html[data-bs-theme="dark"] .login-page .card-subtitle {
+  color: var(--login-muted) !important;
+}
+
+html[data-bs-theme="dark"] .login-page .form-control,
+html[data-bs-theme="dark"] .login-page .form-select {
+  color: var(--login-text);
+  background-color: var(--login-input);
+  border-color: #303741;
+}
+
+html[data-bs-theme="dark"] .login-page .form-control:hover,
+html[data-bs-theme="dark"] .login-page .form-select:hover {
+  border-color: #454e5a;
+}
+
+html[data-bs-theme="dark"] .login-page .form-control:focus,
+html[data-bs-theme="dark"] .login-page .form-select:focus {
+  color: #fff;
+  background-color: var(--login-input-focus);
+  border-color: var(--login-accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--login-accent-rgb), 0.16);
+}
+
+html[data-bs-theme="dark"] .login-page .form-control::placeholder {
+  color: #737b86;
+  opacity: 1;
+}
+
+html[data-bs-theme="dark"] .login-page .input-group-text {
+  color: var(--login-muted);
+  background-color: #1c2026;
+  border-color: #303741;
+}
+
+html[data-bs-theme="dark"] .login-page .btn-primary,
+html[data-bs-theme="dark"] .login-page .btn-dark {
+  color: #17130d;
+  background-color: var(--login-accent);
+  border-color: var(--login-accent);
+}
+
+html[data-bs-theme="dark"] .login-page .btn-primary:hover,
+html[data-bs-theme="dark"] .login-page .btn-primary:focus,
+html[data-bs-theme="dark"] .login-page .btn-dark:hover,
+html[data-bs-theme="dark"] .login-page .btn-dark:focus {
+  color: #17130d;
+  background-color: var(--login-accent-hover);
+  border-color: var(--login-accent-hover);
+}
+
+html[data-bs-theme="dark"] .login-page .btn-primary:focus,
+html[data-bs-theme="dark"] .login-page .btn-dark:focus {
+  box-shadow: 0 0 0 0.2rem rgba(var(--login-accent-rgb), 0.22);
+}
+
+html[data-bs-theme="dark"] .login-page .btn-primary:active,
+html[data-bs-theme="dark"] .login-page .btn-dark:active {
+  color: #fff;
+  background-color: var(--login-accent-active);
+  border-color: var(--login-accent-active);
+}
+
+.login-page .card-accent-top {
+  border-top: 3px solid var(--login-accent) !important;
+}

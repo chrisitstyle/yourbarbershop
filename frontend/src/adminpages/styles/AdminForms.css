@@ -1,0 +1,109 @@
+/* admin-forms.css
+   Styles specific to the admin and booking forms.
+   Bootstrap remains the base; these rules only match the app's dark theme.
+*/
+
+html[data-bs-theme="dark"] {
+  color-scheme: dark;
+  --admin-surface: #16191e;
+  --admin-surface-elevated: #1c2026;
+  --admin-input: #101318;
+  --admin-input-focus: #12161b;
+  --admin-border: rgba(255, 255, 255, 0.1);
+  --admin-border-strong: rgba(255, 255, 255, 0.16);
+  --admin-text: #f2efe9;
+  --admin-muted: #a9afb8;
+  --admin-accent: #d0a15e;
+  --admin-accent-hover: #e1b575;
+  --admin-accent-active: #b98949;
+  --admin-accent-rgb: 208, 161, 94;
+}
+
+html[data-bs-theme="dark"] .card {
+  color: var(--admin-text);
+  background: linear-gradient(
+    145deg,
+    var(--admin-surface-elevated),
+    var(--admin-surface)
+  );
+  border: 1px solid var(--admin-border);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+html[data-bs-theme="dark"] .card-header {
+  background-color: rgba(255, 255, 255, 0.025);
+  border-color: var(--admin-border);
+}
+
+html[data-bs-theme="dark"] .card-title,
+html[data-bs-theme="dark"] .form-label {
+  color: #fff;
+}
+
+html[data-bs-theme="dark"] .text-muted,
+html[data-bs-theme="dark"] .card-subtitle {
+  color: var(--admin-muted) !important;
+}
+
+html[data-bs-theme="dark"] .form-control,
+html[data-bs-theme="dark"] .form-select {
+  color: var(--admin-text);
+  background-color: var(--admin-input);
+  border-color: #303741;
+}
+
+html[data-bs-theme="dark"] .form-control:hover,
+html[data-bs-theme="dark"] .form-select:hover {
+  border-color: #454e5a;
+}
+
+html[data-bs-theme="dark"] .form-control:focus,
+html[data-bs-theme="dark"] .form-select:focus {
+  color: #fff;
+  background-color: var(--admin-input-focus);
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--admin-accent-rgb), 0.16);
+}
+
+html[data-bs-theme="dark"] .form-control::placeholder {
+  color: #737b86;
+  opacity: 1;
+}
+
+html[data-bs-theme="dark"] .input-group-text {
+  color: var(--admin-muted);
+  background-color: #1c2026;
+  border-color: #303741;
+}
+
+html[data-bs-theme="dark"] .btn-primary,
+html[data-bs-theme="dark"] .btn-dark {
+  color: #17130d;
+  background-color: var(--admin-accent);
+  border-color: var(--admin-accent);
+}
+
+html[data-bs-theme="dark"] .btn-primary:hover,
+html[data-bs-theme="dark"] .btn-primary:focus,
+html[data-bs-theme="dark"] .btn-dark:hover,
+html[data-bs-theme="dark"] .btn-dark:focus {
+  color: #17130d;
+  background-color: var(--admin-accent-hover);
+  border-color: var(--admin-accent-hover);
+}
+
+html[data-bs-theme="dark"] .btn-primary:focus,
+html[data-bs-theme="dark"] .btn-dark:focus {
+  box-shadow: 0 0 0 0.2rem rgba(var(--admin-accent-rgb), 0.22);
+}
+
+html[data-bs-theme="dark"] .btn-primary:active,
+html[data-bs-theme="dark"] .btn-dark:active {
+  color: #fff;
+  background-color: var(--admin-accent-active);
+  border-color: var(--admin-accent-active);
+}
+
+.card-accent-top {
+  border-top: 3px solid var(--admin-accent) !important;
+}

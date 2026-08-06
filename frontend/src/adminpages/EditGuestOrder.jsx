@@ -11,6 +11,7 @@ import useOffers from "../hooks/useOffers";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useTranslation } from "react-i18next";
+import "./styles/AdminForms.css";
 
 const EditGuestOrder = () => {
   const { user } = useAuth();
@@ -39,6 +40,7 @@ const EditGuestOrder = () => {
       setPhonenumber(guestOrderData.phonenumber || "");
       setEmail(guestOrderData.email || "");
       setSelectedOffer(guestOrderData?.offer?.idOffer || "");
+
       if (guestOrderData?.visitDate) {
         setSelectedDate(
           format(new Date(guestOrderData.visitDate), "yyyy-MM-dd"),
@@ -48,16 +50,17 @@ const EditGuestOrder = () => {
         setSelectedHour(hours);
         setSelectedMinute(minutes);
       }
+
       setSelectedStatus(guestOrderData?.status || "");
     }
   }, [guestOrderData]);
 
   const handleHourChange = (e) => {
-    setSelectedHour(parseInt(e.target.value, 10));
+    setSelectedHour(Number.parseInt(e.target.value, 10));
   };
 
   const handleMinuteChange = (e) => {
-    setSelectedMinute(parseInt(e.target.value, 10));
+    setSelectedMinute(Number.parseInt(e.target.value, 10));
   };
 
   const editGuestOrderMutation = useMutation({
@@ -119,179 +122,197 @@ const EditGuestOrder = () => {
   }
 
   return (
-    <div className="container mt-2">
+    <div className="container mt-4">
       <div className="row justify-content-center">
-        <div className="col-md-5 border p-3">
-          <h4 className="text-center">
-            {t("admin.guestOrders.editTitle", {
-              id: guestOrderData?.idGuestOrder,
-            })}
-          </h4>
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label htmlFor="inputfirstname" className="form-label">
-                {t("auth.firstname")}
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                id="inputfirstname"
-                value={firstname}
-                onChange={(e) => setFirstname(e.target.value)}
-                required
-                disabled={editGuestOrderMutation.isPending}
-              />
+        <div className="col-md-6">
+          <div className="card card-accent-top">
+            <div className="card-header py-3">
+              <h5 className="card-title text-center mb-0 fw-semibold">
+                {t("admin.guestOrders.editTitle", {
+                  id: guestOrderData?.idGuestOrder,
+                })}
+              </h5>
             </div>
 
-            <div className="mb-3">
-              <label htmlFor="inputlastname" className="form-label">
-                {t("auth.lastname")}
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                id="inputlastname"
-                value={lastname}
-                onChange={(e) => setLastname(e.target.value)}
-                required
-                disabled={editGuestOrderMutation.isPending}
-              />
-            </div>
+            <div className="card-body p-4">
+              <form onSubmit={handleSubmit}>
+                {/* guest details */}
+                <div className="row g-3 mb-3">
+                  <div className="col">
+                    <label htmlFor="ego-firstname" className="form-label">
+                      {t("auth.firstname")}
+                    </label>
+                    <input
+                      type="text"
+                      id="ego-firstname"
+                      className="form-control"
+                      value={firstname}
+                      onChange={(e) => setFirstname(e.target.value)}
+                      required
+                      disabled={editGuestOrderMutation.isPending}
+                    />
+                  </div>
 
-            <div className="mb-3">
-              <label htmlFor="inputphonenumber" className="form-label">
-                {t("orders.phonenumber")}
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                id="inputphonenumber"
-                value={phonenumber}
-                onChange={(e) => setPhonenumber(e.target.value)}
-                required
-                disabled={editGuestOrderMutation.isPending}
-              />
-            </div>
+                  <div className="col">
+                    <label htmlFor="ego-lastname" className="form-label">
+                      {t("auth.lastname")}
+                    </label>
+                    <input
+                      type="text"
+                      id="ego-lastname"
+                      className="form-control"
+                      value={lastname}
+                      onChange={(e) => setLastname(e.target.value)}
+                      required
+                      disabled={editGuestOrderMutation.isPending}
+                    />
+                  </div>
+                </div>
 
-            <div className="mb-3">
-              <label htmlFor="inputemail" className="form-label">
-                {t("auth.email")}
-              </label>
-              <input
-                type="email"
-                className="form-control"
-                id="inputemail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={editGuestOrderMutation.isPending}
-              />
-            </div>
+                <div className="row g-3 mb-4">
+                  <div className="col">
+                    <label htmlFor="ego-phone" className="form-label">
+                      {t("orders.phonenumber")}
+                    </label>
+                    <input
+                      type="tel"
+                      id="ego-phone"
+                      className="form-control"
+                      value={phonenumber}
+                      onChange={(e) => setPhonenumber(e.target.value)}
+                      required
+                      disabled={editGuestOrderMutation.isPending}
+                    />
+                  </div>
 
-            <div className="mb-3">
-              <label htmlFor="selectOffer" className="form-label">
-                {t("orders.selectService")}
-              </label>
-              <select
-                className="form-select"
-                id="selectOffer"
-                value={selectedOffer}
-                onChange={(e) => setSelectedOffer(e.target.value)}
-                required
-                disabled={editGuestOrderMutation.isPending}
-              >
-                <option value="" disabled>
-                  {t("orders.selectService")}
-                </option>
-                {offers.map((offer) => (
-                  <option key={offer.idOffer} value={offer.idOffer}>
-                    {offer.kind} - {offer.cost} {t("common.currency")}
-                  </option>
-                ))}
-              </select>
-            </div>
+                  <div className="col">
+                    <label htmlFor="ego-email" className="form-label">
+                      {t("auth.email")}
+                    </label>
+                    <input
+                      type="email"
+                      id="ego-email"
+                      className="form-control"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={editGuestOrderMutation.isPending}
+                    />
+                  </div>
+                </div>
 
-            <div className="mb-3">
-              <label htmlFor="selectdate" className="form-label">
-                {t("orders.selectDate")}
-              </label>
-              <input
-                type="date"
-                className="form-control"
-                id="selectdate"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                required
-                disabled={editGuestOrderMutation.isPending}
-              />
-            </div>
+                <hr className="my-4" />
 
-            <div className="mb-3">
-              <label htmlFor="selecttime" className="form-label">
-                {t("orders.selectTimeFull")}
-              </label>
-              <div className="d-flex">
-                <select
-                  className="form-select me-2"
-                  id="selecthour"
-                  value={selectedHour}
-                  onChange={handleHourChange}
-                  required
-                  disabled={editGuestOrderMutation.isPending}
-                >
-                  {[...Array(12).keys()].map((hour) => (
-                    <option key={hour} value={hour + 8}>
-                      {String(hour + 8).padStart(2, "0")}
+                {/* appointment details */}
+                <div className="mb-3">
+                  <label htmlFor="ego-offer" className="form-label">
+                    {t("orders.selectService")}
+                  </label>
+                  <select
+                    id="ego-offer"
+                    className="form-select"
+                    value={selectedOffer}
+                    onChange={(e) => setSelectedOffer(e.target.value)}
+                    required
+                    disabled={editGuestOrderMutation.isPending}
+                  >
+                    <option value="" disabled>
+                      {t("orders.selectService")}
                     </option>
-                  ))}
-                </select>
-                <select
-                  className="form-select"
-                  id="selectminute"
-                  value={selectedMinute}
-                  onChange={handleMinuteChange}
-                  required
-                  disabled={editGuestOrderMutation.isPending}
+                    {offers.map((offer) => (
+                      <option key={offer.idOffer} value={offer.idOffer}>
+                        {offer.kind} - {offer.cost} {t("common.currency")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-3">
+                  <label htmlFor="ego-date" className="form-label">
+                    {t("orders.selectDate")}
+                  </label>
+                  <input
+                    type="date"
+                    id="ego-date"
+                    className="form-control"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    required
+                    disabled={editGuestOrderMutation.isPending}
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">
+                    {t("orders.selectTimeFull")}
+                  </label>
+                  <div className="input-group">
+                    <select
+                      id="ego-hour"
+                      className="form-select"
+                      value={selectedHour}
+                      onChange={handleHourChange}
+                      required
+                      disabled={editGuestOrderMutation.isPending}
+                    >
+                      {[...new Array(12).keys()].map((hour) => (
+                        <option key={hour} value={hour + 8}>
+                          {String(hour + 8).padStart(2, "0")}
+                        </option>
+                      ))}
+                    </select>
+
+                    <span className="input-group-text">:</span>
+
+                    <select
+                      id="ego-minute"
+                      className="form-select"
+                      value={selectedMinute}
+                      onChange={handleMinuteChange}
+                      required
+                      disabled={editGuestOrderMutation.isPending}
+                    >
+                      {[...new Array(2).keys()].map((half) => (
+                        <option key={half * 30} value={half * 30}>
+                          {String(half * 30).padStart(2, "0")}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label htmlFor="ego-status" className="form-label">
+                    {t("admin.common.status")}
+                  </label>
+                  <select
+                    id="ego-status"
+                    className="form-select"
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    required
+                    disabled={editGuestOrderMutation.isPending}
+                  >
+                    {["NOWE", "ZREALIZOWANE", "ANULOWANE"].map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <ButtonSpinner
+                  type="submit"
+                  variant="primary"
+                  className="d-block mx-auto px-4"
+                  loading={editGuestOrderMutation.isPending}
+                  loadingText={t("admin.common.saving")}
                 >
-                  {[...Array(2).keys()].map((half) => (
-                    <option key={half * 30} value={half * 30}>
-                      {String(half * 30).padStart(2, "0")}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  {t("admin.common.save")}
+                </ButtonSpinner>
+              </form>
             </div>
-
-            <div className="mb-3">
-              <label htmlFor="selectstatus" className="form-label">
-                {t("admin.common.status")}
-              </label>
-              <select
-                className="form-select"
-                id="selectstatus"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                required
-                disabled={editGuestOrderMutation.isPending}
-              >
-                {["NOWE", "ZREALIZOWANE", "ANULOWANE"].map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <ButtonSpinner
-              type="submit"
-              variant="dark"
-              className="mx-auto d-block"
-              loading={editGuestOrderMutation.isPending}
-              loadingText={t("admin.common.saving")}
-            >
-              {t("admin.common.save")}
-            </ButtonSpinner>
-          </form>
+          </div>
         </div>
       </div>
     </div>

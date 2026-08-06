@@ -259,7 +259,8 @@
     "requestNewResetLink": "Request a new password reset link",
     "passwordChangedSuccess": "Password has been successfully changed.",
     "passwordChangedError": "An error occurred while changing the password.",
-    "passwordsDoNotMatch": "Passwords do not match."
+    "passwordsDoNotMatch": "Passwords do not match.",
+    "emailCodeDescription": "Enter your email address and we will send you a one-time login code."
   },
   "validation": {
     "genericError": "Something went wrong. Please try again."
@@ -329,7 +330,10 @@
     "paymentCardOnSite": "Card on site",
     "paymentCardOnline": "Online card payment",
     "guestSuccessTitle": "Reservation confirmed",
-    "guestSuccessMessage": "Thank you! Your visit has been successfully booked. Reservation details can be found in the email sent to you."
+    "guestSuccessMessage": "Thank you! Your visit has been successfully booked. Reservation details can be found in the email sent to you.",
+    "bookAppointment": "Book an Appointment",
+    "selectServicePlaceholder": "Select a service...",
+    "guestReservation": "Reservation without an account"
   },
   "contact": {
     "info": {
@@ -390,10 +394,10 @@
     },
     "contact": {
       "title": "Contact",
-      "address": "1 Sample Street, Warsaw",
-      "phone": "+48 000 000 000",
+      "address": "Testowa 123 St., Bydgoszcz, Poland",
+      "phone": "+48 123 123 123",
       "email": "kontakt@yourbarbershop.pl",
-      "hours": "Mon-Sat: 9:00 AM - 8:00 PM"
+      "hours": "Mon-Fri: 9:00 AM - 8:00 PM, Sat: 10:00 AM - 6:00 PM, Sun: Closed"
     },
     "rights": "All rights reserved.",
     "createdBy": "Created by"
@@ -405,7 +409,8 @@
   },
   "common": {
     "close": "Close",
-    "currency": "PLN"
+    "currency": "PLN",
+    "or": "or"
   },
   "payment": {
     "successTitle": "Payment completed successfully",
