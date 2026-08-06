@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -37,7 +37,7 @@ class GuestOrderRepositoryTest {
 
         GuestOrder guestOrder = createGuestOrder(
                 savedOffer,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         GuestOrder savedGuestOrder =
@@ -55,7 +55,7 @@ class GuestOrderRepositoryTest {
 
         assertThat(savedGuestOrder.getBookedOffer().getPrice()).isEqualByComparingTo(savedOffer.getCost());
 
-        assertThat(savedGuestOrder.getStatus()).isEqualTo(Status.NOWE);
+        assertThat(savedGuestOrder.getOrderStatus()).isEqualTo(OrderStatus.NOWE);
 
         assertThat(savedGuestOrder.getEmail()).isEqualTo("guestjohndoe@example.com");
 
@@ -73,7 +73,7 @@ class GuestOrderRepositoryTest {
 
         GuestOrder guestOrder = createGuestOrder(
                 savedOffer,
-                Status.ANULOWANE
+                OrderStatus.ANULOWANE
         );
 
         GuestOrder savedGuestOrder =
@@ -101,7 +101,7 @@ class GuestOrderRepositoryTest {
 
         assertThat(result.getBookedOffer().getPrice()).isEqualByComparingTo(savedOffer.getCost());
 
-        assertThat(result.getStatus()).isEqualTo(Status.ANULOWANE);
+        assertThat(result.getOrderStatus()).isEqualTo(OrderStatus.ANULOWANE);
 
         assertThat(result.getEmail()).isEqualTo("guestjohndoe@example.com");
 
@@ -119,7 +119,7 @@ class GuestOrderRepositoryTest {
 
         GuestOrder guestOrder = createGuestOrder(
                 savedOffer,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         guestOrder.setBookedOffer(createBookedOffer(
@@ -162,10 +162,10 @@ class GuestOrderRepositoryTest {
 
         GuestOrder firstGuestOrder = createGuestOrder(
                 savedOffer,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
-        GuestOrder secondGuestOrder = createGuestOrder(savedOffer, Status.ZREALIZOWANE);
+        GuestOrder secondGuestOrder = createGuestOrder(savedOffer, OrderStatus.ZREALIZOWANE);
 
         guestOrderRepository.saveAllAndFlush(List.of(firstGuestOrder,secondGuestOrder)
         );
@@ -204,10 +204,10 @@ class GuestOrderRepositoryTest {
                 });
 
         assertThat(guestOrders)
-                .extracting(GuestOrder::getStatus)
+                .extracting(GuestOrder::getOrderStatus)
                 .containsExactlyInAnyOrder(
-                        Status.NOWE,
-                        Status.ZREALIZOWANE
+                        OrderStatus.NOWE,
+                        OrderStatus.ZREALIZOWANE
                 );
     }
 
@@ -218,7 +218,7 @@ class GuestOrderRepositoryTest {
 
         GuestOrder guestOrder = createGuestOrder(
                 savedOffer,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         GuestOrder savedGuestOrder =
@@ -239,13 +239,13 @@ class GuestOrderRepositoryTest {
     }
 
     @Test
-    @DisplayName("findGuestOrdersByStatus should return only orders with specific status")
+    @DisplayName("findGuestOrdersByStatus should return only orders with specific orderStatus")
     void findGuestOrdersByStatus_returnsOrdersWithGivenStatus() {
         Offer savedOffer = saveOffer();
 
-        GuestOrder newGuestOrder = createGuestOrder(savedOffer, Status.NOWE);
+        GuestOrder newGuestOrder = createGuestOrder(savedOffer, OrderStatus.NOWE);
 
-        GuestOrder cancelledGuestOrder = createGuestOrder(savedOffer,Status.ANULOWANE);
+        GuestOrder cancelledGuestOrder = createGuestOrder(savedOffer, OrderStatus.ANULOWANE);
 
         guestOrderRepository.saveAllAndFlush(
                 List.of(newGuestOrder, cancelledGuestOrder)
@@ -255,13 +255,13 @@ class GuestOrderRepositoryTest {
 
         List<GuestOrder> newGuestOrders =
                 guestOrderRepository.findGuestOrdersByStatus(
-                        Status.NOWE
+                        OrderStatus.NOWE
                 );
 
         assertThat(newGuestOrders)
                 .hasSize(1)
                 .allSatisfy(guestOrder -> {
-                    assertThat(guestOrder.getStatus()).isEqualTo(Status.NOWE);
+                    assertThat(guestOrder.getOrderStatus()).isEqualTo(OrderStatus.NOWE);
 
                     assertThat(guestOrder.getOffer()).isNotNull();
 
@@ -281,7 +281,7 @@ class GuestOrderRepositoryTest {
 
     private GuestOrder createGuestOrder(
             Offer offer,
-            Status status
+            OrderStatus orderStatus
     ) {
         GuestOrder guestOrder =
                 createUnsavedGuestOrder();
@@ -291,7 +291,7 @@ class GuestOrderRepositoryTest {
         guestOrder.setBookedOffer(
                 createBookedOffer(offer)
         );
-        guestOrder.setStatus(status);
+        guestOrder.setOrderStatus(orderStatus);
 
         return guestOrder;
     }

@@ -6,7 +6,7 @@ import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.dto.*;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -164,7 +164,7 @@ public final class UserTestEntities {
                 offer,
                 LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0),
                 LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0),
-                Status.NOWE,
+                OrderStatus.NOWE,
                 PaymentMethod.GOTOWKA,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC
         );

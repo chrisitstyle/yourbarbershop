@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
 import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
+import pl.barbershopproject.barbershop.exception.MissingPaymentException;
 import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestCollisionException;
 import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestHasher;
 import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestManager;
@@ -19,11 +20,12 @@ import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderUpdatedRequestDTO;
 import pl.barbershopproject.barbershop.order.event.OrderEvents;
 import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
+import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.payment.PaymentCheckout;
-import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 import pl.barbershopproject.barbershop.payment.PaymentOfferUpdater;
 import pl.barbershopproject.barbershop.user.User;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -33,14 +35,20 @@ import java.util.Objects;
 @RequiredArgsConstructor
 class OrderService {
 
-    private static final String ORDER_NOT_FOUND_MSG = "Zamówienie o ID: ";
-    private static final String DOES_NOT_EXIST_MSG = " nie istnieje";
-    private static final String AVAILABLE_STATUSES_MSG = "Dostępne statusy: ";
+    private static final String ORDER_NOT_FOUND_MSG =
+            "Zamówienie o ID: ";
+
+    private static final String DOES_NOT_EXIST_MSG =
+            " nie istnieje";
+
+    private static final String AVAILABLE_ORDER_STATUSES_MSG =
+            "Dostępne statusy zamówienia: ";
 
     private final OrderRepository orderRepository;
     private final OfferQuery offerQuery;
     private final AppointmentReservation appointmentReservation;
     private final PaymentOfferUpdater paymentOfferUpdater;
+    private final OrderModificationPolicy orderModificationPolicy;
     private final OrderEvents orderEvents;
     private final OrderCreationTransaction orderCreationTransaction;
     private final PaymentCheckout paymentCheckout;
@@ -63,7 +71,8 @@ class OrderService {
                 orderCreationDTO.paymentMethod().name()
         );
 
-        OrderCreationTransactionResult transactionResult = createOrderTransaction(
+        OrderCreationTransactionResult transactionResult =
+                createOrderTransaction(
                         orderCreationDTO,
                         user,
                         idempotencyKey,
@@ -83,9 +92,10 @@ class OrderService {
             );
         }
 
-        String checkoutUrl = paymentCheckout.createCheckoutIfRequired(
-                transactionResult.checkoutRequest()
-        );
+        String checkoutUrl =
+                paymentCheckout.createCheckoutIfRequired(
+                        transactionResult.checkoutRequest()
+                );
 
         idempotencyRequestManager.markCompleted(
                 transactionResult.idempotencyRequestId(),
@@ -107,14 +117,22 @@ class OrderService {
 
     @Cacheable(value = "orders", key = "#idOrder")
     public OrderDTO getSingleOrder(Long idOrder) {
-        return OrderDTOMapper.toDTO(getRequiredOrder(idOrder));
+        return OrderDTOMapper.toDTO(
+                getRequiredOrder(idOrder)
+        );
     }
 
-    @Cacheable(value = "orders", key = "'status_' + #status.toUpperCase()")
-    public List<OrderDTO> getOrdersByStatus(String status) {
-        Status parsedStatus = parseStatus(status);
+    @Cacheable(
+            value = "orders",
+            key = "'status_' + #orderStatus.toUpperCase()"
+    )
+    public List<OrderDTO> getOrdersByStatus(String orderStatus) {
+        OrderStatus parsedOrderStatus =
+                parseOrderStatus(orderStatus);
 
-        return orderRepository.findOrdersByStatus(parsedStatus).stream()
+        return orderRepository
+                .findOrdersByStatus(parsedOrderStatus)
+                .stream()
                 .map(OrderDTOMapper::toDTO)
                 .toList();
     }
@@ -126,28 +144,46 @@ class OrderService {
             Long idOrder
     ) {
         Order order = getRequiredOrder(idOrder);
-        Offer targetOffer = offerQuery.getRequiredOffer(request.idOffer());
+        Payment payment = getRequiredPayment(order);
 
-        Status oldStatus = order.getStatus();
-        Status targetStatus = request.status() != null
-                ? request.status()
-                : oldStatus;
+        OrderStatus currentOrderStatus = order.getOrderStatus();
 
-        updateOfferIfChanged(order, targetOffer);
+        OrderStatus targetOrderStatus = request.orderStatus() != null
+                        ? request.orderStatus()
+                        : currentOrderStatus;
+
+        orderModificationPolicy.validateUpdate(
+                currentOrderStatus,
+                targetOrderStatus,
+                payment
+        );
+
+        Offer targetOffer = offerQuery.getRequiredOffer(
+                request.idOffer()
+        );
+
+        updateOfferIfChanged(
+                order,
+                targetOffer,
+                payment
+        );
 
         appointmentReservation.updateSlotReservation(
                 order.getVisitDate(),
-                oldStatus,
+                currentOrderStatus,
                 request.visitDate(),
-                targetStatus
+                targetOrderStatus
         );
 
         order.setVisitDate(request.visitDate());
-        order.setStatus(targetStatus);
+        order.setOrderStatus(targetOrderStatus);
 
         Order savedOrder = orderRepository.save(order);
 
-        orderEvents.updated(savedOrder, oldStatus);
+        orderEvents.updated(
+                savedOrder,
+                currentOrderStatus
+        );
 
         return OrderDTOMapper.toDTO(savedOrder);
     }
@@ -159,22 +195,34 @@ class OrderService {
 
         appointmentReservation.releaseIfReserved(
                 order.getVisitDate(),
-                order.getStatus()
+                order.getOrderStatus()
         );
 
         orderRepository.delete(order);
         orderEvents.deleted(idOrder);
     }
 
-    private void updateOfferIfChanged(Order order, Offer targetOffer) {
-        if (!hasOfferChanged(order.getOffer(), targetOffer)) {
+    private void updateOfferIfChanged(
+            Order order,
+            Offer targetOffer,
+            Payment payment
+    ) {
+        if (!hasOfferChanged(
+                order.getOffer(),
+                targetOffer
+        )) {
             return;
         }
 
-        paymentOfferUpdater.updateAfterOfferChange(order.getPayment(), targetOffer);
+        paymentOfferUpdater.updateAfterOfferChange(
+                payment,
+                targetOffer
+        );
 
         order.setOffer(targetOffer);
-        order.setBookedOffer(BookedOffer.from(targetOffer));
+        order.setBookedOffer(
+                BookedOffer.from(targetOffer)
+        );
     }
 
     private boolean hasOfferChanged(
@@ -200,12 +248,28 @@ class OrderService {
                 ));
     }
 
-    private Status parseStatus(String status) {
+    private Payment getRequiredPayment(Order order) {
+        Payment payment = order.getPayment();
+
+        if (payment == null) {
+            throw new MissingPaymentException(
+                    "Zamówienie",
+                    order.getIdOrder()
+            );
+        }
+
+        return payment;
+    }
+
+    private OrderStatus parseOrderStatus(String orderStatus) {
         try {
-            return Status.valueOf(status.toUpperCase());
+            return OrderStatus.valueOf(
+                    orderStatus.toUpperCase()
+            );
         } catch (IllegalArgumentException _) {
             throw new IllegalArgumentException(
-                    AVAILABLE_STATUSES_MSG + List.of(Status.values())
+                    AVAILABLE_ORDER_STATUSES_MSG
+                            + List.of(OrderStatus.values())
             );
         }
     }

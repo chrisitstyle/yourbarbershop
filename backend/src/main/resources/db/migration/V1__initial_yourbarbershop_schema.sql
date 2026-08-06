@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `guest_order` (
     `id_offer` bigint DEFAULT NULL,
     `order_date` datetime NOT NULL,
     `visit_date` datetime NOT NULL,
-    `status` varchar(255) NOT NULL,
+    `order_status` varchar(255) NOT NULL,
     PRIMARY KEY (`id_guest_order`),
     KEY `fk_guest_order_offer_idx` (`id_offer`),
     CONSTRAINT `fk_guest_order_offer` FOREIGN KEY (`id_offer`) REFERENCES `offer` (`id_offer`) ON DELETE SET NULL
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `user_order` (
     `id_offer` bigint DEFAULT NULL,
     `order_date` datetime NOT NULL,
     `visit_date` datetime NOT NULL,
-    `status` varchar(255) NOT NULL,
+    `order_status` varchar(255) NOT NULL,
     PRIMARY KEY (`id_order`),
     KEY `fk_customer_order_user` (`id_user`),
     KEY `fk_customer_order_offer` (`id_offer`),

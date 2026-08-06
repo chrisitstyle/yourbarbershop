@@ -8,7 +8,7 @@ import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.user.User;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -51,7 +51,8 @@ public class Order implements Serializable {
     private LocalDateTime visitDate;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    @Column(name = "order_status")
+    private OrderStatus orderStatus;
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Payment payment;

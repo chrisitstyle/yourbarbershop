@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 
@@ -22,13 +22,13 @@ public record UserOrdersDTO(
         @Schema(description = "Scheduled visit date and time", example = "2026-08-15T10:00:00")
         LocalDateTime visitDate,
 
-        @Schema(description = "Status of the reservation", example = "NOWE")
-        Status status,
+        @Schema(description = "OrderStatus of the reservation", example = "NOWE")
+        OrderStatus orderStatus,
 
         @Schema(description = "Payment method", example = "KARTA_ONLINE")
         PaymentMethod paymentMethod,
 
-        @Schema(description = "Payment status", example = "OPLACONA")
+        @Schema(description = "Payment orderStatus", example = "OPLACONA")
         PaymentStatus paymentStatus
 ) {
 }

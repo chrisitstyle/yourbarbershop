@@ -63,18 +63,18 @@ class OrderController {
         return ResponseEntity.created(location).body(response);
     }
 
-    @Operation(summary = "Get all orders", description = "Results can be filtered using the optional 'status' parameter")
+    @Operation(summary = "Get all orders", description = "Results can be filtered using the optional 'orderStatus' parameter")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved list of orders")
-    @ApiResponse(responseCode = "400", description = "Invalid status filter value")
+    @ApiResponse(responseCode = "400", description = "Invalid orderStatus filter value")
     @ApiResponse(responseCode = "401", description = "Unauthorized - Missing or invalid authentication token")
     @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions to view orders")
     @GetMapping
     public List<OrderDTO> getAllOrders(
-            @Parameter(description = "Optional status filter, e.g., 'NOWE', 'ZAKONCZONE', 'ANULOWANE'")
-            @RequestParam(required = false) String status
+            @Parameter(description = "Optional orderStatus filter, e.g., 'NOWE', 'ZREALIZOWANE', 'ANULOWANE'")
+            @RequestParam(required = false) String orderStatus
     ) {
-        return status != null && !status.isEmpty()
-                ? orderService.getOrdersByStatus(status)
+        return orderStatus != null && !orderStatus.isEmpty()
+                ? orderService.getOrdersByStatus(orderStatus)
                 : orderService.getAllOrders();
     }
 
@@ -94,7 +94,7 @@ class OrderController {
     @ApiResponse(responseCode = "401", description = "Unauthorized - Missing or invalid authentication token")
     @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions to update this order")
     @ApiResponse(responseCode = "404", description = "Order or Offer not found")
-    @ApiResponse(responseCode = "409", description = "Conflict - Target appointment slot is already taken")
+    @ApiResponse(responseCode = "409", description = "Conflict - Appointment slot is taken or the modification is not allowed by the current order or payment state")
     @PutMapping("/{idOrder}")
     public OrderDTO updateOrder(
             @Valid @RequestBody OrderUpdatedRequestDTO updatedOrder,

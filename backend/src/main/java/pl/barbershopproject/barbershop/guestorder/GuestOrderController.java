@@ -16,7 +16,7 @@ import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponse
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
 import pl.barbershopproject.barbershop.idempotency.ValidIdempotencyKey;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.net.URI;
 import java.util.List;
@@ -61,17 +61,17 @@ public class GuestOrderController {
         return ResponseEntity.created(location).body(addedGuestOrder);
     }
 
-    @Operation(summary = "Get all guest orders", description = "Retrieves a list of all guest orders with optional status filtering. Restricted to ADMIN users.")
+    @Operation(summary = "Get all guest orders", description = "Retrieves a list of all guest orders with optional orderStatus filtering. Restricted to ADMIN users.")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved list of guest orders")
     @ApiResponse(responseCode = "401", description = "Unauthorized - Missing or invalid authentication token")
     @ApiResponse(responseCode = "403", description = "Forbidden - Access restricted to administrators")
     @GetMapping
     public List<GuestOrderDTO> getAllGuestOrders(
-            @Parameter(description = "Optional status filter, e.g., 'NOWE', 'ZAKONCZONE', 'ANULOWANE'")
-            @RequestParam(required = false) Status status
+            @Parameter(description = "Optional orderStatus filter, e.g., 'NOWE', 'ZREALIZOWANE', 'ANULOWANE'")
+            @RequestParam(required = false) OrderStatus orderStatus
     ) {
-        return status != null
-                ? guestOrderService.getGuestOrdersByStatus(status)
+        return orderStatus != null
+                ? guestOrderService.getGuestOrdersByStatus(orderStatus)
                 : guestOrderService.getAllGuestOrders();
     }
 
@@ -85,13 +85,13 @@ public class GuestOrderController {
         return guestOrderService.getGuestOrder(idGuestOrder);
     }
 
-    @Operation(summary = "Update an existing guest order", description = "Updates guest order details or visit status. Restricted to ADMIN users.")
+    @Operation(summary = "Update an existing guest order", description = "Updates guest order details or visit orderStatus. Restricted to ADMIN users.")
     @ApiResponse(responseCode = "200", description = "Guest order successfully updated")
     @ApiResponse(responseCode = "400", description = "Invalid request payload")
     @ApiResponse(responseCode = "401", description = "Unauthorized - Missing or invalid authentication token")
     @ApiResponse(responseCode = "403", description = "Forbidden - Access restricted to administrators")
     @ApiResponse(responseCode = "404", description = "Guest order or Offer not found")
-    @ApiResponse(responseCode = "409", description = "Conflict - Target appointment slot is already taken")
+    @ApiResponse(responseCode = "409", description = "Conflict - Appointment slot is taken or the modification is not allowed by the current order or payment state")
     @PutMapping("/{idGuestOrder}")
     public GuestOrderDTO updateGuestOrder(
             @Valid @RequestBody GuestOrderUpdateRequestDTO updatedGuestOrder,

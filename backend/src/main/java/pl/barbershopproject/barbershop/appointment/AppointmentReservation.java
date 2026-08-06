@@ -1,6 +1,6 @@
 package pl.barbershopproject.barbershop.appointment;
 
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  *
  * <p>The interface hides the implementation details of appointment availability
  * management from order-related services. It supports creating, updating and
- * releasing slot reservations depending on the appointment status.</p>
+ * releasing slot reservations depending on the appointment orderStatus.</p>
  */
 public interface AppointmentReservation {
 
@@ -29,23 +29,23 @@ public interface AppointmentReservation {
      * unchanged, depending on the current and target appointment states.</p>
      *
      * @param currentVisitDate current appointment date and time
-     * @param currentStatus current appointment status
+     * @param currentOrderStatus current appointment orderStatus
      * @param targetVisitDate target appointment date and time
-     * @param targetStatus target appointment status
+     * @param targetOrderStatus target appointment orderStatus
      */
     void updateSlotReservation(
             LocalDateTime currentVisitDate,
-            Status currentStatus,
+            OrderStatus currentOrderStatus,
             LocalDateTime targetVisitDate,
-            Status targetStatus
+            OrderStatus targetOrderStatus
     );
 
     /**
-     * Releases the appointment slot when the provided status represents
+     * Releases the appointment slot when the provided orderStatus represents
      * an active reservation.
      *
      * @param visitDate date and time of the appointment slot
-     * @param status current appointment status
+     * @param orderStatus current appointment orderStatus
      */
-    void releaseIfReserved(LocalDateTime visitDate, Status status);
+    void releaseIfReserved(LocalDateTime visitDate, OrderStatus orderStatus);
 }

@@ -2,7 +2,7 @@ package pl.barbershopproject.barbershop.order.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 
@@ -16,7 +16,7 @@ public record OrderUpdatedRequestDTO(
         @NotNull(message = "Data wizyty jest wymagana")
         LocalDateTime visitDate,
 
-        @Schema(description = "Updated order status", example = "ZAKONCZONE")
-        Status status
+        @Schema(description = "Updated order orderStatus", example = "ZAKONCZONE")
+        OrderStatus orderStatus
 ) {
 }

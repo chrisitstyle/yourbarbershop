@@ -41,7 +41,7 @@ public class OrderDTOMapper {
                 bookedOfferDTO,
                 order.getOrderDate(),
                 order.getVisitDate(),
-                order.getStatus(),
+                order.getOrderStatus(),
                 paymentMethod,
                 paymentStatus
         );

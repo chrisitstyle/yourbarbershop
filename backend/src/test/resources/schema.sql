@@ -21,7 +21,7 @@ CREATE TABLE USER_ORDER (
                             BOOKED_OFFER_PRICE DECIMAL(10, 2) NOT NULL,
                             ORDER_DATE TIMESTAMP NOT NULL,
                             VISIT_DATE TIMESTAMP NOT NULL,
-                            STATUS VARCHAR(15) NOT NULL,
+                            ORDER_STATUS VARCHAR(15) NOT NULL,
 
                             CONSTRAINT FK_CUSTOMER_ORDER_USER
                                 FOREIGN KEY (ID_USER)
@@ -45,7 +45,7 @@ CREATE TABLE GUEST_ORDER (
                              BOOKED_OFFER_PRICE DECIMAL(10, 2) NOT NULL,
                              ORDER_DATE TIMESTAMP NOT NULL,
                              VISIT_DATE TIMESTAMP NOT NULL,
-                             STATUS VARCHAR(15) NOT NULL,
+                             ORDER_STATUS VARCHAR(15) NOT NULL,
 
                              CONSTRAINT FK_GUEST_ORDER_OFFER
                                  FOREIGN KEY (ID_OFFER)

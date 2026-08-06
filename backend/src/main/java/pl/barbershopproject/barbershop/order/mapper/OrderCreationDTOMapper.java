@@ -5,7 +5,7 @@ import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.user.User;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -37,7 +37,7 @@ public final class OrderCreationDTOMapper {
                 .bookedOffer(BookedOffer.from(offer))
                 .orderDate(LocalDateTime.now(clock))
                 .visitDate(dto.visitDate())
-                .status(Status.NOWE)
+                .orderStatus(OrderStatus.NOWE)
                 .build();
     }
 }

@@ -105,8 +105,8 @@ class OrderDTOMapperTest {
                         result.visitDate()
                 ),
                 () -> assertEquals(
-                        order.getStatus(),
-                        result.status()
+                        order.getOrderStatus(),
+                        result.orderStatus()
                 )
         );
     }

@@ -9,7 +9,7 @@ import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.dto.BookedOfferDTO;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -47,7 +47,7 @@ public final class GuestOrderTestEntities {
                 .bookedOffer(createBookedOffer(createOffer()))
                 .orderDate(LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0))
                 .visitDate(LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0))
-                .status(Status.NOWE);
+                .orderStatus(OrderStatus.NOWE);
     }
 
     /**
@@ -67,12 +67,12 @@ public final class GuestOrderTestEntities {
      * @param offer       offer associated with the guest order
      * @param orderDate   date the guest order was placed
      * @param visitDate   scheduled visit date
-     * @param status      guest order status
+     * @param orderStatus      guest order orderStatus
      * @return new GuestOrder instance
      */
     public static GuestOrder createGuestOrder(String firstname, String lastname, String phonenumber,
                                               String email, Offer offer, LocalDateTime orderDate,
-                                              LocalDateTime visitDate, Status status) {
+                                              LocalDateTime visitDate, OrderStatus orderStatus) {
 
         return GuestOrder.builder()
                 .firstname(firstname)
@@ -82,7 +82,7 @@ public final class GuestOrderTestEntities {
                 .offer(offer)
                 .orderDate(orderDate)
                 .visitDate(visitDate)
-                .status(status)
+                .orderStatus(orderStatus)
                 .build();
 
     }
@@ -101,7 +101,7 @@ public final class GuestOrderTestEntities {
                 .offer(offer)
                 .orderDate(LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0))
                 .visitDate(LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0))
-                .status(Status.NOWE)
+                .orderStatus(OrderStatus.NOWE)
                 .build();
     }
 
@@ -139,14 +139,14 @@ public final class GuestOrderTestEntities {
                 "guestjohn@example.com",
                 1L,
                 LocalDateTime.of(2026, Month.JANUARY, 16, 12, 0),
-                Status.NOWE
+                OrderStatus.NOWE
         );
     }
 
     /**
-     * Creates a GuestOrderUpdateRequestDTO with null status.
+     * Creates a GuestOrderUpdateRequestDTO with null orderStatus.
      * <p>
-     * Useful for testing update logic that keeps the current guest order status.
+     * Useful for testing update logic that keeps the current guest order orderStatus.
      *
      * @return GuestOrderUpdateRequestDTO instance
      */
@@ -189,7 +189,7 @@ public final class GuestOrderTestEntities {
                 bookedOfferDTO,
                 LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0),
                 LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0),
-                Status.NOWE,
+                OrderStatus.NOWE,
                 PaymentMethod.GOTOWKA,
                 PaymentStatus.NIE_WYMAGANA
         );

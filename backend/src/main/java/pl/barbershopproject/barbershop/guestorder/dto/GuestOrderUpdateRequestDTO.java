@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 
@@ -35,7 +35,7 @@ public record GuestOrderUpdateRequestDTO(
         @NotNull(message = "Data wizyty jest wymagana")
         LocalDateTime visitDate,
 
-        @Schema(description = "Updated order status", example = "ZAKONCZONE")
-        Status status
+        @Schema(description = "Updated order status", example = "ZREALIZOWANE")
+        OrderStatus orderStatus
 ) {
 }

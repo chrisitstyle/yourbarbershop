@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS `guest_order` (
   `id_offer` bigint DEFAULT NULL,
   `order_date` datetime NOT NULL,
   `visit_date` datetime NOT NULL,
-  `status` varchar(255) NOT NULL,
+  `order_status` varchar(255) NOT NULL,
   PRIMARY KEY (`id_guest_order`),
   KEY `fk_guest_order_offer_idx` (`id_offer`),
   CONSTRAINT `fk_guest_order_offer` FOREIGN KEY (`id_offer`) REFERENCES `offer` (`id_offer`) ON DELETE SET NULL
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS `user_order` (
    `id_offer` bigint DEFAULT NULL,
    `order_date` datetime NOT NULL,
     `visit_date` datetime NOT NULL,
-    `status` varchar(255) NOT NULL,
+    `order_status` varchar(255) NOT NULL,
     PRIMARY KEY (`id_order`),
     KEY `fk_customer_order_user` (`id_user`),
     KEY `fk_customer_order_offer` (`id_offer`),
@@ -125,7 +125,7 @@ INSERT INTO `user` (`firstname`, `lastname`, `email`, `password`, `role`) VALUES
 
 -- ORDERS FOR SPECIFIC USER (id_user=2)
 
-INSERT INTO `user_order` (`id_user`, `id_offer`, `order_date`, `visit_date`, `status`) VALUES
+INSERT INTO `user_order` (`id_user`, `id_offer`, `order_date`, `visit_date`, `order_status`) VALUES
 (2, 1,  '2026-04-01 09:00:00', '2026-04-05 10:00:00', 'ZREALIZOWANE'),
 (2, 3,  '2026-04-03 14:30:00', '2026-04-07 12:00:00', 'ZREALIZOWANE'),
 (2, 5,  '2026-04-05 11:00:00', '2026-04-10 15:30:00', 'ANULOWANE'),
@@ -140,7 +140,7 @@ INSERT INTO `user_order` (`id_user`, `id_offer`, `order_date`, `visit_date`, `st
 (2, 1,  '2026-04-18 20:00:00', '2026-04-30 17:00:00', 'NOWE');
 
 -- SIGNED UP USERS' ORDERS
-INSERT INTO `user_order` (`id_user`, `id_offer`, `order_date`, `visit_date`, `status`) VALUES
+INSERT INTO `user_order` (`id_user`, `id_offer`, `order_date`, `visit_date`, `order_status`) VALUES
 (3, 2,  '2026-04-10 10:00:00', '2026-04-20 12:00:00', 'ZREALIZOWANE'),
 (4, 3,  '2026-04-11 11:30:00', '2026-04-21 14:00:00', 'NOWE'),
 (5, 4,  '2026-04-12 09:00:00', '2026-04-22 10:30:00', 'NOWE'),
@@ -159,7 +159,7 @@ INSERT INTO `user_order` (`id_user`, `id_offer`, `order_date`, `visit_date`, `st
 
 
 -- GUEST ORDERS
-INSERT INTO `guest_order` (`firstname`, `lastname`, `phonenumber`, `email`, `id_offer`, `order_date`, `visit_date`, `status`) VALUES
+INSERT INTO `guest_order` (`firstname`, `lastname`, `phonenumber`, `email`, `id_offer`, `order_date`, `visit_date`, `order_status`) VALUES
 ('Sophia', 'Smith', '555-0101', 'sophia.s@example.com', 3, '2026-04-10 08:00:00', '2026-04-20 09:00:00', 'ZREALIZOWANE'),
 ('Charlotte', 'Jones', '555-0102', 'char.j@example.com', 5, '2026-04-11 12:00:00', '2026-04-21 10:00:00', 'NOWE'),
 ('Amelia', 'Brown', '555-0103', 'amelia.b@example.com', 16, '2026-04-12 14:00:00', '2026-04-22 11:00:00', 'NOWE'),
@@ -184,7 +184,7 @@ operation VARCHAR(50) NOT NULL,
 idempotency_key VARCHAR(255) NOT NULL,
 request_hash CHAR(64) NOT NULL,
 owner_user_id BIGINT DEFAULT NULL,
-status VARCHAR(30) NOT NULL,
+order_status VARCHAR(30) NOT NULL,
 resource_id BIGINT DEFAULT NULL,
 payment_id BIGINT DEFAULT NULL,
 payment_method VARCHAR(50) DEFAULT NULL,

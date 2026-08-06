@@ -85,13 +85,19 @@ public class GlobalExceptionHandler {
         return createErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(OrderOfferChangeNotAllowedException.class)
-    public ResponseEntity<ErrorDTO> handleOrderOfferChangeNotAllowed(
-            OrderOfferChangeNotAllowedException ex
+    @ExceptionHandler({
+            OrderOfferChangeNotAllowedException.class,
+            OrderModificationNotAllowedException.class,
+            OrderStatusChangeNotAllowedException.class,
+            MissingPaymentException.class
+    })
+    public ResponseEntity<ErrorDTO> handleOrderConflict(
+            RuntimeException ex
     ) {
         return createErrorResponse(
                 ex.getMessage(),
-                HttpStatus.CONFLICT);
+                HttpStatus.CONFLICT
+        );
     }
 
     @ExceptionHandler(IdempotencyConflictException.class)

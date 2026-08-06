@@ -124,8 +124,8 @@ class GuestOrderDTOMapperTest {
                         result.visitDate()
                 ),
                 () -> assertEquals(
-                        guestOrder.getStatus(),
-                        result.status()
+                        guestOrder.getOrderStatus(),
+                        result.orderStatus()
                 )
         );
     }

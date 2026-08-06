@@ -9,7 +9,7 @@ import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailSafely;
 
@@ -58,22 +58,22 @@ public class OrderEvents {
     /**
      * Publishes an audit event associated with an order update.
      *
-     * <p>The event contains the previous status, the current status
+     * <p>The event contains the previous orderStatus, the current orderStatus
      * and the updated appointment date.</p>
      *
      * @param order updated order
-     * @param oldStatus status assigned to the order before the update
+     * @param oldOrderStatus orderStatus assigned to the order before the update
      */
-    public void updated(Order order, Status oldStatus) {
+    public void updated(Order order, OrderStatus oldOrderStatus) {
         eventPublisher.publishEvent(new AuditEvent(
                 getActorEmailSafely(),
                 ActionType.ORDER_UPDATED,
                 EntityType.ORDER,
                 String.valueOf(order.getIdOrder()),
                 String.format(
-                        "{\"oldStatus\":\"%s\", \"newStatus\":\"%s\", \"visitDate\":\"%s\"}",
-                        oldStatus,
-                        order.getStatus(),
+                        "{\"oldOrderStatus\":\"%s\", \"newStatus\":\"%s\", \"visitDate\":\"%s\"}",
+                        oldOrderStatus,
+                        order.getOrderStatus(),
                         order.getVisitDate()
                 )
         ));
