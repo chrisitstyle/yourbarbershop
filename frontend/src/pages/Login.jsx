@@ -10,7 +10,7 @@ import { API_BASE_URL } from "../api/config";
 import GoogleIcon from "../components/common/GoogleIcon";
 import { useTranslation } from "react-i18next";
 import EmailCodeLoginForm from "../components/auth/EmailCodeLoginForm";
-import "../adminpages/styles/AdminForms.css";
+import "./styles/login-form.css";
 
 const LOGIN_MODE = {
   PASSWORD: "password",
@@ -204,7 +204,7 @@ const Login = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="login-page container mt-5">
       <div className="row justify-content-center">
         {/*picks up dark-theme gradient and shadow from AdminForms.css */}
         <div className="col-md-4">

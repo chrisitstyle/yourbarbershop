@@ -6,7 +6,7 @@ import ButtonSpinner from "../components/common/ButtonSpinner";
 import { useTranslation } from "react-i18next";
 import ReCAPTCHA from "react-google-recaptcha";
 import { RECAPTCHA_SITE_KEY } from "../api/config";
-import "../adminpages/styles/AdminForms.css";
+import "./styles/register-form.css";
 
 const Register = () => {
   const [firstName, setFirstName] = useState("");
@@ -103,7 +103,7 @@ const Register = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="register-page container mt-5">
       <div className="row justify-content-center">
         {/* picks up dark-theme gradient and shadow from AdminForms.css */}
         <div className="col-md-4">

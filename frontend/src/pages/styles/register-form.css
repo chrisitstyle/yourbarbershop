@@ -1,0 +1,109 @@
+/* register-form.css
+   Styles specific to the registration form.
+   Bootstrap remains the base; these rules only match the app's dark theme.
+*/
+
+html[data-bs-theme="dark"] .register-page {
+  color-scheme: dark;
+  --register-surface: #16191e;
+  --register-surface-elevated: #1c2026;
+  --register-input: #101318;
+  --register-input-focus: #12161b;
+  --register-border: rgba(255, 255, 255, 0.1);
+  --register-border-strong: rgba(255, 255, 255, 0.16);
+  --register-text: #f2efe9;
+  --register-muted: #a9afb8;
+  --register-accent: #d0a15e;
+  --register-accent-hover: #e1b575;
+  --register-accent-active: #b98949;
+  --register-accent-rgb: 208, 161, 94;
+}
+
+html[data-bs-theme="dark"] .register-page .card {
+  color: var(--register-text);
+  background: linear-gradient(
+    145deg,
+    var(--register-surface-elevated),
+    var(--register-surface)
+  );
+  border: 1px solid var(--register-border);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+html[data-bs-theme="dark"] .register-page .card-header {
+  background-color: rgba(255, 255, 255, 0.025);
+  border-color: var(--register-border);
+}
+
+html[data-bs-theme="dark"] .register-page .card-title,
+html[data-bs-theme="dark"] .register-page .form-label {
+  color: #fff;
+}
+
+html[data-bs-theme="dark"] .register-page .text-muted,
+html[data-bs-theme="dark"] .register-page .card-subtitle {
+  color: var(--register-muted) !important;
+}
+
+html[data-bs-theme="dark"] .register-page .form-control,
+html[data-bs-theme="dark"] .register-page .form-select {
+  color: var(--register-text);
+  background-color: var(--register-input);
+  border-color: #303741;
+}
+
+html[data-bs-theme="dark"] .register-page .form-control:hover,
+html[data-bs-theme="dark"] .register-page .form-select:hover {
+  border-color: #454e5a;
+}
+
+html[data-bs-theme="dark"] .register-page .form-control:focus,
+html[data-bs-theme="dark"] .register-page .form-select:focus {
+  color: #fff;
+  background-color: var(--register-input-focus);
+  border-color: var(--register-accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--register-accent-rgb), 0.16);
+}
+
+html[data-bs-theme="dark"] .register-page .form-control::placeholder {
+  color: #737b86;
+  opacity: 1;
+}
+
+html[data-bs-theme="dark"] .register-page .input-group-text {
+  color: var(--register-muted);
+  background-color: #1c2026;
+  border-color: #303741;
+}
+
+html[data-bs-theme="dark"] .register-page .btn-primary,
+html[data-bs-theme="dark"] .register-page .btn-dark {
+  color: #17130d;
+  background-color: var(--register-accent);
+  border-color: var(--register-accent);
+}
+
+html[data-bs-theme="dark"] .register-page .btn-primary:hover,
+html[data-bs-theme="dark"] .register-page .btn-primary:focus,
+html[data-bs-theme="dark"] .register-page .btn-dark:hover,
+html[data-bs-theme="dark"] .register-page .btn-dark:focus {
+  color: #17130d;
+  background-color: var(--register-accent-hover);
+  border-color: var(--register-accent-hover);
+}
+
+html[data-bs-theme="dark"] .register-page .btn-primary:focus,
+html[data-bs-theme="dark"] .register-page .btn-dark:focus {
+  box-shadow: 0 0 0 0.2rem rgba(var(--register-accent-rgb), 0.22);
+}
+
+html[data-bs-theme="dark"] .register-page .btn-primary:active,
+html[data-bs-theme="dark"] .register-page .btn-dark:active {
+  color: #fff;
+  background-color: var(--register-accent-active);
+  border-color: var(--register-accent-active);
+}
+
+.register-page .card-accent-top {
+  border-top: 3px solid var(--register-accent) !important;
+}
