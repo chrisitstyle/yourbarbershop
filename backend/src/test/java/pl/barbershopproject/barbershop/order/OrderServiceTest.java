@@ -62,6 +62,7 @@ class OrderServiceTest {
     private static final Long IDEMPOTENCY_REQUEST_ID = 100L;
     private static final String IDEMPOTENCY_KEY = "order-service-test-key";
     private static final String REQUEST_HASH = "a".repeat(64);
+    private static final String STRIPE_CHECKOUT_IDEMPOTENCY_KEY = "550e8400-e29b-41d4-a716-446655440000";
 
     @Mock
     private OrderRepository orderRepository;
@@ -124,17 +125,17 @@ class OrderServiceTest {
                 10L,
                 PaymentMethod.GOTOWKA,
                 PaymentStatus.NIE_WYMAGANA,
+                null,
                 offer.getCost(),
                 "PLN",
                 offer.getKind()
         );
 
-        OrderCreationTransactionResult transactionResult =
-                OrderCreationTransactionResult.resourceCreated(
+        OrderCreationTransactionResult transactionResult = OrderCreationTransactionResult
+                .resourceCreated(
                         IDEMPOTENCY_REQUEST_ID,
                         1L,
-                        checkoutRequest
-                );
+                        checkoutRequest);
 
         givenRequestHash(orderCreationDTO);
 
@@ -182,6 +183,7 @@ class OrderServiceTest {
                 10L,
                 PaymentMethod.KARTA_ONLINE,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                STRIPE_CHECKOUT_IDEMPOTENCY_KEY,
                 offer.getCost(),
                 "PLN",
                 offer.getKind()
@@ -295,13 +297,13 @@ class OrderServiceTest {
                 10L,
                 PaymentMethod.KARTA_ONLINE,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                STRIPE_CHECKOUT_IDEMPOTENCY_KEY,
                 offer.getCost(),
                 "PLN",
                 offer.getKind()
         );
 
-        String checkoutUrl =
-                "https://checkout.stripe.com/c/pay/cs_test_123";
+        String checkoutUrl = "https://checkout.stripe.com/c/pay/cs_test_123";
 
         OrderCreationTransactionResult transactionResult =
                 OrderCreationTransactionResult.completed(

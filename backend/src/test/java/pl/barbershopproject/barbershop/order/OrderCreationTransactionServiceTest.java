@@ -103,6 +103,7 @@ class OrderCreationTransactionServiceTest {
                         PAYMENT_ID,
                         orderCreationDTO.paymentMethod(),
                         PaymentStatus.NIE_WYMAGANA,
+                        null,
                         offer.getCost(),
                         "PLN",
                         offer.getKind());
@@ -467,6 +468,7 @@ class OrderCreationTransactionServiceTest {
                 PAYMENT_ID,
                 orderCreationDTO.paymentMethod(),
                 PaymentStatus.NIE_WYMAGANA,
+                null,
                 offer.getCost(),
                 "PLN",
                 offer.getKind()

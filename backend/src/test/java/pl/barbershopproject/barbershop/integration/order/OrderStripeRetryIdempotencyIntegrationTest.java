@@ -2,6 +2,7 @@ package pl.barbershopproject.barbershop.integration.order;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.AfterAll;
@@ -13,13 +14,15 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.context.WebApplicationContext;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.integration.BaseIntegrationTest;
+import pl.barbershopproject.barbershop.order.event.OrderEvents;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
 import tools.jackson.databind.ObjectMapper;
@@ -32,6 +35,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -40,17 +46,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
 
     private static final String USER_EMAIL = "johndoe@example.com";
-    private static final String IDEMPOTENCY_KEY =
-            "order-stripe-retry-idempotency-test-key";
+    private static final String IDEMPOTENCY_KEY = "order-stripe-retry-idempotency-test-key";
 
     private static final String CHECKOUT_ENDPOINT = "/v1/checkout/sessions";
     private static final String STRIPE_SCENARIO = "stripe-checkout-retry";
-    private static final String STRIPE_FAILED_ONCE = "stripe-failed-once";
+    private static final String CONNECTION_DROPPED = "connection-dropped";
     private static final String STRIPE_SECRET_KEY = "sk_test_integration";
 
     private static final String SESSION_ID = "cs_test_retry_123";
-    private static final String CHECKOUT_URL =
-            "https://checkout.stripe.com/c/pay/cs_test_retry_123";
+    private static final String CHECKOUT_URL = "https://checkout.stripe.com/c/pay/cs_test_retry_123";
 
     private static final LocalDateTime VISIT_DATE =
             LocalDateTime.of(2033, 1, 16, 12, 0);
@@ -66,18 +70,17 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private WebApplicationContext context;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
     @Autowired
     private JwtService jwtService;
-
     @Autowired
     private UserRepository userRepository;
+
+    @MockitoSpyBean
+    private OrderEvents orderEvents;
 
     @DynamicPropertySource
     static void configureStripeProperties(DynamicPropertyRegistry registry) {
@@ -85,12 +88,10 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
         registry.add("stripe.secret-key", () -> STRIPE_SECRET_KEY);
         registry.add(
                 "stripe.success-url",
-                () -> "http://localhost:3000/payment/success"
-        );
+                () -> "http://localhost:3000/payment/success");
         registry.add(
                 "stripe.cancel-url",
-                () -> "http://localhost:3000/payment/cancel"
-        );
+                () -> "http://localhost:3000/payment/cancel");
     }
 
     @BeforeEach
@@ -101,7 +102,7 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
                 .build();
 
         stripeMock.resetAll();
-        stubStripeFailureThenSuccess();
+        stubStripeConnectionFailureThenSuccess();
     }
 
     @AfterAll
@@ -109,9 +110,9 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
         stripeMock.stop();
     }
 
-    @DisplayName("Should reuse existing order and payment when Stripe checkout is retried")
+    @DisplayName("Should reuse existing order and payment when Stripe checkout is retried after connection failure")
     @Test
-    void shouldReuseExistingOrderAndPayment_WhenStripeCheckoutIsRetried()
+    void shouldReuseExistingOrderAndPayment_WhenStripeCheckoutIsRetriedAfterConnectionFailure()
             throws Exception {
         // given
         String token = tokenFor(USER_EMAIL);
@@ -127,9 +128,7 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
         )
                 .isInstanceOf(ServletException.class)
-                .hasRootCauseInstanceOf(
-                        HttpServerErrorException.InternalServerError.class
-                );
+                .hasCauseInstanceOf(ResourceAccessException.class);
 
         assertThat(countOrders()).isEqualTo(1);
         assertThat(countPayments()).isEqualTo(1);
@@ -138,6 +137,10 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
 
         Long paymentId = paymentId();
         Long existingOrderId = existingOrderId();
+
+        String stripeCheckoutIdempotencyKey = stripeCheckoutIdempotencyKey(paymentId);
+
+        assertThat(stripeCheckoutIdempotencyKey).isNotBlank();
 
         assertThat(paymentCheckoutSessionId(paymentId)).isNull();
         assertThat(idempotencyCheckoutUrl()).isNull();
@@ -176,51 +179,40 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
                         )
                         .withHeader(
                                 "Idempotency-Key",
-                                equalTo("checkout-session-payment-" + paymentId)
-                        )
-        );
+                                equalTo("checkout-session-payment-" + stripeCheckoutIdempotencyKey)));
+
+        verify(orderEvents, times(1))
+                .created(any(), any());
     }
 
-    private void stubStripeFailureThenSuccess() {
+    private void stubStripeConnectionFailureThenSuccess() {
         stripeMock.stubFor(
                 WireMock.post(urlEqualTo(CHECKOUT_ENDPOINT))
                         .inScenario(STRIPE_SCENARIO)
                         .whenScenarioStateIs(Scenario.STARTED)
-                        .willSetStateTo(STRIPE_FAILED_ONCE)
+                        .willSetStateTo(CONNECTION_DROPPED)
                         .willReturn(
                                 aResponse()
-                                        .withStatus(500)
-                                        .withHeader("Content-Type", "application/json")
-                                        .withBody(
-                                                """
-                                                        {
-                                                          "error": {
-                                                            "message": "Stripe temporary error"
-                                                          }
-                                                        }
-                                                        """
-                                        )
-                        )
-        );
+                                        .withFault(Fault.CONNECTION_RESET_BY_PEER)));
 
         stripeMock.stubFor(
                 WireMock.post(urlEqualTo(CHECKOUT_ENDPOINT))
                         .inScenario(STRIPE_SCENARIO)
-                        .whenScenarioStateIs(STRIPE_FAILED_ONCE)
+                        .whenScenarioStateIs(CONNECTION_DROPPED)
                         .willReturn(
                                 aResponse()
                                         .withStatus(200)
-                                        .withHeader("Content-Type", "application/json")
+                                        .withHeader(
+                                                "Content-Type",
+                                                "application/json"
+                                        )
                                         .withBody(
                                                 """
                                                         {
                                                           "id": "cs_test_retry_123",
                                                           "url": "https://checkout.stripe.com/c/pay/cs_test_retry_123"
                                                         }
-                                                        """
-                                        )
-                        )
-        );
+                                                        """)));
     }
 
     private ObjectNode createOrderRequest(
@@ -381,5 +373,19 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
 
     private String bearer(String token) {
         return "Bearer " + token;
+    }
+
+    private String stripeCheckoutIdempotencyKey(
+            Long paymentId
+    ) {
+        return jdbcTemplate.queryForObject(
+                """
+                SELECT stripe_checkout_idempotency_key
+                FROM payment
+                WHERE id_payment = ?
+                """,
+                String.class,
+                paymentId
+        );
     }
 }

@@ -21,6 +21,7 @@ public record PaymentCheckoutRequest(
         Long paymentId,
         PaymentMethod paymentMethod,
         PaymentStatus paymentStatus,
+        String stripeCheckoutIdempotencyKey,
         BigDecimal amount,
         String currency,
         String productName
@@ -31,6 +32,13 @@ public record PaymentCheckoutRequest(
 
         Objects.requireNonNull(paymentMethod,"PaymentMethod nie może być null");
         Objects.requireNonNull(paymentStatus, "PaymentStatus nie może być null");
+
+        if (paymentMethod == PaymentMethod.KARTA_ONLINE
+                && (stripeCheckoutIdempotencyKey == null
+                || stripeCheckoutIdempotencyKey.isBlank())) {
+            throw new IllegalArgumentException(
+                    "Stripe Checkout idempotency key nie może być pusty dla płatności online");
+        }
 
         Objects.requireNonNull(amount, "Kwota płatności nie może być null");
 
@@ -54,6 +62,7 @@ public record PaymentCheckoutRequest(
                 payment.getIdPayment(),
                 payment.getPaymentMethod(),
                 payment.getPaymentStatus(),
+                payment.getStripeCheckoutIdempotencyKey(),
                 payment.getAmount(),
                 payment.getCurrency(),
                 productName

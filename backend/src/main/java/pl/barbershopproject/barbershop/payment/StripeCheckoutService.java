@@ -11,6 +11,7 @@ import tools.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -48,12 +49,10 @@ public class StripeCheckoutService {
     }
 
     public StripeCheckoutSessionResponse createCheckoutSession(
-            PaymentCheckoutRequest request
-    ) {
+            PaymentCheckoutRequest request) {
         Objects.requireNonNull(
                 request,
-                "PaymentCheckoutRequest nie może być null"
-        );
+                "PaymentCheckoutRequest nie może być null");
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
 
@@ -66,42 +65,64 @@ public class StripeCheckoutService {
 
         body.add(
                 "line_items[0][price_data][currency]",
-                request.currency().toLowerCase(Locale.ROOT)
-        );
+                request.currency().toLowerCase(Locale.ROOT));
 
-        body.add("line_items[0][price_data][unit_amount]",
-                toSmallestCurrencyUnit(request.amount()).toString()
-        );
+        body.add(
+                "line_items[0][price_data][unit_amount]",
+                toSmallestCurrencyUnit(request.amount()).toString());
 
         body.add(
                 "line_items[0][price_data][product_data][name]",
-                request.productName()
-        );
+                request.productName());
 
         String paymentId = request.paymentId().toString();
 
         body.add(
                 "metadata[paymentId]",
-                paymentId
-        );
+                paymentId);
 
         body.add(
                 "payment_intent_data[metadata][paymentId]",
-                paymentId
-        );
+                paymentId);
 
-        String idempotencyKey =
-                IDEMPOTENCY_KEY_PREFIX + paymentId;
+        String idempotencyKey = IDEMPOTENCY_KEY_PREFIX
+                + request.stripeCheckoutIdempotencyKey();
 
         JsonNode response = restClient.post()
                 .uri("/v1/checkout/sessions")
-                .header(IDEMPOTENCY_KEY_HEADER, idempotencyKey)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .header(
+                        IDEMPOTENCY_KEY_HEADER,
+                        idempotencyKey)
+                .contentType(
+                        MediaType.APPLICATION_FORM_URLENCODED)
                 .body(body)
                 .retrieve()
                 .body(JsonNode.class);
 
         return mapResponse(response);
+    }
+
+    public StripeCheckoutSessionDetails retrieveCheckoutSession(
+            String sessionId
+    ) {
+        String requiredSessionId = Objects.requireNonNull(
+                sessionId,
+                "Stripe Checkout session ID nie może być null");
+
+        if (requiredSessionId.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Stripe Checkout session ID nie może być pusty");
+        }
+
+        JsonNode response = restClient.get()
+                .uri(
+                        "/v1/checkout/sessions/{sessionId}",
+                        requiredSessionId
+                )
+                .retrieve()
+                .body(JsonNode.class);
+
+        return mapSessionDetails(response);
     }
 
     private StripeCheckoutSessionResponse mapResponse(
@@ -126,6 +147,48 @@ public class StripeCheckoutService {
         return new StripeCheckoutSessionResponse(
                 sessionId,
                 checkoutUrl
+        );
+    }
+
+    private StripeCheckoutSessionDetails mapSessionDetails(
+            JsonNode response
+    ) {
+        if (response == null) {
+            throw new IllegalStateException(
+                    "Stripe nie zwrócił Checkout Session");
+        }
+
+        String sessionId = response.path("id").asString(null);
+        String status = response.path("status").asString(null);
+        String paymentStatus = response
+                .path("payment_status")
+                .asString(null);
+
+        long expiresAt = response
+                .path("expires_at")
+                .asLong(0);
+
+        if (sessionId == null
+                || sessionId.isBlank()
+                || status == null
+                || status.isBlank()
+                || paymentStatus == null
+                || paymentStatus.isBlank()
+                || expiresAt <= 0) {
+            throw new IllegalStateException(
+                    "Stripe zwrócił niekompletną Checkout Session");
+        }
+
+        String checkoutUrl = response
+                .path("url")
+                .asString(null);
+
+        return new StripeCheckoutSessionDetails(
+                sessionId,
+                StripeCheckoutSessionStatus.from(status),
+                paymentStatus,
+                checkoutUrl,
+                Instant.ofEpochSecond(expiresAt)
         );
     }
 

@@ -109,6 +109,24 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(InvalidPaymentLinkTokenException.class)
+    public ResponseEntity<ErrorDTO> handleInvalidPaymentLinkToken(
+            InvalidPaymentLinkTokenException ex
+    ) {
+        return createErrorResponse(
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PaymentLinkUnavailableException.class)
+    public ResponseEntity<ErrorDTO> handlePaymentLinkUnavailable(
+            PaymentLinkUnavailableException ex
+    ) {
+        return createErrorResponse(
+                ex.getMessage(),
+                HttpStatus.CONFLICT);
+    }
+
     /**
      * Helper method to construct a standard {@link ResponseEntity} containing an {@link ErrorDTO}.
      *

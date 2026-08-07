@@ -19,7 +19,7 @@ class PaymentCheckoutServiceTest {
     private static final Long PAYMENT_ID = 10L;
     private static final String SESSION_ID = "cs_test_123";
     private static final String CHECKOUT_URL = "https://checkout.stripe.com/c/pay/cs_test_123";
-
+    private static final String STRIPE_CHECKOUT_IDEMPOTENCY_KEY = "550e8400-e29b-41d4-a716-446655440000";
     @Mock
     private StripeCheckoutService stripeCheckoutService;
     @Mock
@@ -68,8 +68,7 @@ class PaymentCheckoutServiceTest {
 
     @Test
     void shouldNotCreateCheckoutForCashPayment() {
-        PaymentCheckoutRequest checkoutRequest =
-                createOfflineCheckoutRequest(PaymentMethod.GOTOWKA);
+        PaymentCheckoutRequest checkoutRequest = createOfflineCheckoutRequest(PaymentMethod.GOTOWKA);
 
         String result = paymentCheckoutService.createCheckoutIfRequired(
                 checkoutRequest
@@ -189,6 +188,7 @@ class PaymentCheckoutServiceTest {
                 PAYMENT_ID,
                 PaymentMethod.KARTA_ONLINE,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                STRIPE_CHECKOUT_IDEMPOTENCY_KEY,
                 new BigDecimal("120.00"),
                 "PLN",
                 "Strzyżenie męskie"
@@ -200,6 +200,7 @@ class PaymentCheckoutServiceTest {
                 PAYMENT_ID,
                 paymentMethod,
                 PaymentStatus.NIE_WYMAGANA,
+                null,
                 new BigDecimal("120.00"),
                 "PLN",
                 "Strzyżenie męskie"

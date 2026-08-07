@@ -42,6 +42,7 @@ class GuestOrderServiceTest {
     private static final Long IDEMPOTENCY_REQUEST_ID = 100L;
     private static final String IDEMPOTENCY_KEY = "guest-order-service-test-key";
     private static final String REQUEST_HASH = "a".repeat(64);
+    private static final String STRIPE_CHECKOUT_IDEMPOTENCY_KEY = "550e8400-e29b-41d4-a716-446655440000";
 
     @Mock
     private GuestOrderRepository guestOrderRepository;
@@ -93,13 +94,13 @@ class GuestOrderServiceTest {
 
     @Test
     void addGuestOrder_ShouldReturnResponseWithoutCheckoutUrl_ForOfflinePayment() {
-        GuestOrderCreationDTO guestOrderCreationDTO =
-                createGuestOrderCreationDTO();
+        GuestOrderCreationDTO guestOrderCreationDTO = createGuestOrderCreationDTO();
 
         PaymentCheckoutRequest checkoutRequest = new PaymentCheckoutRequest(
                 10L,
                 PaymentMethod.GOTOWKA,
                 PaymentStatus.NIE_WYMAGANA,
+                null,
                 offer.getCost(),
                 "PLN",
                 offer.getKind()
@@ -155,6 +156,7 @@ class GuestOrderServiceTest {
                 10L,
                 PaymentMethod.KARTA_ONLINE,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                STRIPE_CHECKOUT_IDEMPOTENCY_KEY,
                 offer.getCost(),
                 "PLN",
                 offer.getKind()
@@ -258,6 +260,7 @@ class GuestOrderServiceTest {
                 10L,
                 PaymentMethod.KARTA_ONLINE,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                STRIPE_CHECKOUT_IDEMPOTENCY_KEY,
                 offer.getCost(),
                 "PLN",
                 offer.getKind());

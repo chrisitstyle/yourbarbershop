@@ -9,6 +9,7 @@ import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.event.OnlinePaymentPendingEvent;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailSafely;
@@ -29,9 +30,9 @@ class GuestOrderEvents {
     /**
      * Publishes events associated with the creation of a guest order.
      *
-     * <p>An audit event is always published. An order confirmation event is
-     * additionally published when the selected payment method does not require
-     * an online card payment.</p>
+     * <p>An audit event is always published. For online card payments,
+     * an event requesting the guest customer to complete the payment is published.
+     * For offline payment methods, an order confirmation event is published.</p>
      *
      * @param guestOrder newly created guest order
      * @param payment payment associated with the guest order
@@ -50,9 +51,12 @@ class GuestOrderEvents {
                 )
         ));
 
-        if (payment.getPaymentMethod() != PaymentMethod.KARTA_ONLINE) {
-            publishConfirmation(guestOrder, payment);
+        if (payment.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
+            publishOnlinePaymentPending(guestOrder, payment);
+            return;
         }
+
+        publishConfirmation(guestOrder, payment);
     }
 
     /**
@@ -115,6 +119,27 @@ class GuestOrderEvents {
                 guestOrder.getOffer().getCost(),
                 payment.getPaymentMethod(),
                 payment.getPaymentStatus()
+        ));
+    }
+
+    /**
+     * Publishes an event informing the guest customer that
+     * an online payment is awaiting completion.
+     *
+     * @param guestOrder guest order awaiting online payment
+     * @param payment payment associated with the guest order
+     */
+    private void publishOnlinePaymentPending(
+            GuestOrder guestOrder,
+            Payment payment
+    ) {
+        eventPublisher.publishEvent(new OnlinePaymentPendingEvent(
+                payment.getIdPayment(),
+                guestOrder.getEmail(),
+                guestOrder.getFirstname(),
+                guestOrder.getVisitDate(),
+                guestOrder.getBookedOffer().getName(),
+                guestOrder.getBookedOffer().getPrice()
         ));
     }
 }

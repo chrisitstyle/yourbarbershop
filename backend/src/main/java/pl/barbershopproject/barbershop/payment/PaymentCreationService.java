@@ -12,6 +12,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Creates and persists payments inside an existing order transaction.
@@ -93,9 +94,16 @@ class PaymentCreationService implements PaymentCreator {
         return Payment.builder()
                 .paymentMethod(paymentMethod)
                 .paymentStatus(initialStatus(paymentMethod))
+                .stripeCheckoutIdempotencyKey(
+                        createStripeCheckoutIdempotencyKey(paymentMethod)
+                )
                 .amount(bookedOffer.getPrice())
                 .currency(currency)
                 .createdAt(LocalDateTime.now(clock));
+    }
+
+    private String createStripeCheckoutIdempotencyKey(PaymentMethod paymentMethod) {
+        return requiresOnlineCheckout(paymentMethod) ? UUID.randomUUID().toString() : null;
     }
 
     private PaymentCreationResult savePayment(

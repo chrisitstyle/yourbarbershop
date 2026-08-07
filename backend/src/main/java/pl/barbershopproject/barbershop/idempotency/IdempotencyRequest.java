@@ -220,8 +220,13 @@ class IdempotencyRequest {
     /**
      * Rebuilds the immutable payment data needed to resume
      * Stripe Checkout creation after an interrupted request.
+     *
+     * @param stripeCheckoutIdempotencyKey idempotency key stored with the payment
+     * @return immutable checkout request
      */
-    PaymentCheckoutRequest toCheckoutRequest() {
+    PaymentCheckoutRequest toCheckoutRequest(
+            String stripeCheckoutIdempotencyKey
+    ) {
         if (status == IdempotencyStatus.PROCESSING) {
             throw new IllegalStateException(
                     "Dane płatności nie zostały jeszcze zapisane"
@@ -232,6 +237,7 @@ class IdempotencyRequest {
                 paymentId,
                 paymentMethod,
                 paymentStatus,
+                stripeCheckoutIdempotencyKey,
                 amount,
                 currency,
                 productName

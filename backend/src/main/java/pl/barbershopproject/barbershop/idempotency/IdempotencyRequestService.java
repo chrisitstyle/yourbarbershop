@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
 import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentRepository;
 
 import java.time.Clock;
 import java.util.NoSuchElementException;
@@ -15,17 +17,19 @@ import java.util.Objects;
 /**
  * Persists and resolves Idempotency-Key records used during order creation.
  *
- * <p>Registration and resource assignment participate in the order transaction,
+ * <p>Resource creation is stored inside the order transaction,
  * while final checkout completion is stored in a separate transaction.</p>
  */
 @Service
 @RequiredArgsConstructor
 class IdempotencyRequestService implements IdempotencyRequestManager {
 
-    private static final String REQUEST_NOT_FOUND_MESSAGE =
-            "Nie znaleziono żądania idempotentnego o ID: ";
+    private static final String REQUEST_NOT_FOUND_MESSAGE = "Nie znaleziono żądania idempotentnego o ID: ";
+
+    private static final String PAYMENT_NOT_FOUND_MESSAGE = "Nie znaleziono płatności o ID: ";
 
     private final IdempotencyRequestRepository idempotencyRequestRepository;
+    private final PaymentRepository paymentRepository;
     private final Clock clock;
 
     @Override
@@ -41,8 +45,7 @@ class IdempotencyRequestService implements IdempotencyRequestManager {
                 IdempotencyOperation.ORDER_CREATION,
                 idempotencyKey,
                 requestHash,
-                userId
-        );
+                userId);
     }
 
     @Override
@@ -55,8 +58,7 @@ class IdempotencyRequestService implements IdempotencyRequestManager {
                 IdempotencyOperation.GUEST_ORDER_CREATION,
                 idempotencyKey,
                 requestHash,
-                null
-        );
+                null);
     }
 
     @Override
@@ -71,8 +73,7 @@ class IdempotencyRequestService implements IdempotencyRequestManager {
         request.markResourceCreated(
                 resourceId,
                 checkoutRequest,
-                clock
-        );
+                clock);
 
         idempotencyRequestRepository.save(request);
     }
@@ -139,16 +140,14 @@ class IdempotencyRequestService implements IdempotencyRequestManager {
         } catch (DataIntegrityViolationException exception) {
             throw new IdempotencyRequestCollisionException(
                     "Idempotency-Key został równocześnie użyty przez inne żądanie",
-                    exception
-            );
+                    exception);
         }
     }
 
     private IdempotencyRequestResult resolveExisting(
             IdempotencyRequest request,
             String requestHash,
-            Long ownerUserId
-    ) {
+            Long ownerUserId) {
         if (!request.hasRequestHash(requestHash)) {
             throw new IdempotencyConflictException(
                     "Idempotency-Key został już użyty dla innych danych żądania"
@@ -174,7 +173,7 @@ class IdempotencyRequestService implements IdempotencyRequestManager {
                     request.getIdIdempotencyRequest(),
                     IdempotencyResolution.RESOURCE_CREATED,
                     request.getResourceId(),
-                    request.toCheckoutRequest(),
+                    toCheckoutRequest(request),
                     null
             );
 
@@ -182,17 +181,52 @@ class IdempotencyRequestService implements IdempotencyRequestManager {
                     request.getIdIdempotencyRequest(),
                     IdempotencyResolution.COMPLETED,
                     request.getResourceId(),
-                    request.toCheckoutRequest(),
-                    request.getCheckoutUrl()
-            );
+                    toCheckoutRequest(request),
+                    request.getCheckoutUrl());
         };
+    }
+
+    private PaymentCheckoutRequest toCheckoutRequest(
+            IdempotencyRequest request) {
+        String stripeCheckoutIdempotencyKey =
+                getStripeCheckoutIdempotencyKey(request);
+
+        return request.toCheckoutRequest(
+                stripeCheckoutIdempotencyKey);
+    }
+
+    private String getStripeCheckoutIdempotencyKey(
+            IdempotencyRequest request
+    ) {
+        if (request.getPaymentMethod() != PaymentMethod.KARTA_ONLINE) {
+            return null;
+        }
+
+        Long paymentId = Objects.requireNonNull(
+                request.getPaymentId(),
+                "Payment ID nie może być null");
+
+        String stripeCheckoutIdempotencyKey = paymentRepository
+                .findById(paymentId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        PAYMENT_NOT_FOUND_MESSAGE + paymentId
+                ))
+                .getStripeCheckoutIdempotencyKey();
+
+        if (stripeCheckoutIdempotencyKey == null
+                || stripeCheckoutIdempotencyKey.isBlank()) {
+            throw new IllegalStateException(
+                    "Brakuje Stripe Checkout idempotency key dla płatności o ID: "
+                            + paymentId);
+        }
+
+        return stripeCheckoutIdempotencyKey;
     }
 
     private IdempotencyRequest getRequiredRequest(Long requestId) {
         Objects.requireNonNull(
                 requestId,
-                "Idempotency request ID nie może być null"
-        );
+                "Idempotency request ID nie może być null");
 
         return idempotencyRequestRepository.findById(requestId)
                 .orElseThrow(() -> new NoSuchElementException(

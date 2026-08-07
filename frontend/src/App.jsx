@@ -26,6 +26,7 @@ const ResetPasswordForm = lazy(() => import("./pages/ResetPasswordForm.jsx"));
 const OAuth2Redirect = lazy(() => import("./OAuth2Redirect.jsx"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess.jsx"));
 const PaymentCancel = lazy(() => import("./pages/PaymentCancel.jsx"));
+const PaymentLink = lazy(() => import("./pages/PaymentLink.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 // admin panel loaded only for admins
@@ -145,6 +146,7 @@ function App() {
                 </Route>
 
                 {/* stripe payment routes */}
+                <Route path="/payment/:token" element={<PaymentLink />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancel" element={<PaymentCancel />} />
                 <Route path="*" element={<NotFound />} />

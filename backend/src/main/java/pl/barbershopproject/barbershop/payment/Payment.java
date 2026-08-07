@@ -46,6 +46,11 @@ public class Payment implements Serializable {
     @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus;
 
+    @Column(name = "stripe_checkout_idempotency_key",
+            unique = true,
+            length = 64)
+    private String stripeCheckoutIdempotencyKey;
+
     @Column(name = "stripe_checkout_session_id", unique = true)
     private String stripeCheckoutSessionId;
 
