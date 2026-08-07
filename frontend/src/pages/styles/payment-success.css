@@ -1,0 +1,6 @@
+.payment-success-icon {
+  width: 72px;
+  height: 72px;
+  color: var(--bs-success);
+  background-color: rgba(var(--bs-success-rgb), 0.12);
+}

@@ -436,6 +436,9 @@
     "errorTitle": "Payment error",
     "secureCheckout": "Secure payment",
     "retrySecurityInfo": "This link only provides access to the payment associated with your reservation.",
-    "stripeNotice": "Your payment will be securely processed by Stripe."
+    "stripeNotice": "Your payment will be securely processed by Stripe.",
+    "paymentConfirmed": "Payment confirmed",
+    "successToastMessage": "Your payment has been successfully received.",
+    "successInfo": "You can now safely leave this page."
   }
 }
