@@ -3,10 +3,8 @@ package pl.barbershopproject.barbershop.order;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import pl.barbershopproject.barbershop.integration.AbstractRepositoryTest;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.user.User;
@@ -25,13 +23,10 @@ import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntiti
 import static pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities.createOrder;
 import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUser;
 
-@ExtendWith(SpringExtension.class)
-@DataJpaTest
-class OrderRepositoryTest {
+class OrderRepositoryTest extends AbstractRepositoryTest {
 
-    private static final LocalDateTime ORDER_DATE =
-            LocalDateTime.of(2026, Month.JANUARY,16,15,0
-            );
+    private static final LocalDateTime ORDER_DATE = LocalDateTime
+            .of(2026, Month.JANUARY, 16, 15, 0);
 
     private static final LocalDateTime VISIT_DATE_NEXT_DAY =
             LocalDateTime.of(

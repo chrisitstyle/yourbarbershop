@@ -13,8 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -39,11 +37,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Sql(
-        scripts = "/sql/order-stripe-retry-idempotency-cleanup.sql",
-        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD,
-        config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
-)
 class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
 
     private static final String USER_EMAIL = "johndoe@example.com";

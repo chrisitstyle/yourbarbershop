@@ -5,8 +5,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -25,10 +23,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-@Sql(scripts = "/sql/security-access-cleanup.sql",
-        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD,
-        config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
-)
+
 class SecurityAccessIntegrationTest extends BaseIntegrationTest {
 
     private static final String ADMIN_EMAIL = "admin@test.com";

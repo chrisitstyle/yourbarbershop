@@ -6,8 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -25,13 +23,9 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Sql(
-        scripts = "/sql/order-idempotency-cleanup.sql",
-        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD,
-        config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
-)
 class OrderIdempotencyIntegrationTest extends BaseIntegrationTest {
 
     private static final String USER_EMAIL = "johndoe@example.com";
@@ -301,20 +295,20 @@ class OrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     private void createSecondUserIfMissing() {
         jdbcTemplate.update(
                 """
-                INSERT INTO user (
-                    firstname,
-                    lastname,
-                    email,
-                    password,
-                    role
-                )
-                SELECT ?, ?, ?, ?, ?
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM user
-                    WHERE email = ?
-                )
-                """,
+                        INSERT INTO user (
+                            firstname,
+                            lastname,
+                            email,
+                            password,
+                            role
+                        )
+                        SELECT ?, ?, ?, ?, ?
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM user
+                            WHERE email = ?
+                        )
+                        """,
                 "Second",
                 "IdempotencyUser",
                 SECOND_USER_EMAIL,
@@ -344,13 +338,13 @@ class OrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     ) {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM user_order o
-                INNER JOIN user u
-                    ON u.id_user = o.id_user
-                WHERE u.email = ?
-                  AND o.visit_date = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM user_order o
+                        INNER JOIN user u
+                            ON u.id_user = o.id_user
+                        WHERE u.email = ?
+                          AND o.visit_date = ?
+                        """,
                 email,
                 Timestamp.valueOf(visitDate)
         );
@@ -362,15 +356,15 @@ class OrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     ) {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM payment p
-                INNER JOIN user_order o
-                    ON o.id_order = p.id_order
-                INNER JOIN user u
-                    ON u.id_user = o.id_user
-                WHERE u.email = ?
-                  AND o.visit_date = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM payment p
+                        INNER JOIN user_order o
+                            ON o.id_order = p.id_order
+                        INNER JOIN user u
+                            ON u.id_user = o.id_user
+                        WHERE u.email = ?
+                          AND o.visit_date = ?
+                        """,
                 email,
                 Timestamp.valueOf(visitDate)
         );
@@ -379,10 +373,10 @@ class OrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     private int countAppointmentSlots(LocalDateTime visitDate) {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM appointment_slot
-                WHERE visit_date = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM appointment_slot
+                        WHERE visit_date = ?
+                        """,
                 Timestamp.valueOf(visitDate)
         );
     }
@@ -390,10 +384,10 @@ class OrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     private int countIdempotencyRequests(String idempotencyKey) {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM idempotency_request
-                WHERE idempotency_key = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM idempotency_request
+                        WHERE idempotency_key = ?
+                        """,
                 idempotencyKey
         );
     }
@@ -403,11 +397,11 @@ class OrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     ) {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM idempotency_request
-                WHERE idempotency_key = ?
-                  AND status = 'COMPLETED'
-                """,
+                        SELECT COUNT(*)
+                        FROM idempotency_request
+                        WHERE idempotency_key = ?
+                          AND status = 'COMPLETED'
+                        """,
                 idempotencyKey
         );
     }

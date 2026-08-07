@@ -6,14 +6,25 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MySQLContainer;
 import pl.barbershopproject.barbershop.auth.captcha.CaptchaService;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("integration-test")
-public abstract class BaseIntegrationTest {
+@Sql(scripts = "/sql/integration-base-data.sql",
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD,
+        config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED))
+
+@Sql(scripts = "/sql/clear-database.sql",
+        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD,
+        config = @SqlConfig(
+                transactionMode = SqlConfig.TransactionMode.ISOLATED))
+@SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
+public abstract class BaseIntegrationTest extends BaseTestEnvironment {
 
     @MockitoBean
     private JavaMailSender javaMailSender;
@@ -22,28 +33,20 @@ public abstract class BaseIntegrationTest {
     protected CaptchaService captchaService;
 
     @SuppressWarnings("resource")
-    static final MySQLContainer<?> mysqlContainer = new MySQLContainer<>("mysql:8.0")
-            .withDatabaseName("barbershop-with-roles")
-            .withUsername("test")
-            .withPassword("test")
-            .withInitScript("barbershop-with-roles_dump_integration_tests.sql");
-
-    @SuppressWarnings("resource")
     static final GenericContainer<?> valkeyContainer = new GenericContainer<>("valkey/valkey:8")
-            .withExposedPorts(6379);
+                    .withExposedPorts(6379);
 
-    static {
-        mysqlContainer.start();
-        valkeyContainer.start();
-    }
+    static {valkeyContainer.start();}
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", mysqlContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", mysqlContainer::getUsername);
-        registry.add("spring.datasource.password", mysqlContainer::getPassword);
-
-        registry.add("spring.data.redis.host", valkeyContainer::getHost);
-        registry.add("spring.data.redis.port", () -> valkeyContainer.getMappedPort(6379));
+        registry.add(
+                "spring.data.redis.host",
+                valkeyContainer::getHost
+        );
+        registry.add(
+                "spring.data.redis.port",
+                () -> valkeyContainer.getMappedPort(6379)
+        );
     }
 }

@@ -64,8 +64,8 @@ jobs:
         run: chmod +x gradlew
 
       # 'check' compiles the application and runs the JUnit verification lifecycle.
-      # The repository's test resources activate the test profile and disable Flyway,
-      # so no production credentials or local .env file are required here.
+      # Database tests use MySQL Testcontainers and production Flyway migrations,
+      # so no external database or local .env file is required here.
       - name: Run backend checks
         working-directory: ./backend
         run: ./gradlew check --no-daemon --stacktrace

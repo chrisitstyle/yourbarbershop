@@ -6,8 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -23,13 +21,9 @@ import java.time.Month;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Sql(
-        scripts = "/sql/guest-order-idempotency-cleanup.sql",
-        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD,
-        config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
-)
 class GuestOrderIdempotencyIntegrationTest extends BaseIntegrationTest {
 
     private static final String REPLAY_IDEMPOTENCY_KEY =
@@ -181,12 +175,12 @@ class GuestOrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     private int countGuestOrderPayments() {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM payment p
-                INNER JOIN guest_order g
-                    ON g.id_guest_order = p.id_guest_order
-                WHERE g.email = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM payment p
+                        INNER JOIN guest_order g
+                            ON g.id_guest_order = p.id_guest_order
+                        WHERE g.email = ?
+                        """,
                 GUEST_EMAIL
         );
     }
@@ -201,10 +195,10 @@ class GuestOrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     private int countIdempotencyRequests(String idempotencyKey) {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM idempotency_request
-                WHERE idempotency_key = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM idempotency_request
+                        WHERE idempotency_key = ?
+                        """,
                 idempotencyKey
         );
     }
@@ -212,11 +206,11 @@ class GuestOrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     private int countCompletedIdempotencyRequests(String idempotencyKey) {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM idempotency_request
-                WHERE idempotency_key = ?
-                  AND status = 'COMPLETED'
-                """,
+                        SELECT COUNT(*)
+                        FROM idempotency_request
+                        WHERE idempotency_key = ?
+                          AND status = 'COMPLETED'
+                        """,
                 idempotencyKey
         );
     }
