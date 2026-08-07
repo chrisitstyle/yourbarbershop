@@ -17,7 +17,7 @@ The application provides comprehensive management tools:
 - **Photo Gallery** - Showcase barber portfolio and work examples stored in Supabase
 - **Password Recovery** - Secure password reset functionality
 - **Guest Orders** - Allow non-registered customers to book appointments
-- **Stripe Online Payments** - Support online card payments through Stripe Checkout with webhook-based payment confirmation
+- **Stripe Online Payments** - Support online card payments through Stripe Checkout with webhook-based payment confirmation and secure payment retry links
 - **Payment Management** - Store payment method, payment status, Stripe Checkout Session ID, Payment Intent ID, amount, currency, and paid timestamp in a dedicated `payment` table
 - **Email Notifications System** - Automated appointment confirmations sent directly to customers' email addresses
 - **Automated Database Migrations** - Robust schema management and versioning with **Flyway**.
@@ -216,6 +216,11 @@ STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_signing_secret
 FRONTEND_URL=http://localhost:3000
 STRIPE_FORWARD_URL=http://localhost:8080/stripe/webhook
+
+# Payment Retry Links
+PAYMENT_LINK_SECRET=generate-a-long-random-secret
+PAYMENT_LINK_VALIDITY_HOURS=24
+PAYMENT_LINK_URL=http://localhost:3000/payment
 ```
 
 > **Note**: `JWT_ACCESS_EXPIRATION_MINUTES` is optional. If it is not set, the backend uses the default short access-token lifetime. Refresh token settings are also optional: `REFRESH_TOKEN_DAYS` controls refresh token lifetime, while `REFRESH_COOKIE_SECURE` and `REFRESH_COOKIE_SAME_SITE` control the refresh cookie flags. For local HTTP development use `REFRESH_COOKIE_SECURE=false` and `REFRESH_COOKIE_SAME_SITE=Lax`. For HTTPS production deployments use `REFRESH_COOKIE_SECURE=true` and `REFRESH_COOKIE_SAME_SITE=None`.
@@ -259,10 +264,20 @@ stripe.webhook-secret=${STRIPE_WEBHOOK_SECRET}
 stripe.currency=pln
 stripe.success-url=${FRONTEND_URL:http://localhost:3000}?payment=success
 stripe.cancel-url=${FRONTEND_URL:http://localhost:3000}?payment=cancel
+
+# Payment retry link configuration
+payment.link-secret=${PAYMENT_LINK_SECRET}
+payment.link-url=${PAYMENT_LINK_URL:${FRONTEND_URL:http://localhost:3000}/payment}
+payment.link-validity-hours=${PAYMENT_LINK_VALIDITY_HOURS:24}
 ```
 
 > **Security Note**: Never commit `.env` files to version control. Make sure they are included in `.gitignore`.
 > Stripe secret keys (`sk_test_...`, `sk_live_...`) and webhook signing secrets (`whsec_...`) are sensitive and must only be used on the backend.
+
+> **Note**: `PAYMENT_LINK_SECRET` is required and is used to sign secure payment retry links.
+> `PAYMENT_LINK_VALIDITY_HOURS` is optional and defaults to `24`.
+> `PAYMENT_LINK_URL` is optional and defaults to `${FRONTEND_URL}/payment`.
+> Use a long, randomly generated value for `PAYMENT_LINK_SECRET` and never commit it to version control.
 
 ### Authentication features
 
@@ -334,6 +349,16 @@ Online payment flow:
 4. The frontend redirects the customer to Stripe Checkout.
 5. Stripe sends webhook events to `POST /stripe/webhook`.
 6. After `checkout.session.completed` or `payment_intent.succeeded`, the backend updates the payment status to `OPLACONA`, stores the Stripe Payment Intent ID, and sets `paid_at`.
+
+Payment retry flow:
+
+1. For online payments, the backend generates a signed, time-limited payment link.
+2. The link is sent to the customer by email after the order is created.
+3. The customer opens `/payment/{token}` and explicitly chooses to continue the payment.
+4. The backend validates the signed token and verifies the current order and payment state.
+5. If the existing Stripe Checkout Session is still open, its URL is reused.
+6. Invalid, expired, cancelled, or already paid payment links are rejected.
+7. Failed card attempts do not mark the entire payment as failed, allowing the customer to retry while the Checkout Session remains available.
 
 Local webhook listener:
 
@@ -450,6 +475,16 @@ GOOGLE_CLIENT_SECRET=google-client-secret
 ### Redis/Valkey ###
 VALKEY_HOST=valkey # (default for docker is valkey, default for springboot is localhost)
 VALKEY_PORT=6379 # (default both)
+
+# Payment Retry Links
+PAYMENT_LINK_SECRET=generate-a-long-random-secret
+PAYMENT_LINK_VALIDITY_HOURS=24
+PAYMENT_LINK_URL=http://localhost:3000/payment
+
+JWT_ACCESS_EXPIRATION_MINUTES=15
+REFRESH_TOKEN_DAYS=14
+REFRESH_COOKIE_SECURE=true
+REFRESH_COOKIE_SAME_SITE=None
 ```
 
 > **Note**: Passwordless email OTP login uses the configured mail provider to send one-time login codes and Valkey/Redis to store short-lived hashed codes, cooldowns, and attempt counters. Refresh tokens are persisted in MySQL as hashes and sent to the browser only as HttpOnly cookies.
