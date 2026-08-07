@@ -1,11 +1,13 @@
 import { useState } from "react";
 
 import { Alert, Button, Spinner } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { resolvePaymentCheckout } from "../api/paymentService";
 
 const PaymentLink = () => {
+  const { t } = useTranslation();
   const { token } = useParams();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +26,7 @@ const PaymentLink = () => {
       const checkoutUrl = response?.checkoutUrl;
 
       if (!checkoutUrl) {
-        throw new Error("Nie udało się uzyskać adresu płatności");
+        throw new Error(t("payment.checkoutUrlError"));
       }
 
       window.location.assign(checkoutUrl);
@@ -32,7 +34,7 @@ const PaymentLink = () => {
       setErrorMessage(
         error?.response?.data?.message ||
           error?.message ||
-          "Nie udało się przejść do płatności",
+          t("payment.checkoutRedirectError"),
       );
 
       setIsLoading(false);
@@ -40,16 +42,15 @@ const PaymentLink = () => {
   };
 
   return (
-    <div className="container my-5 py-5">
+    <div className="container py-5">
       <div className="row justify-content-center">
-        <div className="col-md-6">
-          <div className="card shadow-sm">
-            <div className="card-body p-4 text-center">
-              <h2 className="mb-3">Dokończ płatność</h2>
+        <div className="col-lg-7 col-xl-6">
+          <div className="card shadow-sm border-0">
+            <div className="card-body p-4 p-md-5 text-center">
+              <h1 className="h3 mb-3">{t("payment.retryTitle")}</h1>
 
               <p className="text-body-secondary mb-4">
-                Twoja rezerwacja oczekuje na płatność online. Kliknij poniżej,
-                aby bezpiecznie przejść do Stripe Checkout.
+                {t("payment.retryDescription")}
               </p>
 
               {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
@@ -68,10 +69,10 @@ const PaymentLink = () => {
                         className="me-2"
                         aria-hidden="true"
                       />
-                      Przekierowywanie...
+                      {t("payment.redirecting")}
                     </>
                   ) : (
-                    "Przejdź do płatności"
+                    t("payment.continuePayment")
                   )}
                 </Button>
 
@@ -81,7 +82,7 @@ const PaymentLink = () => {
                   variant="outline-secondary"
                   disabled={isLoading}
                 >
-                  Wróć na stronę główną
+                  {t("payment.goHome")}
                 </Button>
               </div>
             </div>
