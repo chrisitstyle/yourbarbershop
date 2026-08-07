@@ -3,7 +3,7 @@ package pl.barbershopproject.barbershop.integration.resetpassword;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import pl.barbershopproject.barbershop.integration.AbstractRepositoryTest;
 import pl.barbershopproject.barbershop.passwordreset.PasswordResetToken;
 import pl.barbershopproject.barbershop.passwordreset.PasswordResetTokenRepository;
 import pl.barbershopproject.barbershop.user.Role;
@@ -19,14 +19,11 @@ import static pl.barbershopproject.barbershop.utils.testentities.PasswordResetTo
 import static pl.barbershopproject.barbershop.utils.testentities.PasswordResetTokenTestEntities.sha256Hex;
 import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUser;
 
-@DataJpaTest
-class PasswordResetTokenRepositoryTest {
+class PasswordResetTokenRepositoryTest extends AbstractRepositoryTest {
 
-    private static final Instant VALID_EXPIRY_DATE =
-            Instant.parse("2030-01-01T10:00:00Z");
+    private static final Instant VALID_EXPIRY_DATE = Instant.parse("2030-01-01T10:00:00Z");
 
-    private static final Instant LATER_VALID_EXPIRY_DATE =
-            Instant.parse("2030-01-01T11:00:00Z");
+    private static final Instant LATER_VALID_EXPIRY_DATE = Instant.parse("2030-01-01T11:00:00Z");
 
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;

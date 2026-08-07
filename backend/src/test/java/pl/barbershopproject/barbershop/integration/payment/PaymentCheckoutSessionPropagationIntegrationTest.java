@@ -17,10 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD,
         config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
 )
-@Sql(scripts = "/sql/payment/checkout-session-propagation-cleanup.sql",
-        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD,
-        config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
-)
 class PaymentCheckoutSessionPropagationIntegrationTest extends BaseIntegrationTest {
 
     private static final long PAYMENT_ID = 900001L;
@@ -48,10 +44,10 @@ class PaymentCheckoutSessionPropagationIntegrationTest extends BaseIntegrationTe
 
         String persistedSessionId = jdbcTemplate.queryForObject(
                 """
-                SELECT stripe_checkout_session_id
-                FROM payment
-                WHERE id_payment = ?
-                """,
+                        SELECT stripe_checkout_session_id
+                        FROM payment
+                        WHERE id_payment = ?
+                        """,
                 String.class,
                 PAYMENT_ID
         );

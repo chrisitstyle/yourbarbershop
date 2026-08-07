@@ -4,7 +4,7 @@ import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import pl.barbershopproject.barbershop.integration.AbstractRepositoryTest;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
@@ -18,8 +18,7 @@ import static pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestE
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createBookedOffer;
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createUnsavedOffer;
 
-@DataJpaTest
-class GuestOrderRepositoryTest {
+class GuestOrderRepositoryTest extends AbstractRepositoryTest {
 
     @Autowired
     private GuestOrderRepository guestOrderRepository;
@@ -167,7 +166,7 @@ class GuestOrderRepositoryTest {
 
         GuestOrder secondGuestOrder = createGuestOrder(savedOffer, OrderStatus.ZREALIZOWANE);
 
-        guestOrderRepository.saveAllAndFlush(List.of(firstGuestOrder,secondGuestOrder)
+        guestOrderRepository.saveAllAndFlush(List.of(firstGuestOrder, secondGuestOrder)
         );
 
         entityManager.clear();
