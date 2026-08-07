@@ -53,7 +53,7 @@ INSERT INTO `user_order` (
     `booked_offer_price`,
     `order_date`,
     `visit_date`,
-    `status`
+    `order_status`
 ) VALUES
 (2, 1,  'dreadlocks', 25.50, '2026-04-01 09:00:00', '2026-04-05 10:00:00', 'ZREALIZOWANE'),
 (2, 3,  'Strzyżenie męskie klasyczne', 50.00, '2026-04-03 14:30:00', '2026-04-07 12:00:00', 'ZREALIZOWANE'),
@@ -76,7 +76,7 @@ INSERT INTO `user_order` (
     `booked_offer_price`,
     `order_date`,
     `visit_date`,
-    `status`
+    `order_status`
 ) VALUES
 (3, 2,  'Strzyżenie brody + gorący ręcznik', 45.00, '2026-04-10 10:00:00', '2026-04-20 12:00:00', 'ZREALIZOWANE'),
 (4, 3,  'Strzyżenie męskie klasyczne', 50.00, '2026-04-11 11:30:00', '2026-04-21 14:00:00', 'NOWE'),
@@ -106,7 +106,7 @@ INSERT INTO `guest_order` (
     `booked_offer_price`,
     `order_date`,
     `visit_date`,
-    `status`
+    `order_status`
 ) VALUES
 ('Sophia', 'Smith', '555-0101', 'sophia.s@example.com', 3, 'Strzyżenie męskie klasyczne', 50.00, '2026-04-10 08:00:00', '2026-04-20 09:00:00', 'ZREALIZOWANE'),
 ('Charlotte', 'Jones', '555-0102', 'char.j@example.com', 5, 'Strzyżenie długich włosów', 70.00, '2026-04-11 12:00:00', '2026-04-21 10:00:00', 'NOWE'),
@@ -131,11 +131,11 @@ SELECT DISTINCT `visit_date`
 FROM (
 SELECT `visit_date`
 FROM `user_order`
-WHERE `status` <> 'ANULOWANE'
+WHERE `order_status` <> 'ANULOWANE'
 
 UNION ALL
 
 SELECT `visit_date`
 FROM `guest_order`
-WHERE `status` <> 'ANULOWANE'
+WHERE `order_status` <> 'ANULOWANE'
 ) AS active_orders;

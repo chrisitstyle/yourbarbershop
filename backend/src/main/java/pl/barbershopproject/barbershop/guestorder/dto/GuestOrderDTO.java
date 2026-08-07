@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import pl.barbershopproject.barbershop.offer.dto.BookedOfferDTO;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 
@@ -35,12 +35,12 @@ public record GuestOrderDTO(
         LocalDateTime visitDate,
 
         @Schema(description = "Status of the reservation", example = "NOWE")
-        Status status,
+        OrderStatus orderStatus,
 
         @Schema(description = "Selected payment method", example = "KARTA_ONLINE")
         PaymentMethod paymentMethod,
 
-        @Schema(description = "Payment status", example = "COMPLETED")
+        @Schema(description = "Payment status", example = "OPLACONA")
         PaymentStatus paymentStatus
 ) {
 }

@@ -11,7 +11,7 @@ import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -74,7 +74,7 @@ class OrderRepositoryTest {
                 savedOffer,
                 ORDER_DATE,
                 VISIT_DATE_NEXT_DAY,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         Order savedOrder = orderRepository.saveAndFlush(order);
@@ -107,7 +107,7 @@ class OrderRepositoryTest {
                 savedOffer,
                 ORDER_DATE,
                 VISIT_DATE_TWO_DAYS_LATER,
-                Status.ZREALIZOWANE
+                OrderStatus.ZREALIZOWANE
         );
 
         Order savedOrder = orderRepository.saveAndFlush(order);
@@ -136,8 +136,8 @@ class OrderRepositoryTest {
         assertThat(result.getBookedOffer().getPrice())
                 .isEqualByComparingTo(savedOffer.getCost());
 
-        assertThat(result.getStatus())
-                .isEqualTo(Status.ZREALIZOWANE);
+        assertThat(result.getOrderStatus())
+                .isEqualTo(OrderStatus.ZREALIZOWANE);
     }
 
     @Test
@@ -151,7 +151,7 @@ class OrderRepositoryTest {
                 savedOffer,
                 ORDER_DATE,
                 VISIT_DATE_NEXT_DAY,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         order.setBookedOffer(createBookedOffer(
@@ -193,7 +193,7 @@ class OrderRepositoryTest {
                 savedOffer,
                 ORDER_DATE,
                 VISIT_DATE_NEXT_DAY,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         Order secondOrder = createOrder(
@@ -201,7 +201,7 @@ class OrderRepositoryTest {
                 savedOffer,
                 ORDER_DATE,
                 VISIT_DATE_TWO_DAYS_LATER,
-                Status.ANULOWANE
+                OrderStatus.ANULOWANE
         );
 
         orderRepository.saveAllAndFlush(
@@ -214,10 +214,10 @@ class OrderRepositoryTest {
 
         assertThat(orders)
                 .hasSize(2)
-                .extracting(Order::getStatus)
+                .extracting(Order::getOrderStatus)
                 .containsExactlyInAnyOrder(
-                        Status.NOWE,
-                        Status.ANULOWANE
+                        OrderStatus.NOWE,
+                        OrderStatus.ANULOWANE
                 );
 
         assertThat(orders)
@@ -243,7 +243,7 @@ class OrderRepositoryTest {
                 savedOffer,
                 ORDER_DATE,
                 VISIT_DATE_NEXT_DAY,
-                Status.ZREALIZOWANE
+                OrderStatus.ZREALIZOWANE
         );
 
         Order savedOrder = orderRepository.saveAndFlush(order);
@@ -261,7 +261,7 @@ class OrderRepositoryTest {
     }
 
     @Test
-    @DisplayName("findOrdersByStatus should return only orders with specific status")
+    @DisplayName("findOrdersByStatus should return only orders with specific orderStatus")
     void findOrdersByStatus_returnsOrdersWithGivenStatus() {
         User savedUser = saveUser();
         Offer savedOffer = saveOffer();
@@ -271,7 +271,7 @@ class OrderRepositoryTest {
                 savedOffer,
                 ORDER_DATE,
                 VISIT_DATE_NEXT_DAY,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         Order cancelledOrder = createOrder(
@@ -279,7 +279,7 @@ class OrderRepositoryTest {
                 savedOffer,
                 ORDER_DATE,
                 VISIT_DATE_TWO_DAYS_LATER,
-                Status.ANULOWANE
+                OrderStatus.ANULOWANE
         );
 
         orderRepository.saveAllAndFlush(
@@ -289,13 +289,13 @@ class OrderRepositoryTest {
         entityManager.clear();
 
         List<Order> newOrders =
-                orderRepository.findOrdersByStatus(Status.NOWE);
+                orderRepository.findOrdersByStatus(OrderStatus.NOWE);
 
         assertThat(newOrders)
                 .hasSize(1)
                 .allSatisfy(order -> {
-                    assertThat(order.getStatus())
-                            .isEqualTo(Status.NOWE);
+                    assertThat(order.getOrderStatus())
+                            .isEqualTo(OrderStatus.NOWE);
 
                     assertThat(order.getBookedOffer())
                             .isNotNull();

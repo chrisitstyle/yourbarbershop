@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import pl.barbershopproject.barbershop.offer.dto.BookedOfferDTO;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -26,13 +26,13 @@ public record OrderDTO(
         @Schema(description = "Scheduled visit date and time", example = "2026-08-15T10:00:00")
         LocalDateTime visitDate,
 
-        @Schema(description = "Current status of the reservation", example = "NOWE")
-        Status status,
+        @Schema(description = "Current orderStatus of the reservation", example = "NOWE")
+        OrderStatus orderStatus,
 
-        @Schema(description = "Selected payment method", example = "GOTOWKA_NA_MIEJSCU")
+        @Schema(description = "Selected payment method", example = "GOTOWKA")
         PaymentMethod paymentMethod,
 
-        @Schema(description = "Status of the payment", example = "NIE_WYMAGANA")
+        @Schema(description = "OrderStatus of the payment", example = "NIE_WYMAGANA")
         PaymentStatus paymentStatus
 ) implements Serializable {
 }

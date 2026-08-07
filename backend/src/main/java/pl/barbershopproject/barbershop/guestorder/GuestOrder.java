@@ -6,7 +6,7 @@ import lombok.*;
 import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.payment.Payment;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -46,10 +46,11 @@ public class GuestOrder implements Serializable {
     private LocalDateTime orderDate;
 
     @Column(name = "visit_date")
-
     private LocalDateTime visitDate;
+
     @Enumerated(EnumType.STRING)
-    private Status status;
+    @Column(name = "order_status")
+    private OrderStatus orderStatus;
 
     @OneToOne(mappedBy = "guestOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private Payment payment;

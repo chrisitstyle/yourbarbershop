@@ -18,12 +18,12 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Sql(
         scripts = "/sql/guest-order-idempotency-cleanup.sql",
@@ -42,10 +42,10 @@ class GuestOrderIdempotencyIntegrationTest extends BaseIntegrationTest {
             "guest.idempotency@example.com";
 
     private static final LocalDateTime VISIT_DATE =
-            LocalDateTime.of(2031, 1, 16, 12, 0);
+            LocalDateTime.of(2031, Month.JANUARY, 16, 12, 0);
 
     private static final LocalDateTime CHANGED_VISIT_DATE =
-            LocalDateTime.of(2031, 1, 16, 13, 0);
+            LocalDateTime.of(2031, Month.JANUARY, 16, 13, 0);
 
     private MockMvc mockMvc;
 

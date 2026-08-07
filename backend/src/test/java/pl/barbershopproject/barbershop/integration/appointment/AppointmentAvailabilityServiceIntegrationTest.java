@@ -8,7 +8,7 @@ import pl.barbershopproject.barbershop.appointment.AppointmentSlot;
 import pl.barbershopproject.barbershop.appointment.AppointmentSlotRepository;
 import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
 import pl.barbershopproject.barbershop.integration.BaseIntegrationTest;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -64,9 +64,9 @@ class AppointmentAvailabilityServiceIntegrationTest extends BaseIntegrationTest 
 
         appointmentAvailabilityService.updateSlotReservation(
                 currentVisitDate,
-                Status.NOWE,
+                OrderStatus.NOWE,
                 targetVisitDate,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         assertThat(appointmentSlotRepository.findAll())
@@ -83,9 +83,9 @@ class AppointmentAvailabilityServiceIntegrationTest extends BaseIntegrationTest 
 
         appointmentAvailabilityService.updateSlotReservation(
                 visitDate,
-                Status.NOWE,
+                OrderStatus.NOWE,
                 visitDate,
-                Status.ANULOWANE
+                OrderStatus.ANULOWANE
         );
 
         assertThat(appointmentSlotRepository.findAll()).isEmpty();
@@ -97,9 +97,9 @@ class AppointmentAvailabilityServiceIntegrationTest extends BaseIntegrationTest 
 
         appointmentAvailabilityService.updateSlotReservation(
                 visitDate,
-                Status.ANULOWANE,
+                OrderStatus.ANULOWANE,
                 visitDate,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         assertThat(appointmentSlotRepository.findAll())
@@ -115,9 +115,9 @@ class AppointmentAvailabilityServiceIntegrationTest extends BaseIntegrationTest 
 
         appointmentAvailabilityService.updateSlotReservation(
                 currentVisitDate,
-                Status.ANULOWANE,
+                OrderStatus.ANULOWANE,
                 targetVisitDate,
-                Status.ANULOWANE
+                OrderStatus.ANULOWANE
         );
 
         assertThat(appointmentSlotRepository.findAll()).isEmpty();
@@ -131,9 +131,9 @@ class AppointmentAvailabilityServiceIntegrationTest extends BaseIntegrationTest 
 
         appointmentAvailabilityService.updateSlotReservation(
                 visitDate,
-                Status.NOWE,
+                OrderStatus.NOWE,
                 visitDate,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         assertThat(appointmentSlotRepository.findAll())
@@ -148,7 +148,7 @@ class AppointmentAvailabilityServiceIntegrationTest extends BaseIntegrationTest 
 
         appointmentAvailabilityService.reserveSlot(visitDate);
 
-        appointmentAvailabilityService.releaseIfReserved(visitDate, Status.NOWE);
+        appointmentAvailabilityService.releaseIfReserved(visitDate, OrderStatus.NOWE);
 
         assertThat(appointmentSlotRepository.findAll()).isEmpty();
     }
@@ -157,7 +157,7 @@ class AppointmentAvailabilityServiceIntegrationTest extends BaseIntegrationTest 
     void shouldNotReleaseSlotIfStatusDoesNotReserveSlot() {
         LocalDateTime visitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
 
-        appointmentAvailabilityService.releaseIfReserved(visitDate, Status.ANULOWANE);
+        appointmentAvailabilityService.releaseIfReserved(visitDate, OrderStatus.ANULOWANE);
 
         assertThat(appointmentSlotRepository.findAll()).isEmpty();
     }

@@ -19,7 +19,7 @@ import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponse
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderUpdateRequestDTO;
 import pl.barbershopproject.barbershop.guestorder.mapper.GuestOrderDTOMapper;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 import pl.barbershopproject.barbershop.utils.TestClockConfig;
 import pl.barbershopproject.barbershop.utils.testentities.GuestOrderTestEntities;
 import tools.jackson.databind.ObjectMapper;
@@ -176,20 +176,20 @@ class GuestOrderControllerTest {
         // given
         GuestOrderDTO guestOrderDTO = GuestOrderTestEntities.createGuestOrderDTO();
 
-        Status statusParam = Status.NOWE;
+        OrderStatus orderStatusParam = OrderStatus.NOWE;
 
-        when(guestOrderService.getGuestOrdersByStatus(statusParam))
+        when(guestOrderService.getGuestOrdersByStatus(orderStatusParam))
                 .thenReturn(List.of(guestOrderDTO));
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/guestorders")
-                        .queryParam("status", "NOWE"))
+                        .queryParam("orderStatus", "NOWE"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.size()").value(1))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].status").value("NOWE"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].orderStatus").value("NOWE"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].paymentMethod").value("GOTOWKA"));
 
-        verify(guestOrderService).getGuestOrdersByStatus(statusParam);
+        verify(guestOrderService).getGuestOrdersByStatus(orderStatusParam);
     }
 
     @Test
@@ -266,8 +266,7 @@ class GuestOrderControllerTest {
     @Test
     void addGuestOrder_ReturnsBadRequest_WhenIllegalArgumentException() throws Exception {
         // given
-        GuestOrderCreationDTO invalidDto =
-                GuestOrderTestEntities.createGuestOrderCreationDTO();
+        GuestOrderCreationDTO invalidDto = GuestOrderTestEntities.createGuestOrderCreationDTO();
 
         when(guestOrderService.addGuestOrder(
                 any(GuestOrderCreationDTO.class),

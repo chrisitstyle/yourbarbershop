@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -70,9 +70,9 @@ class AppointmentAvailabilityServiceTest {
 
         appointmentAvailabilityService.updateSlotReservation(
                 currentVisitDate,
-                Status.ANULOWANE,
+                OrderStatus.ANULOWANE,
                 targetVisitDate,
-                Status.ANULOWANE
+                OrderStatus.ANULOWANE
         );
 
         verifyNoInteractions(appointmentSlotRepository);
@@ -84,9 +84,9 @@ class AppointmentAvailabilityServiceTest {
 
         appointmentAvailabilityService.updateSlotReservation(
                 LocalDateTime.of(2026, Month.APRIL, 20, 12, 0),
-                Status.ANULOWANE,
+                OrderStatus.ANULOWANE,
                 targetVisitDate,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         ArgumentCaptor<AppointmentSlot> slotCaptor = ArgumentCaptor.forClass(AppointmentSlot.class);
@@ -103,9 +103,9 @@ class AppointmentAvailabilityServiceTest {
 
         appointmentAvailabilityService.updateSlotReservation(
                 currentVisitDate,
-                Status.NOWE,
+                OrderStatus.NOWE,
                 currentVisitDate,
-                Status.ANULOWANE
+                OrderStatus.ANULOWANE
         );
 
         verify(appointmentSlotRepository).deleteByVisitDate(currentVisitDate);
@@ -119,9 +119,9 @@ class AppointmentAvailabilityServiceTest {
 
         appointmentAvailabilityService.updateSlotReservation(
                 currentVisitDate,
-                Status.NOWE,
+                OrderStatus.NOWE,
                 targetVisitDate,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         ArgumentCaptor<AppointmentSlot> slotCaptor = ArgumentCaptor.forClass(AppointmentSlot.class);
@@ -138,9 +138,9 @@ class AppointmentAvailabilityServiceTest {
 
         appointmentAvailabilityService.updateSlotReservation(
                 visitDate,
-                Status.NOWE,
+                OrderStatus.NOWE,
                 visitDate,
-                Status.NOWE
+                OrderStatus.NOWE
         );
 
         verifyNoInteractions(appointmentSlotRepository);
@@ -150,7 +150,7 @@ class AppointmentAvailabilityServiceTest {
     void shouldReleaseSlotIfStatusReservesSlot() {
         LocalDateTime visitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
 
-        appointmentAvailabilityService.releaseIfReserved(visitDate, Status.NOWE);
+        appointmentAvailabilityService.releaseIfReserved(visitDate, OrderStatus.NOWE);
 
         verify(appointmentSlotRepository).deleteByVisitDate(visitDate);
     }
@@ -159,7 +159,7 @@ class AppointmentAvailabilityServiceTest {
     void shouldNotReleaseSlotIfStatusDoesNotReserveSlot() {
         LocalDateTime visitDate = LocalDateTime.of(2026, Month.APRIL, 20, 12, 0);
 
-        appointmentAvailabilityService.releaseIfReserved(visitDate, Status.ANULOWANE);
+        appointmentAvailabilityService.releaseIfReserved(visitDate, OrderStatus.ANULOWANE);
 
         verifyNoInteractions(appointmentSlotRepository);
     }

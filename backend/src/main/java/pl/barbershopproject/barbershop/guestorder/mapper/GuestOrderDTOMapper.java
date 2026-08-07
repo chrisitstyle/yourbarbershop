@@ -36,7 +36,7 @@ public class GuestOrderDTOMapper {
                 bookedOfferDTO,
                 guestOrder.getOrderDate(),
                 guestOrder.getVisitDate(),
-                guestOrder.getStatus(),
+                guestOrder.getOrderStatus(),
                 paymentMethod,
                 paymentStatus
         );

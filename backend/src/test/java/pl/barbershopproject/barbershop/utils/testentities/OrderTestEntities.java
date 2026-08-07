@@ -10,7 +10,7 @@ import pl.barbershopproject.barbershop.order.dto.UserInOrderDTO;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.user.User;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -65,7 +65,7 @@ public final class OrderTestEntities {
                         17,
                         0
                 ))
-                .status(Status.NOWE);
+                .orderStatus(OrderStatus.NOWE);
     }
 
     /**
@@ -84,7 +84,7 @@ public final class OrderTestEntities {
      * @param offer offer associated with the order
      * @param orderDate date the order was placed
      * @param visitDate date the visit is scheduled
-     * @param status order status
+     * @param orderStatus order orderStatus
      * @return new Order instance
      */
     public static Order createOrder(
@@ -92,7 +92,7 @@ public final class OrderTestEntities {
             Offer offer,
             LocalDateTime orderDate,
             LocalDateTime visitDate,
-            Status status
+            OrderStatus orderStatus
     ) {
         return Order.builder()
                 .user(user)
@@ -100,7 +100,7 @@ public final class OrderTestEntities {
                 .bookedOffer(createBookedOffer(offer))
                 .orderDate(orderDate)
                 .visitDate(visitDate)
-                .status(status)
+                .orderStatus(orderStatus)
                 .build();
     }
 
@@ -150,7 +150,7 @@ public final class OrderTestEntities {
                         17,
                         0
                 ),
-                Status.NOWE,
+                OrderStatus.NOWE,
                 PaymentMethod.GOTOWKA,
                 PaymentStatus.NIE_WYMAGANA
         );
@@ -190,7 +190,7 @@ public final class OrderTestEntities {
                         12,
                         0
                 ),
-                Status.NOWE
+                OrderStatus.NOWE
         );
     }
 }

@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import pl.barbershopproject.barbershop.exception.AppointmentSlotTakenException;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -37,19 +37,19 @@ public class AppointmentAvailabilityService implements AppointmentReservation {
     }
 
     /**
-     * Updates the appointment slot reservation when the visit date or status changes.
+     * Updates the appointment slot reservation when the visit date or orderStatus changes.
      * Reserves a new slot, releases the old one, or does nothing if no slot change is required.
      */
     @Override
     @Transactional
     public void updateSlotReservation(
             LocalDateTime currentVisitDate,
-            Status currentStatus,
+            OrderStatus currentOrderStatus,
             LocalDateTime targetVisitDate,
-            Status targetStatus
+            OrderStatus targetOrderStatus
     ) {
-        boolean currentReservesSlot = reservesSlot(currentStatus);
-        boolean targetReservesSlot = reservesSlot(targetStatus);
+        boolean currentReservesSlot = reservesSlot(currentOrderStatus);
+        boolean targetReservesSlot = reservesSlot(targetOrderStatus);
 
         if (!currentReservesSlot && !targetReservesSlot) {
             return;
@@ -72,12 +72,12 @@ public class AppointmentAvailabilityService implements AppointmentReservation {
     }
 
     /**
-     * Releases the appointment slot if the given status represents an active reservation.
+     * Releases the appointment slot if the given orderStatus represents an active reservation.
      */
     @Override
     @Transactional
-    public void releaseIfReserved(LocalDateTime visitDate, Status status) {
-        if (reservesSlot(status)) {
+    public void releaseIfReserved(LocalDateTime visitDate, OrderStatus orderStatus) {
+        if (reservesSlot(orderStatus)) {
             release(visitDate);
         }
     }
@@ -92,10 +92,10 @@ public class AppointmentAvailabilityService implements AppointmentReservation {
     }
 
     /**
-     * Checks whether the given appointment status should reserve a slot.
+     * Checks whether the given appointment orderStatus should reserve a slot.
      */
-    private boolean reservesSlot(Status status) {
-        return status != Status.ANULOWANE;
+    private boolean reservesSlot(OrderStatus orderStatus) {
+        return orderStatus != OrderStatus.ANULOWANE;
     }
 
     /**

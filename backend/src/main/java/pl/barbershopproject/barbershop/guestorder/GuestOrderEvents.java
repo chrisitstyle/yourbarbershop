@@ -9,7 +9,7 @@ import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
 import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailSafely;
 
@@ -58,22 +58,22 @@ class GuestOrderEvents {
     /**
      * Publishes an audit event associated with a guest order update.
      *
-     * <p>The event contains the previous status, the current status and
+     * <p>The event contains the previous orderStatus, the current orderStatus and
      * the updated appointment date.</p>
      *
      * @param guestOrder updated guest order
-     * @param oldStatus status assigned to the guest order before the update
+     * @param oldOrderStatus orderStatus assigned to the guest order before the update
      */
-    void updated(GuestOrder guestOrder, Status oldStatus) {
+    void updated(GuestOrder guestOrder, OrderStatus oldOrderStatus) {
         eventPublisher.publishEvent(new AuditEvent(
                 getActorEmailSafely(),
                 ActionType.GUEST_ORDER_UPDATED,
                 EntityType.GUEST_ORDER,
                 String.valueOf(guestOrder.getIdGuestOrder()),
                 String.format(
-                        "{\"oldStatus\":\"%s\", \"newStatus\":\"%s\", \"visitDate\":\"%s\"}",
-                        oldStatus,
-                        guestOrder.getStatus(),
+                        "{\"oldOrderStatus\":\"%s\", \"newStatus\":\"%s\", \"visitDate\":\"%s\"}",
+                        oldOrderStatus,
+                        guestOrder.getOrderStatus(),
                         guestOrder.getVisitDate()
                 )
         ));

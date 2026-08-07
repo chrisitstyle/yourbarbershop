@@ -9,7 +9,7 @@ INSERT INTO guest_order (
     booked_offer_price,
     order_date,
     visit_date,
-    status
+    order_status
 )
 VALUES (
 900001,

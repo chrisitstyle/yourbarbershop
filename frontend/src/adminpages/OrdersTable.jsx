@@ -16,6 +16,7 @@ import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
 import { StatusBadge } from "../components/common/StatusBadge";
 import { useTranslation } from "react-i18next";
+import { getOrderModificationRules } from "./utils/orderModificationRules";
 import "./styles/AdminTables.css";
 
 const orderFieldsHeaders = [
@@ -27,7 +28,7 @@ const orderFieldsHeaders = [
   "admin.orders.cost",
   "admin.orders.orderDate",
   "admin.orders.visitDate",
-  "admin.orders.status",
+  "admin.orders.orderStatus",
   "admin.orders.paymentMethod",
   "admin.orders.paymentStatus",
 ];
@@ -41,13 +42,13 @@ const orderFields = [
   "offer.cost",
   "orderDate",
   "visitDate",
-  "status",
+  "orderStatus",
   "paymentMethod",
   "paymentStatus",
 ];
 
 // fields that render as a colored pill instead of plain text
-const BADGE_FIELDS = new Set(["status", "paymentStatus"]);
+const BADGE_FIELDS = new Set(["orderStatus", "paymentStatus"]);
 
 // map field -> header key so mobile cards can render a label per cell
 const fieldLabels = orderFields.reduce((acc, field, idx) => {
@@ -63,10 +64,17 @@ const OrderRow = memo(function OrderRow({
 }) {
   const { t } = useTranslation();
 
+  const { isTerminalOrder } = getOrderModificationRules(order);
+
+  const editButtonTitle = isTerminalOrder
+    ? t("admin.orderRules.terminal")
+    : t("admin.common.edit");
+
   return (
     <tr>
       {orderFields.map((field) => {
         const value = getNestedValue(order, field);
+
         return (
           <td
             key={field}
@@ -84,20 +92,28 @@ const OrderRow = memo(function OrderRow({
           </td>
         );
       })}
+
       <td className="align-middle text-center rtable-actions">
         <div className="d-flex justify-content-center">
+          <span title={editButtonTitle}>
+            <button
+              type="button"
+              className="btn btn-warning btn-sm me-2"
+              style={{ minWidth: "40px" }}
+              aria-label={editButtonTitle}
+              onClick={() => onEdit(order)}
+              disabled={isTerminalOrder}
+            >
+              <FontAwesomeIcon icon={faPen} />
+            </button>
+          </span>
+
           <button
-            className="btn btn-warning btn-sm me-2"
-            style={{ minWidth: "40px" }}
-            title={t("admin.common.edit")}
-            onClick={() => onEdit(order)}
-          >
-            <FontAwesomeIcon icon={faPen} />
-          </button>
-          <button
+            type="button"
             className="btn btn-danger btn-sm"
             style={{ minWidth: "40px" }}
             title={t("admin.common.delete")}
+            aria-label={t("admin.common.delete")}
             onClick={() => onDelete(order)}
             disabled={isDeleting}
           >
@@ -119,7 +135,7 @@ const OrdersTable = ({ onDeleteOrder }) => {
       order.user?.lastname || ""
     } ${order.user?.email || ""} ${order.offer?.kind || ""} ${
       order.offer?.cost || ""
-    } ${order.orderDate} ${order.visitDate} ${order.status} ${
+    } ${order.orderDate} ${order.visitDate} ${order.orderStatus} ${
       order.paymentMethod || ""
     } ${order.paymentStatus || ""}`;
 
@@ -157,11 +173,13 @@ const OrdersTable = ({ onDeleteOrder }) => {
   } = useDeleteModal(async (item) => {
     try {
       await onDeleteOrder(item.idOrder);
+
       toast.success(
         t("admin.messages.deleteOrderSuccess", "Pomyślnie usunięto wizytę."),
       );
     } catch (err) {
       console.error("error deleting order:", err);
+
       const errorMsg = err?.data || err?.message;
 
       if (typeof errorMsg === "string" && errorMsg) {
@@ -173,14 +191,25 @@ const OrdersTable = ({ onDeleteOrder }) => {
   }, refetch);
 
   const handleEditClick = (order) => {
+    const { isTerminalOrder } = getOrderModificationRules(order);
+
+    if (isTerminalOrder) {
+      toast.error(t("admin.orderRules.terminal"));
+      return;
+    }
+
     navigate(`/adminpanel/editorder/${order.idOrder}`, {
       state: { orderData: order },
     });
   };
 
-  if (isLoading) return <LoadingSpinner text={t("admin.orders.loading")} />;
+  if (isLoading) {
+    return <LoadingSpinner text={t("admin.orders.loading")} />;
+  }
 
-  if (error) return <Alert variant="danger">{error}</Alert>;
+  if (error) {
+    return <Alert variant="danger">{error}</Alert>;
+  }
 
   return (
     <div className="container my-5 py-4 text-center">

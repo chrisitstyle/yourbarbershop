@@ -3,7 +3,7 @@ package pl.barbershopproject.barbershop.utils;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Lifecycle status of an appointment reservation")
-public enum Status {
+public enum OrderStatus {
 
     @Schema(description = "New appointment created and scheduled")
     NOWE,

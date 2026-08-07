@@ -131,7 +131,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$[0].userOrders[0].idOrder").value(10L))
                 .andExpect(jsonPath("$[0].userOrders[0].offer.kind").value("test_kind"))
                 .andExpect(jsonPath("$[0].userOrders[0].offer.cost").value(120.0))
-                .andExpect(jsonPath("$[0].userOrders[0].status").value("NOWE"));
+                .andExpect(jsonPath("$[0].userOrders[0].orderStatus").value("NOWE"));
     }
 
 
@@ -148,7 +148,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.userOrders[0].idOrder").value(10L))
                 .andExpect(jsonPath("$.userOrders[0].offer.kind").value("test_kind"))
                 .andExpect(jsonPath("$.userOrders[0].offer.cost").value(120.0))
-                .andExpect(jsonPath("$.userOrders[0].status").value("NOWE"));
+                .andExpect(jsonPath("$.userOrders[0].orderStatus").value("NOWE"));
     }
 
     @Test

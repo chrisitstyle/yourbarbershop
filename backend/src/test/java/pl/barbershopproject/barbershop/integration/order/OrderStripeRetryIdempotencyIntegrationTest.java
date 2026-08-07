@@ -30,10 +30,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -203,12 +200,12 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
                                         .withHeader("Content-Type", "application/json")
                                         .withBody(
                                                 """
-                                                {
-                                                  "error": {
-                                                    "message": "Stripe temporary error"
-                                                  }
-                                                }
-                                                """
+                                                        {
+                                                          "error": {
+                                                            "message": "Stripe temporary error"
+                                                          }
+                                                        }
+                                                        """
                                         )
                         )
         );
@@ -223,11 +220,11 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
                                         .withHeader("Content-Type", "application/json")
                                         .withBody(
                                                 """
-                                                {
-                                                  "id": "cs_test_retry_123",
-                                                  "url": "https://checkout.stripe.com/c/pay/cs_test_retry_123"
-                                                }
-                                                """
+                                                        {
+                                                          "id": "cs_test_retry_123",
+                                                          "url": "https://checkout.stripe.com/c/pay/cs_test_retry_123"
+                                                        }
+                                                        """
                                         )
                         )
         );
@@ -268,13 +265,13 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     private Long existingOrderId() {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT o.id_order
-                FROM user_order o
-                INNER JOIN user u
-                    ON u.id_user = o.id_user
-                WHERE u.email = ?
-                  AND o.visit_date = ?
-                """,
+                        SELECT o.id_order
+                        FROM user_order o
+                        INNER JOIN user u
+                            ON u.id_user = o.id_user
+                        WHERE u.email = ?
+                          AND o.visit_date = ?
+                        """,
                 Long.class,
                 USER_EMAIL,
                 Timestamp.valueOf(VISIT_DATE)
@@ -284,15 +281,15 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     private Long paymentId() {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT p.id_payment
-                FROM payment p
-                INNER JOIN user_order o
-                    ON o.id_order = p.id_order
-                INNER JOIN user u
-                    ON u.id_user = o.id_user
-                WHERE u.email = ?
-                  AND o.visit_date = ?
-                """,
+                        SELECT p.id_payment
+                        FROM payment p
+                        INNER JOIN user_order o
+                            ON o.id_order = p.id_order
+                        INNER JOIN user u
+                            ON u.id_user = o.id_user
+                        WHERE u.email = ?
+                          AND o.visit_date = ?
+                        """,
                 Long.class,
                 USER_EMAIL,
                 Timestamp.valueOf(VISIT_DATE)
@@ -302,10 +299,10 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     private String paymentCheckoutSessionId(Long paymentId) {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT stripe_checkout_session_id
-                FROM payment
-                WHERE id_payment = ?
-                """,
+                        SELECT stripe_checkout_session_id
+                        FROM payment
+                        WHERE id_payment = ?
+                        """,
                 String.class,
                 paymentId
         );
@@ -314,10 +311,10 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     private String idempotencyCheckoutUrl() {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT checkout_url
-                FROM idempotency_request
-                WHERE idempotency_key = ?
-                """,
+                        SELECT checkout_url
+                        FROM idempotency_request
+                        WHERE idempotency_key = ?
+                        """,
                 String.class,
                 IDEMPOTENCY_KEY
         );
@@ -326,13 +323,13 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     private int countOrders() {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM user_order o
-                INNER JOIN user u
-                    ON u.id_user = o.id_user
-                WHERE u.email = ?
-                  AND o.visit_date = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM user_order o
+                        INNER JOIN user u
+                            ON u.id_user = o.id_user
+                        WHERE u.email = ?
+                          AND o.visit_date = ?
+                        """,
                 USER_EMAIL,
                 Timestamp.valueOf(VISIT_DATE)
         );
@@ -341,15 +338,15 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     private int countPayments() {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM payment p
-                INNER JOIN user_order o
-                    ON o.id_order = p.id_order
-                INNER JOIN user u
-                    ON u.id_user = o.id_user
-                WHERE u.email = ?
-                  AND o.visit_date = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM payment p
+                        INNER JOIN user_order o
+                            ON o.id_order = p.id_order
+                        INNER JOIN user u
+                            ON u.id_user = o.id_user
+                        WHERE u.email = ?
+                          AND o.visit_date = ?
+                        """,
                 USER_EMAIL,
                 Timestamp.valueOf(VISIT_DATE)
         );
@@ -358,10 +355,10 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     private int countAppointmentSlots() {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM appointment_slot
-                WHERE visit_date = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM appointment_slot
+                        WHERE visit_date = ?
+                        """,
                 Timestamp.valueOf(VISIT_DATE)
         );
     }
@@ -369,11 +366,11 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     private int countIdempotencyRequests(String requestStatus) {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM idempotency_request
-                WHERE idempotency_key = ?
-                  AND status = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM idempotency_request
+                        WHERE idempotency_key = ?
+                          AND status = ?
+                        """,
                 IDEMPOTENCY_KEY,
                 requestStatus
         );

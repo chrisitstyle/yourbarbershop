@@ -171,7 +171,7 @@ class OrderControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].idOrder").value(1L))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].user.firstname").value("John"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].offer.kind").value("test_kind"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].status").value("NOWE"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].orderStatus").value("NOWE"));
     }
 
     @Test
@@ -185,10 +185,10 @@ class OrderControllerTest {
 
         // when then
         mockMvc.perform(MockMvcRequestBuilders.get("/orders")
-                        .queryParam("status", statusParam))
+                        .queryParam("orderStatus", statusParam))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.size()").value(1))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].status").value("NOWE"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].orderStatus").value("NOWE"));
 
         verify(orderService).getOrdersByStatus(statusParam);
     }

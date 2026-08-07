@@ -27,7 +27,7 @@ public class UserOrdersDTOMapper {
                 order.getOffer(),
                 order.getOrderDate(),
                 order.getVisitDate(),
-                order.getStatus(),
+                order.getOrderStatus(),
                 paymentMethod,
                 paymentStatus
 //                order.getPayment().getPaymentMethod(),

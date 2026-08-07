@@ -8,7 +8,7 @@ import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.OrderRepository;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 import pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities;
 import pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities;
 import pl.barbershopproject.barbershop.utils.testentities.UserTestEntities;
@@ -145,7 +145,7 @@ class UserRepositoryTest {
         LocalDateTime orderDate = LocalDateTime.of(2026, Month.JANUARY, 16, 15, 0);
         LocalDateTime visitDate = LocalDateTime.of(2026, Month.JANUARY, 17, 17, 0);
 
-        Order order = OrderTestEntities.createOrder(user, offer, orderDate, visitDate, Status.NOWE);
+        Order order = OrderTestEntities.createOrder(user, offer, orderDate, visitDate, OrderStatus.NOWE);
 
         orderRepository.save(order);
 

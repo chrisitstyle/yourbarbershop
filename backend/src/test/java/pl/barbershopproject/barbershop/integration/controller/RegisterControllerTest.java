@@ -27,7 +27,7 @@ class RegisterControllerTest extends BaseIntegrationTest {
     private ObjectMapper objectMapper;
 
 
-    @DisplayName("Should register new user and return status OK")
+    @DisplayName("Should register new user and return orderStatus OK")
     @Test
     void shouldRegisterUser() throws Exception {
         // given

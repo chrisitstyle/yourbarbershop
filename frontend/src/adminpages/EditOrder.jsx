@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useAuth } from "../auth/AuthContextValue";
 import { updateOrder } from "../api/orderService";
 import useOffers from "../hooks/useOffers";
 import { format } from "date-fns-tz";
@@ -11,10 +10,20 @@ import { Alert } from "react-bootstrap";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useTranslation } from "react-i18next";
+import { getOrderModificationRules } from "./utils/orderModificationRules";
 import "./styles/AdminForms.css";
 
+const ORDER_STATUSES = ["NOWE", "ZREALIZOWANE", "ANULOWANE"];
+
+const getErrorMessage = (error) => {
+  if (typeof error?.data === "string") {
+    return error.data;
+  }
+
+  return error?.data?.message ?? error?.data?.error ?? error?.message ?? null;
+};
+
 const EditOrder = () => {
-  const { user } = useAuth();
   const location = useLocation();
   const orderData = location.state?.orderData;
   const navigate = useNavigate();
@@ -29,38 +38,52 @@ const EditOrder = () => {
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [selectedStatus, setSelectedStatus] = useState("");
 
+  const { isTerminalOrder, isOfferChangeBlocked, canComplete, canCancel } =
+    getOrderModificationRules(orderData);
+
+  const currentOfferId = orderData?.offer?.idOffer ?? null;
+
+  const currentOfferLabel = orderData?.offer
+    ? `${orderData.offer.kind} - ${orderData.offer.cost} ${t(
+        "common.currency",
+      )}`
+    : t("admin.common.none");
+
   useEffect(() => {
-    if (orderData) {
-      setSelectedOffer(orderData.offer?.idOffer || "");
-
-      if (orderData.visitDate) {
-        setSelectedDate(format(new Date(orderData.visitDate), "yyyy-MM-dd"));
-
-        // set time from orderdata
-        const hours = new Date(orderData.visitDate).getHours();
-        const minutes = new Date(orderData.visitDate).getMinutes();
-        setSelectedHour(hours);
-        setSelectedMinute(minutes);
-      }
-
-      setSelectedStatus(orderData.status || "");
+    if (!orderData) {
+      return;
     }
+
+    setSelectedOffer(orderData.offer?.idOffer || "");
+
+    if (orderData.visitDate) {
+      const visitDate = new Date(orderData.visitDate);
+
+      setSelectedDate(format(visitDate, "yyyy-MM-dd"));
+
+      // set time from orderdata
+      setSelectedHour(visitDate.getHours());
+      setSelectedMinute(visitDate.getMinutes());
+    }
+
+    setSelectedStatus(orderData.orderStatus || "");
   }, [orderData]);
 
-  const handleHourChange = (e) => {
-    setSelectedHour(Number.parseInt(e.target.value, 10));
+  const handleHourChange = (event) => {
+    setSelectedHour(Number.parseInt(event.target.value, 10));
   };
 
-  const handleMinuteChange = (e) => {
-    setSelectedMinute(Number.parseInt(e.target.value, 10));
+  const handleMinuteChange = (event) => {
+    setSelectedMinute(Number.parseInt(event.target.value, 10));
   };
 
   const updateOrderMutation = useMutation({
-    mutationFn: (updatedOrder) =>
-      updateOrder(orderData.idOrder, updatedOrder, user?.token),
+    mutationFn: (updatedOrder) => updateOrder(orderData.idOrder, updatedOrder),
     onSuccess: () => {
       // invalidate orders query cache so tables automatically update
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({
+        queryKey: ["orders"],
+      });
 
       toast.success(
         t("admin.messages.editSuccess", "Pomyślnie zapisano zmiany."),
@@ -70,27 +93,48 @@ const EditOrder = () => {
     },
     onError: (error) => {
       console.error("error updating order:", error);
-      const errorMsg = error?.data || error?.message;
 
-      if (typeof errorMsg === "string" && errorMsg) {
-        toast.error(errorMsg);
-      } else {
-        toast.error(t("admin.messages.editError"));
-      }
+      const errorMessage = getErrorMessage(error);
+
+      toast.error(errorMessage || t("admin.messages.editError"));
     },
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    if (isTerminalOrder) {
+      toast.error(t("admin.orderRules.terminal"));
+      return;
+    }
+
+    if (selectedStatus === "ZREALIZOWANE" && !canComplete) {
+      toast.error(t("admin.orderRules.cannotComplete"));
+      return;
+    }
+
+    if (selectedStatus === "ANULOWANE" && !canCancel) {
+      toast.error(t("admin.orderRules.cannotCancel"));
+      return;
+    }
+
+    const offerIdToSend = Number(
+      isOfferChangeBlocked ? currentOfferId : selectedOffer,
+    );
+
+    if (!Number.isInteger(offerIdToSend) || offerIdToSend <= 0) {
+      toast.error(t("admin.orderRules.missingOffer"));
+      return;
+    }
 
     updateOrderMutation.mutate({
-      idOffer: Number(selectedOffer),
+      idOffer: offerIdToSend,
       visitDate: formatSelectedDateTime(
         selectedDate,
         selectedHour,
         selectedMinute,
       ),
-      status: selectedStatus,
+      orderStatus: selectedStatus,
     });
   };
 
@@ -102,9 +146,11 @@ const EditOrder = () => {
     );
   }
 
-  if (isLoadingOffers) {
+  if (isLoadingOffers && !isOfferChangeBlocked) {
     return <LoadingSpinner text={t("admin.common.loadingData")} />;
   }
+
+  const isFormDisabled = isTerminalOrder || updateOrderMutation.isPending;
 
   return (
     <div className="container mt-4">
@@ -113,35 +159,66 @@ const EditOrder = () => {
           <div className="card card-accent-top">
             <div className="card-header py-3">
               <h5 className="card-title text-center mb-0 fw-semibold">
-                {t("admin.orders.editTitle", { id: orderData.idOrder })}
+                {t("admin.orders.editTitle", {
+                  id: orderData.idOrder,
+                })}
               </h5>
             </div>
 
             <div className="card-body p-4">
+              {isTerminalOrder && (
+                <Alert variant="warning">
+                  {t("admin.orderRules.terminal")}
+                </Alert>
+              )}
+
+              {!isTerminalOrder && isOfferChangeBlocked && (
+                <Alert variant="info">
+                  {t("admin.orderRules.offerLocked")}
+                </Alert>
+              )}
+
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label htmlFor="selectOffer" className="form-label">
                     {t("orders.selectService")}
                   </label>
 
-                  <select
-                    className="form-select"
-                    id="selectOffer"
-                    value={selectedOffer}
-                    onChange={(e) => setSelectedOffer(e.target.value)}
-                    required
-                    disabled={updateOrderMutation.isPending}
-                  >
-                    <option value="" disabled>
-                      {t("orders.selectService")}
-                    </option>
-
-                    {offers.map((offer) => (
-                      <option key={offer.idOffer} value={offer.idOffer}>
-                        {offer.kind} - {offer.cost} {t("common.currency")}
+                  {isOfferChangeBlocked ? (
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="selectOffer"
+                      value={currentOfferLabel}
+                      readOnly
+                      aria-describedby="selectOfferHelp"
+                    />
+                  ) : (
+                    <select
+                      className="form-select"
+                      id="selectOffer"
+                      value={selectedOffer}
+                      onChange={(event) => setSelectedOffer(event.target.value)}
+                      required
+                      disabled={isFormDisabled}
+                    >
+                      <option value="" disabled>
+                        {t("orders.selectService")}
                       </option>
-                    ))}
-                  </select>
+
+                      {offers.map((offer) => (
+                        <option key={offer.idOffer} value={offer.idOffer}>
+                          {offer.kind} - {offer.cost} {t("common.currency")}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {isOfferChangeBlocked && (
+                    <div id="selectOfferHelp" className="form-text">
+                      {t("admin.orderRules.offerLocked")}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-3">
@@ -154,9 +231,9 @@ const EditOrder = () => {
                     className="form-control"
                     id="selectdate"
                     value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                    onChange={(event) => setSelectedDate(event.target.value)}
                     required
-                    disabled={updateOrderMutation.isPending}
+                    disabled={isFormDisabled}
                   />
                 </div>
 
@@ -172,7 +249,7 @@ const EditOrder = () => {
                       value={selectedHour}
                       onChange={handleHourChange}
                       required
-                      disabled={updateOrderMutation.isPending}
+                      disabled={isFormDisabled}
                     >
                       {[...new Array(12).keys()].map((hour) => (
                         <option key={hour} value={hour + 8}>
@@ -189,7 +266,7 @@ const EditOrder = () => {
                       value={selectedMinute}
                       onChange={handleMinuteChange}
                       required
-                      disabled={updateOrderMutation.isPending}
+                      disabled={isFormDisabled}
                     >
                       {[...new Array(2).keys()].map((half) => (
                         <option key={half * 30} value={half * 30}>
@@ -209,16 +286,44 @@ const EditOrder = () => {
                     className="form-select"
                     id="selectstatus"
                     value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    onChange={(event) => setSelectedStatus(event.target.value)}
                     required
-                    disabled={updateOrderMutation.isPending}
+                    disabled={isFormDisabled}
                   >
-                    {["NOWE", "ZREALIZOWANE", "ANULOWANE"].map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
+                    {ORDER_STATUSES.map((status) => {
+                      const isCompletionBlocked =
+                        status === "ZREALIZOWANE" && !canComplete;
+
+                      const isCancellationBlocked =
+                        status === "ANULOWANE" && !canCancel;
+
+                      return (
+                        <option
+                          key={status}
+                          value={status}
+                          disabled={
+                            isCompletionBlocked || isCancellationBlocked
+                          }
+                        >
+                          {t(`enums.${status}`, {
+                            defaultValue: status,
+                          })}
+                        </option>
+                      );
+                    })}
                   </select>
+
+                  {!isTerminalOrder && !canComplete && (
+                    <div className="form-text">
+                      {t("admin.orderRules.cannotComplete")}
+                    </div>
+                  )}
+
+                  {!isTerminalOrder && !canCancel && (
+                    <div className="form-text">
+                      {t("admin.orderRules.cannotCancel")}
+                    </div>
+                  )}
                 </div>
 
                 <ButtonSpinner
@@ -227,6 +332,7 @@ const EditOrder = () => {
                   className="d-block mx-auto px-4"
                   loading={updateOrderMutation.isPending}
                   loadingText={t("admin.common.saving")}
+                  disabled={isFormDisabled}
                 >
                   {t("admin.common.save")}
                 </ButtonSpinner>

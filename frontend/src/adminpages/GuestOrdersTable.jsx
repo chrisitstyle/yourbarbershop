@@ -16,6 +16,7 @@ import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
 import { useTranslation } from "react-i18next";
 import { StatusBadge } from "../components/common/StatusBadge";
+import { getOrderModificationRules } from "./utils/orderModificationRules";
 import "./styles/AdminTables.css";
 
 const guestOrderFieldsHeaders = [
@@ -28,7 +29,7 @@ const guestOrderFieldsHeaders = [
   "admin.guestOrders.cost",
   "admin.guestOrders.orderDate",
   "admin.guestOrders.visitDate",
-  "admin.guestOrders.status",
+  "admin.guestOrders.orderStatus",
   "admin.guestOrders.paymentMethod",
   "admin.guestOrders.paymentStatus",
 ];
@@ -43,13 +44,13 @@ const guestOrderFields = [
   "offer.cost",
   "orderDate",
   "visitDate",
-  "status",
+  "orderStatus",
   "paymentMethod",
   "paymentStatus",
 ];
 
 // fields that render as colored status pills instead of plain text
-const STATUS_FIELDS = new Set(["status", "paymentStatus"]);
+const STATUS_FIELDS = new Set(["orderStatus", "paymentStatus"]);
 
 const GuestOrderRow = memo(function GuestOrderRow({
   guestOrder,
@@ -60,15 +61,22 @@ const GuestOrderRow = memo(function GuestOrderRow({
 }) {
   const { t } = useTranslation();
 
+  const { isTerminalOrder } = getOrderModificationRules(guestOrder);
+
+  const editButtonTitle = isTerminalOrder
+    ? t("admin.orderRules.terminal")
+    : t("admin.common.edit");
+
   return (
     <tr>
-      {guestOrderFields.map((field, i) => {
+      {guestOrderFields.map((field, index) => {
         const value = getNestedValue(guestOrder, field);
+
         return (
           <td
             key={field}
             className="align-middle text-center"
-            data-label={headerLabels[i]}
+            data-label={headerLabels[index]}
           >
             {STATUS_FIELDS.has(field) ? (
               <StatusBadge value={value} />
@@ -81,23 +89,31 @@ const GuestOrderRow = memo(function GuestOrderRow({
           </td>
         );
       })}
+
       <td
         className="align-middle text-center"
         data-label={t("admin.common.action")}
       >
         <div className="d-flex justify-content-center gap-2">
+          <span title={editButtonTitle}>
+            <button
+              type="button"
+              className="btn btn-warning btn-sm"
+              style={{ minWidth: "40px" }}
+              aria-label={editButtonTitle}
+              onClick={() => onEdit(guestOrder)}
+              disabled={isTerminalOrder}
+            >
+              <FontAwesomeIcon icon={faPen} />
+            </button>
+          </span>
+
           <button
-            className="btn btn-warning btn-sm"
-            style={{ minWidth: "40px" }}
-            title={t("admin.common.edit")}
-            onClick={() => onEdit(guestOrder)}
-          >
-            <FontAwesomeIcon icon={faPen} />
-          </button>
-          <button
+            type="button"
             className="btn btn-danger btn-sm"
             style={{ minWidth: "40px" }}
             title={t("admin.common.delete")}
+            aria-label={t("admin.common.delete")}
             onClick={() => onDelete(guestOrder)}
             disabled={isDeleting}
           >
@@ -121,7 +137,7 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
       order.lastname
     } ${order.email} ${order.offer?.kind || ""} ${order.offer?.cost || ""} ${
       order.phonenumber || ""
-    } ${order.orderDate} ${order.visitDate} ${order.status} ${
+    } ${order.orderDate} ${order.visitDate} ${order.orderStatus} ${
       order.paymentMethod || ""
     } ${order.paymentStatus || ""}`;
 
@@ -162,14 +178,11 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
   } = useDeleteModal(async (item) => {
     try {
       await onDeleteGuestOrder(item.idGuestOrder);
-      toast.success(
-        t(
-          "admin.messages.deleteGuestOrderSuccess",
-          "Pomyślnie usunięto wizytę gościa.",
-        ),
-      );
+
+      toast.success(t("admin.messages.deleteGuestOrderSuccess"));
     } catch (err) {
       console.error("error deleting guest order:", err);
+
       const errorMsg = err?.data || err?.message;
 
       if (typeof errorMsg === "string" && errorMsg) {
@@ -181,15 +194,25 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
   }, refetch);
 
   const handleEditClick = (guestOrder) => {
+    const { isTerminalOrder } = getOrderModificationRules(guestOrder);
+
+    if (isTerminalOrder) {
+      toast.error(t("admin.orderRules.terminal"));
+      return;
+    }
+
     navigate(`/adminpanel/editguestorder/${guestOrder.idGuestOrder}`, {
       state: { guestOrderData: guestOrder },
     });
   };
 
-  if (isLoading)
+  if (isLoading) {
     return <LoadingSpinner text={t("admin.guestOrders.loading")} />;
+  }
 
-  if (error) return <Alert variant="danger">{error}</Alert>;
+  if (error) {
+    return <Alert variant="danger">{error}</Alert>;
+  }
 
   return (
     <div className="container my-5 py-4 text-center">

@@ -8,7 +8,7 @@ import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityServic
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
-import pl.barbershopproject.barbershop.utils.Status;
+import pl.barbershopproject.barbershop.utils.OrderStatus;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -211,15 +211,15 @@ public class StripeWebhookService {
         if (payment.getOrder() != null) {
             Order order = payment.getOrder();
 
-            appointmentAvailabilityService.releaseIfReserved(order.getVisitDate(), order.getStatus());
-            order.setStatus(Status.ANULOWANE);
+            appointmentAvailabilityService.releaseIfReserved(order.getVisitDate(), order.getOrderStatus());
+            order.setOrderStatus(OrderStatus.ANULOWANE);
 
             return;
         }
 
         GuestOrder guestOrder = payment.getGuestOrder();
 
-        appointmentAvailabilityService.releaseIfReserved(guestOrder.getVisitDate(), guestOrder.getStatus());
-        guestOrder.setStatus(Status.ANULOWANE);
+        appointmentAvailabilityService.releaseIfReserved(guestOrder.getVisitDate(), guestOrder.getOrderStatus());
+        guestOrder.setOrderStatus(OrderStatus.ANULOWANE);
     }
 }

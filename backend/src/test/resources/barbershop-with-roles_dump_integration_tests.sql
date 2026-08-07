@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS `guest_order` (
   `booked_offer_price` decimal(10,2) NOT NULL,
   `order_date` datetime NOT NULL,
   `visit_date` datetime NOT NULL,
-  `status` varchar(255) NOT NULL,
+  `order_status` varchar(255) NOT NULL,
   PRIMARY KEY (`id_guest_order`),
   KEY `fk_guest_order_offer_idx` (`id_offer`),
   CONSTRAINT `fk_guest_order_offer` FOREIGN KEY (`id_offer`) REFERENCES `offer` (`id_offer`) ON DELETE SET NULL
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `user_order` (
   `booked_offer_price` decimal(10,2) NOT NULL,
   `order_date` datetime NOT NULL,
   `visit_date` datetime NOT NULL,
-  `status` varchar(255) NOT NULL,
+  `order_status` varchar(255) NOT NULL,
   PRIMARY KEY (`id_order`),
   KEY `fk_customer_order_user` (`id_user`),
   KEY `fk_customer_order_offer` (`id_offer`),
@@ -157,8 +157,8 @@ CREATE TABLE IF NOT EXISTS `payment` (
 CREATE UNIQUE INDEX `idx_user_email` ON `user` (`email`);
 CREATE UNIQUE INDEX `idx_token` ON `password_reset_token` (`token`);
 
-CREATE INDEX `idx_user_order_status` ON `user_order` (`status`);
-CREATE INDEX `idx_guest_order_status` ON `guest_order` (`status`);
+CREATE INDEX `idx_user_order_status` ON `user_order` (`order_status`);
+CREATE INDEX `idx_guest_order_status` ON `guest_order` (`order_status`);
 
 CREATE TABLE IF NOT EXISTS audit_logs (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
