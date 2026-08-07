@@ -432,6 +432,10 @@
     "continuePayment": "Continue to payment",
     "redirecting": "Redirecting...",
     "checkoutUrlError": "Could not retrieve the payment URL",
-    "checkoutRedirectError": "Could not continue to payment"
+    "checkoutRedirectError": "Could not continue to payment",
+    "errorTitle": "Payment error",
+    "secureCheckout": "Secure payment",
+    "retrySecurityInfo": "This link only provides access to the payment associated with your reservation.",
+    "stripeNotice": "Your payment will be securely processed by Stripe."
   }
 }

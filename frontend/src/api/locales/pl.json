@@ -432,6 +432,10 @@
     "continuePayment": "Przejdź do płatności",
     "redirecting": "Przekierowywanie...",
     "checkoutUrlError": "Nie udało się uzyskać adresu płatności",
-    "checkoutRedirectError": "Nie udało się przejść do płatności"
+    "checkoutRedirectError": "Nie udało się przejść do płatności",
+    "errorTitle": "Błąd płatności",
+    "secureCheckout": "Bezpieczna płatność",
+    "retrySecurityInfo": "Link umożliwia dostęp wyłącznie do płatności powiązanej z Twoją rezerwacją.",
+    "stripeNotice": "Płatność zostanie bezpiecznie obsłużona przez Stripe."
   }
 }
