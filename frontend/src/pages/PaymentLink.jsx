@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Button, Spinner } from "react-bootstrap";
+import { CreditCard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -62,7 +63,7 @@ const PaymentLink = () => {
                     payment-link-icon
                   "
                 >
-                  💳
+                  <CreditCard size={32} aria-hidden="true" />
                 </div>
 
                 <div className="mb-2">
