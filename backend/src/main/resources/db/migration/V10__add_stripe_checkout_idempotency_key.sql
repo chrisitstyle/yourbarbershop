@@ -1,3 +1,4 @@
+-- adds per-payment Stripe Checkout idempotency keys to avoid collisions when payment IDs are reused
 ALTER TABLE payment
     ADD COLUMN stripe_checkout_idempotency_key VARCHAR(64) DEFAULT NULL,
     ADD UNIQUE KEY uk_payment_stripe_checkout_idempotency_key
