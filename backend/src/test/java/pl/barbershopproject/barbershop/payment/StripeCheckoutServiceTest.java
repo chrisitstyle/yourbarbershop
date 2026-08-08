@@ -16,13 +16,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StripeCheckoutServiceTest {
 
-    private static final String IDEMPOTENCY_KEY = "checkout-session-payment-15";
+    private static final String STRIPE_CHECKOUT_IDEMPOTENCY_KEY = "550e8400-e29b-41d4-a716-446655440000";
+
+    private static final String IDEMPOTENCY_KEY = "checkout-session-payment-" + STRIPE_CHECKOUT_IDEMPOTENCY_KEY;
     private static final String CHECKOUT_ENDPOINT = "/v1/checkout/sessions";
     private static final String SECRET_KEY = "sk_test_123";
     private static final String SESSION_ID = "cs_test_123";
     private static final String CHECKOUT_URL = "https://checkout.stripe.com/c/pay/cs_test_123";
     private static final String SUCCESS_URL = "http://localhost:3000/payment/success";
     private static final String CANCEL_URL = "http://localhost:3000/payment/cancel";
+    private static final String SESSION_ENDPOINT = "/v1/checkout/sessions/" + SESSION_ID;
 
     private WireMockServer stripeMock;
     private StripeCheckoutService stripeCheckoutService;
@@ -37,8 +40,7 @@ class StripeCheckoutServiceTest {
                 stripeMock.baseUrl(),
                 SECRET_KEY,
                 SUCCESS_URL,
-                CANCEL_URL
-        );
+                CANCEL_URL);
     }
 
     @AfterEach
@@ -129,10 +131,10 @@ class StripeCheckoutServiceTest {
                 15L,
                 PaymentMethod.KARTA_ONLINE,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                STRIPE_CHECKOUT_IDEMPOTENCY_KEY,
                 new BigDecimal("80.00"),
                 "PLN",
-                "Strzyżenie"
-        );
+                "Strzyżenie");
     }
 
     private void stubSuccessfulCheckoutResponse() {
@@ -184,5 +186,111 @@ class StripeCheckoutServiceTest {
                         .withRequestBody(containing(
                                 "payment_intent_data%5Bmetadata%5D%5BpaymentId%5D=15"))
         );
+    }
+
+    @Test
+    void shouldRetrieveOpenStripeCheckoutSession() {
+        stripeMock.stubFor(
+                get(urlEqualTo(SESSION_ENDPOINT))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type",
+                                                "application/json"
+                                        )
+                                        .withBody(
+                                                """
+                                                {
+                                                  "id": "cs_test_123",
+                                                  "status": "open",
+                                                  "payment_status": "unpaid",
+                                                  "expires_at": 1786125600,
+                                                  "url": "https://checkout.stripe.com/c/pay/cs_test_123"
+                                                }
+                                                """
+                                        )
+                        )
+        );
+
+        StripeCheckoutSessionDetails result = stripeCheckoutService.retrieveCheckoutSession(
+                        SESSION_ID
+                );
+
+        assertThat(result.sessionId())
+                .isEqualTo(SESSION_ID);
+
+        assertThat(result.status())
+                .isEqualTo(StripeCheckoutSessionStatus.OPEN);
+
+        assertThat(result.paymentStatus())
+                .isEqualTo("unpaid");
+
+        assertThat(result.checkoutUrl())
+                .isEqualTo(CHECKOUT_URL);
+
+        assertThat(result.expiresAt())
+                .isEqualTo(
+                        java.time.Instant.ofEpochSecond(1786125600)
+                );
+
+        assertThat(result.isOpen()).isTrue();
+
+        stripeMock.verify(
+                getRequestedFor(urlEqualTo(SESSION_ENDPOINT))
+                        .withHeader(
+                                "Authorization",
+                                equalTo("Bearer " + SECRET_KEY)));
+    }
+
+    @Test
+    void shouldRetrieveExpiredStripeCheckoutSessionWithoutCheckoutUrl() {
+        stripeMock.stubFor(
+                get(urlEqualTo(SESSION_ENDPOINT))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type",
+                                                "application/json"
+                                        )
+                                        .withBody(
+                                                """
+                                                {
+                                                  "id": "cs_test_123",
+                                                  "status": "expired",
+                                                  "payment_status": "unpaid",
+                                                  "expires_at": 1786125600,
+                                                  "url": null
+                                                }
+                                                """
+                                        )
+                        )
+        );
+
+        StripeCheckoutSessionDetails result =
+                stripeCheckoutService.retrieveCheckoutSession(
+                        SESSION_ID
+                );
+
+        assertThat(result.status())
+                .isEqualTo(StripeCheckoutSessionStatus.EXPIRED);
+
+        assertThat(result.paymentStatus())
+                .isEqualTo("unpaid");
+
+        assertThat(result.checkoutUrl()).isNull();
+
+        assertThat(result.isOpen()).isFalse();
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCheckoutSessionIdIsBlank() {
+        assertThatThrownBy(() -> stripeCheckoutService.retrieveCheckoutSession("   ")
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(
+                        "Stripe Checkout session ID nie może być pusty"
+                );
     }
 }

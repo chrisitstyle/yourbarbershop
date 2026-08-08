@@ -9,9 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
-import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
-import pl.barbershopproject.barbershop.payment.PaymentMethod;
-import pl.barbershopproject.barbershop.payment.PaymentStatus;
+import pl.barbershopproject.barbershop.payment.*;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -39,6 +37,10 @@ class IdempotencyRequestServiceTest {
 
     private static final String CHECKOUT_URL = "https://checkout.stripe.com/c/pay/cs_test_123";
 
+    private static final Long PAYMENT_ID = 40L;
+
+    private static final String STRIPE_CHECKOUT_IDEMPOTENCY_KEY = "550e8400-e29b-41d4-a716-446655440000";
+
     private static final Clock CLOCK = Clock.fixed(
             Instant.parse("2026-08-04T10:00:00Z"),
             ZoneOffset.UTC
@@ -47,12 +49,16 @@ class IdempotencyRequestServiceTest {
     @Mock
     private IdempotencyRequestRepository idempotencyRequestRepository;
 
+    @Mock
+    private PaymentRepository paymentRepository;
+
     private IdempotencyRequestService idempotencyRequestService;
 
     @BeforeEach
     void setUp() {
         idempotencyRequestService = new IdempotencyRequestService(
                 idempotencyRequestRepository,
+                paymentRepository,
                 CLOCK);
     }
 
@@ -198,14 +204,14 @@ class IdempotencyRequestServiceTest {
 
         IdempotencyRequest request = createProcessingRequest(
                 REQUEST_HASH,
-                USER_ID
-        );
+                USER_ID);
 
         request.markResourceCreated(
                 ORDER_ID,
                 checkoutRequest,
-                CLOCK
-        );
+                CLOCK);
+
+        givenPaymentWithStripeCheckoutIdempotencyKey();
 
         when(idempotencyRequestRepository
                 .findByOperationAndIdempotencyKey(
@@ -235,19 +241,18 @@ class IdempotencyRequestServiceTest {
 
         IdempotencyRequest request = createProcessingRequest(
                 REQUEST_HASH,
-                USER_ID
-        );
+                USER_ID);
 
         request.markResourceCreated(
                 ORDER_ID,
                 checkoutRequest,
-                CLOCK
-        );
+                CLOCK);
+
+        givenPaymentWithStripeCheckoutIdempotencyKey();
 
         request.markCompleted(
                 CHECKOUT_URL,
-                CLOCK
-        );
+                CLOCK);
 
         when(idempotencyRequestRepository
                 .findByOperationAndIdempotencyKey(
@@ -256,12 +261,10 @@ class IdempotencyRequestServiceTest {
                 ))
                 .thenReturn(Optional.of(request));
 
-        IdempotencyRequestResult result =
-                idempotencyRequestService.startOrderCreation(
+        IdempotencyRequestResult result = idempotencyRequestService.startOrderCreation(
                         IDEMPOTENCY_KEY,
                         REQUEST_HASH,
-                        USER_ID
-                );
+                        USER_ID);
 
         assertThat(result.requestId()).isEqualTo(REQUEST_ID);
         assertThat(result.resolution())
@@ -396,9 +399,22 @@ class IdempotencyRequestServiceTest {
                 40L,
                 PaymentMethod.KARTA_ONLINE,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC,
+                STRIPE_CHECKOUT_IDEMPOTENCY_KEY,
                 new BigDecimal("80.00"),
                 "PLN",
                 "Strzyżenie"
         );
+    }
+
+    private void givenPaymentWithStripeCheckoutIdempotencyKey() {
+        Payment payment = Payment.builder()
+                .idPayment(PAYMENT_ID)
+                .stripeCheckoutIdempotencyKey(
+                        STRIPE_CHECKOUT_IDEMPOTENCY_KEY
+                )
+                .build();
+
+        when(paymentRepository.findById(PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
     }
 }

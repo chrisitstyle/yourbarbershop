@@ -9,6 +9,7 @@ import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.event.OnlinePaymentPendingEvent;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailSafely;
@@ -29,9 +30,9 @@ public class OrderEvents {
     /**
      * Publishes events associated with the creation of an order.
      *
-     * <p>An audit event is always published. An order confirmation event
-     * is additionally published when the selected payment method does not
-     * require an online card payment.</p>
+     * <p>An audit event is always published. For online card payments,
+     * an event requesting the customer to complete the payment is published.
+     * For offline payment methods, an order confirmation event is published.</p>
      *
      * @param order newly created order
      * @param payment payment associated with the order
@@ -50,9 +51,12 @@ public class OrderEvents {
                 )
         ));
 
-        if (payment.getPaymentMethod() != PaymentMethod.KARTA_ONLINE) {
-            publishConfirmation(order, payment);
+        if (payment.getPaymentMethod() == PaymentMethod.KARTA_ONLINE) {
+            publishOnlinePaymentPending(order, payment);
+            return;
         }
+
+        publishConfirmation(order, payment);
     }
 
     /**
@@ -112,6 +116,27 @@ public class OrderEvents {
                 order.getOffer().getCost(),
                 payment.getPaymentMethod(),
                 payment.getPaymentStatus()
+        ));
+    }
+
+    /**
+     * Publishes an event informing the registered customer that
+     * an online payment is awaiting completion.
+     *
+     * @param order order awaiting online payment
+     * @param payment payment associated with the order
+     */
+    private void publishOnlinePaymentPending(
+            Order order,
+            Payment payment
+    ) {
+        eventPublisher.publishEvent(new OnlinePaymentPendingEvent(
+                payment.getIdPayment(),
+                order.getUser().getEmail(),
+                order.getUser().getFirstname(),
+                order.getVisitDate(),
+                order.getBookedOffer().getName(),
+                order.getBookedOffer().getPrice()
         ));
     }
 }

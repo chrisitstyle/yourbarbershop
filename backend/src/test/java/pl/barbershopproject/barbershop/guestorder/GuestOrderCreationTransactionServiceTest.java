@@ -112,6 +112,7 @@ class GuestOrderCreationTransactionServiceTest {
                         PAYMENT_ID,
                         guestOrderCreationDTO.paymentMethod(),
                         PaymentStatus.NIE_WYMAGANA,
+                        null,
                         offer.getCost(),
                         "PLN",
                         offer.getKind());
@@ -522,6 +523,7 @@ class GuestOrderCreationTransactionServiceTest {
                 PAYMENT_ID,
                 guestOrderCreationDTO.paymentMethod(),
                 PaymentStatus.NIE_WYMAGANA,
+                null,
                 offer.getCost(),
                 "PLN",
                 offer.getKind()

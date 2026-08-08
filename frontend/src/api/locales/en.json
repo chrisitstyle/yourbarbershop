@@ -426,6 +426,19 @@
     "cancelMessage": "The payment process was cancelled. You can go back and try again.",
     "goToProfile": "Go to profile",
     "goHome": "Go back home",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "retryTitle": "Complete your payment",
+    "retryDescription": "Your reservation is awaiting online payment. Click below to securely continue to Stripe Checkout.",
+    "continuePayment": "Continue to payment",
+    "redirecting": "Redirecting...",
+    "checkoutUrlError": "Could not retrieve the payment URL",
+    "checkoutRedirectError": "Could not continue to payment",
+    "errorTitle": "Payment error",
+    "secureCheckout": "Secure payment",
+    "retrySecurityInfo": "This link only provides access to the payment associated with your reservation.",
+    "stripeNotice": "Your payment will be securely processed by Stripe.",
+    "paymentConfirmed": "Payment confirmed",
+    "successToastMessage": "Your payment has been successfully received.",
+    "successInfo": "You can now safely leave this page."
   }
 }

@@ -104,7 +104,8 @@ public class StripeWebhookService {
     }
 
     private void handlePaymentIntentFailed(JsonNode paymentIntent) {
-        Optional<Payment> optionalPayment = resolvePaymentFromPaymentIntent(paymentIntent);
+        Optional<Payment> optionalPayment =
+                resolvePaymentFromPaymentIntent(paymentIntent);
 
         optionalPayment.ifPresent(payment -> {
             if (payment.getPaymentStatus() == PaymentStatus.OPLACONA) {
@@ -113,7 +114,6 @@ public class StripeWebhookService {
 
             String paymentIntentId = paymentIntent.path("id").asString(null);
 
-            payment.setPaymentStatus(PaymentStatus.NIEUDANA);
             payment.setStripePaymentIntentId(paymentIntentId);
 
             paymentRepository.save(payment);

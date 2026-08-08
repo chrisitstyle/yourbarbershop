@@ -426,6 +426,19 @@
     "cancelMessage": "Proces płatności został przerwany. Możesz wrócić i spróbować ponownie.",
     "goToProfile": "Przejdź do profilu",
     "goHome": "Wróć na stronę główną",
-    "tryAgain": "Spróbuj ponownie"
+    "tryAgain": "Spróbuj ponownie",
+    "retryTitle": "Dokończ płatność",
+    "retryDescription": "Twoja rezerwacja oczekuje na płatność online. Kliknij poniżej, aby bezpiecznie przejść do Stripe Checkout.",
+    "continuePayment": "Przejdź do płatności",
+    "redirecting": "Przekierowywanie...",
+    "checkoutUrlError": "Nie udało się uzyskać adresu płatności",
+    "checkoutRedirectError": "Nie udało się przejść do płatności",
+    "errorTitle": "Błąd płatności",
+    "secureCheckout": "Bezpieczna płatność",
+    "retrySecurityInfo": "Link umożliwia dostęp wyłącznie do płatności powiązanej z Twoją rezerwacją.",
+    "stripeNotice": "Płatność zostanie bezpiecznie obsłużona przez Stripe.",
+    "paymentConfirmed": "Płatność potwierdzona",
+    "successToastMessage": "Twoja płatność została pomyślnie przyjęta.",
+    "successInfo": "Możesz teraz bezpiecznie opuścić tę stronę."
   }
 }

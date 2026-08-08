@@ -47,6 +47,7 @@ public class SecurityWebConfig {
                                         "/login/oauth2/**"
                                 ).permitAll()
                                 .requestMatchers(HttpMethod.POST, "/stripe/webhook").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/payments/link/**").permitAll()
                                 // Users endpoints
                                 .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
                                 .requestMatchers(HttpMethod.POST, "/users").hasAuthority(Role.ADMIN.toString())
