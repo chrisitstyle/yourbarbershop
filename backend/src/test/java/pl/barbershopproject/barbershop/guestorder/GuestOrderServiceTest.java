@@ -25,6 +25,7 @@ import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -182,9 +183,9 @@ class GuestOrderServiceTest {
                 .thenReturn(checkoutUrl);
 
         GuestOrderCreationResponseDTO result = guestOrderService.addGuestOrder(
-                        guestOrderCreationDTO,
-                        IDEMPOTENCY_KEY
-                );
+                guestOrderCreationDTO,
+                IDEMPOTENCY_KEY
+        );
 
         assertNotNull(result);
         assertEquals(1L, result.guestOrderId());
@@ -444,7 +445,7 @@ class GuestOrderServiceTest {
                 "987654321",
                 "updated@example.com",
                 targetOffer.getIdOffer(),
-                LocalDateTime.of(2026, 11, 10, 12, 0), OrderStatus.NOWE);
+                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
 
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
 
@@ -499,7 +500,7 @@ class GuestOrderServiceTest {
                 "987654321",
                 "updated@example.com",
                 changedCatalogOffer.getIdOffer(),
-                LocalDateTime.of(2026, 11, 10, 12, 0), OrderStatus.NOWE);
+                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
 
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
 
@@ -548,7 +549,7 @@ class GuestOrderServiceTest {
                 "987654321",
                 "updated@example.com",
                 targetOffer.getIdOffer(),
-                LocalDateTime.of(2026, 11, 10, 12, 0), OrderStatus.NOWE);
+                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
 
         when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
 
@@ -684,7 +685,7 @@ class GuestOrderServiceTest {
                         "987654321",
                         "updated@example.com",
                         offer.getIdOffer(),
-                        LocalDateTime.of(2026, 11, 10, 12, 0),
+                        LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0),
                         OrderStatus.ZREALIZOWANE
                 );
 

@@ -29,6 +29,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
@@ -57,7 +58,7 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     private static final String CHECKOUT_URL = "https://checkout.stripe.com/c/pay/cs_test_retry_123";
 
     private static final LocalDateTime VISIT_DATE =
-            LocalDateTime.of(2033, 1, 16, 12, 0);
+            LocalDateTime.of(2033, Month.JANUARY, 16, 12, 0);
 
     private static final WireMockServer stripeMock =
             new WireMockServer(options().dynamicPort());

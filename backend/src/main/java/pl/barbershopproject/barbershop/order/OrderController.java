@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.barbershopproject.barbershop.idempotency.ValidIdempotencyKey;
@@ -16,7 +15,6 @@ import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderUpdatedRequestDTO;
-import pl.barbershopproject.barbershop.user.User;
 
 import java.net.URI;
 import java.util.List;

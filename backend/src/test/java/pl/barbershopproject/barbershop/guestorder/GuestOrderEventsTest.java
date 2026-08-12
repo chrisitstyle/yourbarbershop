@@ -13,6 +13,7 @@ import pl.barbershopproject.barbershop.payment.event.OnlinePaymentPendingEvent;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.mockito.Mockito.*;
 
@@ -35,8 +36,7 @@ class GuestOrderEventsTest {
         GuestOrder guestOrder = mock(GuestOrder.class);
         Payment payment = mock(Payment.class);
 
-        LocalDateTime visitDate =
-                LocalDateTime.of(2030, 1, 11, 12, 0);
+        LocalDateTime visitDate = LocalDateTime.of(2030, Month.JANUARY, 11, 12, 0);
 
         when(offer.getKind()).thenReturn("Strzyżenie");
         when(offer.getCost()).thenReturn(BigDecimal.valueOf(80));
@@ -95,7 +95,7 @@ class GuestOrderEventsTest {
         when(guestOrder.getFirstname()).thenReturn("Jan");
         when(guestOrder.getOffer()).thenReturn(offer);
         when(guestOrder.getVisitDate()).thenReturn(
-                LocalDateTime.of(2030, 1, 11, 12, 0)
+                LocalDateTime.of(2030, Month.JANUARY, 11, 12, 0)
         );
 
         when(payment.getPaymentMethod())

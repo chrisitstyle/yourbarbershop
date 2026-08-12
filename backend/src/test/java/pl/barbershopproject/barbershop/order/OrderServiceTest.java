@@ -35,6 +35,7 @@ import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -517,7 +518,7 @@ class OrderServiceTest {
 
         OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
                 targetOffer.getIdOffer(),
-                LocalDateTime.of(2026, 11, 10, 12, 0), OrderStatus.NOWE);
+                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
@@ -562,7 +563,7 @@ class OrderServiceTest {
 
         OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
                 changedCatalogOffer.getIdOffer(),
-                LocalDateTime.of(2026, 11, 10, 12, 0), OrderStatus.NOWE);
+                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
@@ -597,7 +598,7 @@ class OrderServiceTest {
 
         OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
                 targetOffer.getIdOffer(),
-                LocalDateTime.of(2026, 11, 10, 12, 0), OrderStatus.NOWE);
+                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
@@ -700,7 +701,7 @@ class OrderServiceTest {
     void updateOrder_ShouldNotContinueWhenModificationPolicyRejectsUpdate() {
         OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
                         offer.getIdOffer(),
-                        LocalDateTime.of(2026, 11, 10, 12, 0),
+                        LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0),
                         OrderStatus.ZREALIZOWANE
                 );
 
