@@ -9,55 +9,37 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
 import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
 import pl.barbershopproject.barbershop.exception.MissingPaymentException;
-import pl.barbershopproject.barbershop.exception.OrderOfferChangeNotAllowedException;
-import pl.barbershopproject.barbershop.exception.OrderStatusChangeNotAllowedException;
 import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestHasher;
-import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestManager;
 import pl.barbershopproject.barbershop.offer.Offer;
-import pl.barbershopproject.barbershop.offer.OfferQuery;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderUpdatedRequestDTO;
 import pl.barbershopproject.barbershop.order.event.OrderEvents;
+import pl.barbershopproject.barbershop.ordercreation.OrderCreationCompletionHandler;
+import pl.barbershopproject.barbershop.orderupdate.OrderUpdateCoordinator;
+import pl.barbershopproject.barbershop.orderupdate.OrderUpdateResult;
 import pl.barbershopproject.barbershop.payment.Payment;
-import pl.barbershopproject.barbershop.payment.PaymentCheckout;
 import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
-import pl.barbershopproject.barbershop.payment.PaymentOfferUpdater;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.security.AuthenticatedUser;
 import pl.barbershopproject.barbershop.security.CurrentUserProvider;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
-import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createBookedOffer;
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.createOffer;
-import static pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities.createOrderCreationDTO;
-import static pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities.createOrderUpdatedRequestDTO;
-import static pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities.orderBuilder;
+import static pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities.*;
 import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createAuthenticatedUser;
 import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUser;
 
@@ -76,25 +58,17 @@ class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
     @Mock
-    private OfferQuery offerQuery;
-    @Mock
     private AppointmentReservation appointmentReservation;
-    @Mock
-    private PaymentOfferUpdater paymentOfferUpdater;
     @Mock
     private OrderEvents orderEvents;
     @Mock
     private OrderCreationTransaction orderCreationTransaction;
     @Mock
-    private PaymentCheckout paymentCheckout;
-    @Mock
-    private OrderModificationPolicy orderModificationPolicy;
-
-    @Mock
     private IdempotencyRequestHasher idempotencyRequestHasher;
     @Mock
-    private IdempotencyRequestManager idempotencyRequestManager;
-
+    private OrderUpdateCoordinator orderUpdateCoordinator;
+    @Mock
+    private OrderCreationCompletionHandler orderCreationCompletionHandler;
     @InjectMocks
     private OrderService orderService;
 
@@ -155,8 +129,8 @@ class OrderServiceTest {
                 REQUEST_HASH
         )).thenReturn(transactionResult);
 
-        when(paymentCheckout.createCheckoutIfRequired(checkoutRequest))
-                .thenReturn(null);
+        when(orderCreationCompletionHandler.complete(
+                transactionResult)).thenReturn(null);
 
         OrderCreationResponseDTO result = orderService.addOrder(
                 orderCreationDTO,
@@ -175,11 +149,8 @@ class OrderServiceTest {
                 REQUEST_HASH
         );
 
-        verify(paymentCheckout)
-                .createCheckoutIfRequired(checkoutRequest);
-
-        verify(idempotencyRequestManager)
-                .markCompleted(IDEMPOTENCY_REQUEST_ID, null);
+        verify(orderCreationCompletionHandler).complete(
+                transactionResult);
     }
 
     @Test
@@ -196,15 +167,13 @@ class OrderServiceTest {
                 offer.getKind()
         );
 
-        OrderCreationTransactionResult transactionResult =
-                OrderCreationTransactionResult.resourceCreated(
+        OrderCreationTransactionResult transactionResult = OrderCreationTransactionResult
+                .resourceCreated(
                         IDEMPOTENCY_REQUEST_ID,
                         1L,
-                        checkoutRequest
-                );
+                        checkoutRequest);
 
-        String checkoutUrl =
-                "https://checkout.stripe.com/c/pay/cs_test_123";
+        String checkoutUrl = "https://checkout.stripe.com/c/pay/cs_test_123";
 
         givenRequestHash(orderCreationDTO);
 
@@ -215,8 +184,8 @@ class OrderServiceTest {
                 REQUEST_HASH
         )).thenReturn(transactionResult);
 
-        when(paymentCheckout.createCheckoutIfRequired(checkoutRequest))
-                .thenReturn(checkoutUrl);
+        when(orderCreationCompletionHandler.complete(
+                transactionResult)).thenReturn(checkoutUrl);
 
         OrderCreationResponseDTO result = orderService.addOrder(
                 orderCreationDTO,
@@ -238,14 +207,8 @@ class OrderServiceTest {
                 REQUEST_HASH
         );
 
-        verify(paymentCheckout)
-                .createCheckoutIfRequired(checkoutRequest);
-
-        verify(idempotencyRequestManager)
-                .markCompleted(
-                        IDEMPOTENCY_REQUEST_ID,
-                        checkoutUrl
-                );
+        verify(orderCreationCompletionHandler).complete(
+                transactionResult);
     }
 
     @Test
@@ -287,10 +250,7 @@ class OrderServiceTest {
                 REQUEST_HASH
         );
 
-        verifyNoInteractions(
-                paymentCheckout,
-                idempotencyRequestManager
-        );
+        verifyNoInteractions(orderCreationCompletionHandler);
     }
 
     @Test
@@ -310,15 +270,11 @@ class OrderServiceTest {
 
         String checkoutUrl = "https://checkout.stripe.com/c/pay/cs_test_123";
 
-        OrderCreationTransactionResult transactionResult =
-                OrderCreationTransactionResult.completed(
-                        IDEMPOTENCY_REQUEST_ID,
-                        1L,
-                        checkoutRequest,
-                        checkoutUrl
-                );
-
-        givenRequestHash(orderCreationDTO);
+        OrderCreationTransactionResult transactionResult = OrderCreationTransactionResult.completed(
+                IDEMPOTENCY_REQUEST_ID,
+                1L,
+                checkoutRequest,
+                checkoutUrl);
 
         when(orderCreationTransaction.create(
                 orderCreationDTO,
@@ -326,6 +282,9 @@ class OrderServiceTest {
                 IDEMPOTENCY_KEY,
                 REQUEST_HASH
         )).thenReturn(transactionResult);
+
+        when(orderCreationCompletionHandler.complete(
+                transactionResult)).thenReturn(checkoutUrl);
 
         OrderCreationResponseDTO result = orderService.addOrder(
                 orderCreationDTO,
@@ -340,23 +299,17 @@ class OrderServiceTest {
         );
         assertEquals(checkoutUrl, result.checkoutUrl());
 
-        verifyNoInteractions(
-                paymentCheckout,
-                idempotencyRequestManager
-        );
+        verify(orderCreationCompletionHandler).complete(transactionResult);
     }
-
     @Test
     void addOrder_ShouldRejectRequest_WhenSameKeyIsStillProcessing() {
         OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
+
         givenAuthenticatedUser();
         givenRequestHash(orderCreationDTO);
-        OrderCreationTransactionResult transactionResult =
-                OrderCreationTransactionResult.inProgress(
-                        IDEMPOTENCY_REQUEST_ID
-                );
 
-        givenRequestHash(orderCreationDTO);
+        OrderCreationTransactionResult transactionResult = OrderCreationTransactionResult
+                .inProgress(IDEMPOTENCY_REQUEST_ID);
 
         when(orderCreationTransaction.create(
                 orderCreationDTO,
@@ -365,23 +318,30 @@ class OrderServiceTest {
                 REQUEST_HASH
         )).thenReturn(transactionResult);
 
+        when(orderCreationCompletionHandler.complete(
+                transactionResult
+        )).thenThrow(
+                new IdempotencyConflictException(
+                        "Żądanie z tym Idempotency-Key jest nadal przetwarzane"));
+
         IdempotencyConflictException exception = assertThrows(
-                IdempotencyConflictException.class,
-                () -> orderService.addOrder(
-                        orderCreationDTO,
-                        IDEMPOTENCY_KEY
-                )
-        );
+                        IdempotencyConflictException.class,
+                        () -> orderService.addOrder(
+                                orderCreationDTO,
+                                IDEMPOTENCY_KEY));
 
         assertEquals(
                 "Żądanie z tym Idempotency-Key jest nadal przetwarzane",
-                exception.getMessage()
-        );
+                exception.getMessage());
 
-        verifyNoInteractions(
-                paymentCheckout,
-                idempotencyRequestManager
-        );
+        verify(orderCreationTransaction).create(
+                orderCreationDTO,
+                user,
+                IDEMPOTENCY_KEY,
+                REQUEST_HASH);
+
+        verify(orderCreationCompletionHandler).complete(
+                transactionResult);
     }
 
     @Test
@@ -459,201 +419,115 @@ class OrderServiceTest {
     }
 
     @Test
-    void updateOrder_ShouldUpdateExistingOrderWithoutChangingOffer() {
+    void updateOrder_ShouldUpdateExistingOrder() {
         OrderUpdatedRequestDTO request = createOrderUpdatedRequestDTO();
 
-        LocalDateTime currentVisitDate = order.getVisitDate();
         OrderStatus currentOrderStatus = order.getOrderStatus();
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        OrderUpdateResult updateResult = new OrderUpdateResult(
+                currentOrderStatus,
+                request.orderStatus());
 
-        when(offerQuery.getRequiredOffer(request.idOffer())).thenReturn(offer);
+        when(orderRepository.findById(1L))
+                .thenReturn(Optional.of(order));
 
-        when(orderRepository.save(order)).thenReturn(order);
+        when(orderUpdateCoordinator.prepareUpdate(
+                order,
+                defaultPayment,
+                request.idOffer(),
+                request.visitDate(),
+                request.orderStatus()
+        )).thenReturn(updateResult);
+
+        when(orderRepository.save(order))
+                .thenReturn(order);
 
         OrderDTO result = orderService.updateOrder(request, 1L);
 
         assertNotNull(result);
 
-        assertAll(() -> assertEquals(order.getIdOrder(), result.idOrder()),
-                () -> assertEquals(user.getIdUser(), result.user().idUser()),
-                () -> assertEquals(user.getFirstname(), result.user().firstname()),
-                () -> assertEquals(user.getLastname(), result.user().lastname()),
-                () -> assertEquals(user.getEmail(), result.user().email()),
-                () -> assertEquals(offer.getIdOffer(), result.offer().idOffer()),
-                () -> assertEquals(order.getBookedOffer().getName(), result.offer().kind()),
-                () -> assertEquals(order.getBookedOffer().getPrice(), result.offer().cost()),
-                () -> assertEquals(request.visitDate(), result.visitDate()),
-                () -> assertEquals(request.orderStatus(), result.orderStatus()));
+        assertAll(
+                () -> assertEquals(
+                        order.getIdOrder(),
+                        result.idOrder()),
+                () -> assertEquals(
+                        user.getIdUser(),
+                        result.user().idUser()),
+                () -> assertEquals(
+                        request.visitDate(),
+                        result.visitDate()),
+                () -> assertEquals(
+                        request.orderStatus(),
+                        result.orderStatus()));
 
-        verify(offerQuery).getRequiredOffer(request.idOffer());
-
-        verifyNoInteractions(paymentOfferUpdater);
-
-        verify(appointmentReservation).updateSlotReservation(currentVisitDate,
-                currentOrderStatus, request.visitDate(), request.orderStatus());
+        verify(orderUpdateCoordinator).prepareUpdate(
+                order,
+                defaultPayment,
+                request.idOffer(),
+                request.visitDate(),
+                request.orderStatus());
 
         verify(orderRepository).save(order);
-        verify(orderEvents).updated(order, currentOrderStatus);
 
-        verify(orderModificationPolicy).validateUpdate(
-                currentOrderStatus,
-                request.orderStatus(),
-                defaultPayment);
+        verify(orderEvents).updated(
+                order,
+                currentOrderStatus);
     }
 
     @Test
-    void updateOrder_ShouldUpdateBookedOffer_WhenAssignedOfferChanges() {
-        Offer targetOffer = createOffer(2L, "Strzyżenie i broda", new BigDecimal("180.00"));
-
-        Payment payment = Payment
-                .builder()
-                .paymentMethod(PaymentMethod.GOTOWKA)
-                .paymentStatus(PaymentStatus.NIE_WYMAGANA).amount(offer.getCost()).build();
-
-        order.setPayment(payment);
-
-        LocalDateTime currentVisitDate = order.getVisitDate();
-        OrderStatus currentOrderStatus = order.getOrderStatus();
-
-        OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
-                targetOffer.getIdOffer(),
-                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
-
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-
-        when(offerQuery.getRequiredOffer(targetOffer.getIdOffer())).thenReturn(targetOffer);
-
-        when(orderRepository.save(order)).thenReturn(order);
-
-        OrderDTO result = orderService.updateOrder(request, 1L);
-
-        verify(paymentOfferUpdater).updateAfterOfferChange(payment, targetOffer);
-
-        verify(appointmentReservation).updateSlotReservation(currentVisitDate,
-                currentOrderStatus, request.visitDate(), request.orderStatus());
-
-        verify(orderModificationPolicy).validateUpdate(
-                currentOrderStatus,
-                request.orderStatus(),
-                payment);
-
-        assertSame(targetOffer, order.getOffer());
-        assertEquals(targetOffer.getKind(), order.getBookedOffer().getName());
-        assertEquals(0, targetOffer.getCost().compareTo(order.getBookedOffer().getPrice()));
-        assertEquals(targetOffer.getIdOffer(), result.offer().idOffer());
-        assertEquals(targetOffer.getKind(), result.offer().kind());
-        assertEquals(0, targetOffer.getCost().compareTo(result.offer().cost()));
-    }
-
-    @Test
-    void updateOrder_ShouldPreserveBookedOffer_WhenCatalogOfferDataChanged() {
-        Offer changedCatalogOffer = createOffer(offer.getIdOffer(), "Nowa nazwa katalogowa",
-                new BigDecimal("999.00"));
-
-        Payment payment = Payment.builder()
-                .paymentMethod(PaymentMethod.GOTOWKA)
-                .paymentStatus(PaymentStatus.NIE_WYMAGANA)
-                .amount(order.getBookedOffer().getPrice()).build();
-
-        order.setPayment(payment);
-
-        String bookedName = order.getBookedOffer().getName();
-        BigDecimal bookedPrice = order.getBookedOffer().getPrice();
-
-        OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
-                changedCatalogOffer.getIdOffer(),
-                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
-
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-
-        when(offerQuery.getRequiredOffer(changedCatalogOffer.getIdOffer())).thenReturn(changedCatalogOffer);
-
-        when(orderRepository.save(order)).thenReturn(order);
-
-        OrderDTO result = orderService.updateOrder(request, 1L);
-
-        verifyNoInteractions(paymentOfferUpdater);
-
-        assertSame(offer, order.getOffer());
-        assertEquals(bookedName, order.getBookedOffer().getName());
-        assertEquals(0, bookedPrice.compareTo(order.getBookedOffer().getPrice()));
-        assertEquals(0, bookedPrice.compareTo(payment.getAmount()));
-        assertEquals(bookedName, result.offer().kind());
-        assertEquals(0, bookedPrice.compareTo(result.offer().cost()));
-    }
-
-    @Test
-    void updateOrder_ShouldNotUpdateOrder_WhenPaymentRejectsOfferChange() {
-        Offer targetOffer = createOffer(2L, "Strzyżenie i broda", new BigDecimal("180.00"));
-
-        Payment payment = Payment
-                .builder()
-                .paymentMethod(PaymentMethod.KARTA_ONLINE)
-                .paymentStatus(PaymentStatus.OPLACONA)
-                .amount(offer.getCost())
-                .build();
-
-        order.setPayment(payment);
-
-        OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
-                targetOffer.getIdOffer(),
-                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
-
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-
-        when(offerQuery.getRequiredOffer(targetOffer.getIdOffer())).thenReturn(targetOffer);
-
-        doThrow(new OrderOfferChangeNotAllowedException("Nie można zmienić oferty w opłaconym zamówieniu"))
-                .when(paymentOfferUpdater).updateAfterOfferChange(payment, targetOffer);
-
-        OrderOfferChangeNotAllowedException exception = assertThrows(OrderOfferChangeNotAllowedException.class,
-                () -> orderService.updateOrder(request, 1L));
-
-        assertEquals("Nie można zmienić oferty w opłaconym zamówieniu", exception.getMessage());
-
-        verify(orderRepository, never()).save(any(Order.class));
-
-        verifyNoInteractions(appointmentReservation, orderEvents);
-
-        assertSame(offer, order.getOffer());
-        assertEquals(offer.getKind(), order.getBookedOffer().getName());
-        assertEquals(0, offer.getCost().compareTo(order.getBookedOffer().getPrice()));
-    }
-
-    @Test
-    void updateOrder_ShouldUseCurrentStatus_WhenUpdatedStatusIsNull() {
+    void updateOrder_ShouldUseTargetStatusReturnedByCoordinator() {
         LocalDateTime targetVisitDate = LocalDateTime.parse("2025-03-26T10:00:00");
 
-        OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(offer.getIdOffer(), targetVisitDate, null);
+        OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
+                offer.getIdOffer(),
+                targetVisitDate,
+                null);
 
-        LocalDateTime currentVisitDate = order.getVisitDate();
         OrderStatus currentOrderStatus = order.getOrderStatus();
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        OrderUpdateResult updateResult = new OrderUpdateResult(
+                currentOrderStatus,
+                currentOrderStatus);
 
-        when(offerQuery.getRequiredOffer(request.idOffer())).thenReturn(offer);
+        when(orderRepository.findById(1L))
+                .thenReturn(Optional.of(order));
 
-        when(orderRepository.save(order)).thenReturn(order);
+        when(orderUpdateCoordinator.prepareUpdate(
+                order,
+                defaultPayment,
+                request.idOffer(),
+                request.visitDate(),
+                null
+        )).thenReturn(updateResult);
 
-        OrderDTO result = orderService.updateOrder(request, 1L);
+        when(orderRepository.save(order))
+                .thenReturn(order);
+
+        OrderDTO result = orderService.updateOrder(
+                request,
+                1L);
 
         assertNotNull(result);
         assertEquals(targetVisitDate, result.visitDate());
-        assertEquals(currentOrderStatus, result.orderStatus());
+        assertEquals(
+                currentOrderStatus,
+                result.orderStatus()
+        );
 
-        verifyNoInteractions(paymentOfferUpdater);
-
-        verify(appointmentReservation).updateSlotReservation(
-                currentVisitDate, currentOrderStatus, targetVisitDate, currentOrderStatus);
+        verify(orderUpdateCoordinator).prepareUpdate(
+                order,
+                defaultPayment,
+                request.idOffer(),
+                request.visitDate(),
+                null
+        );
 
         verify(orderRepository).save(order);
-        verify(orderEvents).updated(order, currentOrderStatus);
 
-        verify(orderModificationPolicy).validateUpdate(
-                currentOrderStatus,
-                currentOrderStatus,
-                defaultPayment);
+        verify(orderEvents).updated(
+                order,
+                currentOrderStatus
+        );
     }
 
     @Test
@@ -669,87 +543,12 @@ class OrderServiceTest {
 
         verify(orderRepository).findById(2L);
 
-        verifyNoInteractions(orderModificationPolicy, offerQuery, appointmentReservation, paymentOfferUpdater,
+        verifyNoInteractions(
+                orderUpdateCoordinator,
+                appointmentReservation,
                 orderEvents);
 
         verify(orderRepository, never()).save(any(Order.class));
-    }
-
-    @Test
-    void updateOrder_ShouldThrowException_WhenOfferNotFound() {
-        OrderUpdatedRequestDTO request = createOrderUpdatedRequestDTO();
-
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-
-        when(offerQuery.getRequiredOffer(request.idOffer()))
-                .thenThrow(new NoSuchElementException("Oferta o ID: " + request.idOffer() + " nie istnieje"));
-
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
-                () -> orderService.updateOrder(request, 1L));
-
-        assertEquals("Oferta o ID: " + request.idOffer() + " nie istnieje", exception.getMessage());
-
-        verify(orderRepository).findById(1L);
-        verify(offerQuery).getRequiredOffer(request.idOffer());
-
-        verifyNoInteractions(appointmentReservation, paymentOfferUpdater, orderEvents);
-
-        verify(orderRepository, never()).save(any(Order.class));
-    }
-
-    @Test
-    void updateOrder_ShouldNotContinueWhenModificationPolicyRejectsUpdate() {
-        OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
-                        offer.getIdOffer(),
-                        LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0),
-                        OrderStatus.ZREALIZOWANE
-                );
-
-        OrderStatus currentOrderStatus = order.getOrderStatus();
-
-        doThrow(new OrderStatusChangeNotAllowedException(
-                "Nie można zrealizować zamówienia przed rozliczeniem płatności"
-        ))
-                .when(orderModificationPolicy)
-                .validateUpdate(
-                        currentOrderStatus,
-                        request.orderStatus(),
-                        defaultPayment
-                );
-
-        when(orderRepository.findById(1L))
-                .thenReturn(Optional.of(order));
-
-        OrderStatusChangeNotAllowedException exception = assertThrows(
-                        OrderStatusChangeNotAllowedException.class,
-                        () -> orderService.updateOrder(
-                                request,
-                                1L
-                        )
-                );
-
-        assertEquals(
-                "Nie można zrealizować zamówienia przed rozliczeniem płatności",
-                exception.getMessage()
-        );
-
-        verify(orderModificationPolicy).validateUpdate(
-                currentOrderStatus,
-                request.orderStatus(),
-                defaultPayment
-        );
-
-        verifyNoInteractions(
-                offerQuery,
-                paymentOfferUpdater,
-                appointmentReservation,
-                orderEvents
-        );
-
-        verify(
-                orderRepository,
-                never()
-        ).save(any(Order.class));
     }
 
     @Test
@@ -762,12 +561,12 @@ class OrderServiceTest {
                 .thenReturn(Optional.of(order));
 
         MissingPaymentException exception = assertThrows(
-                        MissingPaymentException.class,
-                        () -> orderService.updateOrder(
-                                request,
-                                1L
-                        )
-                );
+                MissingPaymentException.class,
+                () -> orderService.updateOrder(
+                        request,
+                        1L
+                )
+        );
 
         assertEquals(
                 "Zamówienie o ID 1 nie ma powiązanej płatności",
@@ -775,17 +574,12 @@ class OrderServiceTest {
         );
 
         verifyNoInteractions(
-                orderModificationPolicy,
-                offerQuery,
-                paymentOfferUpdater,
+                orderUpdateCoordinator,
                 appointmentReservation,
-                orderEvents
-        );
+                orderEvents);
 
-        verify(
-                orderRepository,
-                never()
-        ).save(any(Order.class));
+        verify(orderRepository,
+                never()).save(any(Order.class));
     }
 
     @Test
@@ -850,9 +644,7 @@ class OrderServiceTest {
 
         verifyNoInteractions(
                 orderCreationTransaction,
-                paymentCheckout,
-                idempotencyRequestManager
-        );
+                orderCreationCompletionHandler);
     }
 
     private void givenRequestHash(

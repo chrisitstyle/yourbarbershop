@@ -1,19 +1,22 @@
 package pl.barbershopproject.barbershop.guestorder;
 
 import pl.barbershopproject.barbershop.idempotency.IdempotencyResolution;
+import pl.barbershopproject.barbershop.ordercreation.CreationTransactionResult;
 import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 
 import java.util.Objects;
 
 /**
- * Contains the result of resolving or creating an idempotent guest order.
+ * Represents the result of resolving or creating an idempotent guest order,
+ * including the idempotency state and payment checkout data required to
+ * complete the creation flow.
  *
  * @param idempotencyRequestId identifier of the persisted idempotency request
- * @param resolution current resolution of the idempotent operation
- * @param guestOrderId identifier of the persisted guest order, if already created
- * @param checkoutRequest immutable payment data used to create or resume checkout
- * @param checkoutUrl checkout URL for online payment, or {@code null} when checkout
- *                    is not required or has not been completed yet
+ * @param resolution           current resolution of the idempotent operation
+ * @param guestOrderId         identifier of the persisted guest order, if already created
+ * @param checkoutRequest      immutable payment data used to create or resume checkout
+ * @param checkoutUrl          checkout URL for online payment, or {@code null} when checkout
+ *                             is not required or has not been completed yet
  */
 record GuestOrderCreationTransactionResult(
         Long idempotencyRequestId,
@@ -21,7 +24,7 @@ record GuestOrderCreationTransactionResult(
         Long guestOrderId,
         PaymentCheckoutRequest checkoutRequest,
         String checkoutUrl
-) {
+) implements CreationTransactionResult {
 
     GuestOrderCreationTransactionResult {
         Objects.requireNonNull(
@@ -99,13 +102,5 @@ record GuestOrderCreationTransactionResult(
                 checkoutRequest,
                 checkoutUrl
         );
-    }
-
-    boolean isInProgress() {
-        return resolution == IdempotencyResolution.IN_PROGRESS;
-    }
-
-    boolean isCompleted() {
-        return resolution == IdempotencyResolution.COMPLETED;
     }
 }

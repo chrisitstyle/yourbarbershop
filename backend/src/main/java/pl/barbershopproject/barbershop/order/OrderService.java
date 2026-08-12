@@ -10,29 +10,24 @@ import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
 import pl.barbershopproject.barbershop.exception.MissingPaymentException;
 import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestCollisionException;
 import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestHasher;
-import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestManager;
-import pl.barbershopproject.barbershop.offer.BookedOffer;
-import pl.barbershopproject.barbershop.offer.Offer;
-import pl.barbershopproject.barbershop.offer.OfferQuery;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderDTO;
 import pl.barbershopproject.barbershop.order.dto.OrderUpdatedRequestDTO;
 import pl.barbershopproject.barbershop.order.event.OrderEvents;
 import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
+import pl.barbershopproject.barbershop.ordercreation.OrderCreationCompletionHandler;
+import pl.barbershopproject.barbershop.orderupdate.OrderUpdateCoordinator;
+import pl.barbershopproject.barbershop.orderupdate.OrderUpdateResult;
 import pl.barbershopproject.barbershop.payment.Payment;
-import pl.barbershopproject.barbershop.payment.PaymentCheckout;
-import pl.barbershopproject.barbershop.payment.PaymentOfferUpdater;
 import pl.barbershopproject.barbershop.security.AuthenticatedUser;
 import pl.barbershopproject.barbershop.security.CurrentUserProvider;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
-import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -47,15 +42,12 @@ class OrderService {
     private final CurrentUserProvider currentUserProvider;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
-    private final OfferQuery offerQuery;
     private final AppointmentReservation appointmentReservation;
-    private final PaymentOfferUpdater paymentOfferUpdater;
-    private final OrderModificationPolicy orderModificationPolicy;
     private final OrderEvents orderEvents;
     private final OrderCreationTransaction orderCreationTransaction;
-    private final PaymentCheckout paymentCheckout;
     private final IdempotencyRequestHasher idempotencyRequestHasher;
-    private final IdempotencyRequestManager idempotencyRequestManager;
+    private final OrderUpdateCoordinator orderUpdateCoordinator;
+    private final OrderCreationCompletionHandler orderCreationCompletionHandler;
 
     @CacheEvict(value = "orders", allEntries = true)
     public OrderCreationResponseDTO addOrder(
@@ -65,8 +57,7 @@ class OrderService {
         AuthenticatedUser authenticatedUser = currentUserProvider.getCurrentUser();
 
         User user = userRepository.findById(authenticatedUser.userId())
-                .orElseThrow(() ->
-                        new NoSuchElementException(
+                .orElseThrow(() -> new NoSuchElementException(
                                 "Użytkownik o podanym ID nie istnieje"));
 
         String requestHash = idempotencyRequestHasher.hash(
@@ -80,35 +71,17 @@ class OrderService {
         );
 
         OrderCreationTransactionResult transactionResult = createOrderTransaction(
-                        orderCreationDTO,
-                        user,
-                        idempotencyKey,
-                        requestHash
-                );
-
-        if (transactionResult.isInProgress()) {
-            throw new IdempotencyConflictException(
-                    "Żądanie z tym Idempotency-Key jest nadal przetwarzane"
-            );
-        }
-
-        if (transactionResult.isCompleted()) {
-            return createResponse(
-                    transactionResult,
-                    transactionResult.checkoutUrl()
-            );
-        }
-
-        String checkoutUrl = paymentCheckout.createCheckoutIfRequired(
-                        transactionResult.checkoutRequest());
-
-        idempotencyRequestManager.markCompleted(
-                transactionResult.idempotencyRequestId(),
-                checkoutUrl);
+                orderCreationDTO,
+                user,
+                idempotencyKey,
+                requestHash
+        );
+        String checkoutUrl = orderCreationCompletionHandler.complete(transactionResult);
 
         return createResponse(
                 transactionResult,
                 checkoutUrl);
+
     }
 
     @Cacheable(value = "orders", key = "'all'")
@@ -149,44 +122,22 @@ class OrderService {
         Order order = getRequiredOrder(idOrder);
         Payment payment = getRequiredPayment(order);
 
-        OrderStatus currentOrderStatus = order.getOrderStatus();
-
-        OrderStatus targetOrderStatus = request.orderStatus() != null
-                        ? request.orderStatus()
-                        : currentOrderStatus;
-
-        orderModificationPolicy.validateUpdate(
-                currentOrderStatus,
-                targetOrderStatus,
-                payment
-        );
-
-        Offer targetOffer = offerQuery.getRequiredOffer(
-                request.idOffer()
-        );
-
-        updateOfferIfChanged(
+        OrderUpdateResult updateResult = orderUpdateCoordinator.prepareUpdate(
                 order,
-                targetOffer,
-                payment
-        );
-
-        appointmentReservation.updateSlotReservation(
-                order.getVisitDate(),
-                currentOrderStatus,
+                payment,
+                request.idOffer(),
                 request.visitDate(),
-                targetOrderStatus
+                request.orderStatus()
         );
 
         order.setVisitDate(request.visitDate());
-        order.setOrderStatus(targetOrderStatus);
+        order.setOrderStatus(updateResult.targetStatus());
 
         Order savedOrder = orderRepository.save(order);
 
         orderEvents.updated(
                 savedOrder,
-                currentOrderStatus
-        );
+                updateResult.currentStatus());
 
         return OrderDTOMapper.toDTO(savedOrder);
     }
@@ -205,50 +156,13 @@ class OrderService {
         orderEvents.deleted(idOrder);
     }
 
-    private void updateOfferIfChanged(
-            Order order,
-            Offer targetOffer,
-            Payment payment
-    ) {
-        if (!hasOfferChanged(
-                order.getOffer(),
-                targetOffer
-        )) {
-            return;
-        }
-
-        paymentOfferUpdater.updateAfterOfferChange(
-                payment,
-                targetOffer
-        );
-
-        order.setOffer(targetOffer);
-        order.setBookedOffer(
-                BookedOffer.from(targetOffer)
-        );
-    }
-
-    private boolean hasOfferChanged(
-            Offer currentOffer,
-            Offer targetOffer
-    ) {
-        if (currentOffer == null) {
-            return true;
-        }
-
-        return !Objects.equals(
-                currentOffer.getIdOffer(),
-                targetOffer.getIdOffer()
-        );
-    }
 
     private Order getRequiredOrder(Long idOrder) {
         return orderRepository.findById(idOrder)
                 .orElseThrow(() -> new NoSuchElementException(
                         ORDER_NOT_FOUND_MSG
                                 + idOrder
-                                + DOES_NOT_EXIST_MSG
-                ));
+                                + DOES_NOT_EXIST_MSG));
     }
 
     private Payment getRequiredPayment(Order order) {

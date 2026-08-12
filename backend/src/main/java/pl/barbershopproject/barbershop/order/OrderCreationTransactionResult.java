@@ -1,18 +1,22 @@
 package pl.barbershopproject.barbershop.order;
 
 import pl.barbershopproject.barbershop.idempotency.IdempotencyResolution;
+import pl.barbershopproject.barbershop.ordercreation.CreationTransactionResult;
 import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 
 import java.util.Objects;
 
 /**
- * Contains the result of resolving or creating an idempotent order.
+ * Represents the result of resolving or creating an idempotent order,
+ * including the idempotency state and payment checkout data required to
+ * complete the creation flow.
  *
  * @param idempotencyRequestId identifier of the persisted idempotency request
- * @param resolution current idempotency resolution
- * @param orderId identifier of the persisted order, if already created
- * @param checkoutRequest immutable payment data used to create or resume checkout
- * @param checkoutUrl previously created checkout URL, if the request is completed
+ * @param resolution           current resolution of the idempotent operation
+ * @param orderId              identifier of the persisted order, if already created
+ * @param checkoutRequest      immutable payment data used to create or resume checkout
+ * @param checkoutUrl          checkout URL for online payment, or {@code null} when checkout
+ *                             is not required or has not been completed yet
  */
 record OrderCreationTransactionResult(
         Long idempotencyRequestId,
@@ -20,7 +24,7 @@ record OrderCreationTransactionResult(
         Long orderId,
         PaymentCheckoutRequest checkoutRequest,
         String checkoutUrl
-) {
+) implements CreationTransactionResult {
 
     OrderCreationTransactionResult {
         Objects.requireNonNull(
@@ -98,13 +102,5 @@ record OrderCreationTransactionResult(
                 checkoutRequest,
                 checkoutUrl
         );
-    }
-
-    boolean isInProgress() {
-        return resolution == IdempotencyResolution.IN_PROGRESS;
-    }
-
-    boolean isCompleted() {
-        return resolution == IdempotencyResolution.COMPLETED;
     }
 }
