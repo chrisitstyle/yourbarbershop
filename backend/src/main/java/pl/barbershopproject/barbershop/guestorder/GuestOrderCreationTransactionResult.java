@@ -37,42 +37,35 @@ record GuestOrderCreationTransactionResult(
                 "Idempotency resolution nie może być null"
         );
 
-        if (resolution == IdempotencyResolution.IN_PROGRESS) {
-            if (guestOrderId != null
-                    || checkoutRequest != null
-                    || checkoutUrl != null) {
-                throw new IllegalArgumentException(
-                        "Przetwarzane żądanie nie może zawierać wyniku zamówienia"
-                );
-            }
-        } else if (resolution == IdempotencyResolution.RESOURCE_CREATED
-                || resolution == IdempotencyResolution.COMPLETED) {
-            Objects.requireNonNull(
+        switch (resolution) {
+            case IN_PROGRESS -> validateInProgress(
                     guestOrderId,
-                    "GuestOrder ID nie może być null"
-            );
-
-            Objects.requireNonNull(
                     checkoutRequest,
-                    "PaymentCheckoutRequest nie może być null"
-            );
-        } else {
-            throw new IllegalArgumentException(
-                    "Stan NEW nie może opuścić transakcji tworzenia zamówienia"
-            );
+                    checkoutUrl);
+
+            case RESOURCE_CREATED, COMPLETED -> {
+                Objects.requireNonNull(
+                        guestOrderId,
+                        "GuestOrder ID nie może być null");
+
+                Objects.requireNonNull(
+                        checkoutRequest,
+                        "PaymentCheckoutRequest nie może być null");
+            }
+
+            case NEW -> throw new IllegalArgumentException(
+                    "Stan NEW nie może opuścić transakcji tworzenia zamówienia");
         }
     }
 
     static GuestOrderCreationTransactionResult inProgress(
-            Long idempotencyRequestId
-    ) {
+            Long idempotencyRequestId) {
         return new GuestOrderCreationTransactionResult(
                 idempotencyRequestId,
                 IdempotencyResolution.IN_PROGRESS,
                 null,
                 null,
-                null
-        );
+                null);
     }
 
     static GuestOrderCreationTransactionResult resourceCreated(
@@ -102,5 +95,18 @@ record GuestOrderCreationTransactionResult(
                 checkoutRequest,
                 checkoutUrl
         );
+    }
+
+    private static void validateInProgress(
+            Long guestOrderId,
+            PaymentCheckoutRequest checkoutRequest,
+            String checkoutUrl) {
+        if (guestOrderId != null
+                || checkoutRequest != null
+                || checkoutUrl != null) {
+            throw new IllegalArgumentException(
+                    "Przetwarzane żądanie nie może zawierać wyniku zamówienia"
+            );
+        }
     }
 }

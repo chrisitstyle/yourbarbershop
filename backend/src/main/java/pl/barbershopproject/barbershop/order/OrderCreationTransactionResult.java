@@ -29,35 +29,30 @@ record OrderCreationTransactionResult(
     OrderCreationTransactionResult {
         Objects.requireNonNull(
                 idempotencyRequestId,
-                "Idempotency request ID nie może być null"
-        );
+                "Idempotency request ID nie może być null");
 
         Objects.requireNonNull(
                 resolution,
-                "Idempotency resolution nie może być null"
-        );
+                "Idempotency resolution nie może być null");
 
-        if (resolution == IdempotencyResolution.IN_PROGRESS) {
-            if (orderId != null
-                    || checkoutRequest != null
-                    || checkoutUrl != null) {
-                throw new IllegalArgumentException(
-                        "Przetwarzane żądanie nie może zawierać wyniku zamówienia"
+        switch (resolution) {
+            case IN_PROGRESS -> validateInProgress(
+                    orderId,
+                    checkoutRequest,
+                    checkoutUrl);
+
+            case RESOURCE_CREATED, COMPLETED -> {
+                Objects.requireNonNull(
+                        orderId,
+                        "Order ID nie może być null");
+
+                Objects.requireNonNull(
+                        checkoutRequest,
+                        "PaymentCheckoutRequest nie może być null"
                 );
             }
-        } else if (resolution == IdempotencyResolution.RESOURCE_CREATED
-                || resolution == IdempotencyResolution.COMPLETED) {
-            Objects.requireNonNull(
-                    orderId,
-                    "Order ID nie może być null"
-            );
 
-            Objects.requireNonNull(
-                    checkoutRequest,
-                    "PaymentCheckoutRequest nie może być null"
-            );
-        } else {
-            throw new IllegalArgumentException(
+            case NEW -> throw new IllegalArgumentException(
                     "Stan NEW nie może opuścić transakcji tworzenia zamówienia"
             );
         }
@@ -102,5 +97,18 @@ record OrderCreationTransactionResult(
                 checkoutRequest,
                 checkoutUrl
         );
+    }
+
+    private static void validateInProgress(
+            Long orderId,
+            PaymentCheckoutRequest checkoutRequest,
+            String checkoutUrl) {
+        if (orderId != null
+                || checkoutRequest != null
+                || checkoutUrl != null) {
+            throw new IllegalArgumentException(
+                    "Przetwarzane żądanie nie może zawierać wyniku zamówienia"
+            );
+        }
     }
 }
