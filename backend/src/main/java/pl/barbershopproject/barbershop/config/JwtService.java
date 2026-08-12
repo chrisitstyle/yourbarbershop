@@ -7,7 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import pl.barbershopproject.barbershop.user.User;
+import pl.barbershopproject.barbershop.security.UserPrincipal;
 
 import javax.crypto.SecretKey;
 import java.time.Instant;
@@ -29,15 +29,13 @@ public class JwtService {
     @Value("${JWT_ACCESS_EXPIRATION_MINUTES:15}")
     private long accessExpirationMinutes;
 
-    public String generateAccessToken(UserDetails userDetails) {
+    public String generateAccessToken(UserPrincipal principal) {
         Map<String, Object> extraClaims = new HashMap<>();
 
-        if (userDetails instanceof User user) {
-            extraClaims.put("role", user.getRole().toString());
-            extraClaims.put("id", user.getIdUser());
-        }
+        extraClaims.put("role", principal.role().toString());
+        extraClaims.put("id", principal.userId());
 
-        return generateAccessToken(extraClaims, userDetails);
+        return generateAccessToken(extraClaims, principal);
     }
 
     public String generateAccessToken(Map<String, Object> extraClaims, UserDetails userDetails) {
@@ -59,15 +57,13 @@ public class JwtService {
     }
 
     @Deprecated
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserPrincipal principal) {
         Map<String, Object> extraClaims = new HashMap<>();
 
-        if (userDetails instanceof User user) {
-            extraClaims.put("role", user.getRole().toString());
-            extraClaims.put("id", user.getIdUser());
-        }
+        extraClaims.put("role", principal.role().toString());
+        extraClaims.put("id", principal.userId());
 
-        return generateToken(extraClaims, userDetails);
+        return generateToken(extraClaims, principal);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {

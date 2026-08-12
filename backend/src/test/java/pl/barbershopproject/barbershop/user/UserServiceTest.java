@@ -1,6 +1,5 @@
 package pl.barbershopproject.barbershop.user;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,13 +8,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.SelfDeletionException;
+import pl.barbershopproject.barbershop.security.AuthenticatedUser;
+import pl.barbershopproject.barbershop.security.CurrentUserProvider;
 import pl.barbershopproject.barbershop.user.dto.UserCreationDTO;
 import pl.barbershopproject.barbershop.user.dto.UserDTO;
 import pl.barbershopproject.barbershop.user.dto.UserProfileUpdateRequestDTO;
@@ -35,17 +33,11 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
 
     @Mock
+    private CurrentUserProvider currentUserProvider;
+    @Mock
     private UserRepository userRepository;
-
-    @Mock
-    private Authentication authentication;
-
-    @Mock
-    private SecurityContext securityContext;
-
     @Mock
     private PasswordEncoder passwordEncoder;
-
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
@@ -65,13 +57,6 @@ class UserServiceTest {
         user.setPassword("encoded_password");
 
         userResponseDTO = UserTestEntities.createUserResponseDTO();
-
-        SecurityContextHolder.setContext(securityContext);
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -114,7 +99,7 @@ class UserServiceTest {
     @Test
     void getUserById_ShouldReturnUserDTO_WhenAuthorized() {
         User adminUser = UserTestEntities.createAdminUser();
-        mockSecurityContext(adminUser);
+        mockCurrentUser(adminUser);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
@@ -127,7 +112,7 @@ class UserServiceTest {
     @Test
     void getUserById_ThrowsException_WhenUnauthorized() {
         User regularUser = UserTestEntities.createRegularUser(2L);
-        mockSecurityContext(regularUser);
+        mockCurrentUser(regularUser);
 
         assertThrows(AccessDeniedException.class, () -> userService.getUserById(1L));
     }
@@ -135,7 +120,7 @@ class UserServiceTest {
     @Test
     void updateUser_ShouldUpdateFields_WhenValid() {
         UserProfileUpdateRequestDTO updatedUser = UserTestEntities.createUserProfileUpdateRequestDTO();
-        mockSecurityContext(user);
+        mockCurrentUser(user);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
@@ -163,7 +148,7 @@ class UserServiceTest {
         Long nonExistingId = 999L;
         UserProfileUpdateRequestDTO updatedUser = UserTestEntities.createUserProfileUpdateRequestDTO();
         User adminUser = UserTestEntities.createAdminUser();
-        mockSecurityContext(adminUser);
+        mockCurrentUser(adminUser);
 
         when(userRepository.findById(nonExistingId)).thenReturn(Optional.empty());
 
@@ -176,7 +161,7 @@ class UserServiceTest {
 
     @Test
     void deleteUserById_ShouldThrowException_WhenDeletingSelf() {
-        mockSecurityContext(user);
+        mockCurrentUser(user);
 
         assertThrows(
                 SelfDeletionException.class,
@@ -189,7 +174,7 @@ class UserServiceTest {
     @Test
     void deleteUserById_ShouldDelete_WhenAdminDeletesOtherUser() {
         User adminUser = UserTestEntities.createAdminUser();
-        mockSecurityContext(adminUser);
+        mockCurrentUser(adminUser);
 
         when(userRepository.existsById(2L)).thenReturn(true);
 
@@ -199,9 +184,10 @@ class UserServiceTest {
         verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 
-    private void mockSecurityContext(User user) {
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(user);
-        when(authentication.isAuthenticated()).thenReturn(true);
+    private void mockCurrentUser(User user) {
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(new AuthenticatedUser(
+                        user.getIdUser(),
+                        user.getRole()));
     }
 }

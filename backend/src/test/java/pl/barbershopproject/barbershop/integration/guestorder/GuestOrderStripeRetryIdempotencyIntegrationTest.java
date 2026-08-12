@@ -28,6 +28,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
@@ -58,11 +59,13 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
     private static final String CHECKOUT_URL = "https://checkout.stripe.com/c/pay/cs_test_guest_retry_123";
 
     private static final LocalDateTime VISIT_DATE = LocalDateTime
-            .of(2033, 1, 17, 12, 0);
+            .of(2033, Month.JANUARY, 17, 12, 0);
 
     private static final WireMockServer stripeMock = new WireMockServer(options().dynamicPort());
 
-    static {stripeMock.start();}
+    static {
+        stripeMock.start();
+    }
 
     private MockMvc mockMvc;
 
@@ -237,9 +240,9 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
                                                 + stripeCheckoutIdempotencyKey)));
 
         long paymentPendingEvents = applicationEvents.stream(
-                                OnlinePaymentPendingEvent.class
-                        )
-                        .count();
+                        OnlinePaymentPendingEvent.class
+                )
+                .count();
 
         assertThat(paymentPendingEvents).isEqualTo(1);
     }
@@ -281,11 +284,11 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
                                         )
                                         .withBody(
                                                 """
-                                                {
-                                                  "id": "cs_test_guest_retry_123",
-                                                  "url": "https://checkout.stripe.com/c/pay/cs_test_guest_retry_123"
-                                                }
-                                                """
+                                                        {
+                                                          "id": "cs_test_guest_retry_123",
+                                                          "url": "https://checkout.stripe.com/c/pay/cs_test_guest_retry_123"
+                                                        }
+                                                        """
                                         )
                         )
         );
@@ -332,11 +335,11 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
     private Long existingGuestOrderId() {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT id_guest_order
-                FROM guest_order
-                WHERE email = ?
-                  AND visit_date = ?
-                """,
+                        SELECT id_guest_order
+                        FROM guest_order
+                        WHERE email = ?
+                          AND visit_date = ?
+                        """,
                 Long.class,
                 GUEST_EMAIL,
                 Timestamp.valueOf(VISIT_DATE)
@@ -346,13 +349,13 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
     private Long paymentId() {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT p.id_payment
-                FROM payment p
-                INNER JOIN guest_order g
-                    ON g.id_guest_order = p.id_guest_order
-                WHERE g.email = ?
-                  AND g.visit_date = ?
-                """,
+                        SELECT p.id_payment
+                        FROM payment p
+                        INNER JOIN guest_order g
+                            ON g.id_guest_order = p.id_guest_order
+                        WHERE g.email = ?
+                          AND g.visit_date = ?
+                        """,
                 Long.class,
                 GUEST_EMAIL,
                 Timestamp.valueOf(VISIT_DATE)
@@ -364,10 +367,10 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
     ) {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT stripe_checkout_session_id
-                FROM payment
-                WHERE id_payment = ?
-                """,
+                        SELECT stripe_checkout_session_id
+                        FROM payment
+                        WHERE id_payment = ?
+                        """,
                 String.class,
                 paymentId
         );
@@ -376,10 +379,10 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
     private String idempotencyCheckoutUrl() {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT checkout_url
-                FROM idempotency_request
-                WHERE idempotency_key = ?
-                """,
+                        SELECT checkout_url
+                        FROM idempotency_request
+                        WHERE idempotency_key = ?
+                        """,
                 String.class,
                 IDEMPOTENCY_KEY
         );
@@ -388,11 +391,11 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
     private int countGuestOrders() {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM guest_order
-                WHERE email = ?
-                  AND visit_date = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM guest_order
+                        WHERE email = ?
+                          AND visit_date = ?
+                        """,
                 GUEST_EMAIL,
                 Timestamp.valueOf(VISIT_DATE)
         );
@@ -401,13 +404,13 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
     private int countPayments() {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM payment p
-                INNER JOIN guest_order g
-                    ON g.id_guest_order = p.id_guest_order
-                WHERE g.email = ?
-                  AND g.visit_date = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM payment p
+                        INNER JOIN guest_order g
+                            ON g.id_guest_order = p.id_guest_order
+                        WHERE g.email = ?
+                          AND g.visit_date = ?
+                        """,
                 GUEST_EMAIL,
                 Timestamp.valueOf(VISIT_DATE)
         );
@@ -416,10 +419,10 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
     private int countAppointmentSlots() {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM appointment_slot
-                WHERE visit_date = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM appointment_slot
+                        WHERE visit_date = ?
+                        """,
                 Timestamp.valueOf(VISIT_DATE)
         );
     }
@@ -429,11 +432,11 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
     ) {
         return count(
                 """
-                SELECT COUNT(*)
-                FROM idempotency_request
-                WHERE idempotency_key = ?
-                  AND status = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM idempotency_request
+                        WHERE idempotency_key = ?
+                          AND status = ?
+                        """,
                 IDEMPOTENCY_KEY,
                 requestStatus
         );
@@ -457,10 +460,10 @@ class GuestOrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTes
     ) {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT stripe_checkout_idempotency_key
-                FROM payment
-                WHERE id_payment = ?
-                """,
+                        SELECT stripe_checkout_idempotency_key
+                        FROM payment
+                        WHERE id_payment = ?
+                        """,
                 String.class,
                 paymentId
         );

@@ -24,7 +24,7 @@ public class AuditLogController {
 
     private final AuditLogService auditLogService;
 
-    @GetMapping("/admin/audit-logs")
+    @GetMapping()
     @Operation(
             summary = "Get all audit logs (Admin only)",
             description = "Retrieves a chronological list of all system audit events, newest first."

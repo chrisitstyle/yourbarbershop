@@ -3,6 +3,8 @@ package pl.barbershopproject.barbershop.utils.testentities;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
+import pl.barbershopproject.barbershop.security.AuthenticatedUser;
+import pl.barbershopproject.barbershop.security.UserPrincipal;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.dto.*;
@@ -168,5 +170,69 @@ public final class UserTestEntities {
                 PaymentMethod.GOTOWKA,
                 PaymentStatus.OCZEKUJE_NA_PLATNOSC
         );
+    }
+
+    /**
+     * Creates an authenticated user identity with default test data.
+     * <p>
+     * Defaults: userId=1L, role=USER.
+     *
+     * @return an AuthenticatedUser with default test data
+     */
+    public static AuthenticatedUser createAuthenticatedUser() {
+        return new AuthenticatedUser(
+                1L,
+                Role.USER
+        );
+    }
+
+    /**
+     * Creates an authenticated user identity with custom user ID and role.
+     *
+     * @param userId ID of the authenticated user
+     * @param role   role of the authenticated user
+     * @return an AuthenticatedUser with the provided ID and role
+     */
+    public static AuthenticatedUser createAuthenticatedUser(
+            long userId,
+            Role role
+    ) {
+        return new AuthenticatedUser(
+                userId,
+                role
+        );
+    }
+
+    /**
+     * Creates an authenticated admin identity with default test data.
+     * <p>
+     * Defaults: userId=99L, role=ADMIN.
+     *
+     * @return an AuthenticatedUser representing an admin
+     */
+    public static AuthenticatedUser createAuthenticatedAdmin() {
+        return new AuthenticatedUser(
+                99L,
+                Role.ADMIN
+        );
+    }
+
+    /**
+     * Creates a UserPrincipal from the provided User entity.
+     *
+     * @param user source user entity
+     * @return a security principal containing the user's authentication data
+     */
+    public static UserPrincipal createUserPrincipal(User user) {
+        return UserPrincipal.from(user);
+    }
+
+    /**
+     * Creates a UserPrincipal with default test user data.
+     *
+     * @return a UserPrincipal with default test data
+     */
+    public static UserPrincipal createUserPrincipal() {
+        return createUserPrincipal(createUser());
     }
 }

@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.barbershopproject.barbershop.auth.captcha.CaptchaService;
 import pl.barbershopproject.barbershop.auth.event.PasswordResetRequestedEvent;
@@ -17,6 +18,7 @@ import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.InvalidPasswordTokenException;
 import pl.barbershopproject.barbershop.passwordreset.PasswordResetToken;
 import pl.barbershopproject.barbershop.passwordreset.PasswordResetTokenRepository;
+import pl.barbershopproject.barbershop.security.UserPrincipal;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
@@ -30,8 +32,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static pl.barbershopproject.barbershop.utils.testentities.AuthTestEntities.*;
 import static pl.barbershopproject.barbershop.utils.testentities.PasswordResetTokenTestEntities.createPasswordResetToken;
-import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUser;
-import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.userBuilder;
+import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -73,14 +74,20 @@ class AuthServiceTest {
         // given
         RegisterRequest request = createRegisterRequest();
 
-        when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(request.password())).thenReturn(ENCODED_PASSWORD);
+        when(userRepository.findByEmail(request.email()))
+                .thenReturn(Optional.empty());
+
+        when(passwordEncoder.encode(request.password()))
+                .thenReturn(ENCODED_PASSWORD);
+
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User savedUser = invocation.getArgument(0);
             savedUser.setIdUser(1L);
             return savedUser;
         });
-        when(jwtService.generateAccessToken(any(User.class))).thenReturn(ACCESS_TOKEN);
+
+        when(jwtService.generateAccessToken(any(UserPrincipal.class)))
+                .thenReturn(ACCESS_TOKEN);
 
         // when
         AuthResult result = authService.register(request);
@@ -97,7 +104,9 @@ class AuthServiceTest {
         verify(captchaService).verify(request.captchaToken());
         verify(userRepository).findByEmail(request.email());
 
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        ArgumentCaptor<User> userCaptor =
+                ArgumentCaptor.forClass(User.class);
+
         verify(userRepository).save(userCaptor.capture());
 
         User savedUser = userCaptor.getValue();
@@ -118,7 +127,16 @@ class AuthServiceTest {
         assertEquals(request.email(), event.email());
         assertEquals(request.firstname(), event.firstname());
 
-        verify(jwtService).generateAccessToken(savedUser);
+        ArgumentCaptor<UserPrincipal> principalCaptor = ArgumentCaptor.forClass(UserPrincipal.class);
+
+        verify(jwtService).generateAccessToken(principalCaptor.capture());
+
+        UserPrincipal principal = principalCaptor.getValue();
+
+        assertEquals(savedUser.getIdUser(), principal.userId());
+        assertEquals(savedUser.getEmail(), principal.email());
+        assertEquals(savedUser.getPassword(), principal.passwordHash());
+        assertEquals(savedUser.getRole(), principal.role());
     }
 
     @Test
@@ -127,7 +145,8 @@ class AuthServiceTest {
         RegisterRequest request = createRegisterRequest();
         User existingUser = createUser();
 
-        when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByEmail(request.email()))
+                .thenReturn(Optional.of(existingUser));
 
         // when + then
         assertThrows(
@@ -140,7 +159,8 @@ class AuthServiceTest {
 
         verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));
-        verify(jwtService, never()).generateAccessToken(any(User.class));
+        verify(jwtService, never())
+                .generateAccessToken(any(UserPrincipal.class));
         verify(eventPublisher, never()).publishEvent(any(Object.class));
     }
 
@@ -155,8 +175,21 @@ class AuthServiceTest {
                 .role(Role.ADMIN)
                 .build();
 
-        when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
-        when(jwtService.generateAccessToken(user)).thenReturn(ACCESS_TOKEN);
+        UserPrincipal principal = createUserPrincipal(user);
+
+        Authentication authentication = mock(Authentication.class);
+
+        when(authentication.getPrincipal())
+                .thenReturn(principal);
+
+        when(authenticationManager.authenticate(any()))
+                .thenReturn(authentication);
+
+        when(userRepository.findById(principal.userId()))
+                .thenReturn(Optional.of(user));
+
+        when(jwtService.generateAccessToken(principal))
+                .thenReturn(ACCESS_TOKEN);
 
         // when
         AuthResult result = authService.authenticate(request);
@@ -167,13 +200,15 @@ class AuthServiceTest {
         assertEquals(7L, result.user().getIdUser());
         assertEquals(Role.ADMIN, result.user().getRole());
 
-        verify(authenticationManager).authenticate(argThat(authentication ->
-                request.email().equals(authentication.getPrincipal())
-                        && request.password().equals(authentication.getCredentials())
-        ));
+        verify(authenticationManager).authenticate(
+                argThat(authenticationToken ->
+                        request.email().equals(authenticationToken.getPrincipal())
+                                && request.password().equals(authenticationToken.getCredentials())
+                )
+        );
 
-        verify(userRepository).findByEmail(request.email());
-        verify(jwtService).generateAccessToken(user);
+        verify(userRepository).findById(principal.userId());
+        verify(jwtService).generateAccessToken(principal);
     }
 
     @Test

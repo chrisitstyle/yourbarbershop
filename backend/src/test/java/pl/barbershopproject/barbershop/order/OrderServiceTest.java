@@ -26,12 +26,16 @@ import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentOfferUpdater;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
+import pl.barbershopproject.barbershop.security.AuthenticatedUser;
+import pl.barbershopproject.barbershop.security.CurrentUserProvider;
 import pl.barbershopproject.barbershop.user.User;
+import pl.barbershopproject.barbershop.user.UserRepository;
 import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -54,6 +58,7 @@ import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntiti
 import static pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities.createOrderCreationDTO;
 import static pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities.createOrderUpdatedRequestDTO;
 import static pl.barbershopproject.barbershop.utils.testentities.OrderTestEntities.orderBuilder;
+import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createAuthenticatedUser;
 import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUser;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,6 +69,10 @@ class OrderServiceTest {
     private static final String REQUEST_HASH = "a".repeat(64);
     private static final String STRIPE_CHECKOUT_IDEMPOTENCY_KEY = "550e8400-e29b-41d4-a716-446655440000";
 
+    @Mock
+    private CurrentUserProvider currentUserProvider;
+    @Mock
+    private UserRepository userRepository;
     @Mock
     private OrderRepository orderRepository;
     @Mock
@@ -120,7 +129,7 @@ class OrderServiceTest {
     @Test
     void addOrder_ShouldReturnResponseWithoutCheckoutUrl_ForOfflinePayment() {
         OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
-
+        givenAuthenticatedUser();
         PaymentCheckoutRequest checkoutRequest = new PaymentCheckoutRequest(
                 10L,
                 PaymentMethod.GOTOWKA,
@@ -151,9 +160,7 @@ class OrderServiceTest {
 
         OrderCreationResponseDTO result = orderService.addOrder(
                 orderCreationDTO,
-                user,
-                IDEMPOTENCY_KEY
-        );
+                IDEMPOTENCY_KEY);
 
         assertNotNull(result);
         assertEquals(1L, result.orderId());
@@ -178,7 +185,7 @@ class OrderServiceTest {
     @Test
     void addOrder_ShouldReturnCheckoutUrl_ForOnlinePayment() {
         OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
-
+        givenAuthenticatedUser();
         PaymentCheckoutRequest checkoutRequest = new PaymentCheckoutRequest(
                 10L,
                 PaymentMethod.KARTA_ONLINE,
@@ -213,9 +220,7 @@ class OrderServiceTest {
 
         OrderCreationResponseDTO result = orderService.addOrder(
                 orderCreationDTO,
-                user,
-                IDEMPOTENCY_KEY
-        );
+                IDEMPOTENCY_KEY);
 
         assertNotNull(result);
         assertEquals(1L, result.orderId());
@@ -246,7 +251,7 @@ class OrderServiceTest {
     @Test
     void addOrder_ShouldNotCreateCheckout_WhenTransactionFails() {
         OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
-
+        givenAuthenticatedUser();
         givenRequestHash(orderCreationDTO);
 
         when(orderCreationTransaction.create(
@@ -264,7 +269,6 @@ class OrderServiceTest {
                 NoSuchElementException.class,
                 () -> orderService.addOrder(
                         orderCreationDTO,
-                        user,
                         IDEMPOTENCY_KEY
                 )
         );
@@ -292,7 +296,8 @@ class OrderServiceTest {
     @Test
     void addOrder_ShouldReturnStoredResponse_WhenRequestIsCompleted() {
         OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
-
+        givenAuthenticatedUser();
+        givenRequestHash(orderCreationDTO);
         PaymentCheckoutRequest checkoutRequest = new PaymentCheckoutRequest(
                 10L,
                 PaymentMethod.KARTA_ONLINE,
@@ -324,7 +329,6 @@ class OrderServiceTest {
 
         OrderCreationResponseDTO result = orderService.addOrder(
                 orderCreationDTO,
-                user,
                 IDEMPOTENCY_KEY
         );
 
@@ -345,7 +349,8 @@ class OrderServiceTest {
     @Test
     void addOrder_ShouldRejectRequest_WhenSameKeyIsStillProcessing() {
         OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
-
+        givenAuthenticatedUser();
+        givenRequestHash(orderCreationDTO);
         OrderCreationTransactionResult transactionResult =
                 OrderCreationTransactionResult.inProgress(
                         IDEMPOTENCY_REQUEST_ID
@@ -364,7 +369,6 @@ class OrderServiceTest {
                 IdempotencyConflictException.class,
                 () -> orderService.addOrder(
                         orderCreationDTO,
-                        user,
                         IDEMPOTENCY_KEY
                 )
         );
@@ -514,7 +518,7 @@ class OrderServiceTest {
 
         OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
                 targetOffer.getIdOffer(),
-                LocalDateTime.of(2026, 11, 10, 12, 0), OrderStatus.NOWE);
+                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
@@ -559,7 +563,7 @@ class OrderServiceTest {
 
         OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
                 changedCatalogOffer.getIdOffer(),
-                LocalDateTime.of(2026, 11, 10, 12, 0), OrderStatus.NOWE);
+                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
@@ -594,7 +598,7 @@ class OrderServiceTest {
 
         OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
                 targetOffer.getIdOffer(),
-                LocalDateTime.of(2026, 11, 10, 12, 0), OrderStatus.NOWE);
+                LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0), OrderStatus.NOWE);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
@@ -697,7 +701,7 @@ class OrderServiceTest {
     void updateOrder_ShouldNotContinueWhenModificationPolicyRejectsUpdate() {
         OrderUpdatedRequestDTO request = new OrderUpdatedRequestDTO(
                         offer.getIdOffer(),
-                        LocalDateTime.of(2026, 11, 10, 12, 0),
+                        LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0),
                         OrderStatus.ZREALIZOWANE
                 );
 
@@ -817,6 +821,40 @@ class OrderServiceTest {
         verify(orderRepository, never()).delete(any(Order.class));
     }
 
+    @Test
+    void addOrder_ShouldThrowException_WhenAuthenticatedUserDoesNotExist() {
+        // given
+        OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
+        AuthenticatedUser authenticatedUser = createAuthenticatedUser();
+
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(authenticatedUser);
+
+        when(userRepository.findById(authenticatedUser.userId()))
+                .thenReturn(Optional.empty());
+
+        // when, then
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
+                () -> orderService.addOrder(
+                        orderCreationDTO,
+                        IDEMPOTENCY_KEY
+                )
+        );
+
+        assertEquals("Użytkownik o podanym ID nie istnieje",
+                exception.getMessage());
+
+        verify(currentUserProvider).getCurrentUser();
+        verify(userRepository).findById(authenticatedUser.userId());
+
+        verifyNoInteractions(
+                orderCreationTransaction,
+                paymentCheckout,
+                idempotencyRequestManager
+        );
+    }
+
     private void givenRequestHash(
             OrderCreationDTO orderCreationDTO
     ) {
@@ -829,5 +867,15 @@ class OrderServiceTest {
                 "paymentMethod",
                 orderCreationDTO.paymentMethod().name()
         )).thenReturn(REQUEST_HASH);
+    }
+
+    private void givenAuthenticatedUser() {
+        AuthenticatedUser authenticatedUser = createAuthenticatedUser();
+
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(authenticatedUser);
+
+        when(userRepository.findById(authenticatedUser.userId()))
+                .thenReturn(Optional.of(user));
     }
 }

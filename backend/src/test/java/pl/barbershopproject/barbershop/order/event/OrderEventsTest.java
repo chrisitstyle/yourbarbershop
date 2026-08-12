@@ -14,6 +14,7 @@ import pl.barbershopproject.barbershop.user.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.mockito.Mockito.*;
 
@@ -38,7 +39,7 @@ class OrderEventsTest {
         Payment payment = mock(Payment.class);
 
         LocalDateTime visitDate =
-                LocalDateTime.of(2030, 1, 11, 12, 0);
+                LocalDateTime.of(2030, Month.JANUARY, 11, 12, 0);
 
         when(user.getEmail()).thenReturn("customer@example.com");
         when(user.getFirstname()).thenReturn("Jan");
@@ -103,7 +104,7 @@ class OrderEventsTest {
         when(order.getUser()).thenReturn(user);
         when(order.getOffer()).thenReturn(offer);
         when(order.getVisitDate()).thenReturn(
-                LocalDateTime.of(2030, 1, 11, 12, 0)
+                LocalDateTime.of(2030, Month.JANUARY, 11, 12, 0)
         );
 
         when(payment.getPaymentMethod())

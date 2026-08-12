@@ -9,10 +9,7 @@ import pl.barbershopproject.barbershop.exception.PaymentLinkUnavailableException
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -244,7 +241,7 @@ class PaymentLinkServiceTest {
     private LocalDateTime futureVisitDate() {
         return LocalDateTime.of(
                 2030,
-                1,
+                Month.JANUARY,
                 11,
                 12,
                 0);

@@ -12,19 +12,20 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.integration.BaseIntegrationTest;
-import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUserPrincipal;
 
 class OrderIdempotencyIntegrationTest extends BaseIntegrationTest {
 
@@ -41,17 +42,16 @@ class OrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     private static final String OWNER_CONFLICT_IDEMPOTENCY_KEY =
             "order-idempotency-owner-conflict-test-key";
 
-    private static final LocalDateTime REPLAY_VISIT_DATE =
-            LocalDateTime.of(2032, 1, 16, 12, 0);
+    private static final LocalDateTime REPLAY_VISIT_DATE = LocalDateTime.of(2032, Month.JANUARY, 16, 12, 0);
 
     private static final LocalDateTime REQUEST_CONFLICT_VISIT_DATE =
-            LocalDateTime.of(2032, 1, 17, 12, 0);
+            LocalDateTime.of(2032, Month.JANUARY, 17, 12, 0);
 
     private static final LocalDateTime CHANGED_VISIT_DATE =
-            LocalDateTime.of(2032, 1, 17, 13, 0);
+            LocalDateTime.of(2032, Month.JANUARY, 17, 13, 0);
 
     private static final LocalDateTime OWNER_CONFLICT_VISIT_DATE =
-            LocalDateTime.of(2032, 1, 18, 12, 0);
+            LocalDateTime.of(2032, Month.JANUARY, 18, 12, 0);
 
     private MockMvc mockMvc;
 
@@ -319,10 +319,12 @@ class OrderIdempotencyIntegrationTest extends BaseIntegrationTest {
     }
 
     private String tokenFor(String email) {
-        User user = userRepository.findByEmail(email)
+        var user = userRepository.findByEmail(email)
                 .orElseThrow();
 
-        return jwtService.generateAccessToken(user);
+        return jwtService.generateAccessToken(
+                createUserPrincipal(user)
+        );
     }
 
     private Long firstOfferId() {

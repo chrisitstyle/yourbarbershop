@@ -17,6 +17,7 @@ import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.InvalidPasswordTokenException;
 import pl.barbershopproject.barbershop.passwordreset.PasswordResetToken;
 import pl.barbershopproject.barbershop.passwordreset.PasswordResetTokenRepository;
+import pl.barbershopproject.barbershop.security.UserPrincipal;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
@@ -67,7 +68,8 @@ public class AuthService {
                 new UserRegisteredEvent(user.getEmail(), user.getFirstname())
         );
 
-        var accessToken = jwtService.generateAccessToken(user);
+        var accessToken = jwtService.generateAccessToken(
+                UserPrincipal.from(user));
 
         return new AuthResult(accessToken, user);
     }
@@ -77,12 +79,18 @@ public class AuthService {
     }
 
     public AuthResult authenticate(@NotNull String email, @NotNull String password) {
-        authenticationManager.authenticate(
+        var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password)
         );
 
-        var user = userRepository.findByEmail(email).orElseThrow();
-        var accessToken = jwtService.generateAccessToken(user);
+        if (!(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            throw new IllegalStateException("Unexpected authentication principal");
+        }
+
+        var user = userRepository.findById(principal.userId())
+                .orElseThrow();
+
+        var accessToken = jwtService.generateAccessToken(principal);
 
         return new AuthResult(accessToken, user);
     }
