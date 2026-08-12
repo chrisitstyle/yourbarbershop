@@ -1,18 +1,22 @@
 package pl.barbershopproject.barbershop.order;
 
 import pl.barbershopproject.barbershop.idempotency.IdempotencyResolution;
+import pl.barbershopproject.barbershop.ordercreation.CreationTransactionResult;
 import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 
 import java.util.Objects;
 
 /**
- * Contains the result of resolving or creating an idempotent order.
+ * Represents the result of resolving or creating an idempotent order,
+ * including the idempotency state and payment checkout data required to
+ * complete the creation flow.
  *
  * @param idempotencyRequestId identifier of the persisted idempotency request
- * @param resolution current idempotency resolution
- * @param orderId identifier of the persisted order, if already created
- * @param checkoutRequest immutable payment data used to create or resume checkout
- * @param checkoutUrl previously created checkout URL, if the request is completed
+ * @param resolution           current resolution of the idempotent operation
+ * @param orderId              identifier of the persisted order, if already created
+ * @param checkoutRequest      immutable payment data used to create or resume checkout
+ * @param checkoutUrl          checkout URL for online payment, or {@code null} when checkout
+ *                             is not required or has not been completed yet
  */
 record OrderCreationTransactionResult(
         Long idempotencyRequestId,
@@ -20,40 +24,35 @@ record OrderCreationTransactionResult(
         Long orderId,
         PaymentCheckoutRequest checkoutRequest,
         String checkoutUrl
-) {
+) implements CreationTransactionResult {
 
     OrderCreationTransactionResult {
         Objects.requireNonNull(
                 idempotencyRequestId,
-                "Idempotency request ID nie może być null"
-        );
+                "Idempotency request ID nie może być null");
 
         Objects.requireNonNull(
                 resolution,
-                "Idempotency resolution nie może być null"
-        );
+                "Idempotency resolution nie może być null");
 
-        if (resolution == IdempotencyResolution.IN_PROGRESS) {
-            if (orderId != null
-                    || checkoutRequest != null
-                    || checkoutUrl != null) {
-                throw new IllegalArgumentException(
-                        "Przetwarzane żądanie nie może zawierać wyniku zamówienia"
+        switch (resolution) {
+            case IN_PROGRESS -> validateInProgress(
+                    orderId,
+                    checkoutRequest,
+                    checkoutUrl);
+
+            case RESOURCE_CREATED, COMPLETED -> {
+                Objects.requireNonNull(
+                        orderId,
+                        "Order ID nie może być null");
+
+                Objects.requireNonNull(
+                        checkoutRequest,
+                        "PaymentCheckoutRequest nie może być null"
                 );
             }
-        } else if (resolution == IdempotencyResolution.RESOURCE_CREATED
-                || resolution == IdempotencyResolution.COMPLETED) {
-            Objects.requireNonNull(
-                    orderId,
-                    "Order ID nie może być null"
-            );
 
-            Objects.requireNonNull(
-                    checkoutRequest,
-                    "PaymentCheckoutRequest nie może być null"
-            );
-        } else {
-            throw new IllegalArgumentException(
+            case NEW -> throw new IllegalArgumentException(
                     "Stan NEW nie może opuścić transakcji tworzenia zamówienia"
             );
         }
@@ -100,11 +99,16 @@ record OrderCreationTransactionResult(
         );
     }
 
-    boolean isInProgress() {
-        return resolution == IdempotencyResolution.IN_PROGRESS;
-    }
-
-    boolean isCompleted() {
-        return resolution == IdempotencyResolution.COMPLETED;
+    private static void validateInProgress(
+            Long orderId,
+            PaymentCheckoutRequest checkoutRequest,
+            String checkoutUrl) {
+        if (orderId != null
+                || checkoutRequest != null
+                || checkoutUrl != null) {
+            throw new IllegalArgumentException(
+                    "Przetwarzane żądanie nie może zawierać wyniku zamówienia"
+            );
+        }
     }
 }

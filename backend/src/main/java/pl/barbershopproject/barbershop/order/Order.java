@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.orderupdate.OrderUpdateTarget;
 import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
@@ -21,7 +22,7 @@ import java.time.LocalDateTime;
 @Setter
 @Table(name = "user_order")
 @Entity
-public class Order implements Serializable {
+public class Order implements OrderUpdateTarget, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

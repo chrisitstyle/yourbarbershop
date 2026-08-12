@@ -1,19 +1,22 @@
 package pl.barbershopproject.barbershop.guestorder;
 
 import pl.barbershopproject.barbershop.idempotency.IdempotencyResolution;
+import pl.barbershopproject.barbershop.ordercreation.CreationTransactionResult;
 import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 
 import java.util.Objects;
 
 /**
- * Contains the result of resolving or creating an idempotent guest order.
+ * Represents the result of resolving or creating an idempotent guest order,
+ * including the idempotency state and payment checkout data required to
+ * complete the creation flow.
  *
  * @param idempotencyRequestId identifier of the persisted idempotency request
- * @param resolution current resolution of the idempotent operation
- * @param guestOrderId identifier of the persisted guest order, if already created
- * @param checkoutRequest immutable payment data used to create or resume checkout
- * @param checkoutUrl checkout URL for online payment, or {@code null} when checkout
- *                    is not required or has not been completed yet
+ * @param resolution           current resolution of the idempotent operation
+ * @param guestOrderId         identifier of the persisted guest order, if already created
+ * @param checkoutRequest      immutable payment data used to create or resume checkout
+ * @param checkoutUrl          checkout URL for online payment, or {@code null} when checkout
+ *                             is not required or has not been completed yet
  */
 record GuestOrderCreationTransactionResult(
         Long idempotencyRequestId,
@@ -21,7 +24,7 @@ record GuestOrderCreationTransactionResult(
         Long guestOrderId,
         PaymentCheckoutRequest checkoutRequest,
         String checkoutUrl
-) {
+) implements CreationTransactionResult {
 
     GuestOrderCreationTransactionResult {
         Objects.requireNonNull(
@@ -34,42 +37,35 @@ record GuestOrderCreationTransactionResult(
                 "Idempotency resolution nie może być null"
         );
 
-        if (resolution == IdempotencyResolution.IN_PROGRESS) {
-            if (guestOrderId != null
-                    || checkoutRequest != null
-                    || checkoutUrl != null) {
-                throw new IllegalArgumentException(
-                        "Przetwarzane żądanie nie może zawierać wyniku zamówienia"
-                );
-            }
-        } else if (resolution == IdempotencyResolution.RESOURCE_CREATED
-                || resolution == IdempotencyResolution.COMPLETED) {
-            Objects.requireNonNull(
+        switch (resolution) {
+            case IN_PROGRESS -> validateInProgress(
                     guestOrderId,
-                    "GuestOrder ID nie może być null"
-            );
-
-            Objects.requireNonNull(
                     checkoutRequest,
-                    "PaymentCheckoutRequest nie może być null"
-            );
-        } else {
-            throw new IllegalArgumentException(
-                    "Stan NEW nie może opuścić transakcji tworzenia zamówienia"
-            );
+                    checkoutUrl);
+
+            case RESOURCE_CREATED, COMPLETED -> {
+                Objects.requireNonNull(
+                        guestOrderId,
+                        "GuestOrder ID nie może być null");
+
+                Objects.requireNonNull(
+                        checkoutRequest,
+                        "PaymentCheckoutRequest nie może być null");
+            }
+
+            case NEW -> throw new IllegalArgumentException(
+                    "Stan NEW nie może opuścić transakcji tworzenia zamówienia");
         }
     }
 
     static GuestOrderCreationTransactionResult inProgress(
-            Long idempotencyRequestId
-    ) {
+            Long idempotencyRequestId) {
         return new GuestOrderCreationTransactionResult(
                 idempotencyRequestId,
                 IdempotencyResolution.IN_PROGRESS,
                 null,
                 null,
-                null
-        );
+                null);
     }
 
     static GuestOrderCreationTransactionResult resourceCreated(
@@ -101,11 +97,16 @@ record GuestOrderCreationTransactionResult(
         );
     }
 
-    boolean isInProgress() {
-        return resolution == IdempotencyResolution.IN_PROGRESS;
-    }
-
-    boolean isCompleted() {
-        return resolution == IdempotencyResolution.COMPLETED;
+    private static void validateInProgress(
+            Long guestOrderId,
+            PaymentCheckoutRequest checkoutRequest,
+            String checkoutUrl) {
+        if (guestOrderId != null
+                || checkoutRequest != null
+                || checkoutUrl != null) {
+            throw new IllegalArgumentException(
+                    "Przetwarzane żądanie nie może zawierać wyniku zamówienia"
+            );
+        }
     }
 }
