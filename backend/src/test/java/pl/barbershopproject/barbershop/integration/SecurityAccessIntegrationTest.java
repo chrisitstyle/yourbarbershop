@@ -23,6 +23,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUserPrincipal;
 
 class SecurityAccessIntegrationTest extends BaseIntegrationTest {
 
@@ -260,10 +261,12 @@ class SecurityAccessIntegrationTest extends BaseIntegrationTest {
     }
 
     private String tokenFor(String email) {
-        User user = userRepository.findByEmail(email)
+        var user = userRepository.findByEmail(email)
                 .orElseThrow();
 
-        return jwtService.generateAccessToken(user);
+        return jwtService.generateAccessToken(
+                createUserPrincipal(user)
+        );
     }
 
     private Long userIdByEmail(String email) {

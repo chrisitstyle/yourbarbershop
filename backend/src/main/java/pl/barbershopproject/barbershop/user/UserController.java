@@ -1,14 +1,12 @@
 package pl.barbershopproject.barbershop.user;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.barbershopproject.barbershop.user.dto.*;
@@ -45,10 +43,8 @@ public class UserController {
     @ApiResponse(responseCode = "401", description = "Unauthorized - User is not authenticated")
     @ApiResponse(responseCode = "404", description = "User not found")
     @GetMapping("/me")
-    public CurrentUserResponseDTO getCurrentUser(
-            @Parameter(hidden = true) Authentication authentication
-    ) {
-        return userService.getCurrentUser(authentication.getName());
+    public ResponseEntity<CurrentUserResponseDTO> getCurrentUser() {
+        return ResponseEntity.ok(userService.getCurrentUser());
     }
 
     @Operation(summary = "Get a list of all users")

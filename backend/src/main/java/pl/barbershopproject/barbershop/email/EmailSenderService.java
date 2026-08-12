@@ -62,12 +62,13 @@ public class EmailSenderService {
     }
 
     private boolean shouldSkipEmail(String email) {
-        if (isBlocked(email)) {
+        boolean blocked = isBlocked(email);
+
+        if (blocked) {
             log.warn("Email sending to '{}' was cancelled. The recipient is blocked.", email);
-            return true;
         }
 
-        return false;
+        return blocked;
     }
 
     private boolean isBlocked(String email) {

@@ -73,7 +73,6 @@ class OrderControllerTest {
 
         when(orderService.addOrder(
                 any(OrderCreationDTO.class),
-                any(),
                 eq(IDEMPOTENCY_KEY)
         )).thenReturn(responseDTO);
 
@@ -90,9 +89,7 @@ class OrderControllerTest {
 
         verify(orderService).addOrder(
                 any(OrderCreationDTO.class),
-                any(),
-                eq(IDEMPOTENCY_KEY)
-        );
+                eq(IDEMPOTENCY_KEY));
     }
 
     @Test
@@ -270,7 +267,6 @@ class OrderControllerTest {
 
         when(orderService.addOrder(
                 any(OrderCreationDTO.class),
-                any(),
                 eq(IDEMPOTENCY_KEY)
         )).thenThrow(new IllegalArgumentException("Nieprawidłowa data wizyty"));
 

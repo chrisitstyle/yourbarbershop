@@ -23,7 +23,6 @@ import org.springframework.web.context.WebApplicationContext;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.integration.BaseIntegrationTest;
 import pl.barbershopproject.barbershop.order.event.OrderEvents;
-import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -42,6 +41,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUserPrincipal;
 
 class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
 
@@ -226,10 +226,12 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     }
 
     private String tokenFor(String email) {
-        User user = userRepository.findByEmail(email)
+        var user = userRepository.findByEmail(email)
                 .orElseThrow();
 
-        return jwtService.generateAccessToken(user);
+        return jwtService.generateAccessToken(
+                createUserPrincipal(user)
+        );
     }
 
     private Long firstOfferId() {
@@ -380,10 +382,10 @@ class OrderStripeRetryIdempotencyIntegrationTest extends BaseIntegrationTest {
     ) {
         return jdbcTemplate.queryForObject(
                 """
-                SELECT stripe_checkout_idempotency_key
-                FROM payment
-                WHERE id_payment = ?
-                """,
+                        SELECT stripe_checkout_idempotency_key
+                        FROM payment
+                        WHERE id_payment = ?
+                        """,
                 String.class,
                 paymentId
         );

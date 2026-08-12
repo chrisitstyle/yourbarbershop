@@ -42,18 +42,13 @@ class OrderController {
                     required = true,
                     example = "88fa85f2-0569-4da0-9152-68ef69478036"
             )
-
             @ValidIdempotencyKey
             @RequestHeader("Idempotency-Key")
             String idempotencyKey,
 
-            @Valid @RequestBody OrderCreationDTO order,
-
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal
-            User user
+            @Valid @RequestBody OrderCreationDTO order
     ) {
-        OrderCreationResponseDTO response = orderService.addOrder(order, user, idempotencyKey);
+        OrderCreationResponseDTO response = orderService.addOrder(order, idempotencyKey);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")

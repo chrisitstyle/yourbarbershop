@@ -23,7 +23,10 @@ import pl.barbershopproject.barbershop.order.mapper.OrderDTOMapper;
 import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.payment.PaymentCheckout;
 import pl.barbershopproject.barbershop.payment.PaymentOfferUpdater;
+import pl.barbershopproject.barbershop.security.AuthenticatedUser;
+import pl.barbershopproject.barbershop.security.CurrentUserProvider;
 import pl.barbershopproject.barbershop.user.User;
+import pl.barbershopproject.barbershop.user.UserRepository;
 import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
@@ -35,15 +38,14 @@ import java.util.Objects;
 @RequiredArgsConstructor
 class OrderService {
 
-    private static final String ORDER_NOT_FOUND_MSG =
-            "Zamówienie o ID: ";
+    private static final String ORDER_NOT_FOUND_MSG = "Zamówienie o ID: ";
 
-    private static final String DOES_NOT_EXIST_MSG =
-            " nie istnieje";
+    private static final String DOES_NOT_EXIST_MSG = " nie istnieje";
 
-    private static final String AVAILABLE_ORDER_STATUSES_MSG =
-            "Dostępne statusy zamówienia: ";
+    private static final String AVAILABLE_ORDER_STATUSES_MSG = "Dostępne statusy zamówienia: ";
 
+    private final CurrentUserProvider currentUserProvider;
+    private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final OfferQuery offerQuery;
     private final AppointmentReservation appointmentReservation;
@@ -58,9 +60,15 @@ class OrderService {
     @CacheEvict(value = "orders", allEntries = true)
     public OrderCreationResponseDTO addOrder(
             OrderCreationDTO orderCreationDTO,
-            User user,
             String idempotencyKey
     ) {
+        AuthenticatedUser authenticatedUser = currentUserProvider.getCurrentUser();
+
+        User user = userRepository.findById(authenticatedUser.userId())
+                .orElseThrow(() ->
+                        new NoSuchElementException(
+                                "Użytkownik o podanym ID nie istnieje"));
+
         String requestHash = idempotencyRequestHasher.hash(
                 "order-creation-v1",
                 "idOffer",
@@ -71,8 +79,7 @@ class OrderService {
                 orderCreationDTO.paymentMethod().name()
         );
 
-        OrderCreationTransactionResult transactionResult =
-                createOrderTransaction(
+        OrderCreationTransactionResult transactionResult = createOrderTransaction(
                         orderCreationDTO,
                         user,
                         idempotencyKey,
@@ -92,20 +99,16 @@ class OrderService {
             );
         }
 
-        String checkoutUrl =
-                paymentCheckout.createCheckoutIfRequired(
-                        transactionResult.checkoutRequest()
-                );
+        String checkoutUrl = paymentCheckout.createCheckoutIfRequired(
+                        transactionResult.checkoutRequest());
 
         idempotencyRequestManager.markCompleted(
                 transactionResult.idempotencyRequestId(),
-                checkoutUrl
-        );
+                checkoutUrl);
 
         return createResponse(
                 transactionResult,
-                checkoutUrl
-        );
+                checkoutUrl);
     }
 
     @Cacheable(value = "orders", key = "'all'")

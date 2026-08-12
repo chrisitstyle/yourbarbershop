@@ -23,6 +23,7 @@ import pl.barbershopproject.barbershop.auth.refresh.RefreshCookieService;
 import pl.barbershopproject.barbershop.auth.refresh.RefreshTokenRotation;
 import pl.barbershopproject.barbershop.auth.refresh.RefreshTokenService;
 import pl.barbershopproject.barbershop.config.JwtService;
+import pl.barbershopproject.barbershop.security.UserPrincipal;
 
 @RestController
 @RequiredArgsConstructor
@@ -109,7 +110,7 @@ public class AuthController {
 
         refreshCookieService.addRefreshCookie(response, rotation.newRefreshToken());
 
-        String newAccessToken = jwtService.generateAccessToken(rotation.user());
+        String newAccessToken = jwtService.generateAccessToken(UserPrincipal.from(rotation.user()));
 
         return ResponseEntity.ok(
                 new AuthResponse(

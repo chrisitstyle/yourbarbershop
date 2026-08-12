@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import pl.barbershopproject.barbershop.security.UserPrincipal;
 import pl.barbershopproject.barbershop.user.UserRepository;
 
 @RequiredArgsConstructor
@@ -20,10 +21,10 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return userName -> userRepository
-                .findByEmail(userName)
-                .orElseThrow(() ->
-                        new UsernameNotFoundException(String.format("User '%s' not found!", userName)));
+        return email -> userRepository.findByEmail(email)
+                .map(UserPrincipal::from)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        String.format("User '%s' not found!", email)));
     }
 
     @Bean

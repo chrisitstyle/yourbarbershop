@@ -10,9 +10,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -88,24 +85,22 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.idUser").value(1L));
     }
 
-    @DisplayName("Should allow authenticated user to access current user endpoint")
+    @DisplayName("Should return current user")
     @Test
-    void shouldAllowAuthenticatedUserToAccessCurrentUserEndpoint() throws Exception {
+    void shouldReturnCurrentUser() throws Exception {
         // given
         CurrentUserResponseDTO currentUser = new CurrentUserResponseDTO(
                 1L,
                 "John",
                 "Doe",
                 USER_EMAIL,
-                Role.USER
-        );
+                Role.USER);
 
-        when(userService.getCurrentUser(USER_EMAIL))
+        when(userService.getCurrentUser())
                 .thenReturn(currentUser);
 
-        // when + then
-        mockMvc.perform(MockMvcRequestBuilders.get("/users/me")
-                        .principal(authenticationFor(USER_EMAIL)))
+        // when, then
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.firstname").value("John"))
@@ -113,7 +108,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.email").value(USER_EMAIL))
                 .andExpect(jsonPath("$.role").value("USER"));
 
-        verify(userService).getCurrentUser(USER_EMAIL);
+        verify(userService).getCurrentUser();
     }
 
     @Test
@@ -249,13 +244,5 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value("Cannot remove yourself"))
                 .andExpect(jsonPath("$.status").value("FORBIDDEN"));
 
-    }
-
-    private Authentication authenticationFor(String email) {
-        return new UsernamePasswordAuthenticationToken(
-                email,
-                null,
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
-        );
     }
 }

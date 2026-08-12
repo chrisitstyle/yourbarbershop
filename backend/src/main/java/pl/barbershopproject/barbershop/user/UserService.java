@@ -3,8 +3,6 @@ package pl.barbershopproject.barbershop.user;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,12 +12,16 @@ import pl.barbershopproject.barbershop.audit.enums.EntityType;
 import pl.barbershopproject.barbershop.audit.event.AuditEvent;
 import pl.barbershopproject.barbershop.exception.EmailAlreadyExistsException;
 import pl.barbershopproject.barbershop.exception.SelfDeletionException;
+import pl.barbershopproject.barbershop.security.AuthenticatedUser;
+import pl.barbershopproject.barbershop.security.CurrentUserProvider;
 import pl.barbershopproject.barbershop.user.dto.*;
 import pl.barbershopproject.barbershop.user.mapper.UserCreationDTOMapper;
 import pl.barbershopproject.barbershop.user.mapper.UserDTOMapper;
+import pl.barbershopproject.barbershop.utils.SecurityUtils;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailSafely;
 
@@ -27,6 +29,7 @@ import static pl.barbershopproject.barbershop.utils.SecurityUtils.getActorEmailS
 @RequiredArgsConstructor
 public class UserService {
 
+    private final CurrentUserProvider currentUserProvider;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
@@ -44,7 +47,7 @@ public class UserService {
         eventPublisher.publishEvent(new AuditEvent(
                 getActorEmailSafely(),
                 ActionType.USER_CREATED,
-               EntityType.USER,
+                EntityType.USER,
                 String.valueOf(savedUser.getIdUser()),
                 String.format("{\"email\":\"%s\", \"role\":\"%s\"}", savedUser.getEmail(), savedUser.getRole())
         ));
@@ -52,8 +55,10 @@ public class UserService {
         return UserCreationDTOMapper.toResponseDTO(savedUser);
     }
 
-    public CurrentUserResponseDTO getCurrentUser(String email) {
-        User user = userRepository.findByEmail(email)
+    public CurrentUserResponseDTO getCurrentUser() {
+        AuthenticatedUser authenticatedUser = currentUserProvider.getCurrentUser();
+
+        User user = userRepository.findById(authenticatedUser.userId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return CurrentUserResponseDTO.from(user);
@@ -67,7 +72,7 @@ public class UserService {
     }
 
     public UserDTO getUserById(Long idUser) {
-        User authUser = getAuthenticatedUser();
+        AuthenticatedUser authUser = currentUserProvider.getCurrentUser();
         validateUserAccess(authUser, idUser);
 
         return userRepository.findById(idUser)
@@ -77,7 +82,7 @@ public class UserService {
 
     @Transactional
     public UserDTO updateUser(UserProfileUpdateRequestDTO updatedUser, Long idUser) {
-        User authUser = getAuthenticatedUser();
+        AuthenticatedUser authUser = currentUserProvider.getCurrentUser();
         validateUserAccess(authUser, idUser);
 
         User existingUser = userRepository.findById(idUser)
@@ -88,7 +93,7 @@ public class UserService {
         User savedUser = userRepository.save(existingUser);
 
         eventPublisher.publishEvent(new AuditEvent(
-                authUser.getEmail(),
+                SecurityUtils.getActorEmailSafely(),
                 ActionType.USER_UPDATED,
                 EntityType.USER,
                 String.valueOf(idUser),
@@ -101,11 +106,9 @@ public class UserService {
 
     @Transactional
     public void deleteUserById(Long idUser) {
-        User authUser = getAuthenticatedUser();
-        if (authUser == null) {
-            throw new AccessDeniedException("Brak zalogowanego użytkownika");
-        }
-        if (authUser.getIdUser().equals(idUser)) {
+        AuthenticatedUser authUser = currentUserProvider.getCurrentUser();
+
+        if (Objects.equals(authUser.userId(), idUser)) {
             throw new SelfDeletionException("Nie można usunąć własnego konta");
         }
 
@@ -116,7 +119,7 @@ public class UserService {
         userRepository.deleteById(idUser);
 
         eventPublisher.publishEvent(new AuditEvent(
-                authUser.getEmail(),
+                SecurityUtils.getActorEmailSafely(),
                 ActionType.USER_DELETED,
                 EntityType.USER,
                 String.valueOf(idUser),
@@ -124,22 +127,10 @@ public class UserService {
         ));
     }
 
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof User)) {
-            throw new AccessDeniedException("Użytkownik nie jest poprawnie uwierzytelniony");
-        }
-        return (User) authentication.getPrincipal();
-    }
-
-    private void validateUserAccess(User authUser, Long targetUserId) {
-        if (authUser == null) {
-            throw new AccessDeniedException("Brak kontekstu użytkownika");
-        }
-
-        if (!authUser.getIdUser().equals(targetUserId) && authUser.getRole() != Role.ADMIN) {
-            throw new AccessDeniedException("Brak uprawnień");
+    private void validateUserAccess(AuthenticatedUser authenticatedUser, Long targetUserId) {
+        if (!authenticatedUser.userId().equals(targetUserId)
+                && authenticatedUser.role() != Role.ADMIN) {
+            throw new AccessDeniedException("You are not allowed to access this user");
         }
     }
 

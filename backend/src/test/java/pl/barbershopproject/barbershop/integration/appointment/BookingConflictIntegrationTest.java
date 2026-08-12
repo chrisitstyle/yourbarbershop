@@ -16,7 +16,6 @@ import pl.barbershopproject.barbershop.integration.BaseIntegrationTest;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.OrderRepository;
-import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -27,7 +26,9 @@ import java.time.Month;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUserPrincipal;
 
 class BookingConflictIntegrationTest extends BaseIntegrationTest {
 
@@ -259,10 +260,12 @@ class BookingConflictIntegrationTest extends BaseIntegrationTest {
     }
 
     private String createJwtTokenForUser(String email) {
-        User user = userRepository.findByEmail(email)
+        var user = userRepository.findByEmail(email)
                 .orElseThrow();
 
-        return jwtService.generateAccessToken(user);
+        return jwtService.generateAccessToken(
+                createUserPrincipal(user)
+        );
     }
 
     private Long firstOfferId() {

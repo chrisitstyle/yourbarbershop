@@ -14,6 +14,7 @@ import pl.barbershopproject.barbershop.auth.AuthResult;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.email.EmailSenderService;
 import pl.barbershopproject.barbershop.exception.InvalidEmailLoginCodeException;
+import pl.barbershopproject.barbershop.security.UserPrincipal;
 import pl.barbershopproject.barbershop.user.Role;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
@@ -30,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUserPrincipal;
 
 @ExtendWith(MockitoExtension.class)
 class EmailLoginCodeServiceTest {
@@ -139,7 +141,9 @@ class EmailLoginCodeServiceTest {
 
     @Test
     void shouldVerifyCodeAndReturnAuthResult() {
+        // given
         User user = createUserForSuccessfulLogin();
+        UserPrincipal principal = createUserPrincipal(user);
 
         when(valueOperations.get(codeKey()))
                 .thenReturn(CODE_HASH);
@@ -151,13 +155,14 @@ class EmailLoginCodeServiceTest {
                 .thenReturn(true);
         when(userRepository.findByEmailIgnoreCase(EMAIL))
                 .thenReturn(Optional.of(user));
-        when(jwtService.generateAccessToken(user))
+        when(jwtService.generateAccessToken(principal))
                 .thenReturn(ACCESS_TOKEN);
 
+        // when
         AuthResult result = emailLoginCodeService.verifyCode(
-                new EmailLoginCodeVerifyRequest(RAW_EMAIL, CODE)
-        );
+                new EmailLoginCodeVerifyRequest(RAW_EMAIL, CODE));
 
+        // then
         assertEquals(ACCESS_TOKEN, result.accessToken());
         assertEquals(user, result.user());
         assertEquals(1L, result.user().getIdUser());
@@ -165,7 +170,7 @@ class EmailLoginCodeServiceTest {
 
         verify(stringRedisTemplate).delete(codeKey());
         verify(stringRedisTemplate).delete(attemptsKey());
-        verify(jwtService).generateAccessToken(user);
+        verify(jwtService).generateAccessToken(principal);
     }
 
     @Test
@@ -173,8 +178,7 @@ class EmailLoginCodeServiceTest {
         when(valueOperations.get(codeKey()))
                 .thenReturn(null);
 
-        EmailLoginCodeVerifyRequest request =
-                new EmailLoginCodeVerifyRequest(RAW_EMAIL, CODE);
+        EmailLoginCodeVerifyRequest request = new EmailLoginCodeVerifyRequest(RAW_EMAIL, CODE);
 
         assertThrows(
                 InvalidEmailLoginCodeException.class,
@@ -195,13 +199,10 @@ class EmailLoginCodeServiceTest {
         when(passwordEncoder.matches(CODE, CODE_HASH))
                 .thenReturn(false);
 
-        EmailLoginCodeVerifyRequest request =
-                new EmailLoginCodeVerifyRequest(RAW_EMAIL, CODE);
+        EmailLoginCodeVerifyRequest request = new EmailLoginCodeVerifyRequest(RAW_EMAIL, CODE);
 
-        assertThrows(
-                InvalidEmailLoginCodeException.class,
-                () -> emailLoginCodeService.verifyCode(request)
-        );
+        assertThrows(InvalidEmailLoginCodeException.class,
+                () -> emailLoginCodeService.verifyCode(request));
 
         verify(stringRedisTemplate, never()).delete(codeKey());
         verifyNoInteractions(jwtService);

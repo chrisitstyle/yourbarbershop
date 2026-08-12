@@ -8,6 +8,7 @@ import pl.barbershopproject.barbershop.auth.AuthResult;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.email.EmailSenderService;
 import pl.barbershopproject.barbershop.exception.InvalidEmailLoginCodeException;
+import pl.barbershopproject.barbershop.security.UserPrincipal;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
 
@@ -132,7 +133,8 @@ public class EmailLoginCodeService {
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(this::invalidCodeException);
 
-        String accessToken = jwtService.generateAccessToken(user);
+        String accessToken = jwtService.generateAccessToken(UserPrincipal.from(user));
+
         return new AuthResult(accessToken, user);
     }
 

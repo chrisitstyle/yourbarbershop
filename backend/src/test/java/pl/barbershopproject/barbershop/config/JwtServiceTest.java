@@ -6,12 +6,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+import pl.barbershopproject.barbershop.security.UserPrincipal;
 import pl.barbershopproject.barbershop.user.Role;
-import pl.barbershopproject.barbershop.user.User;
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.createUserPrincipal;
 import static pl.barbershopproject.barbershop.utils.testentities.UserTestEntities.userBuilder;
 
 class JwtServiceTest {
@@ -33,33 +34,36 @@ class JwtServiceTest {
     @Test
     void generateAccessToken_ShouldContainUserEmailAsSubject() {
         // given
-        User user = userBuilder()
+        UserPrincipal principal = createUserPrincipal(userBuilder()
                 .idUser(7L)
                 .email("john.jwt@example.com")
                 .role(Role.USER)
-                .build();
+                .build());
 
         // when
-        String token = jwtService.generateAccessToken(user);
+        String token = jwtService.generateAccessToken(principal);
 
         // then
         assertNotNull(token);
         assertFalse(token.isBlank());
-        assertEquals("john.jwt@example.com", jwtService.extractUserName(token));
+        assertEquals(
+                "john.jwt@example.com",
+                jwtService.extractUserName(token)
+        );
     }
 
     @DisplayName("generateAccessToken should contain user role and id claims")
     @Test
     void generateAccessToken_ShouldContainUserRoleAndIdClaims() {
         // given
-        User user = userBuilder()
+        UserPrincipal principal = createUserPrincipal(userBuilder()
                 .idUser(7L)
                 .email("admin.jwt@example.com")
                 .role(Role.ADMIN)
-                .build();
+                .build());
 
         // when
-        String token = jwtService.generateAccessToken(user);
+        String token = jwtService.generateAccessToken(principal);
 
         // then
         String role = jwtService.extractClaim(
@@ -80,11 +84,11 @@ class JwtServiceTest {
     @Test
     void generateAccessToken_ShouldContainCustomClaims_WhenExtraClaimsAreProvided() {
         // given
-        User user = userBuilder()
+        UserPrincipal principal = createUserPrincipal(userBuilder()
                 .idUser(8L)
                 .email("custom.jwt@example.com")
                 .role(Role.USER)
-                .build();
+                .build());
 
         Map<String, Object> extraClaims = Map.of(
                 "customClaim", "custom-value",
@@ -92,7 +96,10 @@ class JwtServiceTest {
         );
 
         // when
-        String token = jwtService.generateAccessToken(extraClaims, user);
+        String token = jwtService.generateAccessToken(
+                extraClaims,
+                principal
+        );
 
         // then
         String customClaim = jwtService.extractClaim(
@@ -107,23 +114,22 @@ class JwtServiceTest {
 
         assertEquals("custom-value", customClaim);
         assertTrue(featureEnabled);
-        assertEquals("custom.jwt@example.com", jwtService.extractUserName(token));
+        assertEquals(
+                "custom.jwt@example.com",
+                jwtService.extractUserName(token)
+        );
     }
 
     @DisplayName("isTokenValid should return true when username matches and token is not expired")
     @Test
     void isTokenValid_ShouldReturnTrue_WhenUsernameMatchesAndTokenIsNotExpired() {
         // given
-        User user = userBuilder()
-                .idUser(9L)
-                .email("valid.jwt@example.com")
-                .role(Role.USER)
-                .build();
+        UserPrincipal principal = createUserPrincipal();
 
-        String token = jwtService.generateAccessToken(user);
+        String token = jwtService.generateAccessToken(principal);
 
         // when
-        boolean valid = jwtService.isTokenValid(token, user);
+        boolean valid = jwtService.isTokenValid(token, principal);
 
         // then
         assertTrue(valid);
@@ -134,17 +140,17 @@ class JwtServiceTest {
     @Test
     void isTokenValid_ShouldReturnFalse_WhenUsernameDoesNotMatch() {
         // given
-        User tokenOwner = userBuilder()
-                .idUser(10L)
-                .email("owner.jwt@example.com")
-                .role(Role.USER)
-                .build();
+        UserPrincipal tokenOwner = createUserPrincipal(
+                userBuilder()
+                        .idUser(10L)
+                        .email("owner.jwt@example.com")
+                        .build());
 
-        User differentUser = userBuilder()
-                .idUser(11L)
-                .email("different.jwt@example.com")
-                .role(Role.USER)
-                .build();
+        UserPrincipal differentUser = createUserPrincipal(
+                userBuilder()
+                        .idUser(11L)
+                        .email("different.jwt@example.com")
+                        .build());
 
         String token = jwtService.generateAccessToken(tokenOwner);
 
@@ -159,20 +165,20 @@ class JwtServiceTest {
     @Test
     void isTokenValid_ShouldThrowExpiredJwtException_WhenTokenIsExpired() {
         // given
-        ReflectionTestUtils.setField(jwtService, "accessExpirationMinutes", -1L);
+        ReflectionTestUtils.setField(
+                jwtService,
+                "accessExpirationMinutes",
+                -1L
+        );
 
-        User user = userBuilder()
-                .idUser(12L)
-                .email("expired.jwt@example.com")
-                .role(Role.USER)
-                .build();
+        UserPrincipal principal = createUserPrincipal();
 
-        String token = jwtService.generateAccessToken(user);
+        String token = jwtService.generateAccessToken(principal);
 
         // when + then
         assertThrows(
                 ExpiredJwtException.class,
-                () -> jwtService.isTokenValid(token, user)
+                () -> jwtService.isTokenValid(token, principal)
         );
     }
 
@@ -180,13 +186,9 @@ class JwtServiceTest {
     @Test
     void extractClaim_ShouldReturnExpirationClaim() {
         // given
-        User user = userBuilder()
-                .idUser(13L)
-                .email("expiration.jwt@example.com")
-                .role(Role.USER)
-                .build();
+        UserPrincipal principal = createUserPrincipal();
 
-        String token = jwtService.generateAccessToken(user);
+        String token = jwtService.generateAccessToken(principal);
 
         // when
         Object expiration = jwtService.extractClaim(
@@ -197,4 +199,5 @@ class JwtServiceTest {
         // then
         assertNotNull(expiration);
     }
+
 }
