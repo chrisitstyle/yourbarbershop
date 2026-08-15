@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.link;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +15,6 @@ import pl.barbershopproject.barbershop.config.JwtAuthFilter;
 import pl.barbershopproject.barbershop.config.JwtService;
 import pl.barbershopproject.barbershop.exception.InvalidPaymentLinkTokenException;
 import pl.barbershopproject.barbershop.exception.PaymentLinkUnavailableException;
-import pl.barbershopproject.barbershop.payment.link.PaymentLinkController;
-import pl.barbershopproject.barbershop.payment.link.PaymentLinkService;
 import pl.barbershopproject.barbershop.utils.TestClockConfig;
 
 import static org.mockito.Mockito.verify;

@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.link;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -6,7 +6,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.exception.PaymentLinkUnavailableException;
-import pl.barbershopproject.barbershop.payment.link.*;
+import pl.barbershopproject.barbershop.payment.PaymentCheckout;
+import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutService;
 import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionDetails;
 import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionStatus;

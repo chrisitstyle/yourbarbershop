@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.checkout;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -6,8 +6,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import pl.barbershopproject.barbershop.payment.checkout.PaymentCheckoutService;
-import pl.barbershopproject.barbershop.payment.checkout.PaymentCheckoutSessionUpdater;
+import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutService;
 import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionResponse;
 
