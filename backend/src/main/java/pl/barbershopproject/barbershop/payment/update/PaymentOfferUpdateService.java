@@ -1,8 +1,10 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.update;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.payment.Payment;
+import pl.barbershopproject.barbershop.payment.PaymentOfferUpdater;
 import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 
 import java.util.Objects;
@@ -12,7 +14,7 @@ import java.util.Objects;
  */
 @Service
 @RequiredArgsConstructor
-class PaymentOfferUpdateService implements PaymentOfferUpdater {
+public class PaymentOfferUpdateService implements PaymentOfferUpdater {
 
     private final OrderModificationPolicy orderModificationPolicy;
 

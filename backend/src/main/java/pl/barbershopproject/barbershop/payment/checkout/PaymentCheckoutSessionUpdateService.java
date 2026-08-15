@@ -1,16 +1,19 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.checkout;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.payment.Payment;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentRepository;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-class PaymentCheckoutSessionUpdateService implements PaymentCheckoutSessionUpdater {
+public class PaymentCheckoutSessionUpdateService implements PaymentCheckoutSessionUpdater {
 
     private static final String PAYMENT_NOT_FOUND_MESSAGE = "Nie znaleziono płatności o ID: ";
 

@@ -1,9 +1,12 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.checkout;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.payment.*;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutService;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionResponse;
 
 import java.util.Objects;
 

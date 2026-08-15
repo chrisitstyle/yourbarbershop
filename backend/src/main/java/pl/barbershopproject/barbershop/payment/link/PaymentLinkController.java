@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.link;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,7 +19,7 @@ import pl.barbershopproject.barbershop.payment.dto.PaymentLinkCheckoutResponseDT
 @Tag(
         name = "Payment Links",
         description = "Public endpoints for continuing unpaid online payments")
-class PaymentLinkController {
+public class PaymentLinkController {
 
     private final PaymentLinkService paymentLinkService;
 

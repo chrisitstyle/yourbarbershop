@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pl.barbershopproject.barbershop.exception.OrderOfferChangeNotAllowedException;
 import pl.barbershopproject.barbershop.offer.Offer;
+import pl.barbershopproject.barbershop.payment.update.PaymentOfferUpdateService;
 import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 
 import java.math.BigDecimal;
@@ -13,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 import static pl.barbershopproject.barbershop.utils.testentities.OfferTestEntities.offerBuilder;
 
-class PaymentOfferUpdateServiceTest {
+public class PaymentOfferUpdateServiceTest {
 
     private OrderModificationPolicy orderModificationPolicy;
     private PaymentOfferUpdateService paymentOfferUpdateService;

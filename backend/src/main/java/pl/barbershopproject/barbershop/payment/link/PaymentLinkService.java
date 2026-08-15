@@ -1,9 +1,12 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.link;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.barbershopproject.barbershop.exception.PaymentLinkUnavailableException;
 import pl.barbershopproject.barbershop.exception.InvalidPaymentLinkTokenException;
+import pl.barbershopproject.barbershop.payment.*;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutService;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionDetails;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.Clock;

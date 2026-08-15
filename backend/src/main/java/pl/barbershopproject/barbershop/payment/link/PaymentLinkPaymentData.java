@@ -1,5 +1,6 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.link;
 
+import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
  * @param orderStatus current reservation status
  * @param visitDate scheduled appointment date
  */
-record PaymentLinkPaymentData(
+public record PaymentLinkPaymentData(
         PaymentCheckoutRequest checkoutRequest,
         String stripeCheckoutSessionId,
         OrderStatus orderStatus,

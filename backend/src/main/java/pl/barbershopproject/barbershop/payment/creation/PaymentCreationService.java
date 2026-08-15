@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.creation;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.offer.BookedOffer;
 import pl.barbershopproject.barbershop.order.Order;
+import pl.barbershopproject.barbershop.payment.*;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -23,13 +24,13 @@ import java.util.UUID;
  */
 @Service
 @Transactional(propagation = Propagation.MANDATORY) // requires an already active order transaction when creating and persisting a payment
-class PaymentCreationService implements PaymentCreator {
+public class PaymentCreationService implements PaymentCreator {
 
     private final PaymentRepository paymentRepository;
     private final Clock clock;
     private final String currency;
 
-    PaymentCreationService(
+    public PaymentCreationService(
             PaymentRepository paymentRepository,
             Clock clock,
             @Value("${stripe.currency:pln}") String currency

@@ -9,7 +9,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import pl.barbershopproject.barbershop.integration.BaseIntegrationTest;
-import pl.barbershopproject.barbershop.payment.PaymentCheckoutSessionUpdater;
+import pl.barbershopproject.barbershop.payment.checkout.PaymentCheckoutSessionUpdater;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

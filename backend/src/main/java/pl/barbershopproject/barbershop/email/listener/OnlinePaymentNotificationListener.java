@@ -7,7 +7,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import pl.barbershopproject.barbershop.email.EmailSenderService;
 import pl.barbershopproject.barbershop.email.template.OnlinePaymentPendingEmailTemplate;
-import pl.barbershopproject.barbershop.payment.PaymentLinkGenerator;
+import pl.barbershopproject.barbershop.payment.link.PaymentLinkGenerator;
 import pl.barbershopproject.barbershop.payment.event.OnlinePaymentPendingEvent;
 
 import java.time.format.DateTimeFormatter;

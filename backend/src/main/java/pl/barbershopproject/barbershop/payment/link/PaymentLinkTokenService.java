@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.link;
 
 
 import org.springframework.beans.factory.annotation.Value;

@@ -6,6 +6,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutService;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionDetails;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionResponse;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionStatus;
 
 import java.math.BigDecimal;
 

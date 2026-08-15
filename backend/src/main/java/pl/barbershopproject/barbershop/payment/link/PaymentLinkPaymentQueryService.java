@@ -1,10 +1,13 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.link;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.order.Order;
+import pl.barbershopproject.barbershop.payment.Payment;
+import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
+import pl.barbershopproject.barbershop.payment.PaymentRepository;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -18,7 +21,7 @@ import java.util.Objects;
  */
 @Service
 @RequiredArgsConstructor
-class PaymentLinkPaymentQueryService {
+public class PaymentLinkPaymentQueryService {
 
     private static final String PAYMENT_NOT_FOUND_MESSAGE = "Nie znaleziono płatności o ID: ";
 

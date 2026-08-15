@@ -9,6 +9,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.transaction.support.TransactionTemplate;
 import pl.barbershopproject.barbershop.integration.BaseIntegrationTest;
 import pl.barbershopproject.barbershop.payment.*;
+import pl.barbershopproject.barbershop.payment.checkout.PaymentCheckoutSessionUpdater;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutService;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionResponse;
 
 import java.math.BigDecimal;
 

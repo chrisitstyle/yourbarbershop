@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.stripe.webhook;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

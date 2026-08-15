@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.checkout;
 
 /**
  * Persists the Stripe Checkout session identifier assigned to a payment.
