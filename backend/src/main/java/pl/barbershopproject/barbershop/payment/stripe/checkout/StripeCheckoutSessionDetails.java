@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.stripe.checkout;
 
 import java.time.Instant;
 

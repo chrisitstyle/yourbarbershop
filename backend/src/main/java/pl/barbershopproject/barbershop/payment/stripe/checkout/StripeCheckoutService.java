@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.stripe.checkout;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 import tools.jackson.databind.JsonNode;
 
 import java.math.BigDecimal;

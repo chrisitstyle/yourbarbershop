@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.stripe.webhook;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -8,6 +8,9 @@ import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityServic
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.event.OrderCreatedEvent;
+import pl.barbershopproject.barbershop.payment.Payment;
+import pl.barbershopproject.barbershop.payment.PaymentRepository;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;

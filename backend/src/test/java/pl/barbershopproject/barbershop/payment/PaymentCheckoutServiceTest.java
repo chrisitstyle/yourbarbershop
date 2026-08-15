@@ -6,6 +6,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.barbershopproject.barbershop.payment.checkout.PaymentCheckoutService;
+import pl.barbershopproject.barbershop.payment.checkout.PaymentCheckoutSessionUpdater;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutService;
+import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionResponse;
 
 import java.math.BigDecimal;
 

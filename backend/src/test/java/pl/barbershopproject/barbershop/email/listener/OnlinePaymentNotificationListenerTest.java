@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.email.EmailSenderService;
 import pl.barbershopproject.barbershop.email.template.OnlinePaymentPendingEmailTemplate;
-import pl.barbershopproject.barbershop.payment.PaymentLinkGenerator;
+import pl.barbershopproject.barbershop.payment.link.PaymentLinkGenerator;
 import pl.barbershopproject.barbershop.payment.event.OnlinePaymentPendingEvent;
 
 import java.math.BigDecimal;
