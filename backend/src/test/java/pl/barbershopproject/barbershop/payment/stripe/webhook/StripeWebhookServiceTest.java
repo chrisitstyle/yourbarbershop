@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.stripe.webhook;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,7 +7,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import pl.barbershopproject.barbershop.appointment.AppointmentAvailabilityService;
-import pl.barbershopproject.barbershop.payment.stripe.webhook.StripeWebhookService;
+import pl.barbershopproject.barbershop.payment.Payment;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentRepository;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Clock;

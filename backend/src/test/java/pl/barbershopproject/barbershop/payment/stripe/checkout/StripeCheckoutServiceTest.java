@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.stripe.checkout;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.AfterEach;
@@ -6,10 +6,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
-import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutService;
-import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionDetails;
-import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionResponse;
-import pl.barbershopproject.barbershop.payment.stripe.checkout.StripeCheckoutSessionStatus;
+import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 
 import java.math.BigDecimal;
 

@@ -1,4 +1,4 @@
-package pl.barbershopproject.barbershop.payment;
+package pl.barbershopproject.barbershop.payment.creation;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.order.Order;
-import pl.barbershopproject.barbershop.payment.creation.PaymentCreationService;
+import pl.barbershopproject.barbershop.payment.*;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
