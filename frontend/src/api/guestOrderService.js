@@ -34,6 +34,22 @@ export const getGuestOrders = async () => {
   }
 };
 
+export const getGuestOrderById = async (idGuestOrder) => {
+  try {
+    const response = await apiRequest(
+      `${API_BASE_URL}/guestorders/${idGuestOrder}`,
+      {
+        credentials: "include",
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error loading guest order:", error);
+    throw error;
+  }
+};
+
 export const updateGuestOrder = async (idGuestOrder, data) => {
   try {
     const response = await apiRequest(
@@ -67,6 +83,7 @@ export const deleteGuestOrder = async (idGuestOrder) => {
 const guestOrderService = {
   createGuestOrder,
   getGuestOrders,
+  getGuestOrderById,
   updateGuestOrder,
   deleteGuestOrder,
 };

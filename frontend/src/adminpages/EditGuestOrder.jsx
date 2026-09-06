@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { updateGuestOrder } from "../api/guestOrderService";
@@ -7,6 +7,7 @@ import { format } from "date-fns-tz";
 import { formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
 import useOffers from "../hooks/useOffers";
+import useGuestOrder from "../hooks/useGuestOrder";
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useTranslation } from "react-i18next";
@@ -25,11 +26,20 @@ const getErrorMessage = (error) => {
 
 const EditGuestOrder = () => {
   const location = useLocation();
-  const guestOrderData = location.state?.guestOrderData;
-
   const navigate = useNavigate();
+  const { id } = useParams();
+
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const guestOrderId = Number(id);
+  const initialGuestOrderData = location.state?.guestOrderData;
+
+  const {
+    data: guestOrderData,
+    isLoading: isLoadingGuestOrder,
+    error: guestOrderError,
+  } = useGuestOrder(guestOrderId, initialGuestOrderData);
 
   const { offers = [], isLoading: isLoadingOffers } = useOffers();
 
@@ -43,6 +53,8 @@ const EditGuestOrder = () => {
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [selectedStatus, setSelectedStatus] = useState("");
 
+  const isFormDirtyRef = useRef(false);
+
   const { isTerminalOrder, isOfferChangeBlocked, canComplete, canCancel } =
     getOrderModificationRules(guestOrderData);
 
@@ -55,7 +67,7 @@ const EditGuestOrder = () => {
     : t("admin.common.none");
 
   useEffect(() => {
-    if (!guestOrderData) {
+    if (!guestOrderData || isFormDirtyRef.current) {
       return;
     }
 
@@ -76,17 +88,53 @@ const EditGuestOrder = () => {
     setSelectedStatus(guestOrderData.orderStatus || "");
   }, [guestOrderData]);
 
+  const handleFirstnameChange = (event) => {
+    isFormDirtyRef.current = true;
+    setFirstname(event.target.value);
+  };
+
+  const handleLastnameChange = (event) => {
+    isFormDirtyRef.current = true;
+    setLastname(event.target.value);
+  };
+
+  const handlePhonenumberChange = (event) => {
+    isFormDirtyRef.current = true;
+    setPhonenumber(event.target.value);
+  };
+
+  const handleEmailChange = (event) => {
+    isFormDirtyRef.current = true;
+    setEmail(event.target.value);
+  };
+
+  const handleOfferChange = (event) => {
+    isFormDirtyRef.current = true;
+    setSelectedOffer(event.target.value);
+  };
+
+  const handleDateChange = (event) => {
+    isFormDirtyRef.current = true;
+    setSelectedDate(event.target.value);
+  };
+
   const handleHourChange = (event) => {
+    isFormDirtyRef.current = true;
     setSelectedHour(Number.parseInt(event.target.value, 10));
   };
 
   const handleMinuteChange = (event) => {
+    isFormDirtyRef.current = true;
     setSelectedMinute(Number.parseInt(event.target.value, 10));
   };
 
+  const handleStatusChange = (event) => {
+    isFormDirtyRef.current = true;
+    setSelectedStatus(event.target.value);
+  };
+
   const editGuestOrderMutation = useMutation({
-    mutationFn: (updatedData) =>
-      updateGuestOrder(guestOrderData.idGuestOrder, updatedData),
+    mutationFn: (updatedData) => updateGuestOrder(guestOrderId, updatedData),
     onSuccess: () => {
       // invalidate guest orders query cache so tables automatically update
       queryClient.invalidateQueries({
@@ -150,6 +198,28 @@ const EditGuestOrder = () => {
     });
   };
 
+  if (!Number.isInteger(guestOrderId) || guestOrderId <= 0) {
+    return (
+      <div className="container mt-5 text-center">
+        <Alert variant="warning">{t("admin.common.noData")}</Alert>
+      </div>
+    );
+  }
+
+  if (isLoadingGuestOrder) {
+    return <LoadingSpinner text={t("admin.common.loadingData")} />;
+  }
+
+  if (guestOrderError && !guestOrderData) {
+    return (
+      <div className="container mt-5 text-center">
+        <Alert variant="danger">
+          {getErrorMessage(guestOrderError) || t("admin.common.noData")}
+        </Alert>
+      </div>
+    );
+  }
+
   if (!guestOrderData) {
     return (
       <div className="container mt-5 text-center">
@@ -203,7 +273,7 @@ const EditGuestOrder = () => {
                       id="ego-firstname"
                       className="form-control"
                       value={firstname}
-                      onChange={(event) => setFirstname(event.target.value)}
+                      onChange={handleFirstnameChange}
                       required
                       disabled={isFormDisabled}
                     />
@@ -219,7 +289,7 @@ const EditGuestOrder = () => {
                       id="ego-lastname"
                       className="form-control"
                       value={lastname}
-                      onChange={(event) => setLastname(event.target.value)}
+                      onChange={handleLastnameChange}
                       required
                       disabled={isFormDisabled}
                     />
@@ -237,7 +307,7 @@ const EditGuestOrder = () => {
                       id="ego-phone"
                       className="form-control"
                       value={phonenumber}
-                      onChange={(event) => setPhonenumber(event.target.value)}
+                      onChange={handlePhonenumberChange}
                       required
                       disabled={isFormDisabled}
                     />
@@ -253,7 +323,7 @@ const EditGuestOrder = () => {
                       id="ego-email"
                       className="form-control"
                       value={email}
-                      onChange={(event) => setEmail(event.target.value)}
+                      onChange={handleEmailChange}
                       required
                       disabled={isFormDisabled}
                     />
@@ -282,7 +352,7 @@ const EditGuestOrder = () => {
                       id="ego-offer"
                       className="form-select"
                       value={selectedOffer}
-                      onChange={(event) => setSelectedOffer(event.target.value)}
+                      onChange={handleOfferChange}
                       required
                       disabled={isFormDisabled}
                     >
@@ -315,7 +385,7 @@ const EditGuestOrder = () => {
                     id="ego-date"
                     className="form-control"
                     value={selectedDate}
-                    onChange={(event) => setSelectedDate(event.target.value)}
+                    onChange={handleDateChange}
                     required
                     disabled={isFormDisabled}
                   />
@@ -370,7 +440,7 @@ const EditGuestOrder = () => {
                     id="ego-status"
                     className="form-select"
                     value={selectedStatus}
-                    onChange={(event) => setSelectedStatus(event.target.value)}
+                    onChange={handleStatusChange}
                     required
                     disabled={isFormDisabled}
                   >
