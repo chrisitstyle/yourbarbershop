@@ -32,6 +32,14 @@ export const getOrders = async () => {
   }
 };
 
+export const getOrderById = async (orderId) => {
+  const response = await apiRequest(`${API_BASE_URL}/orders/${orderId}`, {
+    credentials: "include",
+  });
+
+  return response.data;
+};
+
 export const updateOrder = async (orderId, newData) => {
   const response = await apiRequest(`${API_BASE_URL}/orders/${orderId}`, {
     method: "PUT",
@@ -57,6 +65,7 @@ export const deleteOrder = async (idOrder) => {
 const orderService = {
   createOrder,
   getOrders,
+  getOrderById,
   updateOrder,
   deleteOrder,
 };

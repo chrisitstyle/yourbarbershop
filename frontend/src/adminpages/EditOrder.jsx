@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { updateOrder } from "../api/orderService";
 import useOffers from "../hooks/useOffers";
+import useOrder from "../hooks/useOrder";
 import { format } from "date-fns-tz";
 import { formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
@@ -25,8 +26,17 @@ const getErrorMessage = (error) => {
 
 const EditOrder = () => {
   const location = useLocation();
-  const orderData = location.state?.orderData;
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  const orderId = Number(id);
+  const initialOrderData = location.state?.orderData;
+
+  const {
+    data: orderData,
+    isLoading: isLoadingOrder,
+    error: orderError,
+  } = useOrder(orderId, initialOrderData);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -37,6 +47,8 @@ const EditOrder = () => {
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [selectedStatus, setSelectedStatus] = useState("");
+
+  const isFormDirtyRef = useRef(false);
 
   const { isTerminalOrder, isOfferChangeBlocked, canComplete, canCancel } =
     getOrderModificationRules(orderData);
@@ -50,7 +62,7 @@ const EditOrder = () => {
     : t("admin.common.none");
 
   useEffect(() => {
-    if (!orderData) {
+    if (!orderData || isFormDirtyRef.current) {
       return;
     }
 
@@ -70,15 +82,32 @@ const EditOrder = () => {
   }, [orderData]);
 
   const handleHourChange = (event) => {
+    isFormDirtyRef.current = true;
     setSelectedHour(Number.parseInt(event.target.value, 10));
   };
 
   const handleMinuteChange = (event) => {
+    isFormDirtyRef.current = true;
     setSelectedMinute(Number.parseInt(event.target.value, 10));
   };
 
+  const handleOfferChange = (event) => {
+    isFormDirtyRef.current = true;
+    setSelectedOffer(event.target.value);
+  };
+
+  const handleDateChange = (event) => {
+    isFormDirtyRef.current = true;
+    setSelectedDate(event.target.value);
+  };
+
+  const handleStatusChange = (event) => {
+    isFormDirtyRef.current = true;
+    setSelectedStatus(event.target.value);
+  };
+
   const updateOrderMutation = useMutation({
-    mutationFn: (updatedOrder) => updateOrder(orderData.idOrder, updatedOrder),
+    mutationFn: (updatedOrder) => updateOrder(orderId, updatedOrder),
     onSuccess: () => {
       // invalidate orders query cache so tables automatically update
       queryClient.invalidateQueries({
@@ -137,6 +166,28 @@ const EditOrder = () => {
       orderStatus: selectedStatus,
     });
   };
+
+  if (!Number.isInteger(orderId) || orderId <= 0) {
+    return (
+      <div className="container mt-5 text-center">
+        <Alert variant="warning">{t("admin.common.noData")}</Alert>
+      </div>
+    );
+  }
+
+  if (isLoadingOrder) {
+    return <LoadingSpinner text={t("admin.common.loadingData")} />;
+  }
+
+  if (orderError && !orderData) {
+    return (
+      <div className="container mt-5 text-center">
+        <Alert variant="danger">
+          {getErrorMessage(orderError) || t("admin.common.noData")}
+        </Alert>
+      </div>
+    );
+  }
 
   if (!orderData) {
     return (
@@ -198,7 +249,7 @@ const EditOrder = () => {
                       className="form-select"
                       id="selectOffer"
                       value={selectedOffer}
-                      onChange={(event) => setSelectedOffer(event.target.value)}
+                      onChange={handleOfferChange}
                       required
                       disabled={isFormDisabled}
                     >
@@ -231,7 +282,7 @@ const EditOrder = () => {
                     className="form-control"
                     id="selectdate"
                     value={selectedDate}
-                    onChange={(event) => setSelectedDate(event.target.value)}
+                    onChange={handleDateChange}
                     required
                     disabled={isFormDisabled}
                   />
@@ -286,7 +337,7 @@ const EditOrder = () => {
                     className="form-select"
                     id="selectstatus"
                     value={selectedStatus}
-                    onChange={(event) => setSelectedStatus(event.target.value)}
+                    onChange={handleStatusChange}
                     required
                     disabled={isFormDisabled}
                   >
