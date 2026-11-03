@@ -164,13 +164,7 @@ public final class OrderTestEntities {
     public static OrderCreationDTO createOrderCreationDTO() {
         return new OrderCreationDTO(
                 1L,
-                LocalDateTime.of(
-                        2026,
-                        Month.OCTOBER,
-                        17,
-                        17,
-                        0
-                ),
+                LocalDateTime.now().plusDays(7),
                 PaymentMethod.GOTOWKA
         );
     }
