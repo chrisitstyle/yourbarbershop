@@ -63,13 +63,11 @@ class OrderControllerTest {
         // given
         OrderCreationDTO inputDto = OrderTestEntities.createOrderCreationDTO();
 
-        OrderCreationResponseDTO responseDTO =
-                new OrderCreationResponseDTO(
+        OrderCreationResponseDTO responseDTO = new OrderCreationResponseDTO(
                         10L,
                         PaymentMethod.GOTOWKA,
                         PaymentStatus.NIE_WYMAGANA,
-                        null
-                );
+                        null);
 
         when(orderService.addOrder(
                 any(OrderCreationDTO.class),

@@ -119,7 +119,7 @@ public final class GuestOrderTestEntities {
                 "123456789",
                 "guestjohndoe@example.com",
                 1L,
-                LocalDateTime.of(2026, Month.OCTOBER, 17, 17, 0),
+                LocalDateTime.now().plusDays(7),
                 PaymentMethod.GOTOWKA
         );
     }
