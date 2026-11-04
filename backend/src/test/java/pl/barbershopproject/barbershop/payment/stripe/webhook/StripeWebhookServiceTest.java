@@ -135,4 +135,130 @@ class StripeWebhookServiceTest {
                 eventPublisher
         );
     }
+
+
+    @Test
+    void shouldNotRestoreRefundedPayment_WhenPaymentIntentSucceeded() {
+        Payment payment = createRefundedPayment();
+
+        when(paymentRepository.findById(PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+
+        String payload = """
+            {
+              "type": "payment_intent.succeeded",
+              "data": {
+                "object": {
+                  "id": "pi_test_refunded",
+                  "metadata": {
+                    "paymentId": "15"
+                  }
+                }
+              }
+            }
+            """;
+
+        stripeWebhookService.handleEvent(payload);
+
+        assertThat(payment.getPaymentStatus())
+                .isEqualTo(PaymentStatus.ZWROCONA);
+
+        verify(paymentRepository, never()).save(any());
+        verifyNoInteractions(
+                appointmentAvailabilityService,
+                eventPublisher
+        );
+    }
+
+    @Test
+    void shouldNotRestoreRefundedPayment_WhenCheckoutCompleted() {
+        Payment payment = createRefundedPayment();
+
+        when(paymentRepository.findByStripeCheckoutSessionId("cs_test_refunded"))
+                .thenReturn(Optional.of(payment));
+
+        String payload = """
+            {
+              "type": "checkout.session.completed",
+              "data": {
+                "object": {
+                  "id": "cs_test_refunded",
+                  "payment_intent": "pi_test_refunded"
+                }
+              }
+            }
+            """;
+
+        stripeWebhookService.handleEvent(payload);
+
+        assertThat(payment.getPaymentStatus())
+                .isEqualTo(PaymentStatus.ZWROCONA);
+
+        verify(paymentRepository, never()).save(any());
+        verifyNoInteractions(
+                appointmentAvailabilityService,
+                eventPublisher
+        );
+    }
+
+    @Test
+    void shouldNotExpirePreviouslyRefundedPayment() {
+        Payment payment = createRefundedPayment();
+
+        when(paymentRepository.findByStripeCheckoutSessionId("cs_test_refunded"))
+                .thenReturn(Optional.of(payment));
+
+        String payload = """
+            {
+              "type": "checkout.session.expired",
+              "data": {
+                "object": {
+                  "id": "cs_test_refunded"
+                }
+              }
+            }
+            """;
+
+        stripeWebhookService.handleEvent(payload);
+
+        assertThat(payment.getPaymentStatus())
+                .isEqualTo(PaymentStatus.ZWROCONA);
+
+        verify(paymentRepository, never()).save(any());
+        verifyNoInteractions(appointmentAvailabilityService, eventPublisher);
+    }
+
+    @Test
+    void shouldNotModifyPayment_WhenPartialChargeRefundEventArrives() {
+        String payload = """
+            {
+              "type": "charge.refunded",
+              "data": {
+                "object": {
+                  "id": "ch_test_partial",
+                  "payment_intent": "pi_test_refunded",
+                  "amount": 8000,
+                  "amount_refunded": 2000
+                }
+              }
+            }
+            """;
+
+        stripeWebhookService.handleEvent(payload);
+
+        verifyNoInteractions(
+                paymentRepository,
+                appointmentAvailabilityService,
+                eventPublisher);
+    }
+
+    private Payment createRefundedPayment() {
+        return Payment.builder()
+                .idPayment(PAYMENT_ID)
+                .paymentMethod(PaymentMethod.KARTA_ONLINE)
+                .paymentStatus(PaymentStatus.ZWROCONA)
+                .stripePaymentIntentId("pi_test_refunded")
+                .build();
+    }
+
 }
