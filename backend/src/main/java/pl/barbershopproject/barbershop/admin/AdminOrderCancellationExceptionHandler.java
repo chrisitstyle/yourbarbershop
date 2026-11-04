@@ -14,7 +14,10 @@ import java.util.NoSuchElementException;
  * Maps administrative cancellation errors to appropriate HTTP responses.
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@RestControllerAdvice(assignableTypes = AdminOrderCancellationController.class)
+@RestControllerAdvice(assignableTypes = {
+        AdminOrderCancellationController.class,
+        AdminRefundController.class
+})
 public class AdminOrderCancellationExceptionHandler {
 
     @ExceptionHandler(NoSuchElementException.class)
