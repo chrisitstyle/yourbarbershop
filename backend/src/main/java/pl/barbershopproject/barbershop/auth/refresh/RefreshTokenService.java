@@ -39,7 +39,7 @@ public class RefreshTokenService {
     public RefreshTokenRotation rotateRefreshToken(String rawRefreshToken, HttpServletRequest request) {
         String oldTokenHash = hashToken(rawRefreshToken);
 
-        RefreshToken oldToken = refreshTokenRepository.findByTokenHash(oldTokenHash)
+        RefreshToken oldToken = refreshTokenRepository.findForUpdateByTokenHash(oldTokenHash)
                 .orElseThrow(() -> unauthorized("Invalid refresh token"));
 
         if (oldToken.isRevoked() || oldToken.isExpired()) {
@@ -60,7 +60,7 @@ public class RefreshTokenService {
     public void revokeRefreshToken(String rawRefreshToken) {
         String tokenHash = hashToken(rawRefreshToken);
 
-        refreshTokenRepository.findByTokenHash(tokenHash).ifPresent(token -> {
+        refreshTokenRepository.findForUpdateByTokenHash(tokenHash).ifPresent(token -> {
             if (!token.isRevoked()) {
                 token.setRevokedAt(Instant.now());
                 refreshTokenRepository.save(token);
