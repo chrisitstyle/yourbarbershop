@@ -18,6 +18,7 @@ import pl.barbershopproject.barbershop.ordercreation.OrderCreationCompletionHand
 import pl.barbershopproject.barbershop.orderupdate.OrderUpdateCoordinator;
 import pl.barbershopproject.barbershop.orderupdate.OrderUpdateResult;
 import pl.barbershopproject.barbershop.payment.Payment;
+import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class GuestOrderService {
     private final GuestOrderCreationTransaction guestOrderCreationTransaction;
     private final IdempotencyRequestHasher idempotencyRequestHasher;
     private final OrderCreationCompletionHandler orderCreationCompletionHandler;
+    private final OrderModificationPolicy orderModificationPolicy;
 
     @CacheEvict(value = "guestOrders", allEntries = true)
     public GuestOrderCreationResponseDTO addGuestOrder(
@@ -123,8 +125,10 @@ public class GuestOrderService {
 
     @Transactional
     public void deleteGuestOrderById(Long idGuestOrder) {
-        GuestOrder guestOrder =
-                getRequiredGuestOrder(idGuestOrder);
+        GuestOrder guestOrder = getRequiredGuestOrder(idGuestOrder);
+        Payment payment = getRequiredPayment(guestOrder);
+
+        orderModificationPolicy.validateDeletion(payment);
 
         appointmentReservation.releaseIfReserved(
                 guestOrder.getVisitDate(),

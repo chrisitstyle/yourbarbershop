@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
 import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
 import pl.barbershopproject.barbershop.exception.MissingPaymentException;
+import pl.barbershopproject.barbershop.exception.OrderDeletionNotAllowedException;
 import pl.barbershopproject.barbershop.idempotency.IdempotencyRequestHasher;
 import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.order.dto.OrderCreationDTO;
@@ -27,6 +28,7 @@ import pl.barbershopproject.barbershop.security.AuthenticatedUser;
 import pl.barbershopproject.barbershop.security.CurrentUserProvider;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
+import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
@@ -69,6 +71,9 @@ class OrderServiceTest {
     private OrderUpdateCoordinator orderUpdateCoordinator;
     @Mock
     private OrderCreationCompletionHandler orderCreationCompletionHandler;
+    @Mock
+    private OrderModificationPolicy orderModificationPolicy;
+
     @InjectMocks
     private OrderService orderService;
 
@@ -597,6 +602,7 @@ class OrderServiceTest {
 
         verify(orderRepository).delete(order);
         verify(orderEvents).deleted(1L);
+        verify(orderModificationPolicy).validateDeletion(defaultPayment);
     }
 
     @Test
@@ -613,6 +619,24 @@ class OrderServiceTest {
         verifyNoInteractions(appointmentReservation, orderEvents);
 
         verify(orderRepository, never()).delete(any(Order.class));
+    }
+
+    @Test
+    void deleteOrderById_ShouldNotDeleteOrder_WhenPaymentIsOnline() {
+        defaultPayment.setPaymentMethod(PaymentMethod.KARTA_ONLINE);
+        defaultPayment.setPaymentStatus(PaymentStatus.OPLACONA);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        doThrow(new OrderDeletionNotAllowedException())
+                .when(orderModificationPolicy)
+                .validateDeletion(defaultPayment);
+
+        assertThrows(OrderDeletionNotAllowedException.class,
+                () -> orderService.deleteOrderById(1L));
+
+        verify(orderRepository, never()).delete(any(Order.class));
+        verifyNoInteractions(appointmentReservation, orderEvents);
     }
 
     @Test
