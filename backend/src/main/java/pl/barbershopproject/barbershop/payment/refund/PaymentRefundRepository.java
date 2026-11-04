@@ -1,6 +1,8 @@
 package pl.barbershopproject.barbershop.payment.refund;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,4 +17,10 @@ public interface PaymentRefundRepository extends JpaRepository<PaymentRefund, Lo
     Optional<PaymentRefund> findByIdempotencyKey(String idempotencyKey);
 
     List<PaymentRefund> findAllByPayment_IdPaymentOrderByRequestedAtDesc(Long paymentId);
+
+    boolean existsByPayment_IdPayment(Long paymentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<PaymentRefund> findForUpdateByIdPaymentRefund(Long refundId);
+
 }
