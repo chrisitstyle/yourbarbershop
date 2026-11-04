@@ -14,10 +14,7 @@ import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.OrderRepository;
 import pl.barbershopproject.barbershop.payment.*;
-import pl.barbershopproject.barbershop.payment.refund.PaymentRefund;
-import pl.barbershopproject.barbershop.payment.refund.PaymentRefundRepository;
-import pl.barbershopproject.barbershop.payment.refund.RefundStatus;
-import pl.barbershopproject.barbershop.payment.refund.RefundTransactionService;
+import pl.barbershopproject.barbershop.payment.refund.*;
 import pl.barbershopproject.barbershop.payment.stripe.webhook.StripeWebhookController;
 import pl.barbershopproject.barbershop.user.UserRepository;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
@@ -72,6 +69,9 @@ class StripeRefundWebhookIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RefundReconciliationService refundReconciliationService;
 
     @BeforeEach
     void resetStripeServer() {stripeServer.resetAll();}
@@ -178,6 +178,62 @@ class StripeRefundWebhookIntegrationTest extends BaseIntegrationTest {
 
         stripeServer.verify(0, getRequestedFor(urlEqualTo("/v1/refunds/" + STRIPE_REFUND_ID)));
     }
+
+
+    @Test
+    void shouldRestorePaidStatusWhenInitiallySuccessfulRefundLaterFails() throws Exception {
+
+        Payment payment = createPaidOnlinePayment();
+
+        var refundReservation = refundTransactionService
+                .reserveFullRefund(payment.getIdPayment());
+
+        Long refundId = refundReservation.refundId();
+
+        // Stripe initially reports a successful refund
+        stubStripeRefund(refundId, "succeeded", 8000);
+
+        sendSignedWebhook("refund.updated");
+
+        assertEquals(RefundStatus.SUCCEEDED, getRefund(refundId).getRefundStatus());
+
+        assertEquals(PaymentStatus.ZWROCONA,
+                paymentRepository.findById(payment.getIdPayment())
+                        .orElseThrow()
+                        .getPaymentStatus());
+
+        // Stripe later reports that the refund failed
+        stripeServer.resetAll();
+        stubStripeRefund(refundId, "failed", 8000);
+
+        sendSignedWebhook("refund.failed");
+
+        PaymentRefund refundRequiringReconciliation = getRefund(refundId);
+
+        assertEquals(RefundStatus.RECONCILIATION_REQUIRED,
+                refundRequiringReconciliation.getRefundStatus());
+
+        // a fresh Stripe lookup confirms the final failure
+        var reconciliationResult = refundReconciliationService.reconcileRefund(refundId);
+
+        assertEquals(RefundStatus.FAILED, reconciliationResult.refundStatus());
+
+        PaymentRefund failedRefund = getRefund(refundId);
+
+        assertEquals(RefundStatus.FAILED, failedRefund.getRefundStatus());
+        assertNotNull(failedRefund.getCompletedAt());
+
+        Payment updatedPayment = paymentRepository
+                .findById(payment.getIdPayment())
+                .orElseThrow();
+
+        assertEquals(PaymentStatus.OPLACONA, updatedPayment.getPaymentStatus());
+
+        // reconciliation must never create another refund.
+        stripeServer.verify(0,
+                postRequestedFor(urlEqualTo("/v1/refunds")));
+    }
+
 
     private Payment createPaidOnlinePayment() {
         Offer selectedOffer = offerRepository.findAll()

@@ -4,6 +4,7 @@ package pl.barbershopproject.barbershop.payment.refund;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
 
 import java.time.Instant;
@@ -20,6 +21,7 @@ public class StripeRefundStatusSynchronizer {
 
     private final PaymentRefundRepository paymentRefundRepository;
 
+
     @Transactional
     public RefundResult synchronizeRefund(
             Long refundId,
@@ -27,7 +29,8 @@ public class StripeRefundStatusSynchronizer {
     ) {
         PaymentRefund paymentRefund = paymentRefundRepository
                 .findForUpdateByIdPaymentRefund(refundId)
-                .orElseThrow(() -> new IllegalStateException("Payment refund not found: " + refundId));
+                .orElseThrow(() -> new IllegalStateException(
+                        "Payment refund not found: " + refundId));
 
         validateStripeRefund(paymentRefund, stripeRefund);
 
@@ -38,8 +41,13 @@ public class StripeRefundStatusSynchronizer {
             if (isTerminalStatus(receivedStatus)
                     && currentStatus != receivedStatus) {
 
-                paymentRefund.setRefundStatus(RefundStatus.RECONCILIATION_REQUIRED);
-                paymentRefund.setFailureReason("Conflicting terminal refund statuses");
+                paymentRefund.setRefundStatus(
+                        RefundStatus.RECONCILIATION_REQUIRED
+                );
+                paymentRefund.setFailureReason(
+                        "Conflicting terminal refund statuses"
+                );
+                paymentRefund.setCompletedAt(null);
 
                 return toRefundResult(paymentRefund);
             }
@@ -53,14 +61,25 @@ public class StripeRefundStatusSynchronizer {
 
         if (isTerminalStatus(receivedStatus)) {
             paymentRefund.setCompletedAt(Instant.now());
+        } else {
+            paymentRefund.setCompletedAt(null);
         }
 
+        Payment payment = paymentRefund.getPayment();
+
         if (receivedStatus == RefundStatus.SUCCEEDED) {
-            paymentRefund.getPayment().setPaymentStatus(PaymentStatus.ZWROCONA);
+            payment.setPaymentStatus(PaymentStatus.ZWROCONA);
+
+        } else if ((receivedStatus == RefundStatus.FAILED
+                || receivedStatus == RefundStatus.CANCELED)
+                && payment.getPaymentStatus() == PaymentStatus.ZWROCONA) {
+
+            payment.setPaymentStatus(PaymentStatus.OPLACONA);
         }
 
         return toRefundResult(paymentRefund);
     }
+
 
     private void validateStripeRefund(
             PaymentRefund paymentRefund,
