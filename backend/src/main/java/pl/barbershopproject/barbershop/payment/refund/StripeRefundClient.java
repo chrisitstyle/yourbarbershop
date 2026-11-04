@@ -10,6 +10,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
+import java.util.Map;
+
 /**
  * Handles HTTP communication with Stripe for payment refunds.
  */
@@ -61,6 +63,13 @@ public class StripeRefundClient {
                 .body(StripeRefundResponse.class);
     }
 
+    public StripeRefundResponse retrieveRefund(String stripeRefundId) {
+        return stripeRestClient.get()
+                .uri("/v1/refunds/{refundId}", stripeRefundId)
+                .retrieve()
+                .body(StripeRefundResponse.class);
+    }
+
     public record StripePaymentIntentResponse(
             String id,
             String status,
@@ -76,5 +85,6 @@ public class StripeRefundClient {
             @JsonProperty("payment_intent")
             String paymentIntentId,
             @JsonProperty("failure_reason")
-            String failureReason) { }
+            String failureReason,
+            Map<String, String> metadata) { }
 }

@@ -7,8 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Locale;
-
 /**
  * Coordinates full Stripe refunds without holding a database transaction
  * during external HTTP requests.
@@ -19,17 +17,18 @@ public class StripeRefundService {
 
     private final StripeRefundClient stripeRefundClient;
     private final RefundTransactionService refundTransactionService;
+    private final StripeRefundStatusSynchronizer refundStatusSynchronizer;
 
     public RefundResult requestFullRefund(Long paymentId) {
-        RefundTransactionService.RefundReservation refundReservation =
-                refundTransactionService.reserveFullRefund(paymentId);
+        RefundTransactionService.RefundReservation refundReservation = refundTransactionService
+                .reserveFullRefund(paymentId);
 
         StripeRefundClient.StripeRefundResponse stripeResponse;
         RefundStatus refundStatus;
 
         try {
-            StripeRefundClient.StripePaymentIntentResponse paymentIntent = stripeRefundClient.retrievePaymentIntent(
-                            refundReservation.paymentIntentId());
+            StripeRefundClient.StripePaymentIntentResponse paymentIntent = stripeRefundClient
+                    .retrievePaymentIntent(refundReservation.paymentIntentId());
 
             validatePaymentIntent(paymentIntent, refundReservation);
 
@@ -41,8 +40,6 @@ public class StripeRefundService {
 
             validateStripeRefund(stripeResponse, refundReservation);
 
-            refundStatus = resolveRefundStatus(stripeResponse.status());
-
         } catch (RestClientException | IllegalStateException exception) {
             refundTransactionService.markReconciliationRequired(refundReservation.refundId());
 
@@ -52,10 +49,9 @@ public class StripeRefundService {
                     exception);
         }
 
-        return refundTransactionService.recordStripeRefund(
+        return refundStatusSynchronizer.synchronizeRefund(
                 refundReservation.refundId(),
-                stripeResponse,
-                refundStatus);
+                stripeResponse);
     }
 
     private void validatePaymentIntent(
@@ -91,21 +87,5 @@ public class StripeRefundService {
 
             throw new IllegalStateException("Stripe refund response does not match the requested refund");
         }
-    }
-
-    private RefundStatus resolveRefundStatus(String stripeStatus) {
-        if (stripeStatus == null) {
-            throw new IllegalStateException("Missing Stripe refund status");
-        }
-
-        return switch (stripeStatus.toLowerCase(Locale.ROOT)) {
-            case "pending" -> RefundStatus.PENDING;
-            case "succeeded" -> RefundStatus.SUCCEEDED;
-            case "failed" -> RefundStatus.FAILED;
-            case "canceled" -> RefundStatus.CANCELED;
-            case "requires_action" -> RefundStatus.REQUIRES_ACTION;
-            default -> throw new IllegalStateException(
-                    "Unsupported Stripe refund status");
-        };
     }
 }

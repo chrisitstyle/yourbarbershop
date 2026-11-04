@@ -63,35 +63,6 @@ public class RefundTransactionService {
     }
 
     @Transactional
-    public RefundResult recordStripeRefund(
-            Long refundId,
-            StripeRefundClient.StripeRefundResponse stripeResponse,
-            RefundStatus refundStatus
-    ) {
-        PaymentRefund refund = getRefundForUpdate(refundId);
-
-        if (refund.getRefundStatus() == RefundStatus.SUCCEEDED) {
-            return toRefundResult(refund);
-        }
-
-        refund.setStripeRefundId(stripeResponse.id());
-        refund.setRefundStatus(refundStatus);
-        refund.setFailureReason(stripeResponse.failureReason());
-
-        if (refundStatus == RefundStatus.SUCCEEDED
-                || refundStatus == RefundStatus.FAILED
-                || refundStatus == RefundStatus.CANCELED) {
-            refund.setCompletedAt(Instant.now());
-        }
-
-        if (refundStatus == RefundStatus.SUCCEEDED) {
-            refund.getPayment().setPaymentStatus(PaymentStatus.ZWROCONA);
-        }
-
-        return toRefundResult(refund);
-    }
-
-    @Transactional
     public void markReconciliationRequired(Long refundId) {
         PaymentRefund refund = getRefundForUpdate(refundId);
 
@@ -139,13 +110,6 @@ public class RefundTransactionService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Refund not found"
                 ));
-    }
-
-    private RefundResult toRefundResult(PaymentRefund refund) {
-        return new RefundResult(
-                refund.getIdPaymentRefund(),
-                refund.getStripeRefundId(),
-                refund.getRefundStatus());
     }
 
     public record RefundReservation(
