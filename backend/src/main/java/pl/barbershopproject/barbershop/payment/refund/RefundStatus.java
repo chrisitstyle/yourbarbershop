@@ -5,6 +5,7 @@ package pl.barbershopproject.barbershop.payment.refund;
  */
 public enum RefundStatus {
     REQUESTED,
+    SUBMITTING,
     PENDING,
     SUCCEEDED,
     FAILED,

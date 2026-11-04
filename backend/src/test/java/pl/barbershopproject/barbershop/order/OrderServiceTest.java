@@ -306,6 +306,7 @@ class OrderServiceTest {
 
         verify(orderCreationCompletionHandler).complete(transactionResult);
     }
+
     @Test
     void addOrder_ShouldRejectRequest_WhenSameKeyIsStillProcessing() {
         OrderCreationDTO orderCreationDTO = createOrderCreationDTO();
@@ -330,10 +331,10 @@ class OrderServiceTest {
                         "Żądanie z tym Idempotency-Key jest nadal przetwarzane"));
 
         IdempotencyConflictException exception = assertThrows(
-                        IdempotencyConflictException.class,
-                        () -> orderService.addOrder(
-                                orderCreationDTO,
-                                IDEMPOTENCY_KEY));
+                IdempotencyConflictException.class,
+                () -> orderService.addOrder(
+                        orderCreationDTO,
+                        IDEMPOTENCY_KEY));
 
         assertEquals(
                 "Żądanie z tym Idempotency-Key jest nadal przetwarzane",
@@ -379,9 +380,11 @@ class OrderServiceTest {
 
     @Test
     void getSingleOrder_ShouldThrowException_WhenOrderNotFound() {
-        when(orderRepository.findById(2L)).thenReturn(Optional.empty());
+        when(orderRepository.findById(2L))
+                .thenReturn(Optional.empty());
 
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
                 () -> orderService.getSingleOrder(2L));
 
         assertEquals("Zamówienie o ID: 2 nie istnieje", exception.getMessage());
@@ -433,7 +436,7 @@ class OrderServiceTest {
                 currentOrderStatus,
                 request.orderStatus());
 
-        when(orderRepository.findById(1L))
+        when(orderRepository.findForUpdateByIdOrder(1L))
                 .thenReturn(Optional.of(order));
 
         when(orderUpdateCoordinator.prepareUpdate(
@@ -494,7 +497,7 @@ class OrderServiceTest {
                 currentOrderStatus,
                 currentOrderStatus);
 
-        when(orderRepository.findById(1L))
+        when(orderRepository.findForUpdateByIdOrder(1L))
                 .thenReturn(Optional.of(order));
 
         when(orderUpdateCoordinator.prepareUpdate(
@@ -539,14 +542,14 @@ class OrderServiceTest {
     void updateOrder_ShouldThrowException_WhenOrderNotFound() {
         OrderUpdatedRequestDTO request = createOrderUpdatedRequestDTO();
 
-        when(orderRepository.findById(2L)).thenReturn(Optional.empty());
+        when(orderRepository.findForUpdateByIdOrder(2L)).thenReturn(Optional.empty());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class,
                 () -> orderService.updateOrder(request, 2L));
 
         assertEquals("Zamówienie o ID: 2 nie istnieje", exception.getMessage());
 
-        verify(orderRepository).findById(2L);
+        verify(orderRepository).findForUpdateByIdOrder(2L);
 
         verifyNoInteractions(
                 orderUpdateCoordinator,
@@ -562,7 +565,7 @@ class OrderServiceTest {
 
         order.setPayment(null);
 
-        when(orderRepository.findById(1L))
+        when(orderRepository.findForUpdateByIdOrder(1L))
                 .thenReturn(Optional.of(order));
 
         MissingPaymentException exception = assertThrows(
@@ -592,11 +595,11 @@ class OrderServiceTest {
         LocalDateTime visitDate = order.getVisitDate();
         OrderStatus orderStatus = order.getOrderStatus();
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findForUpdateByIdOrder(1L)).thenReturn(Optional.of(order));
 
         orderService.deleteOrderById(1L);
 
-        verify(orderRepository).findById(1L);
+        verify(orderRepository).findForUpdateByIdOrder(1L);
 
         verify(appointmentReservation).releaseIfReserved(visitDate, orderStatus);
 
@@ -607,14 +610,14 @@ class OrderServiceTest {
 
     @Test
     void deleteOrderById_ShouldThrowException_WhenOrderNotExists() {
-        when(orderRepository.findById(2L)).thenReturn(Optional.empty());
+        when(orderRepository.findForUpdateByIdOrder(2L)).thenReturn(Optional.empty());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class,
                 () -> orderService.deleteOrderById(2L));
 
         assertEquals("Zamówienie o ID: 2 nie istnieje", exception.getMessage());
 
-        verify(orderRepository).findById(2L);
+        verify(orderRepository).findForUpdateByIdOrder(2L);
 
         verifyNoInteractions(appointmentReservation, orderEvents);
 
@@ -626,7 +629,7 @@ class OrderServiceTest {
         defaultPayment.setPaymentMethod(PaymentMethod.KARTA_ONLINE);
         defaultPayment.setPaymentStatus(PaymentStatus.OPLACONA);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findForUpdateByIdOrder(1L)).thenReturn(Optional.of(order));
 
         doThrow(new OrderDeletionNotAllowedException())
                 .when(orderModificationPolicy)

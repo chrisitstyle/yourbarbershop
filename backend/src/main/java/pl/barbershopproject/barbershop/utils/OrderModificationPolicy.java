@@ -145,4 +145,37 @@ public class OrderModificationPolicy {
             throw new OrderDeletionNotAllowedException();
         }
     }
+
+    /**
+     * Validates administrative cancellation and determines
+     * whether a full Stripe refund is required.
+     */
+    public boolean requiresFullRefundForAdminCancellation(
+            OrderStatus currentOrderStatus,
+            Payment payment
+    ) {
+        Objects.requireNonNull(payment, "Płatność zamówienia nie może być null");
+
+        if (currentOrderStatus != OrderStatus.NOWE) {
+            throw new OrderStatusChangeNotAllowedException("Można anulować tylko aktywną rezerwację");
+        }
+
+        PaymentMethod paymentMethod = payment.getPaymentMethod();
+        PaymentStatus paymentStatus = payment.getPaymentStatus();
+
+        if (paymentMethod == PaymentMethod.KARTA_ONLINE
+                && paymentStatus == PaymentStatus.OPLACONA) {
+            return true;
+        }
+
+        boolean isUnpaidOnSitePayment = (paymentMethod == PaymentMethod.GOTOWKA
+                        || paymentMethod == PaymentMethod.KARTA_NA_MIEJSCU)
+                        && paymentStatus == PaymentStatus.NIE_WYMAGANA;
+
+        if (isUnpaidOnSitePayment) {
+            return false;
+        }
+
+        throw new OrderStatusChangeNotAllowedException("Nie można anulować rezerwacji z obecnym statusem płatności");
+    }
 }

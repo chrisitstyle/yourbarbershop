@@ -13,6 +13,7 @@ import pl.barbershopproject.barbershop.payment.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -89,6 +90,34 @@ public class RefundTransactionService {
                 paymentRefund.getRefundStatus(),
                 paymentRefund.getStripeRefundId(),
                 paymentRefund.getPayment().getStripePaymentIntentId());
+    }
+
+    /**
+     * Claims a refund for a single Stripe submission.
+     * The claim is committed before the external HTTP request.
+     */
+    @Transactional
+    public Optional<RefundReservation> claimRefundForSubmission(Long refundId) {
+        PaymentRefund paymentRefund = getRefundForUpdate(refundId);
+
+        if (paymentRefund.getRefundStatus() != RefundStatus.REQUESTED) {
+            return Optional.empty();
+        }
+
+        paymentRefund.setRefundStatus(RefundStatus.SUBMITTING);
+
+        Payment payment = paymentRefund.getPayment();
+
+        long amountInMinorUnits = paymentRefund.getAmount()
+                .movePointRight(2)
+                .longValueExact();
+
+        return Optional.of(new RefundReservation(
+                paymentRefund.getIdPaymentRefund(),
+                payment.getStripePaymentIntentId(),
+                amountInMinorUnits,
+                paymentRefund.getCurrency(),
+                paymentRefund.getIdempotencyKey()));
     }
 
     public record RefundLookupTarget(

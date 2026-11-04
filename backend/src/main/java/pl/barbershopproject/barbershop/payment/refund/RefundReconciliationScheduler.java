@@ -27,12 +27,12 @@ public class RefundReconciliationScheduler {
 
     private static final int BATCH_SIZE = 50;
 
-    private static final Set<RefundStatus> RECONCILIABLE_STATUSES =
-            EnumSet.of(
-                    RefundStatus.REQUESTED,
-                    RefundStatus.PENDING,
-                    RefundStatus.REQUIRES_ACTION,
-                    RefundStatus.RECONCILIATION_REQUIRED);
+    private static final Set<RefundStatus> RECONCILIABLE_STATUSES = EnumSet.of(
+            RefundStatus.REQUESTED,
+            RefundStatus.SUBMITTING,
+            RefundStatus.PENDING,
+            RefundStatus.REQUIRES_ACTION,
+            RefundStatus.RECONCILIATION_REQUIRED);
 
     private final PaymentRefundRepository paymentRefundRepository;
     private final RefundReconciliationService refundReconciliationService;

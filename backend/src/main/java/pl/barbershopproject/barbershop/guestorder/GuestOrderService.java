@@ -18,6 +18,7 @@ import pl.barbershopproject.barbershop.ordercreation.OrderCreationCompletionHand
 import pl.barbershopproject.barbershop.orderupdate.OrderUpdateCoordinator;
 import pl.barbershopproject.barbershop.orderupdate.OrderUpdateResult;
 import pl.barbershopproject.barbershop.payment.Payment;
+import pl.barbershopproject.barbershop.payment.refund.RefundTransactionService;
 import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
@@ -38,6 +39,7 @@ public class GuestOrderService {
     private final IdempotencyRequestHasher idempotencyRequestHasher;
     private final OrderCreationCompletionHandler orderCreationCompletionHandler;
     private final OrderModificationPolicy orderModificationPolicy;
+    private final RefundTransactionService refundTransactionService;
 
     @CacheEvict(value = "guestOrders", allEntries = true)
     public GuestOrderCreationResponseDTO addGuestOrder(
@@ -97,7 +99,7 @@ public class GuestOrderService {
             GuestOrderUpdateRequestDTO request,
             Long idGuestOrder
     ) {
-        GuestOrder guestOrder = getRequiredGuestOrder(idGuestOrder);
+        GuestOrder guestOrder = getRequiredGuestOrderForUpdate(idGuestOrder);
 
         Payment payment = getRequiredPayment(guestOrder);
 
@@ -115,9 +117,7 @@ public class GuestOrderService {
 
         GuestOrder savedGuestOrder = guestOrderRepository.save(guestOrder);
 
-        guestOrderEvents.updated(
-                savedGuestOrder,
-                updateResult.currentStatus());
+        guestOrderEvents.updated(savedGuestOrder, updateResult.currentStatus());
 
         return GuestOrderDTOMapper.toDTO(
                 savedGuestOrder);
@@ -125,7 +125,7 @@ public class GuestOrderService {
 
     @Transactional
     public void deleteGuestOrderById(Long idGuestOrder) {
-        GuestOrder guestOrder = getRequiredGuestOrder(idGuestOrder);
+        GuestOrder guestOrder = getRequiredGuestOrderForUpdate(idGuestOrder);
         Payment payment = getRequiredPayment(guestOrder);
 
         orderModificationPolicy.validateDeletion(payment);
@@ -137,6 +137,45 @@ public class GuestOrderService {
         guestOrderRepository.delete(guestOrder);
         guestOrderEvents.deleted(idGuestOrder);
     }
+
+
+    /**
+     * Cancels a guest appointment and persists the refund request
+     * before communicating with Stripe.
+     *
+     * @return refund ID, or null when no online refund is required
+     */
+    @Transactional
+    public Long prepareAdminCancellation(Long guestOrderId) {
+        GuestOrder guestOrder = getRequiredGuestOrderForUpdate(guestOrderId);
+
+        Payment payment = getRequiredPayment(guestOrder);
+
+        boolean requiresFullRefund = orderModificationPolicy.requiresFullRefundForAdminCancellation(
+                        guestOrder.getOrderStatus(),
+                        payment);
+
+        Long refundId = null;
+
+        if (requiresFullRefund) {
+            RefundTransactionService.RefundReservation refundReservation = refundTransactionService
+                    .reserveFullRefund(payment.getIdPayment());
+
+            refundId = refundReservation.refundId();
+        }
+
+        OrderStatus previousOrderStatus = guestOrder.getOrderStatus();
+
+        appointmentReservation.releaseIfReserved(guestOrder.getVisitDate(), previousOrderStatus);
+
+        guestOrder.setOrderStatus(OrderStatus.ANULOWANE);
+
+        guestOrderEvents.updated(guestOrder,
+previousOrderStatus);
+
+        return refundId;
+    }
+
 
     private GuestOrderCreationTransactionResult createGuestOrderTransaction(
             GuestOrderCreationDTO guestOrderCreationDTO,
@@ -212,5 +251,12 @@ public class GuestOrderService {
         guestOrder.setEmail(request.email());
         guestOrder.setVisitDate(request.visitDate());
         guestOrder.setOrderStatus(targetOrderStatus);
+    }
+
+    private GuestOrder getRequiredGuestOrderForUpdate(Long guestOrderId) {
+        return guestOrderRepository
+                .findForUpdateByIdGuestOrder(guestOrderId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        GUEST_ORDER_NOT_FOUND_MSG + guestOrderId));
     }
 }

@@ -21,10 +21,11 @@ public class RefundReconciliationService {
     private static final int MAX_REFUND_PAGES = 50;
 
     private static final Set<RefundStatus> RECONCILIABLE_STATUSES = EnumSet.of(
-                    RefundStatus.REQUESTED,
-                    RefundStatus.PENDING,
-                    RefundStatus.REQUIRES_ACTION,
-                    RefundStatus.RECONCILIATION_REQUIRED);
+            RefundStatus.REQUESTED,
+            RefundStatus.SUBMITTING,
+            RefundStatus.PENDING,
+            RefundStatus.REQUIRES_ACTION,
+            RefundStatus.RECONCILIATION_REQUIRED);
 
     private final StripeRefundClient stripeRefundClient;
     private final RefundTransactionService refundTransactionService;

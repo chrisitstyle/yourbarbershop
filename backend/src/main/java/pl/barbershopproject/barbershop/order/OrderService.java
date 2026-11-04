@@ -20,6 +20,7 @@ import pl.barbershopproject.barbershop.ordercreation.OrderCreationCompletionHand
 import pl.barbershopproject.barbershop.orderupdate.OrderUpdateCoordinator;
 import pl.barbershopproject.barbershop.orderupdate.OrderUpdateResult;
 import pl.barbershopproject.barbershop.payment.Payment;
+import pl.barbershopproject.barbershop.payment.refund.RefundTransactionService;
 import pl.barbershopproject.barbershop.security.AuthenticatedUser;
 import pl.barbershopproject.barbershop.security.CurrentUserProvider;
 import pl.barbershopproject.barbershop.user.User;
@@ -50,6 +51,7 @@ class OrderService {
     private final OrderUpdateCoordinator orderUpdateCoordinator;
     private final OrderCreationCompletionHandler orderCreationCompletionHandler;
     private final OrderModificationPolicy orderModificationPolicy;
+    private final RefundTransactionService refundTransactionService;
 
     @CacheEvict(value = "orders", allEntries = true)
     public OrderCreationResponseDTO addOrder(
@@ -121,7 +123,7 @@ class OrderService {
             OrderUpdatedRequestDTO request,
             Long idOrder
     ) {
-        Order order = getRequiredOrder(idOrder);
+        Order order = getRequiredOrderForUpdate(idOrder);
         Payment payment = getRequiredPayment(order);
 
         OrderUpdateResult updateResult = orderUpdateCoordinator.prepareUpdate(
@@ -129,8 +131,7 @@ class OrderService {
                 payment,
                 request.idOffer(),
                 request.visitDate(),
-                request.orderStatus()
-        );
+                request.orderStatus());
 
         order.setVisitDate(request.visitDate());
         order.setOrderStatus(updateResult.targetStatus());
@@ -147,7 +148,7 @@ class OrderService {
     @Transactional
     @CacheEvict(value = "orders", allEntries = true)
     public void deleteOrderById(Long idOrder) {
-        Order order = getRequiredOrder(idOrder);
+        Order order = getRequiredOrderForUpdate(idOrder);
         Payment payment = getRequiredPayment(order);
 
         orderModificationPolicy.validateDeletion(payment);
@@ -159,6 +160,44 @@ class OrderService {
         orderRepository.delete(order);
         orderEvents.deleted(idOrder);
     }
+
+
+    /**
+     * Cancels a registered customer's appointment and persists
+     * the refund request before any external Stripe API call.
+     *
+     * @return refund ID, or null when no online refund is required
+     */
+    @Transactional
+    @CacheEvict(value = "orders", allEntries = true)
+    public Long prepareAdminCancellation(Long orderId) {
+        Order order = getRequiredOrderForUpdate(orderId);
+        Payment payment = getRequiredPayment(order);
+
+        boolean requiresFullRefund = orderModificationPolicy
+                .requiresFullRefundForAdminCancellation(
+                        order.getOrderStatus(), payment);
+
+        Long refundId = null;
+
+        if (requiresFullRefund) {
+            RefundTransactionService.RefundReservation refundReservation = refundTransactionService
+                    .reserveFullRefund(payment.getIdPayment());
+
+            refundId = refundReservation.refundId();
+        }
+
+        OrderStatus previousOrderStatus = order.getOrderStatus();
+
+        appointmentReservation.releaseIfReserved(order.getVisitDate(), previousOrderStatus);
+
+        order.setOrderStatus(OrderStatus.ANULOWANE);
+
+        orderEvents.updated(order, previousOrderStatus);
+
+        return refundId;
+    }
+
 
 
     private Order getRequiredOrder(Long idOrder) {
@@ -234,5 +273,11 @@ class OrderService {
                 transactionResult.checkoutRequest().paymentStatus(),
                 checkoutUrl
         );
+    }
+
+    private Order getRequiredOrderForUpdate(Long orderId) {
+        return orderRepository.findForUpdateByIdOrder(orderId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        ORDER_NOT_FOUND_MSG + orderId + DOES_NOT_EXIST_MSG));
     }
 }

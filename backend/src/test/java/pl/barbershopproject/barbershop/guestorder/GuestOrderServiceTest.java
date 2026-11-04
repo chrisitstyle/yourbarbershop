@@ -360,12 +360,15 @@ class GuestOrderServiceTest {
 
     @Test
     void getGuestOrder_ShouldThrowException_WhenOrderDoesNotExist() {
-        when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
+        when(guestOrderRepository.findById(1L))
+                .thenReturn(Optional.empty());
 
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class,
+        NoSuchElementException exception = assertThrows(
+                NoSuchElementException.class,
                 () -> guestOrderService.getGuestOrder(1L));
 
-        assertEquals("Nie znaleziono zamówienia gościa o ID: 1", exception.getMessage());
+        assertEquals("Nie znaleziono zamówienia gościa o ID: 1",
+                exception.getMessage());
 
         verify(guestOrderRepository).findById(1L);
     }
@@ -393,7 +396,7 @@ class GuestOrderServiceTest {
                 currentOrderStatus,
                 request.orderStatus());
 
-        when(guestOrderRepository.findById(1L))
+        when(guestOrderRepository.findForUpdateByIdGuestOrder(1L))
                 .thenReturn(Optional.of(guestOrder));
 
         when(orderUpdateCoordinator.prepareUpdate(
@@ -463,7 +466,7 @@ class GuestOrderServiceTest {
                         currentOrderStatus
                 );
 
-        when(guestOrderRepository.findById(1L))
+        when(guestOrderRepository.findForUpdateByIdGuestOrder(1L))
                 .thenReturn(Optional.of(guestOrder));
 
         when(orderUpdateCoordinator.prepareUpdate(
@@ -477,29 +480,22 @@ class GuestOrderServiceTest {
         when(guestOrderRepository.save(guestOrder))
                 .thenReturn(guestOrder);
 
-        GuestOrderDTO result =
-                guestOrderService.updateGuestOrder(
-                        request,
-                        1L
-                );
+        GuestOrderDTO result = guestOrderService.updateGuestOrder(request, 1L);
 
         assertNotNull(result);
         assertEquals(
                 request.visitDate(),
-                result.visitDate()
-        );
+                result.visitDate());
         assertEquals(
                 currentOrderStatus,
-                result.orderStatus()
-        );
+                result.orderStatus());
 
         verify(orderUpdateCoordinator).prepareUpdate(
                 guestOrder,
                 defaultPayment,
                 request.idOffer(),
                 request.visitDate(),
-                null
-        );
+                null);
 
         verify(guestOrderRepository).save(guestOrder);
 
@@ -513,14 +509,14 @@ class GuestOrderServiceTest {
     void updateGuestOrder_ShouldThrowException_WhenOrderDoesNotExist() {
         GuestOrderUpdateRequestDTO request = createGuestOrderUpdateRequestDTO();
 
-        when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
+        when(guestOrderRepository.findForUpdateByIdGuestOrder(1L)).thenReturn(Optional.empty());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class,
                 () -> guestOrderService.updateGuestOrder(request, 1L));
 
         assertEquals("Nie znaleziono zamówienia gościa o ID: 1", exception.getMessage());
 
-        verify(guestOrderRepository).findById(1L);
+        verify(guestOrderRepository).findForUpdateByIdGuestOrder(1L);
 
         verifyNoInteractions(
                 orderUpdateCoordinator,
@@ -535,11 +531,11 @@ class GuestOrderServiceTest {
         LocalDateTime visitDate = guestOrder.getVisitDate();
         OrderStatus orderStatus = guestOrder.getOrderStatus();
 
-        when(guestOrderRepository.findById(1L)).thenReturn(Optional.of(guestOrder));
+        when(guestOrderRepository.findForUpdateByIdGuestOrder(1L)).thenReturn(Optional.of(guestOrder));
 
         guestOrderService.deleteGuestOrderById(1L);
 
-        verify(guestOrderRepository).findById(1L);
+        verify(guestOrderRepository).findForUpdateByIdGuestOrder(1L);
         verify(appointmentReservation).releaseIfReserved(visitDate, orderStatus);
         verify(guestOrderRepository).delete(guestOrder);
         verify(guestOrderEvents).deleted(1L);
@@ -552,7 +548,7 @@ class GuestOrderServiceTest {
 
         guestOrder.setPayment(null);
 
-        when(guestOrderRepository.findById(1L))
+        when(guestOrderRepository.findForUpdateByIdGuestOrder(1L))
                 .thenReturn(Optional.of(guestOrder));
 
         MissingPaymentException exception = assertThrows(
@@ -572,19 +568,19 @@ class GuestOrderServiceTest {
                 guestOrderEvents);
 
         verify(guestOrderRepository, never()).save(any(GuestOrder.class));
-        verify(guestOrderRepository).findById(1L);
+        verify(guestOrderRepository).findForUpdateByIdGuestOrder(1L);
     }
 
     @Test
     void deleteGuestOrderById_ShouldThrowException_WhenOrderDoesNotExist() {
-        when(guestOrderRepository.findById(1L)).thenReturn(Optional.empty());
+        when(guestOrderRepository.findForUpdateByIdGuestOrder(1L)).thenReturn(Optional.empty());
 
         NoSuchElementException exception = assertThrows(NoSuchElementException.class,
                 () -> guestOrderService.deleteGuestOrderById(1L));
 
         assertEquals("Nie znaleziono zamówienia gościa o ID: 1", exception.getMessage());
 
-        verify(guestOrderRepository).findById(1L);
+        verify(guestOrderRepository).findForUpdateByIdGuestOrder(1L);
 
         verifyNoInteractions(appointmentReservation, guestOrderEvents);
 
@@ -596,7 +592,7 @@ class GuestOrderServiceTest {
         defaultPayment.setPaymentMethod(PaymentMethod.KARTA_ONLINE);
         defaultPayment.setPaymentStatus(PaymentStatus.OPLACONA);
 
-        when(guestOrderRepository.findById(1L))
+        when(guestOrderRepository.findForUpdateByIdGuestOrder(1L))
                 .thenReturn(Optional.of(guestOrder));
 
         doThrow(new OrderDeletionNotAllowedException())

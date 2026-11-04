@@ -19,12 +19,24 @@ public class StripeRefundService {
     private final RefundTransactionService refundTransactionService;
     private final StripeRefundStatusSynchronizer refundStatusSynchronizer;
 
+
     public RefundResult requestFullRefund(Long paymentId) {
         RefundTransactionService.RefundReservation refundReservation = refundTransactionService
                 .reserveFullRefund(paymentId);
 
-        StripeRefundClient.StripeRefundResponse stripeResponse;
-        RefundStatus refundStatus;
+        return submitReservedRefund(refundReservation.refundId());
+    }
+
+    /**
+     * Submits a previously reserved refund to Stripe.
+     * Prevents repeated submissions of the same refund operation.
+     */
+    public RefundResult submitReservedRefund(Long refundId) {
+        RefundTransactionService.RefundReservation refundReservation =
+                refundTransactionService.claimRefundForSubmission(refundId)
+                        .orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.CONFLICT,
+                                "Refund has already been submitted"));
 
         try {
             StripeRefundClient.StripePaymentIntentResponse paymentIntent = stripeRefundClient
@@ -32,13 +44,15 @@ public class StripeRefundService {
 
             validatePaymentIntent(paymentIntent, refundReservation);
 
-            stripeResponse = stripeRefundClient.createFullRefund(
-                    refundReservation.paymentIntentId(),
-                    refundReservation.amountInMinorUnits(),
-                    refundReservation.idempotencyKey(),
-                    refundReservation.refundId());
+            StripeRefundClient.StripeRefundResponse stripeRefund = stripeRefundClient.createFullRefund(
+                            refundReservation.paymentIntentId(),
+                            refundReservation.amountInMinorUnits(),
+                            refundReservation.idempotencyKey(),
+                            refundReservation.refundId());
 
-            validateStripeRefund(stripeResponse, refundReservation);
+            validateStripeRefund(stripeRefund, refundReservation);
+
+            return refundStatusSynchronizer.synchronizeRefund(refundReservation.refundId(), stripeRefund);
 
         } catch (RestClientException | IllegalStateException exception) {
             refundTransactionService.markReconciliationRequired(refundReservation.refundId());
@@ -48,11 +62,8 @@ public class StripeRefundService {
                     "Refund outcome requires verification with Stripe",
                     exception);
         }
-
-        return refundStatusSynchronizer.synchronizeRefund(
-                refundReservation.refundId(),
-                stripeResponse);
     }
+
 
     private void validatePaymentIntent(
             StripeRefundClient.StripePaymentIntentResponse paymentIntent,
