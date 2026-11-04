@@ -230,6 +230,22 @@ class SecurityAccessIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.paymentStatus").value("NIE_WYMAGANA"));
     }
 
+    @Test
+    void shouldProtectAdminCancellationEndpoints() throws Exception {
+        String userToken = tokenFor(USER_EMAIL);
+
+        mockMvc.perform(post("/admin/orders/999/cancel"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/admin/orders/999/cancel")
+                        .header("Authorization", bearer(userToken)))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/admin/guest-orders/999/cancel")
+                        .header("Authorization", bearer(userToken)))
+                .andExpect(status().isForbidden());
+    }
+
     private ObjectNode createOfferRequest() {
         return objectMapper.createObjectNode()
                 .put("kind", "Security Test Service")
