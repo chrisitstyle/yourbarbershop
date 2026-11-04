@@ -24,6 +24,7 @@ import pl.barbershopproject.barbershop.security.AuthenticatedUser;
 import pl.barbershopproject.barbershop.security.CurrentUserProvider;
 import pl.barbershopproject.barbershop.user.User;
 import pl.barbershopproject.barbershop.user.UserRepository;
+import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.util.List;
@@ -48,6 +49,7 @@ class OrderService {
     private final IdempotencyRequestHasher idempotencyRequestHasher;
     private final OrderUpdateCoordinator orderUpdateCoordinator;
     private final OrderCreationCompletionHandler orderCreationCompletionHandler;
+    private final OrderModificationPolicy orderModificationPolicy;
 
     @CacheEvict(value = "orders", allEntries = true)
     public OrderCreationResponseDTO addOrder(
@@ -146,11 +148,13 @@ class OrderService {
     @CacheEvict(value = "orders", allEntries = true)
     public void deleteOrderById(Long idOrder) {
         Order order = getRequiredOrder(idOrder);
+        Payment payment = getRequiredPayment(order);
+
+        orderModificationPolicy.validateDeletion(payment);
 
         appointmentReservation.releaseIfReserved(
                 order.getVisitDate(),
-                order.getOrderStatus()
-        );
+                order.getOrderStatus());
 
         orderRepository.delete(order);
         orderEvents.deleted(idOrder);

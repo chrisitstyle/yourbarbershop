@@ -1,6 +1,7 @@
 package pl.barbershopproject.barbershop.utils;
 
 import org.springframework.stereotype.Component;
+import pl.barbershopproject.barbershop.exception.OrderDeletionNotAllowedException;
 import pl.barbershopproject.barbershop.exception.OrderModificationNotAllowedException;
 import pl.barbershopproject.barbershop.exception.OrderOfferChangeNotAllowedException;
 import pl.barbershopproject.barbershop.exception.OrderStatusChangeNotAllowedException;
@@ -128,6 +129,20 @@ public class OrderModificationPolicy {
         if (payment.getPaymentMethod() == PaymentMethod.KARTA_ONLINE
                 && paymentStatus == PaymentStatus.OCZEKUJE_NA_PLATNOSC) {
             throw new OrderStatusChangeNotAllowedException(PENDING_ONLINE_CANCELLATION_MESSAGE);
+        }
+    }
+
+    public void validateDeletion(Payment payment) {
+        Objects.requireNonNull(payment,
+                "Płatność zamówienia nie może być null");
+
+        boolean isOnSitePayment = payment.getPaymentMethod() == PaymentMethod.GOTOWKA
+                        || payment.getPaymentMethod() == PaymentMethod.KARTA_NA_MIEJSCU;
+
+        boolean isPaymentNotRequired = payment.getPaymentStatus() == PaymentStatus.NIE_WYMAGANA;
+
+        if (!isOnSitePayment || !isPaymentNotRequired) {
+            throw new OrderDeletionNotAllowedException();
         }
     }
 }

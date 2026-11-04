@@ -89,6 +89,7 @@ public class GlobalExceptionHandler {
             OrderOfferChangeNotAllowedException.class,
             OrderModificationNotAllowedException.class,
             OrderStatusChangeNotAllowedException.class,
+            OrderDeletionNotAllowedException.class,
             MissingPaymentException.class
     })
     public ResponseEntity<ErrorDTO> handleOrderConflict(

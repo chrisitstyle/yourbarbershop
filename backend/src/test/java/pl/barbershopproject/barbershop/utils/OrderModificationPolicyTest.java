@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import pl.barbershopproject.barbershop.exception.OrderDeletionNotAllowedException;
 import pl.barbershopproject.barbershop.exception.OrderModificationNotAllowedException;
 import pl.barbershopproject.barbershop.exception.OrderOfferChangeNotAllowedException;
 import pl.barbershopproject.barbershop.exception.OrderStatusChangeNotAllowedException;
@@ -316,6 +317,63 @@ class OrderModificationPolicyTest {
         }
     }
 
+    @Nested
+    class DeletionValidation {
+
+        @ParameterizedTest
+        @EnumSource(
+                value = PaymentMethod.class,
+                names = {"GOTOWKA", "KARTA_NA_MIEJSCU"}
+        )
+        void shouldAllowDeletingUnpaidOnSiteOrder(PaymentMethod paymentMethod) {
+            Payment payment = createPayment(
+                    paymentMethod,
+                    PaymentStatus.NIE_WYMAGANA
+            );
+
+            assertThatCode(() -> orderModificationPolicy.validateDeletion(payment))
+                    .doesNotThrowAnyException();
+        }
+
+        @ParameterizedTest
+        @EnumSource(PaymentStatus.class)
+        void shouldRejectDeletingOnlinePaymentOrder(PaymentStatus paymentStatus) {
+            Payment payment = createPayment(
+                    PaymentMethod.KARTA_ONLINE,
+                    paymentStatus
+            );
+
+            assertThatThrownBy(() -> orderModificationPolicy.validateDeletion(payment))
+                    .isInstanceOf(OrderDeletionNotAllowedException.class);
+        }
+
+        @ParameterizedTest
+        @CsvSource({
+                "GOTOWKA, OPLACONA",
+                "GOTOWKA, ZWROCONA",
+                "KARTA_NA_MIEJSCU, OPLACONA",
+                "KARTA_NA_MIEJSCU, ZWROCONA",
+                "GOTOWKA, NIEUDANA",
+                "KARTA_NA_MIEJSCU, WYGASLA"
+        })
+        void shouldRejectDeletingOnSiteOrderWithInvalidPaymentStatus(
+                PaymentMethod paymentMethod,
+                PaymentStatus paymentStatus
+        ) {
+            Payment payment = createPayment(paymentMethod, paymentStatus);
+
+            assertThatThrownBy(() -> orderModificationPolicy.validateDeletion(payment))
+                    .isInstanceOf(OrderDeletionNotAllowedException.class);
+        }
+
+        @Test
+        void shouldRejectDeletingOrderWithoutPayment() {
+            assertThatThrownBy(() -> orderModificationPolicy.validateDeletion(null))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessage("Płatność zamówienia nie może być null");
+        }
+    }
+
     private Payment createPayment(
             PaymentMethod paymentMethod,
             PaymentStatus paymentStatus
@@ -325,4 +383,6 @@ class OrderModificationPolicyTest {
                 .paymentStatus(paymentStatus)
                 .build();
     }
+
+
 }

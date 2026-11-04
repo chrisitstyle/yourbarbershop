@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.barbershopproject.barbershop.appointment.AppointmentReservation;
 import pl.barbershopproject.barbershop.exception.IdempotencyConflictException;
 import pl.barbershopproject.barbershop.exception.MissingPaymentException;
+import pl.barbershopproject.barbershop.exception.OrderDeletionNotAllowedException;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderCreationResponseDTO;
 import pl.barbershopproject.barbershop.guestorder.dto.GuestOrderDTO;
@@ -22,6 +23,7 @@ import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.payment.PaymentCheckoutRequest;
 import pl.barbershopproject.barbershop.payment.PaymentMethod;
 import pl.barbershopproject.barbershop.payment.PaymentStatus;
+import pl.barbershopproject.barbershop.utils.OrderModificationPolicy;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.time.LocalDateTime;
@@ -60,6 +62,9 @@ class GuestOrderServiceTest {
     private OrderCreationCompletionHandler orderCreationCompletionHandler;
     @Mock
     private IdempotencyRequestHasher idempotencyRequestHasher;
+
+    @Mock
+    private OrderModificationPolicy orderModificationPolicy;
 
     @InjectMocks
     private GuestOrderService guestOrderService;
@@ -538,6 +543,7 @@ class GuestOrderServiceTest {
         verify(appointmentReservation).releaseIfReserved(visitDate, orderStatus);
         verify(guestOrderRepository).delete(guestOrder);
         verify(guestOrderEvents).deleted(1L);
+        verify(orderModificationPolicy).validateDeletion(defaultPayment);
     }
 
     @Test
@@ -583,6 +589,25 @@ class GuestOrderServiceTest {
         verifyNoInteractions(appointmentReservation, guestOrderEvents);
 
         verify(guestOrderRepository, never()).delete(any(GuestOrder.class));
+    }
+
+    @Test
+    void deleteGuestOrderById_ShouldNotDeleteGuestOrder_WhenPaymentIsOnline() {
+        defaultPayment.setPaymentMethod(PaymentMethod.KARTA_ONLINE);
+        defaultPayment.setPaymentStatus(PaymentStatus.OPLACONA);
+
+        when(guestOrderRepository.findById(1L))
+                .thenReturn(Optional.of(guestOrder));
+
+        doThrow(new OrderDeletionNotAllowedException())
+                .when(orderModificationPolicy)
+                .validateDeletion(defaultPayment);
+
+        assertThrows(OrderDeletionNotAllowedException.class,
+                () -> guestOrderService.deleteGuestOrderById(1L));
+
+        verify(guestOrderRepository, never()).delete(any(GuestOrder.class));
+        verifyNoInteractions(appointmentReservation, guestOrderEvents);
     }
 
     private void givenRequestHash(
