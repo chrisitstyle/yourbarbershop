@@ -64,15 +64,41 @@ public class RefundTransactionService {
 
     @Transactional
     public void markReconciliationRequired(Long refundId) {
-        PaymentRefund refund = getRefundForUpdate(refundId);
+        PaymentRefund paymentRefund = getRefundForUpdate(refundId);
 
-        if (refund.getRefundStatus() != RefundStatus.REQUESTED) {
+        if (paymentRefund.getRefundStatus() == RefundStatus.SUCCEEDED
+                || paymentRefund.getRefundStatus() == RefundStatus.FAILED
+                || paymentRefund.getRefundStatus() == RefundStatus.CANCELED) {
             return;
         }
 
-        refund.setRefundStatus(RefundStatus.RECONCILIATION_REQUIRED);
-        refund.setFailureReason("Stripe refund outcome could not be confirmed");
+        paymentRefund.setRefundStatus(RefundStatus.RECONCILIATION_REQUIRED);
+
+        paymentRefund.setFailureReason("Stripe refund outcome requires reconciliation");
     }
+
+
+    @Transactional(readOnly = true)
+    public RefundLookupTarget loadRefundForReconciliation(Long refundId) {
+        PaymentRefund paymentRefund = paymentRefundRepository
+                .findById(refundId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Refund not found"));
+
+        return new RefundLookupTarget(
+                paymentRefund.getIdPaymentRefund(),
+                paymentRefund.getRefundStatus(),
+                paymentRefund.getStripeRefundId(),
+                paymentRefund.getPayment().getStripePaymentIntentId());
+    }
+
+    public record RefundLookupTarget(
+            Long refundId,
+            RefundStatus refundStatus,
+            String stripeRefundId,
+            String paymentIntentId
+    ) {
+    }
+
 
     private void validateRefundEligibility(Payment payment) {
         if (payment.getPaymentMethod() != PaymentMethod.KARTA_ONLINE
@@ -108,8 +134,7 @@ public class RefundTransactionService {
         return paymentRefundRepository
                 .findForUpdateByIdPaymentRefund(refundId)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Refund not found"
-                ));
+                        HttpStatus.NOT_FOUND, "Refund not found"));
     }
 
     public record RefundReservation(

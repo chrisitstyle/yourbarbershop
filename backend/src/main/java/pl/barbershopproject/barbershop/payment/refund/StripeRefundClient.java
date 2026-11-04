@@ -9,7 +9,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriBuilder;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -69,6 +71,37 @@ public class StripeRefundClient {
                 .retrieve()
                 .body(StripeRefundResponse.class);
     }
+
+
+    public StripeRefundListResponse listRefundsForPaymentIntent(
+            String paymentIntentId,
+            String startingAfterRefundId
+    ) {
+        return stripeRestClient.get()
+                .uri(uriBuilder -> {
+                    UriBuilder refundUriBuilder = uriBuilder
+                            .path("/v1/refunds")
+                            .queryParam("payment_intent", paymentIntentId)
+                            .queryParam("limit", 100);
+
+                    if (startingAfterRefundId != null) {
+                        refundUriBuilder.queryParam(
+                                "starting_after",
+                                startingAfterRefundId);
+                    }
+
+                    return refundUriBuilder.build();
+                })
+                .retrieve()
+                .body(StripeRefundListResponse.class);
+    }
+
+    public record StripeRefundListResponse(
+            List<StripeRefundResponse> data,
+            @JsonProperty("has_more") boolean hasMore
+    ) {
+    }
+
 
     public record StripePaymentIntentResponse(
             String id,
