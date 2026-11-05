@@ -2,34 +2,58 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { updateGuestOrder } from "../api/guestOrderService";
 import { format } from "date-fns-tz";
-import { formatSelectedDateTime } from "../api/dataParser";
 import { Alert } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
+
+import { updateGuestOrder } from "../api/guestOrderService";
+import { formatSelectedDateTime } from "../api/dataParser";
+
 import useOffers from "../hooks/useOffers";
 import useGuestOrder from "../hooks/useGuestOrder";
+
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { useTranslation } from "react-i18next";
+
 import { getOrderModificationRules } from "./utils/orderModificationRules";
+
 import "./styles/AdminForms.css";
 
-const ORDER_STATUSES = ["NOWE", "ZREALIZOWANE", "ANULOWANE"];
+const EDITABLE_ORDER_STATUSES = ["NOWE", "ZREALIZOWANE"];
 
+/**
+ * Extracts a readable error message from an API request failure.
+ *
+ * @param {Error|object} error - Error returned by the API client.
+ * @returns {string|null} Error message or null when unavailable.
+ */
 const getErrorMessage = (error) => {
   if (typeof error?.data === "string") {
     return error.data;
   }
 
-  return error?.data?.message ?? error?.data?.error ?? error?.message ?? null;
+  return (
+    error?.data?.detail ??
+    error?.data?.message ??
+    error?.data?.error ??
+    error?.message ??
+    null
+  );
 };
 
+/**
+ * Provides the administrative editing form for guest reservations.
+ *
+ * Reservation cancellation is intentionally excluded from standard
+ * editing and must be performed through the dedicated administrative
+ * cancellation endpoint.
+ */
 const EditGuestOrder = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
-
   const { t } = useTranslation();
+
   const queryClient = useQueryClient();
 
   const guestOrderId = Number(id);
@@ -47,6 +71,7 @@ const EditGuestOrder = () => {
   const [lastname, setLastname] = useState("");
   const [phonenumber, setPhonenumber] = useState("");
   const [email, setEmail] = useState("");
+
   const [selectedOffer, setSelectedOffer] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedHour, setSelectedHour] = useState(8);
@@ -55,7 +80,7 @@ const EditGuestOrder = () => {
 
   const isFormDirtyRef = useRef(false);
 
-  const { isTerminalOrder, isOfferChangeBlocked, canComplete, canCancel } =
+  const { isTerminalOrder, isOfferChangeBlocked, canComplete } =
     getOrderModificationRules(guestOrderData);
 
   const currentOfferId = guestOrderData?.offer?.idOffer ?? null;
@@ -66,6 +91,12 @@ const EditGuestOrder = () => {
       )}`
     : t("admin.common.none");
 
+  /**
+   * Initializes form fields from guest reservation data.
+   *
+   * Prevents background query updates from overwriting changes
+   * already entered by the administrator.
+   */
   useEffect(() => {
     if (!guestOrderData || isFormDirtyRef.current) {
       return;
@@ -75,6 +106,7 @@ const EditGuestOrder = () => {
     setLastname(guestOrderData.lastname || "");
     setPhonenumber(guestOrderData.phonenumber || "");
     setEmail(guestOrderData.email || "");
+
     setSelectedOffer(guestOrderData.offer?.idOffer || "");
 
     if (guestOrderData.visitDate) {
@@ -134,9 +166,10 @@ const EditGuestOrder = () => {
   };
 
   const editGuestOrderMutation = useMutation({
-    mutationFn: (updatedData) => updateGuestOrder(guestOrderId, updatedData),
+    mutationFn: (updatedGuestOrder) =>
+      updateGuestOrder(guestOrderId, updatedGuestOrder),
+
     onSuccess: () => {
-      // invalidate guest orders query cache so tables automatically update
       queryClient.invalidateQueries({
         queryKey: ["guestOrders"],
       });
@@ -147,8 +180,9 @@ const EditGuestOrder = () => {
 
       navigate("/adminpanel");
     },
+
     onError: (error) => {
-      console.error("error updating guest order:", error);
+      console.error("Failed to update guest reservation:", error);
 
       const errorMessage = getErrorMessage(error);
 
@@ -156,6 +190,12 @@ const EditGuestOrder = () => {
     },
   });
 
+  /**
+   * Validates and submits guest reservation changes.
+   *
+   * Standard updates cannot cancel reservations. Cancellation
+   * must use the dedicated administrative cancellation endpoint.
+   */
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -164,13 +204,13 @@ const EditGuestOrder = () => {
       return;
     }
 
-    if (selectedStatus === "ZREALIZOWANE" && !canComplete) {
-      toast.error(t("admin.orderRules.cannotComplete"));
+    if (!EDITABLE_ORDER_STATUSES.includes(selectedStatus)) {
+      toast.error(t("admin.orderCancellation.cancellationNotAllowed"));
       return;
     }
 
-    if (selectedStatus === "ANULOWANE" && !canCancel) {
-      toast.error(t("admin.orderRules.cannotCancel"));
+    if (selectedStatus === "ZREALIZOWANE" && !canComplete) {
+      toast.error(t("admin.orderRules.cannotComplete"));
       return;
     }
 
@@ -261,7 +301,7 @@ const EditGuestOrder = () => {
               )}
 
               <form onSubmit={handleSubmit}>
-                {/* guest details */}
+                {/* Guest personal details */}
                 <div className="row g-3 mb-3">
                   <div className="col">
                     <label htmlFor="ego-firstname" className="form-label">
@@ -332,7 +372,7 @@ const EditGuestOrder = () => {
 
                 <hr className="my-4" />
 
-                {/* appointment details */}
+                {/* Appointment service */}
                 <div className="mb-3">
                   <label htmlFor="ego-offer" className="form-label">
                     {t("orders.selectService")}
@@ -375,6 +415,7 @@ const EditGuestOrder = () => {
                   )}
                 </div>
 
+                {/* Appointment date */}
                 <div className="mb-3">
                   <label htmlFor="ego-date" className="form-label">
                     {t("orders.selectDate")}
@@ -391,6 +432,7 @@ const EditGuestOrder = () => {
                   />
                 </div>
 
+                {/* Appointment time */}
                 <div className="mb-3">
                   <label className="form-label">
                     {t("orders.selectTimeFull")}
@@ -404,6 +446,7 @@ const EditGuestOrder = () => {
                       onChange={handleHourChange}
                       required
                       disabled={isFormDisabled}
+                      aria-label={t("orders.selectTimeFull")}
                     >
                       {[...new Array(12).keys()].map((hour) => (
                         <option key={hour} value={hour + 8}>
@@ -421,6 +464,7 @@ const EditGuestOrder = () => {
                       onChange={handleMinuteChange}
                       required
                       disabled={isFormDisabled}
+                      aria-label={t("orders.selectTimeFull")}
                     >
                       {[...new Array(2).keys()].map((half) => (
                         <option key={half * 30} value={half * 30}>
@@ -431,41 +475,45 @@ const EditGuestOrder = () => {
                   </div>
                 </div>
 
+                {/* Reservation status */}
                 <div className="mb-4">
                   <label htmlFor="ego-status" className="form-label">
                     {t("admin.common.status")}
                   </label>
 
-                  <select
-                    id="ego-status"
-                    className="form-select"
-                    value={selectedStatus}
-                    onChange={handleStatusChange}
-                    required
-                    disabled={isFormDisabled}
-                  >
-                    {ORDER_STATUSES.map((status) => {
-                      const isCompletionBlocked =
-                        status === "ZREALIZOWANE" && !canComplete;
-
-                      const isCancellationBlocked =
-                        status === "ANULOWANE" && !canCancel;
-
-                      return (
+                  {isTerminalOrder ? (
+                    <input
+                      type="text"
+                      id="ego-status"
+                      className="form-control"
+                      value={t(`enums.${guestOrderData.orderStatus}`, {
+                        defaultValue: guestOrderData.orderStatus,
+                      })}
+                      readOnly
+                      disabled
+                    />
+                  ) : (
+                    <select
+                      id="ego-status"
+                      className="form-select"
+                      value={selectedStatus}
+                      onChange={handleStatusChange}
+                      required
+                      disabled={isFormDisabled}
+                    >
+                      {EDITABLE_ORDER_STATUSES.map((status) => (
                         <option
                           key={status}
                           value={status}
-                          disabled={
-                            isCompletionBlocked || isCancellationBlocked
-                          }
+                          disabled={status === "ZREALIZOWANE" && !canComplete}
                         >
                           {t(`enums.${status}`, {
                             defaultValue: status,
                           })}
                         </option>
-                      );
-                    })}
-                  </select>
+                      ))}
+                    </select>
+                  )}
 
                   {!isTerminalOrder && !canComplete && (
                     <div className="form-text">
@@ -473,9 +521,9 @@ const EditGuestOrder = () => {
                     </div>
                   )}
 
-                  {!isTerminalOrder && !canCancel && (
+                  {!isTerminalOrder && (
                     <div className="form-text">
-                      {t("admin.orderRules.cannotCancel")}
+                      {t("admin.orderCancellation.cancelFromListHint")}
                     </div>
                   )}
                 </div>

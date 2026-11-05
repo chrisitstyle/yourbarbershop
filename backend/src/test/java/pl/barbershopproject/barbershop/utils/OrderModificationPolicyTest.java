@@ -124,85 +124,43 @@ class OrderModificationPolicyTest {
                     );
         }
 
-        @ParameterizedTest
-        @EnumSource(PaymentMethod.class)
-        void shouldRejectCancellingPaidOrder(
-                PaymentMethod paymentMethod
-        ) {
-            Payment payment = createPayment(
-                    paymentMethod,
-                    PaymentStatus.OPLACONA
-            );
-
-            assertThatThrownBy(() -> orderModificationPolicy.validateUpdate(
-                            OrderStatus.NOWE,
-                            OrderStatus.ANULOWANE,
-                            payment))
-                    .isInstanceOf(
-                            OrderStatusChangeNotAllowedException.class
-                    )
-                    .hasMessage(
-                            "Nie można anulować opłaconego zamówienia bez wykonania zwrotu"
-                    );
-        }
-
-        @Test
-        void shouldRejectCancellingOrderWithPendingOnlinePayment() {
-            Payment payment = createPayment(
-                    PaymentMethod.KARTA_ONLINE,
-                    PaymentStatus.OCZEKUJE_NA_PLATNOSC
-            );
-
-            assertThatThrownBy(() -> orderModificationPolicy.validateUpdate(
-                            OrderStatus.NOWE,
-                            OrderStatus.ANULOWANE,
-                            payment))
-                    .isInstanceOf(
-                            OrderStatusChangeNotAllowedException.class
-                    )
-                    .hasMessage(
-                            "Nie można anulować zamówienia podczas aktywnej płatności online"
-                    );
-        }
 
         @ParameterizedTest
         @CsvSource({
-                "GOTOWKA, NIE_WYMAGANA",
-                "KARTA_NA_MIEJSCU, NIE_WYMAGANA",
+                "KARTA_ONLINE, OPLACONA",
+                "KARTA_ONLINE, OCZEKUJE_NA_PLATNOSC",
                 "KARTA_ONLINE, NIEUDANA",
-                "KARTA_ONLINE, WYGASLA"
+                "KARTA_ONLINE, WYGASLA",
+                "GOTOWKA, NIE_WYMAGANA",
+                "KARTA_NA_MIEJSCU, NIE_WYMAGANA"
         })
-        void shouldAllowCancellingOrderWithoutCompletedOrPendingPayment(
+        void shouldRejectCancellationThroughStandardOrderUpdate(
                 PaymentMethod paymentMethod,
                 PaymentStatus paymentStatus
         ) {
-            Payment payment = createPayment(
-                    paymentMethod,
-                    paymentStatus
-            );
+            Payment payment = createPayment(paymentMethod, paymentStatus);
 
-            assertThatCode(() -> orderModificationPolicy.validateUpdate(
-                            OrderStatus.NOWE,
-                            OrderStatus.ANULOWANE,
-                            payment
-                    )
-            ).doesNotThrowAnyException();
+            assertThatThrownBy(() -> orderModificationPolicy.validateUpdate(
+                    OrderStatus.NOWE,
+                    OrderStatus.ANULOWANE,
+                    payment
+            ))
+                    .isInstanceOf(OrderStatusChangeNotAllowedException.class)
+                    .hasMessage(
+                            "Anulowanie rezerwacji jest dostępne wyłącznie przez dedykowany endpoint administratora");
         }
+
 
         @Test
         void shouldRejectUpdateWhenCurrentOrderStatusIsNull() {
-            Payment payment = createPayment(
-                    PaymentMethod.GOTOWKA,
-                    PaymentStatus.NIE_WYMAGANA
-            );
+            Payment payment = createPayment(PaymentMethod.GOTOWKA, PaymentStatus.NIE_WYMAGANA);
 
             assertThatThrownBy(() -> orderModificationPolicy.validateUpdate(
                             null,
                             OrderStatus.NOWE,
                             payment))
                     .isInstanceOf(NullPointerException.class)
-                    .hasMessage(
-                            "Aktualny status zamówienia nie może być null");
+                    .hasMessage("Aktualny status zamówienia nie może być null");
         }
 
         @Test

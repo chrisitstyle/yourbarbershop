@@ -225,6 +225,7 @@
       "cancelAndRefund": "Cancel and initiate refund",
       "confirmCancellation": "Confirm cancellation",
       "cancelReservation": "Cancel reservation",
+      "cancelFromListHint": "To cancel a reservation, return to the reservation list and use the Cancel button.",
       "back": "Back",
       "close": "Close",
       "refundStatuses": {

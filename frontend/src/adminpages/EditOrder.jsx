@@ -2,32 +2,59 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { format } from "date-fns-tz";
+import { Alert } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
+
 import { updateOrder } from "../api/orderService";
+import { formatSelectedDateTime } from "../api/dataParser";
+
 import useOffers from "../hooks/useOffers";
 import useOrder from "../hooks/useOrder";
-import { format } from "date-fns-tz";
-import { formatSelectedDateTime } from "../api/dataParser";
-import { Alert } from "react-bootstrap";
+
 import ButtonSpinner from "../components/common/ButtonSpinner";
 import LoadingSpinner from "../components/common/LoadingSpinner";
-import { useTranslation } from "react-i18next";
+
 import { getOrderModificationRules } from "./utils/orderModificationRules";
+
 import "./styles/AdminForms.css";
 
-const ORDER_STATUSES = ["NOWE", "ZREALIZOWANE", "ANULOWANE"];
+const EDITABLE_ORDER_STATUSES = ["NOWE", "ZREALIZOWANE"];
 
+/**
+ * Extracts a readable error message from an API request failure.
+ *
+ * @param {Error|object} error - Error returned by the API client.
+ * @returns {string|null} Error message or null when unavailable.
+ */
 const getErrorMessage = (error) => {
   if (typeof error?.data === "string") {
     return error.data;
   }
 
-  return error?.data?.message ?? error?.data?.error ?? error?.message ?? null;
+  return (
+    error?.data?.detail ??
+    error?.data?.message ??
+    error?.data?.error ??
+    error?.message ??
+    null
+  );
 };
 
+/**
+ * Provides the administrative editing form for registered reservations.
+ *
+ * Reservation cancellation is intentionally excluded from standard
+ * editing and must be performed through the dedicated admin
+ * cancellation endpoint.
+ */
 const EditOrder = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t } = useTranslation();
+
+  const queryClient = useQueryClient();
 
   const orderId = Number(id);
   const initialOrderData = location.state?.orderData;
@@ -37,8 +64,6 @@ const EditOrder = () => {
     isLoading: isLoadingOrder,
     error: orderError,
   } = useOrder(orderId, initialOrderData);
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
 
   const { offers = [], isLoading: isLoadingOffers } = useOffers();
 
@@ -50,7 +75,7 @@ const EditOrder = () => {
 
   const isFormDirtyRef = useRef(false);
 
-  const { isTerminalOrder, isOfferChangeBlocked, canComplete, canCancel } =
+  const { isTerminalOrder, isOfferChangeBlocked, canComplete } =
     getOrderModificationRules(orderData);
 
   const currentOfferId = orderData?.offer?.idOffer ?? null;
@@ -61,6 +86,12 @@ const EditOrder = () => {
       )}`
     : t("admin.common.none");
 
+  /**
+   * Initializes form fields from reservation data.
+   *
+   * Prevents background query updates from overwriting
+   * changes already entered by the administrator.
+   */
   useEffect(() => {
     if (!orderData || isFormDirtyRef.current) {
       return;
@@ -108,8 +139,8 @@ const EditOrder = () => {
 
   const updateOrderMutation = useMutation({
     mutationFn: (updatedOrder) => updateOrder(orderId, updatedOrder),
+
     onSuccess: () => {
-      // invalidate orders query cache so tables automatically update
       queryClient.invalidateQueries({
         queryKey: ["orders"],
       });
@@ -120,8 +151,9 @@ const EditOrder = () => {
 
       navigate("/adminpanel");
     },
+
     onError: (error) => {
-      console.error("error updating order:", error);
+      console.error("Failed to update registered order:", error);
 
       const errorMessage = getErrorMessage(error);
 
@@ -129,6 +161,12 @@ const EditOrder = () => {
     },
   });
 
+  /**
+   * Validates and submits reservation changes.
+   *
+   * Cancellation cannot be submitted through the standard
+   * order update API.
+   */
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -137,13 +175,13 @@ const EditOrder = () => {
       return;
     }
 
-    if (selectedStatus === "ZREALIZOWANE" && !canComplete) {
-      toast.error(t("admin.orderRules.cannotComplete"));
+    if (!EDITABLE_ORDER_STATUSES.includes(selectedStatus)) {
+      toast.error(t("admin.orderCancellation.cancellationNotAllowed"));
       return;
     }
 
-    if (selectedStatus === "ANULOWANE" && !canCancel) {
-      toast.error(t("admin.orderRules.cannotCancel"));
+    if (selectedStatus === "ZREALIZOWANE" && !canComplete) {
+      toast.error(t("admin.orderRules.cannotComplete"));
       return;
     }
 
@@ -230,6 +268,7 @@ const EditOrder = () => {
               )}
 
               <form onSubmit={handleSubmit}>
+                {/* Service selection */}
                 <div className="mb-3">
                   <label htmlFor="selectOffer" className="form-label">
                     {t("orders.selectService")}
@@ -272,6 +311,7 @@ const EditOrder = () => {
                   )}
                 </div>
 
+                {/* Visit date */}
                 <div className="mb-3">
                   <label htmlFor="selectdate" className="form-label">
                     {t("orders.selectDate")}
@@ -288,6 +328,7 @@ const EditOrder = () => {
                   />
                 </div>
 
+                {/* Visit time */}
                 <div className="mb-3">
                   <label className="form-label">
                     {t("orders.selectTimeFull")}
@@ -301,6 +342,7 @@ const EditOrder = () => {
                       onChange={handleHourChange}
                       required
                       disabled={isFormDisabled}
+                      aria-label={t("orders.selectTimeFull")}
                     >
                       {[...new Array(12).keys()].map((hour) => (
                         <option key={hour} value={hour + 8}>
@@ -318,6 +360,7 @@ const EditOrder = () => {
                       onChange={handleMinuteChange}
                       required
                       disabled={isFormDisabled}
+                      aria-label={t("orders.selectTimeFull")}
                     >
                       {[...new Array(2).keys()].map((half) => (
                         <option key={half * 30} value={half * 30}>
@@ -328,41 +371,45 @@ const EditOrder = () => {
                   </div>
                 </div>
 
+                {/* Reservation status */}
                 <div className="mb-4">
                   <label htmlFor="selectstatus" className="form-label">
                     {t("admin.common.status")}
                   </label>
 
-                  <select
-                    className="form-select"
-                    id="selectstatus"
-                    value={selectedStatus}
-                    onChange={handleStatusChange}
-                    required
-                    disabled={isFormDisabled}
-                  >
-                    {ORDER_STATUSES.map((status) => {
-                      const isCompletionBlocked =
-                        status === "ZREALIZOWANE" && !canComplete;
-
-                      const isCancellationBlocked =
-                        status === "ANULOWANE" && !canCancel;
-
-                      return (
+                  {isTerminalOrder ? (
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="selectstatus"
+                      value={t(`enums.${orderData.orderStatus}`, {
+                        defaultValue: orderData.orderStatus,
+                      })}
+                      readOnly
+                      disabled
+                    />
+                  ) : (
+                    <select
+                      className="form-select"
+                      id="selectstatus"
+                      value={selectedStatus}
+                      onChange={handleStatusChange}
+                      required
+                      disabled={isFormDisabled}
+                    >
+                      {EDITABLE_ORDER_STATUSES.map((status) => (
                         <option
                           key={status}
                           value={status}
-                          disabled={
-                            isCompletionBlocked || isCancellationBlocked
-                          }
+                          disabled={status === "ZREALIZOWANE" && !canComplete}
                         >
                           {t(`enums.${status}`, {
                             defaultValue: status,
                           })}
                         </option>
-                      );
-                    })}
-                  </select>
+                      ))}
+                    </select>
+                  )}
 
                   {!isTerminalOrder && !canComplete && (
                     <div className="form-text">
@@ -370,9 +417,9 @@ const EditOrder = () => {
                     </div>
                   )}
 
-                  {!isTerminalOrder && !canCancel && (
+                  {!isTerminalOrder && (
                     <div className="form-text">
-                      {t("admin.orderRules.cannotCancel")}
+                      {t("admin.orderCancellation.cancelFromListHint")}
                     </div>
                   )}
                 </div>

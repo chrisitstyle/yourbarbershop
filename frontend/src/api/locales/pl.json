@@ -225,6 +225,7 @@
       "cancelAndRefund": "Anuluj i zleć zwrot",
       "confirmCancellation": "Potwierdź anulowanie",
       "cancelReservation": "Anuluj rezerwację",
+      "cancelFromListHint": "Aby anulować rezerwację, wróć do listy rezerwacji i użyj przycisku „Anuluj”.",
       "back": "Wróć",
       "close": "Zamknij",
       "refundStatuses": {
