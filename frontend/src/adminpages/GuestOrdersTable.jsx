@@ -1,22 +1,28 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { faBan, faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { Alert } from "react-bootstrap";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+
 import useGuestOrders from "../hooks/useGuestOrders";
 import useTableData from "../hooks/useTableData";
 import useSortableData from "../hooks/useSortableData";
 import useDeleteModal from "../hooks/useDeleteModal";
+
 import { getNestedValue } from "../utils/tableHelpers";
-import { Alert } from "react-bootstrap";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal";
 import PaginationControl from "../components/common/PaginationControl";
 import SearchBox from "../components/common/SearchBox";
 import SortableTableHeader from "../components/SortableTableHeader";
-import { useTranslation } from "react-i18next";
 import { StatusBadge } from "../components/common/StatusBadge";
+
+import AdminOrderCancellationModal from "./AdminOrderCancellationModal";
 import { getOrderModificationRules } from "./utils/orderModificationRules";
+import { canAdminCancelReservation } from "./utils/adminOrderCancellationRules";
+
 import "./styles/AdminTables.css";
 
 const guestOrderFieldsHeaders = [
@@ -49,13 +55,24 @@ const guestOrderFields = [
   "paymentStatus",
 ];
 
-// fields that render as colored status pills instead of plain text
 const STATUS_FIELDS = new Set(["orderStatus", "paymentStatus"]);
 
+/**
+ * Displays a guest reservation and its available administrative actions.
+ *
+ * @param {object} props - Component properties.
+ * @param {object} props.guestOrder - Guest reservation.
+ * @param {Function} props.onEdit - Opens the reservation editor.
+ * @param {Function} props.onDelete - Opens the deletion confirmation.
+ * @param {Function} props.onCancel - Opens the cancellation confirmation.
+ * @param {boolean} props.isDeleting - Whether the reservation is being deleted.
+ * @param {string[]} props.headerLabels - Translated table header labels.
+ */
 const GuestOrderRow = memo(function GuestOrderRow({
   guestOrder,
   onEdit,
   onDelete,
+  onCancel,
   isDeleting,
   headerLabels,
 }) {
@@ -63,14 +80,20 @@ const GuestOrderRow = memo(function GuestOrderRow({
 
   const { isTerminalOrder } = getOrderModificationRules(guestOrder);
 
+  const cancellationAllowed = canAdminCancelReservation(guestOrder);
+
   const editButtonTitle = isTerminalOrder
     ? t("admin.orderRules.terminal")
     : t("admin.common.edit");
 
+  const cancellationButtonTitle = cancellationAllowed
+    ? t("admin.orderCancellation.cancelReservation")
+    : t("admin.orderCancellation.cancellationNotAllowed");
+
   return (
     <tr>
       {guestOrderFields.map((field, index) => {
-        const value = getNestedValue(guestOrder, field);
+        const fieldValue = getNestedValue(guestOrder, field);
 
         return (
           <td
@@ -79,10 +102,11 @@ const GuestOrderRow = memo(function GuestOrderRow({
             data-label={headerLabels[index]}
           >
             {STATUS_FIELDS.has(field) ? (
-              <StatusBadge value={value} />
+              <StatusBadge value={fieldValue} />
             ) : (
               <>
-                {value}
+                {fieldValue}
+
                 {field === "offer.cost" ? ` ${t("common.currency")}` : ""}
               </>
             )}
@@ -91,10 +115,10 @@ const GuestOrderRow = memo(function GuestOrderRow({
       })}
 
       <td
-        className="align-middle text-center"
+        className="align-middle text-center rtable-actions"
         data-label={t("admin.common.action")}
       >
-        <div className="d-flex justify-content-center gap-2">
+        <div className="d-flex justify-content-center align-items-center flex-wrap gap-2">
           <span title={editButtonTitle}>
             <button
               type="button"
@@ -102,11 +126,26 @@ const GuestOrderRow = memo(function GuestOrderRow({
               style={{ minWidth: "40px" }}
               aria-label={editButtonTitle}
               onClick={() => onEdit(guestOrder)}
-              disabled={isTerminalOrder}
+              disabled={isTerminalOrder || isDeleting}
             >
               <FontAwesomeIcon icon={faPen} />
             </button>
           </span>
+
+          {guestOrder.orderStatus === "NOWE" && (
+            <span title={cancellationButtonTitle}>
+              <button
+                type="button"
+                className="btn btn-outline-danger btn-sm"
+                style={{ minWidth: "40px" }}
+                aria-label={t("admin.orderCancellation.cancelReservation")}
+                onClick={() => onCancel(guestOrder)}
+                disabled={!cancellationAllowed || isDeleting}
+              >
+                <FontAwesomeIcon icon={faBan} />
+              </button>
+            </span>
+          )}
 
           <button
             type="button"
@@ -125,29 +164,56 @@ const GuestOrderRow = memo(function GuestOrderRow({
   );
 });
 
+/**
+ * Displays guest reservations and provides editing, deletion,
+ * and administrative cancellation actions.
+ *
+ * @param {object} props - Component properties.
+ * @param {Function} props.onDeleteGuestOrder - Deletes a guest reservation.
+ */
 const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
   const { guestOrders, isLoading, error, refetch } = useGuestOrders();
+
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const headerLabels = guestOrderFieldsHeaders.map((key) => t(key));
+  const [
+    selectedGuestOrderForCancellation,
+    setSelectedGuestOrderForCancellation,
+  ] = useState(null);
 
-  const filterGuestOrders = (order, term) => {
-    const searchStr = ` ${order.idGuestOrder} ${order.firstname} ${
-      order.lastname
-    } ${order.email} ${order.offer?.kind || ""} ${order.offer?.cost || ""} ${
-      order.phonenumber || ""
-    } ${order.orderDate} ${order.visitDate} ${order.orderStatus} ${
-      order.paymentMethod || ""
-    } ${order.paymentStatus || ""}`;
+  const headerLabels = guestOrderFieldsHeaders.map((translationKey) =>
+    t(translationKey),
+  );
 
-    return searchStr.toLowerCase().includes(term.toLowerCase());
+  /**
+   * Filters guest reservations using their displayed details.
+   */
+  const filterGuestOrders = (guestOrder, searchTerm) => {
+    const searchableGuestOrderDetails = `
+      ${guestOrder.idGuestOrder}
+      ${guestOrder.firstname || ""}
+      ${guestOrder.lastname || ""}
+      ${guestOrder.email || ""}
+      ${guestOrder.phonenumber || ""}
+      ${guestOrder.offer?.kind || ""}
+      ${guestOrder.offer?.cost || ""}
+      ${guestOrder.orderDate || ""}
+      ${guestOrder.visitDate || ""}
+      ${guestOrder.orderStatus || ""}
+      ${guestOrder.paymentMethod || ""}
+      ${guestOrder.paymentStatus || ""}
+    `;
+
+    return searchableGuestOrderDetails
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
   };
 
-  const safeGuestOrders = Array.isArray(guestOrders) ? guestOrders : [];
+  const availableGuestOrders = Array.isArray(guestOrders) ? guestOrders : [];
 
   const { sortedData, sortConfig, handleSort } = useSortableData(
-    safeGuestOrders,
+    availableGuestOrders,
     {
       field: "visitDate",
       direction: "desc",
@@ -175,25 +241,28 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
     askDelete: handleAskDelete,
     confirmDelete,
     isDeleting,
-  } = useDeleteModal(async (item) => {
+  } = useDeleteModal(async (guestOrder) => {
     try {
-      await onDeleteGuestOrder(item.idGuestOrder);
+      await onDeleteGuestOrder(guestOrder.idGuestOrder);
 
       toast.success(t("admin.messages.deleteGuestOrderSuccess"));
-    } catch (err) {
-      console.error("error deleting guest order:", err);
+    } catch (deletionError) {
+      console.error("Failed to delete guest reservation:", deletionError);
 
-      const errorMsg = err?.data || err?.message;
+      const errorMessage = deletionError?.data || deletionError?.message;
 
-      if (typeof errorMsg === "string" && errorMsg) {
-        toast.error(errorMsg);
+      if (typeof errorMessage === "string" && errorMessage.trim()) {
+        toast.error(errorMessage);
       } else {
         toast.error(t("admin.messages.deleteGuestOrderError"));
       }
     }
   }, refetch);
 
-  const handleEditClick = (guestOrder) => {
+  /**
+   * Opens the guest reservation editor when editing is allowed.
+   */
+  const handleEditGuestOrder = (guestOrder) => {
     const { isTerminalOrder } = getOrderModificationRules(guestOrder);
 
     if (isTerminalOrder) {
@@ -202,8 +271,33 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
     }
 
     navigate(`/adminpanel/editguestorder/${guestOrder.idGuestOrder}`, {
-      state: { guestOrderData: guestOrder },
+      state: {
+        guestOrderData: guestOrder,
+      },
     });
+  };
+
+  /**
+   * Opens the administrative cancellation confirmation modal.
+   *
+   * The backend decides whether the reservation requires
+   * a Stripe refund.
+   */
+  const handleOpenCancellationModal = (guestOrder) => {
+    if (!canAdminCancelReservation(guestOrder)) {
+      toast.error(t("admin.orderCancellation.cancellationNotAllowed"));
+
+      return;
+    }
+
+    setSelectedGuestOrderForCancellation(guestOrder);
+  };
+
+  /**
+   * Closes the cancellation modal and clears the selected reservation.
+   */
+  const handleCloseCancellationModal = () => {
+    setSelectedGuestOrderForCancellation(null);
   };
 
   if (isLoading) {
@@ -248,8 +342,9 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
                 <GuestOrderRow
                   key={guestOrder.idGuestOrder}
                   guestOrder={guestOrder}
-                  onEdit={handleEditClick}
+                  onEdit={handleEditGuestOrder}
                   onDelete={handleAskDelete}
+                  onCancel={handleOpenCancellationModal}
                   headerLabels={headerLabels}
                   isDeleting={
                     isDeleting &&
@@ -261,7 +356,7 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
               <tr>
                 <td
                   colSpan={guestOrderFields.length + 1}
-                  className="text-center py-4"
+                  className="text-center py-4 rtable-empty"
                 >
                   <Alert variant="info" className="mb-0">
                     {t("admin.common.noResults")}
@@ -292,6 +387,14 @@ const GuestOrdersTable = ({ onDeleteGuestOrder }) => {
             : ""
         }
         label={t("admin.guestOrders.deleteLabel")}
+      />
+
+      <AdminOrderCancellationModal
+        show={selectedGuestOrderForCancellation !== null}
+        onHide={handleCloseCancellationModal}
+        reservation={selectedGuestOrderForCancellation}
+        reservationType="GUEST"
+        onCancellationAttemptFinished={refetch}
       />
     </div>
   );

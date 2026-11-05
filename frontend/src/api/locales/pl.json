@@ -196,6 +196,47 @@
       "title": "Potwierdzenie usunięcia",
       "message": "Czy na pewno chcesz usunąć {{label}}: {{itemName}}?",
       "cancel": "Anuluj"
+    },
+
+    "orderCancellation": {
+      "title": "Anulowanie rezerwacji #{{reservationId}}",
+      "customer": "Klient",
+      "service": "Usługa",
+      "servicePrice": "Cena usługi",
+      "paymentMethod": "Metoda płatności",
+      "confirmationMessage": "Czy na pewno chcesz anulować tę rezerwację?",
+      "onlineRefundTitle": "Pełny zwrot płatności",
+      "onlineRefundDescription": "Anulowanie rezerwacji spowoduje zlecenie pełnego zwrotu przez Stripe. Realizacja zwrotu może potrwać. Termin wizyty zostanie zwolniony.",
+      "onSiteDescription": "Rezerwacja zostanie anulowana, a termin wizyty zwolniony. Zwrot przez Stripe nie jest wymagany.",
+      "cancellationNotAllowed": "Nie można anulować rezerwacji z obecnym statusem płatności lub rezerwacji.",
+      "cancellationErrorTitle": "Nie udało się potwierdzić anulowania",
+      "unknownError": "Wystąpił nieoczekiwany błąd.",
+      "uncertainOutcomeWarning": "Nie ponawiaj anulowania bez sprawdzenia aktualnego stanu rezerwacji. Operacja mogła zostać wykonana mimo błędu odpowiedzi.",
+      "cancellationSucceeded": "Rezerwacja została anulowana.",
+      "refundStatus": "Status zwrotu",
+      "refundSucceeded": "Płatność została zwrócona.",
+      "refundFailed": "Zwrot nie powiódł się lub został anulowany. Rezerwacja pozostaje anulowana. Wymagana jest interwencja administratora.",
+      "refundRequiresAttention": "Status zwrotu wymaga weryfikacji lub dodatkowego działania. Nie zlecaj ponownego zwrotu bez sprawdzenia płatności.",
+      "refundPending": "Zwrot jest przygotowywany lub przetwarzany przez Stripe.",
+      "failureReason": "Powód niepowodzenia",
+      "refreshRefundStatus": "Odśwież status zwrotu",
+      "refundLookupError": "Nie udało się pobrać aktualnego statusu zwrotu.",
+      "noRefundRequired": "Anulowanie nie wymagało zwrotu przez Stripe.",
+      "cancelAndRefund": "Anuluj i zleć zwrot",
+      "confirmCancellation": "Potwierdź anulowanie",
+      "cancelReservation": "Anuluj rezerwację",
+      "back": "Wróć",
+      "close": "Zamknij",
+      "refundStatuses": {
+        "REQUESTED": "Zlecony",
+        "SUBMITTING": "Wysyłany do Stripe",
+        "PENDING": "W trakcie realizacji",
+        "SUCCEEDED": "Zakończony pomyślnie",
+        "FAILED": "Nieudany",
+        "CANCELED": "Anulowany",
+        "REQUIRES_ACTION": "Wymaga działania",
+        "RECONCILIATION_REQUIRED": "Wymaga weryfikacji"
+      }
     }
   },
   "nav": {

@@ -46,7 +46,10 @@ const parseResponseData = async (response) => {
 
   const contentType = response.headers.get("content-type") || "";
 
-  if (contentType.includes("application/json")) {
+  if (
+    contentType.includes("application/json") ||
+    contentType.includes("+json")
+  ) {
     try {
       return JSON.parse(responseText);
     } catch {
@@ -78,7 +81,7 @@ const getErrorMessage = (response, data) => {
   }
 
   if (data && typeof data === "object") {
-    return data.message || data.error || response.statusText;
+    return data.message || data.detail || data.error || response.statusText;
   }
 
   return response.statusText || `HTTP error ${response.status}`;

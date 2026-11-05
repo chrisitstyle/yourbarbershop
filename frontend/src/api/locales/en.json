@@ -95,7 +95,7 @@
       "cost": "Cost",
       "orderDate": "Order Date",
       "visitDate": "Visit Date",
-      "status": "Status",
+      "orderStatus": "Status",
       "paymentMethod": "Payment Method",
       "paymentStatus": "Payment Status"
     },
@@ -196,6 +196,47 @@
       "title": "Confirm deletion",
       "message": "Are you sure you want to delete {{label}}: {{itemName}}?",
       "cancel": "Cancel"
+    },
+
+    "orderCancellation": {
+      "title": "Cancel reservation #{{reservationId}}",
+      "customer": "Customer",
+      "service": "Service",
+      "servicePrice": "Service price",
+      "paymentMethod": "Payment method",
+      "confirmationMessage": "Are you sure you want to cancel this reservation?",
+      "onlineRefundTitle": "Full payment refund",
+      "onlineRefundDescription": "Cancelling this reservation will initiate a full refund through Stripe. Processing may take some time. The appointment slot will be released.",
+      "onSiteDescription": "The reservation will be cancelled and the appointment slot released. No Stripe refund is required.",
+      "cancellationNotAllowed": "This reservation cannot be cancelled with its current reservation or payment status.",
+      "cancellationErrorTitle": "Cancellation could not be confirmed",
+      "unknownError": "An unexpected error occurred.",
+      "uncertainOutcomeWarning": "Do not retry the cancellation without checking the current reservation state. The operation may have completed despite the response error.",
+      "cancellationSucceeded": "The reservation has been cancelled.",
+      "refundStatus": "Refund status",
+      "refundSucceeded": "The payment has been refunded.",
+      "refundFailed": "The refund failed or was cancelled. The reservation remains cancelled. Administrator intervention is required.",
+      "refundRequiresAttention": "The refund status requires verification or additional action. Do not initiate another refund without checking the payment.",
+      "refundPending": "The refund is being prepared or processed by Stripe.",
+      "failureReason": "Failure reason",
+      "refreshRefundStatus": "Refresh refund status",
+      "refundLookupError": "Unable to retrieve the latest refund status.",
+      "noRefundRequired": "No Stripe refund was required for this cancellation.",
+      "cancelAndRefund": "Cancel and initiate refund",
+      "confirmCancellation": "Confirm cancellation",
+      "cancelReservation": "Cancel reservation",
+      "back": "Back",
+      "close": "Close",
+      "refundStatuses": {
+        "REQUESTED": "Requested",
+        "SUBMITTING": "Submitting to Stripe",
+        "PENDING": "Processing",
+        "SUCCEEDED": "Succeeded",
+        "FAILED": "Failed",
+        "CANCELED": "Cancelled",
+        "REQUIRES_ACTION": "Requires action",
+        "RECONCILIATION_REQUIRED": "Requires verification"
+      }
     }
   },
   "nav": {
