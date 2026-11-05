@@ -1,0 +1,165 @@
+/* Refund history dashboard */
+
+.admin-refund-history {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  text-align: left;
+}
+
+.admin-refund-history h2 {
+  font-size: 1.5rem;
+}
+
+/* Dashboard summary */
+
+.admin-refund-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-refund-summary-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100px;
+  padding: 1.1rem 1.25rem;
+  background-color: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.85rem;
+}
+
+.admin-refund-summary-card--attention {
+  border-color: var(--bs-danger-border-subtle);
+}
+
+.admin-refund-summary-label {
+  color: var(--bs-secondary-color);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.admin-refund-summary-value {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--bs-emphasis-color);
+  font-size: 1.7rem;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+/* Filters */
+
+.admin-refund-filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.admin-refund-search {
+  flex: 1 1 350px;
+  max-width: 420px;
+}
+
+.admin-refund-status-filter {
+  flex: 0 1 260px;
+  min-width: 190px;
+}
+
+/* Table */
+
+.admin-refund-table-wrapper {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.85rem;
+  overflow: auto;
+}
+
+.admin-refund-table {
+  width: 100%;
+}
+
+.admin-refund-table th,
+.admin-refund-table td {
+  padding-inline: 1rem;
+}
+
+.admin-refund-table--updating {
+  opacity: 0.65;
+  transition: opacity 150ms ease;
+}
+
+.admin-refund-details-button {
+  padding-inline: 0.25rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-refund-details-button:hover {
+  text-decoration: underline;
+}
+
+/* Status presentation */
+
+.admin-refund-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.admin-refund-status--success {
+  color: var(--bs-success-text-emphasis);
+}
+
+.admin-refund-status--danger {
+  color: var(--bs-danger-text-emphasis);
+}
+
+.admin-refund-status--warning {
+  color: var(--bs-warning-text-emphasis);
+}
+
+.admin-refund-status--pending {
+  color: var(--bs-body-color);
+}
+
+/* Reuse the existing pagination without its global bottom spacing */
+
+.admin-refund-history .pagination {
+  margin-bottom: 0;
+}
+
+@media (max-width: 767.98px) {
+  .admin-refund-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-refund-summary-card {
+    min-height: 80px;
+  }
+
+  .admin-refund-filters {
+    flex-direction: column;
+  }
+
+  .admin-refund-search,
+  .admin-refund-status-filter {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    flex-basis: auto;
+  }
+
+  .admin-refund-table-wrapper {
+    border: 0;
+    overflow: visible;
+  }
+
+  .admin-refund-table th,
+  .admin-refund-table td {
+    padding-inline: 0.9rem;
+  }
+}
