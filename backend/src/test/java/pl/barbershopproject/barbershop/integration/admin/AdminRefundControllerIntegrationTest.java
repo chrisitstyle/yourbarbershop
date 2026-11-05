@@ -118,8 +118,7 @@ class AdminRefundControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ADMIN")
-    void shouldReturnRefundRequiringReconciliation()
-            throws Exception {
+    void shouldReturnRefundRequiringReconciliation() throws Exception {
 
         PaymentRefund refund = createRegisteredRefund(RefundStatus.RECONCILIATION_REQUIRED);
 
@@ -138,8 +137,7 @@ class AdminRefundControllerIntegrationTest extends BaseIntegrationTest {
     void shouldReturnRefundBelongingToGuestOrder() throws Exception {
         PaymentRefund refund = createGuestRefund();
 
-        mockMvc.perform(get(
-                        "/admin/refunds/{refundId}",
+        mockMvc.perform(get("/admin/refunds/{refundId}",
                         refund.getIdPaymentRefund()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.refundId")
@@ -166,12 +164,107 @@ class AdminRefundControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldRejectRefundLookupByUnauthenticatedUser()
-            throws Exception {
+    void shouldRejectRefundLookupByUnauthenticatedUser() throws Exception {
 
         mockMvc.perform(get("/admin/refunds/{refundId}", 999999L))
                 .andExpect(status().isUnauthorized());
     }
+
+
+    @Test
+    @WithMockUser(authorities = "ADMIN")
+    void shouldReturnPaginatedRefundHistoryWithSummary() throws Exception {
+        createRegisteredRefund(RefundStatus.SUCCEEDED);
+        createGuestRefund();
+
+        PaymentRefund failedRefund = createRegisteredRefund(RefundStatus.FAILED);
+
+        mockMvc.perform(get("/admin/refunds")
+                        .param("page", "0")
+                        .param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.summary.completed").value(1))
+                .andExpect(jsonPath("$.summary.inProgress").value(1))
+                .andExpect(jsonPath("$.summary.requiresAttention").value(1))
+                .andExpect(jsonPath("$.content[0].refundId")
+                        .value(failedRefund.getIdPaymentRefund()))
+                .andExpect(jsonPath("$.content[0].reservationType")
+                        .value("REGISTERED"))
+                .andExpect(jsonPath("$.content[0].status")
+                        .value("FAILED"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ADMIN")
+    void shouldFilterRefundHistoryByStatus() throws Exception {
+        PaymentRefund successfulRefund = createRegisteredRefund(RefundStatus.SUCCEEDED);
+
+        createGuestRefund();
+
+        mockMvc.perform(get("/admin/refunds")
+                        .param("status", "SUCCEEDED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].refundId")
+                        .value(successfulRefund.getIdPaymentRefund()))
+                .andExpect(jsonPath("$.content[0].status")
+                        .value("SUCCEEDED"))
+                .andExpect(jsonPath("$.summary.completed").value(1))
+                .andExpect(jsonPath("$.summary.inProgress").value(1));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ADMIN")
+    void shouldFilterRefundHistoryByGuestReservationId() throws Exception {
+
+        PaymentRefund guestRefund = createGuestRefund();
+
+        Long guestOrderId = guestRefund.getPayment()
+                .getGuestOrder()
+                .getIdGuestOrder();
+
+        mockMvc.perform(get("/admin/refunds")
+                        .param("reservationId", guestOrderId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].refundId")
+                        .value(guestRefund.getIdPaymentRefund()))
+                .andExpect(jsonPath("$.content[0].reservationId")
+                        .value(guestOrderId))
+                .andExpect(jsonPath("$.content[0].reservationType")
+                        .value("GUEST"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ADMIN")
+    void shouldRejectInvalidRefundHistoryPagination() throws Exception {
+        mockMvc.perform(get("/admin/refunds")
+                        .param("page", "-1"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/admin/refunds")
+                        .param("size", "101"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(authorities = "USER")
+    void shouldRejectRefundHistoryLookupByRegularUser() throws Exception {
+
+        mockMvc.perform(get("/admin/refunds")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectUnauthenticatedRefundHistoryLookup() throws Exception {
+
+        mockMvc.perform(get("/admin/refunds")).andExpect(status().isUnauthorized());
+    }
+
 
     private PaymentRefund createRegisteredRefund(RefundStatus status) {
         Offer offer = getRequiredOffer();
