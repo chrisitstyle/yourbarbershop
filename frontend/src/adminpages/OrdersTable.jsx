@@ -1,6 +1,12 @@
 import { memo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBan, faPen, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+  faBan,
+  faEye,
+  faPen,
+  faSpinner,
+  faTrashAlt,
+} from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { Alert } from "react-bootstrap";
 import { toast } from "sonner";
@@ -10,6 +16,7 @@ import useOrders from "../hooks/useOrders";
 import useTableData from "../hooks/useTableData";
 import useSortableData from "../hooks/useSortableData";
 import useDeleteModal from "../hooks/useDeleteModal";
+import useAdminReservationRefundDetails from "../hooks/useAdminReservationRefundDetails";
 
 import { getNestedValue } from "../utils/tableHelpers";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -20,6 +27,7 @@ import SortableTableHeader from "../components/SortableTableHeader";
 import { StatusBadge } from "../components/common/StatusBadge";
 
 import AdminOrderCancellationModal from "./AdminOrderCancellationModal";
+import AdminRefundDetailsModal from "./AdminRefundDetailsModal";
 import { getOrderModificationRules } from "./utils/orderModificationRules";
 import { canAdminCancelReservation } from "./utils/adminOrderCancellationRules";
 
@@ -69,6 +77,9 @@ const fieldLabels = orderFields.reduce((fieldLabelsByName, field, index) => {
  * @param {Function} props.onEdit - Opens the reservation editor.
  * @param {Function} props.onDelete - Opens the deletion confirmation.
  * @param {Function} props.onCancel - Opens the cancellation confirmation.
+ * @param {Function} props.onViewRefund - Finds refund details for the reservation.
+ * @param {boolean} props.isLookingUpRefund - Whether a refund lookup is active.
+ * @param {Function} props.isLookingUpRefundFor - Identifies the refund lookup target.
  * @param {boolean} props.isDeleting - Whether this reservation is being deleted.
  */
 const OrderRow = memo(function OrderRow({
@@ -76,6 +87,9 @@ const OrderRow = memo(function OrderRow({
   onEdit,
   onDelete,
   onCancel,
+  onViewRefund,
+  isLookingUpRefund,
+  isLookingUpRefundFor,
   isDeleting,
 }) {
   const { t } = useTranslation();
@@ -83,6 +97,9 @@ const OrderRow = memo(function OrderRow({
   const { isTerminalOrder } = getOrderModificationRules(order);
 
   const cancellationAllowed = canAdminCancelReservation(order);
+
+  const hasPotentialOnlineRefund =
+    order.orderStatus === "ANULOWANE" && order.paymentMethod === "KARTA_ONLINE";
 
   const editButtonTitle = isTerminalOrder
     ? t("admin.orderRules.terminal")
@@ -145,6 +162,30 @@ const OrderRow = memo(function OrderRow({
             </span>
           )}
 
+          {/* Refund details for cancelled online payments */}
+          {hasPotentialOnlineRefund && (
+            <span title={t("admin.refundHistory.viewReservationRefund")}>
+              <button
+                type="button"
+                className="btn btn-outline-info btn-sm"
+                style={{ minWidth: "40px" }}
+                aria-label={t("admin.refundHistory.viewReservationRefund")}
+                onClick={() => onViewRefund(order.idOrder, "REGISTERED")}
+                disabled={isDeleting || isLookingUpRefund}
+              >
+                <FontAwesomeIcon
+                  icon={
+                    isLookingUpRefundFor(order.idOrder, "REGISTERED")
+                      ? faSpinner
+                      : faEye
+                  }
+                  spin={isLookingUpRefundFor(order.idOrder, "REGISTERED")}
+                  aria-hidden="true"
+                />
+              </button>
+            </span>
+          )}
+
           <button
             type="button"
             className="btn btn-danger btn-sm"
@@ -163,8 +204,8 @@ const OrderRow = memo(function OrderRow({
 });
 
 /**
- * Displays registered customer reservations and provides
- * editing, deletion, and administrative cancellation actions.
+ * Displays registered customer reservations and provides editing,
+ * deletion, administrative cancellation, and refund details actions.
  *
  * @param {object} props - Component properties.
  * @param {Function} props.onDeleteOrder - Deletes a reservation.
@@ -177,6 +218,15 @@ const OrdersTable = ({ onDeleteOrder }) => {
 
   const [selectedOrderForCancellation, setSelectedOrderForCancellation] =
     useState(null);
+
+  const {
+    selectedRefund,
+    openRefundDetails,
+    closeRefundDetails,
+    handleRefundUpdated,
+    isLookingUpRefund,
+    isLookingUpRefundFor,
+  } = useAdminReservationRefundDetails();
 
   /**
    * Filters reservations using their displayed fields.
@@ -302,14 +352,14 @@ const OrdersTable = ({ onDeleteOrder }) => {
     <div className="container my-5 py-4 text-center">
       <h2 className="mb-4">{t("admin.orders.title")}</h2>
 
-      {/* search box */}
+      {/* Search box */}
       <SearchBox
         value={searchTerm}
         onChange={handleSearchChange}
         placeholder={t("admin.orders.searchPlaceholder")}
       />
 
-      {/* table (rtable-wrap + rtable enable the responsive card view) */}
+      {/* Responsive reservation table */}
       <div className="rtable-wrap mx-auto" style={{ maxWidth: "1100px" }}>
         <table className="table table-hover align-middle rtable mb-0">
           <SortableTableHeader
@@ -332,6 +382,9 @@ const OrdersTable = ({ onDeleteOrder }) => {
                   onEdit={handleEditOrder}
                   onDelete={handleAskDelete}
                   onCancel={handleOpenCancellationModal}
+                  onViewRefund={openRefundDetails}
+                  isLookingUpRefund={isLookingUpRefund}
+                  isLookingUpRefundFor={isLookingUpRefundFor}
                   isDeleting={
                     isDeleting && orderToDelete?.idOrder === order.idOrder
                   }
@@ -353,33 +406,43 @@ const OrdersTable = ({ onDeleteOrder }) => {
         </table>
       </div>
 
-      {/* pagination component */}
+      {/* Pagination */}
       <PaginationControl
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
 
+      {/* Reservation deletion */}
       <ConfirmDeleteModal
         show={showDeleteModal}
         onHide={() => setShowDeleteModal(false)}
         onConfirm={confirmDelete}
         itemName={
           orderToDelete
-            ? `${orderToDelete.offer?.kind || t("admin.common.none")} (${
-                orderToDelete.idOrder
-              })`
+            ? `${
+                orderToDelete.offer?.kind || t("admin.common.none")
+              } (${orderToDelete.idOrder})`
             : ""
         }
         label={t("admin.orders.deleteLabel")}
       />
 
+      {/* Administrative cancellation */}
       <AdminOrderCancellationModal
         show={selectedOrderForCancellation !== null}
         onHide={handleCloseCancellationModal}
         reservation={selectedOrderForCancellation}
         reservationType="REGISTERED"
         onCancellationAttemptFinished={refetch}
+      />
+
+      {/* Existing read-only refund details modal */}
+      <AdminRefundDetailsModal
+        show={selectedRefund !== null}
+        onHide={closeRefundDetails}
+        refund={selectedRefund}
+        onRefundUpdated={handleRefundUpdated}
       />
     </div>
   );

@@ -266,7 +266,10 @@
       "reservationTypes": {
         "REGISTERED": "Registered customer",
         "GUEST": "Guest"
-      }
+      },
+      "viewReservationRefund": "View refund details",
+      "noRefundForReservation": "No refund was found for this reservation.",
+      "refundLookupError": "Unable to retrieve the refund for this reservation."
     },
 
     "refundDetails": {

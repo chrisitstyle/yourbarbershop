@@ -266,7 +266,10 @@
       "reservationTypes": {
         "REGISTERED": "Użytkownik",
         "GUEST": "Gość"
-      }
+      },
+      "viewReservationRefund": "Szczegóły zwrotu",
+      "noRefundForReservation": "Nie znaleziono zwrotu dla tej rezerwacji.",
+      "refundLookupError": "Nie udało się pobrać zwrotu dla tej rezerwacji."
     },
 
     "refundDetails": {
