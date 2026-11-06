@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pl.barbershopproject.barbershop.payment.refund.StripeRefundWebhookHandler;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,6 +22,7 @@ public class StripeWebhookController {
 
     private final StripeWebhookSignatureVerifier signatureVerifier;
     private final StripeWebhookService stripeWebhookService;
+    private final StripeRefundWebhookHandler stripeRefundWebhookHandler;
 
     @Operation(
             summary = "Handle Stripe webhook events",
@@ -33,10 +35,17 @@ public class StripeWebhookController {
     public ResponseEntity<String> handleStripeWebhook(
             @RequestBody String payload,
             @Parameter(description = "Stripe cryptographic signature header for payload verification")
-            @RequestHeader(name = "Stripe-Signature", required = false) String stripeSignature
+            @RequestHeader(name = "Stripe-Signature", required = false)
+            String stripeSignature
     ) {
         signatureVerifier.verify(payload, stripeSignature);
-        stripeWebhookService.handleEvent(payload);
+
+        boolean refundEventHandled = stripeRefundWebhookHandler.handleVerifiedRefundEvent(payload);
+
+        if (!refundEventHandled) {
+            stripeWebhookService.handleEvent(payload);
+        }
+
         return ResponseEntity.ok("OK");
     }
 }

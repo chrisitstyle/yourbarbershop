@@ -136,8 +136,11 @@ act-db:
 act-security:
 	act push -W .github/workflows/security-audit.yaml -j audit-frontend
 
+# Listen for Stripe webhooks and forward them to the backend.
+# The --all-snapshot flag is required in newer Stripe CLI versions (v1.55+) to explicitly allow forwarding of all test events.
 stripe-listen:
-	stripe listen --api-key "$(STRIPE_SECRET_KEY)" --forward-to "$(STRIPE_FORWARD_URL)"
+	stripe listen --api-key "$(STRIPE_SECRET_KEY)" --forward-to "$(STRIPE_FORWARD_URL)" --all-snapshot
+
 
 stripe-trigger:
 	stripe trigger checkout.session.completed --api-key "$(STRIPE_SECRET_KEY)"

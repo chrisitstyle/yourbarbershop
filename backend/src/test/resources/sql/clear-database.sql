@@ -1,5 +1,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
+TRUNCATE TABLE `payment_refund`;
 TRUNCATE TABLE `idempotency_request`;
 TRUNCATE TABLE `payment`;
 TRUNCATE TABLE `audit_logs`;

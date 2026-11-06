@@ -73,12 +73,13 @@ public class SecurityWebConfig {
                                 // Email endpoints
                                 .requestMatchers("/send-email").hasAuthority(Role.ADMIN.toString())
 
+                                .requestMatchers("/admin/**").hasAuthority(Role.ADMIN.toString())
+
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement ->
                         sessionManagement
-                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
@@ -87,8 +88,7 @@ public class SecurityWebConfig {
                         .successHandler(oAuth2LoginSuccessHandler))
 
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-                );
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
 
         return http.build();
     }

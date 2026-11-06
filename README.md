@@ -17,9 +17,10 @@ The application provides comprehensive management tools:
 - **Photo Gallery** - Showcase barber portfolio and work examples stored in Supabase
 - **Password Recovery** - Secure password reset functionality
 - **Guest Orders** - Allow non-registered customers to book appointments
-- **Stripe Online Payments** - Support online card payments through Stripe Checkout with webhook-based payment confirmation and secure payment retry links
+- **Stripe Online Payments & Refunds** - Secure online card payments via Stripe Checkout, webhook-based payment confirmation, payment retry links, automated refunds for administrator-cancelled reservations, and refund status reconciliation
 - **Payment Management** - Store payment method, payment status, Stripe Checkout Session ID, Payment Intent ID, amount, currency, and paid timestamp in a dedicated `payment` table
-- **Email Notifications System** - Automated appointment confirmations sent directly to customers' email addresses
+- **Refund History Dashboard** - View refund statistics, filter refund records, search by reservation ID, and inspect refund details
+- **Email Notifications System** - Automated appointment notifications, payment links, login codes, and successful refund confirmations
 - **Automated Database Migrations** - Robust schema management and versioning with **Flyway**.
 - **Integration Testing** - Robust testing suite ensuring system reliability using **Testcontainers**.
 
@@ -197,6 +198,9 @@ REFRESH_COOKIE_SAME_SITE=Lax
 MYSQL_USERNAME=yor-mysql-username
 MYSQL_PASSWORD=your-mysql-password
 
+# Stripe Refund Reconciliation
+REFUND_RECONCILIATION_ENABLED=true
+
 # OAuth2 Configuration
 
 GOOGLE_CLIENT_ID=your-google-id
@@ -229,6 +233,11 @@ PAYMENT_LINK_URL=http://localhost:3000/payment
 
 > **Important**: For `MAIL_PASSWORD`, you need to generate a Google App Password at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords). Regular Gmail passwords won't work for security reasons.
 
+> **Refund reconciliation:** `REFUND_RECONCILIATION_ENABLED`
+> controls the background refund reconciliation scheduler.
+> The default value is `false`. Set it to `true` to enable
+> periodic synchronization of pending refunds with Stripe.
+
 **Frontend configuration** - Create `frontend/.env` file:
 
 ```properties
@@ -245,7 +254,7 @@ Update `backend/src/main/resources/application.properties` to use these environm
 # Database configuration
 spring.datasource.url=jdbc:mysql://localhost:3306/barbershop_with_roles
 spring.datasource.username=${MYSQL_USERNAME}
-spring. datasource.password=${MYSQL_PASSWORD}
+spring.datasource.password=${MYSQL_PASSWORD}
 
 # JWT / refresh token configuration
 JWT_ACCESS_EXPIRATION_MINUTES=${JWT_ACCESS_EXPIRATION_MINUTES:15}
@@ -360,6 +369,103 @@ Payment retry flow:
 6. Invalid, expired, cancelled, or already paid payment links are rejected.
 7. Failed card attempts do not mark the entire payment as failed, allowing the customer to retry while the Checkout Session remains available.
 
+#### Administrative cancellation and Stripe refunds
+
+YourBarbershop allows administrators to cancel eligible reservations
+for both registered customers and guests.
+
+Reservation cancellation is handled through dedicated endpoints rather
+than standard order update requests.
+
+**Administrator endpoints:**
+
+```http
+POST /admin/orders/{orderId}/cancel
+POST /admin/guest-orders/{guestOrderId}/cancel
+```
+
+**Cancellation behavior:**
+
+1. The administrator selects an eligible reservation and confirms
+   its cancellation.
+2. The backend validates the reservation and payment status.
+3. For an eligible paid online reservation, the backend initiates
+   a full refund through Stripe.
+4. For reservations paid on site, no Stripe refund is required.
+5. The reservation is marked as `ANULOWANE`.
+6. Refund details and processing status are persisted in MySQL.
+
+Standard order update endpoints cannot be used to set the
+`ANULOWANE` status.
+
+**Refund processing:**
+
+Refund statuses are synchronized using Stripe webhooks and
+background reconciliation.
+
+Supported refund statuses:
+
+| Status                    | Description                                       |
+| ------------------------- | ------------------------------------------------- |
+| `REQUESTED`               | Refund request has been recorded                  |
+| `SUBMITTING`              | Refund submission is in progress                  |
+| `PENDING`                 | Stripe is processing the refund                   |
+| `SUCCEEDED`               | Stripe has successfully processed the refund      |
+| `FAILED`                  | Refund processing failed                          |
+| `CANCELED`                | The refund was cancelled                          |
+| `REQUIRES_ACTION`         | Additional action may be required                 |
+| `RECONCILIATION_REQUIRED` | Refund status requires reconciliation with Stripe |
+
+The backend uses database locking and Stripe idempotency to protect
+refund operations against concurrent requests and accidental
+duplicate submissions.
+
+**Refund history:**
+
+Administrators can access a dedicated refund history dashboard
+with summary statistics, filtering, searching, and pagination.
+
+```http
+GET /admin/refunds?page=0&size=20
+GET /admin/refunds?status=FAILED&page=0&size=20
+GET /admin/refunds?reservationId=18&page=0&size=20
+GET /admin/refunds/{refundId}
+```
+
+The dashboard displays:
+
+- Completed refunds
+- Refunds in progress
+- Refunds requiring attention
+- Associated reservation identifiers and types
+- Refund amounts, statuses, and processing dates
+- Detailed Stripe refund information
+
+Administrators can also open refund details directly from
+cancelled online reservations.
+
+**Refund email notifications:**
+
+When a refund transitions to `SUCCEEDED`, the backend sends
+a confirmation email to the customer.
+
+Notifications support registered customers and guest reservations.
+
+Emails are sent asynchronously after the refund transaction is
+committed, using the existing email configuration.
+
+Repeated processing of an unchanged `SUCCEEDED` status does not
+trigger additional confirmation emails.
+
+Email delivery is best-effort. Notification failures do not affect
+refund processing, and failed email deliveries are not automatically
+retried.
+
+**Security:**
+
+Cancellation and refund management endpoints require the
+`ADMIN` authority.
+
 Local webhook listener:
 
 ```powershell
@@ -455,6 +561,7 @@ FRONTEND_URL=http://localhost:3000
 STRIPE_FORWARD_URL=http://localhost:8080/stripe/webhook
 STRIPE_SUCCESS_URL=http://localhost:3000/payment/success
 STRIPE_CANCEL_URL=http://localhost:3000/payment/cancel
+REFUND_RECONCILIATION_ENABLED=true
 
 # Database
 MYSQL_ROOT_PASSWORD=your-root-password
@@ -480,11 +587,6 @@ VALKEY_PORT=6379 # (default both)
 PAYMENT_LINK_SECRET=generate-a-long-random-secret
 PAYMENT_LINK_VALIDITY_HOURS=24
 PAYMENT_LINK_URL=http://localhost:3000/payment
-
-JWT_ACCESS_EXPIRATION_MINUTES=15
-REFRESH_TOKEN_DAYS=14
-REFRESH_COOKIE_SECURE=true
-REFRESH_COOKIE_SAME_SITE=None
 ```
 
 > **Note**: Passwordless email OTP login uses the configured mail provider to send one-time login codes and Valkey/Redis to store short-lived hashed codes, cooldowns, and attempt counters. Refresh tokens are persisted in MySQL as hashes and sent to the browser only as HttpOnly cookies.
@@ -611,6 +713,7 @@ The application uses MySQL with the following main tables:
 - **user_order** - Orders placed by registered users
 - **guest_order** - Orders placed by guest customers
 - **payment** - Payment records connected to user or guest orders, including payment method, payment status, Stripe Checkout Session ID, Payment Intent ID, amount, currency, and paid timestamp
+- **payment_refund** - Stripe refund records, including associated payment, refund status, amount, currency, Stripe refund ID, processing timestamps, and failure details
 - **password_reset_token** - Password recovery tokens
 - **refresh_token** - Hashed refresh tokens used for session renewal, rotation, revocation, and logout
 

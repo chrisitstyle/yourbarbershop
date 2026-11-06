@@ -41,7 +41,6 @@ public class StripeWebhookService {
                 case "checkout.session.expired" -> handleCheckoutExpired(object);
                 case "payment_intent.succeeded" -> handlePaymentIntentSucceeded(object);
                 case "payment_intent.payment_failed" -> handlePaymentIntentFailed(object);
-                case "charge.refunded" -> handleChargeRefunded(object);
                 default -> {
                     // Stripe sends many events. Unsupported events are ignored.
                 }
@@ -55,7 +54,7 @@ public class StripeWebhookService {
         Optional<Payment> optionalPayment = resolvePaymentFromCheckoutSession(session);
 
         optionalPayment.ifPresent(payment -> {
-            if (payment.getPaymentStatus() == PaymentStatus.OPLACONA) {
+            if (isPaymentAlreadySettled(payment)) {
                 return;
             }
 
@@ -75,7 +74,7 @@ public class StripeWebhookService {
         Optional<Payment> optionalPayment = resolvePaymentFromCheckoutSession(session);
 
         optionalPayment.ifPresent(payment -> {
-            if (payment.getPaymentStatus() == PaymentStatus.OPLACONA) {
+            if (isPaymentAlreadySettled(payment)) {
                 return;
             }
 
@@ -90,7 +89,7 @@ public class StripeWebhookService {
         Optional<Payment> optionalPayment = resolvePaymentFromPaymentIntent(paymentIntent);
 
         optionalPayment.ifPresent(payment -> {
-            if (payment.getPaymentStatus() == PaymentStatus.OPLACONA) {
+            if (isPaymentAlreadySettled(payment)) {
                 return;
             }
 
@@ -107,11 +106,10 @@ public class StripeWebhookService {
     }
 
     private void handlePaymentIntentFailed(JsonNode paymentIntent) {
-        Optional<Payment> optionalPayment =
-                resolvePaymentFromPaymentIntent(paymentIntent);
+        Optional<Payment> optionalPayment = resolvePaymentFromPaymentIntent(paymentIntent);
 
         optionalPayment.ifPresent(payment -> {
-            if (payment.getPaymentStatus() == PaymentStatus.OPLACONA) {
+            if (isPaymentAlreadySettled(payment)) {
                 return;
             }
 
@@ -123,18 +121,6 @@ public class StripeWebhookService {
         });
     }
 
-    private void handleChargeRefunded(JsonNode charge) {
-        String paymentIntentId = charge.path("payment_intent").asString(null);
-
-        if (paymentIntentId == null || paymentIntentId.isBlank()) {
-            return;
-        }
-
-        paymentRepository.findByStripePaymentIntentId(paymentIntentId).ifPresent(payment -> {
-            payment.setPaymentStatus(PaymentStatus.ZWROCONA);
-            paymentRepository.save(payment);
-        });
-    }
 
     private Optional<Payment> resolvePaymentFromCheckoutSession(JsonNode session) {
         String sessionId = session.path("id").asString(null);
@@ -224,5 +210,13 @@ public class StripeWebhookService {
 
         appointmentAvailabilityService.releaseIfReserved(guestOrder.getVisitDate(), guestOrder.getOrderStatus());
         guestOrder.setOrderStatus(OrderStatus.ANULOWANE);
+    }
+
+    /**
+     * Prevents delayed payment events from overwriting settled states.
+     */
+    private boolean isPaymentAlreadySettled(Payment payment) {
+        return payment.getPaymentStatus() == PaymentStatus.OPLACONA
+                || payment.getPaymentStatus() == PaymentStatus.ZWROCONA;
     }
 }

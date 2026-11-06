@@ -1,9 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faScissors,
+  faUser,
+  faCalendarCheck,
+  faImages,
+  faClipboardList,
+  faMoneyBillTransfer,
+} from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "react-i18next";
+
 import userService from "../api/userService.js";
 import offerService from "../api/offerService.js";
 import orderService from "../api/orderService.js";
 import guestOrderService from "../api/guestOrderService.js";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import OffersTable from "./OffersTable";
 import AddOffer from "./AddOffer";
 import UsersTable from "./UsersTable";
@@ -12,181 +24,295 @@ import OrdersTable from "./OrdersTable";
 import GuestOrdersTable from "./GuestOrdersTable.jsx";
 import GallerySettings from "./GallerySettings.jsx";
 import AuditLogsTable from "./AuditLogsTable.jsx";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faScissors,
-  faUser,
-  faCalendarCheck,
-  faImages,
-  faClipboardList,
-} from "@fortawesome/free-solid-svg-icons";
-import { useTranslation } from "react-i18next";
+import AdminRefundHistory from "./AdminRefundHistory.jsx";
 
+/**
+ * Provides the administrative dashboard and module navigation.
+ *
+ * Reservation cancellation is available in the order tables,
+ * while refund history provides read-only access to persisted
+ * Stripe refund information.
+ */
 const AdminPanel = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  // single source of truth for which module/view is visible (null = nothing selected)
   const [activeView, setActiveView] = useState(null);
-
-  // index of the currently open dropdown menu (null = all closed)
   const [openMenu, setOpenMenu] = useState(null);
+
   const menuBarRef = useRef(null);
 
-  const closeMenu = useCallback(() => setOpenMenu(null), []);
+  /**
+   * Closes the currently expanded navigation menu.
+   */
+  const closeMenu = useCallback(() => {
+    setOpenMenu(null);
+  }, []);
 
-  // selecting a view switches the panel and always hides the dropdown
+  /**
+   * Selects an administrative module and closes the menu.
+   *
+   * @param {string} view - Administrative module identifier.
+   */
   const selectView = useCallback((view) => {
     setActiveView(view);
     setOpenMenu(null);
   }, []);
 
-  // close the open menu on outside click and on escape
+  /**
+   * Closes the navigation menu when the administrator clicks
+   * outside the menu bar or presses Escape.
+   */
   useEffect(() => {
-    if (openMenu === null) return undefined;
+    if (openMenu === null) {
+      return undefined;
+    }
 
-    const handlePointer = (e) => {
-      if (menuBarRef.current && !menuBarRef.current.contains(e.target)) {
+    const handleOutsideClick = (event) => {
+      if (menuBarRef.current && !menuBarRef.current.contains(event.target)) {
         closeMenu();
       }
     };
-    const handleKey = (e) => {
-      if (e.key === "Escape") closeMenu();
+
+    const handleEscapeKey = (event) => {
+      if (event.key === "Escape") {
+        closeMenu();
+      }
     };
 
-    document.addEventListener("mousedown", handlePointer);
-    document.addEventListener("keydown", handleKey);
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscapeKey);
+
     return () => {
-      document.removeEventListener("mousedown", handlePointer);
-      document.removeEventListener("keydown", handleKey);
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscapeKey);
     };
   }, [openMenu, closeMenu]);
 
-  // mutations for handling api operations with query invalidation
+  /**
+   * Creates a service and refreshes the service list.
+   */
   const addOfferMutation = useMutation({
     mutationFn: (newOffer) => offerService.addOffer(newOffer),
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["offers"] });
+      queryClient.invalidateQueries({
+        queryKey: ["offers"],
+      });
+
       setActiveView("offers");
     },
+
     onError: (error) => {
-      console.error("error adding offer:", error);
+      console.error("Failed to add offer:", error);
     },
   });
 
+  /**
+   * Deletes a service and refreshes the service list.
+   */
   const deleteOfferMutation = useMutation({
-    mutationFn: (idOffer) => offerService.deleteOffer(idOffer),
+    mutationFn: (offerId) => offerService.deleteOffer(offerId),
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["offers"] });
+      queryClient.invalidateQueries({
+        queryKey: ["offers"],
+      });
     },
+
     onError: (error) => {
-      console.error("error deleting offer:", error);
+      console.error("Failed to delete offer:", error);
     },
   });
 
+  /**
+   * Creates a user and refreshes the user list.
+   */
   const addUserMutation = useMutation({
     mutationFn: (newUser) => userService.addUser(newUser),
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+
       setActiveView("users");
     },
+
     onError: (error) => {
-      console.error("error adding user:", error);
+      console.error("Failed to add user:", error);
     },
   });
 
+  /**
+   * Deletes a user and refreshes the user list.
+   */
   const deleteUserMutation = useMutation({
-    mutationFn: (idUser) => userService.deleteUser(idUser),
+    mutationFn: (userId) => userService.deleteUser(userId),
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
     },
+
     onError: (error) => {
-      console.error("error deleting user:", error);
+      console.error("Failed to delete user:", error);
     },
   });
 
+  /**
+   * Deletes a registered reservation and refreshes its list.
+   */
   const deleteOrderMutation = useMutation({
-    mutationFn: (idOrder) => orderService.deleteOrder(idOrder),
+    mutationFn: (orderId) => orderService.deleteOrder(orderId),
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({
+        queryKey: ["orders"],
+      });
     },
+
     onError: (error) => {
-      console.error("error deleting order:", error);
+      console.error("Failed to delete order:", error);
     },
   });
 
+  /**
+   * Deletes a guest reservation and refreshes its list.
+   */
   const deleteGuestOrderMutation = useMutation({
-    mutationFn: (idGuestOrder) =>
-      guestOrderService.deleteGuestOrder(idGuestOrder),
+    mutationFn: (guestOrderId) =>
+      guestOrderService.deleteGuestOrder(guestOrderId),
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["guestOrders"] });
+      queryClient.invalidateQueries({
+        queryKey: ["guestOrders"],
+      });
     },
+
     onError: (error) => {
-      console.error("error deleting guest order:", error);
+      console.error("Failed to delete guest order:", error);
     },
   });
 
   const handleAddOffer = (newOffer) => addOfferMutation.mutateAsync(newOffer);
-  const handleDeleteOffer = (idOffer) =>
-    deleteOfferMutation.mutateAsync(idOffer);
-  const handleAddUser = (newUser) => addUserMutation.mutateAsync(newUser);
-  const handleDeleteUser = (idUser) => deleteUserMutation.mutateAsync(idUser);
-  const handleDeleteOrder = (idOrder) =>
-    deleteOrderMutation.mutateAsync(idOrder);
-  const handleDeleteGuestOrder = (idGuestOrder) =>
-    deleteGuestOrderMutation.mutateAsync(idGuestOrder);
 
-  // data-driven menu -> each dropdown + its actions described declaratively, no duplicated jsx
+  const handleDeleteOffer = (offerId) =>
+    deleteOfferMutation.mutateAsync(offerId);
+
+  const handleAddUser = (newUser) => addUserMutation.mutateAsync(newUser);
+
+  const handleDeleteUser = (userId) => deleteUserMutation.mutateAsync(userId);
+
+  const handleDeleteOrder = (orderId) =>
+    deleteOrderMutation.mutateAsync(orderId);
+
+  const handleDeleteGuestOrder = (guestOrderId) =>
+    deleteGuestOrderMutation.mutateAsync(guestOrderId);
+
+  /**
+   * Defines the available administrative navigation modules.
+   *
+   * Every action points to a view registered in the views map.
+   */
   const menus = [
     {
       icon: faScissors,
       label: t("admin.menu.offers"),
       actions: [
-        { view: "offers", label: t("admin.actions.showOffers") },
-        { view: "addOffer", label: t("admin.actions.addOffer") },
+        {
+          view: "offers",
+          label: t("admin.actions.showOffers"),
+        },
+        {
+          view: "addOffer",
+          label: t("admin.actions.addOffer"),
+        },
       ],
     },
     {
       icon: faUser,
       label: t("admin.menu.users"),
       actions: [
-        { view: "users", label: t("admin.actions.showUsers") },
-        { view: "addUser", label: t("admin.actions.addUser") },
+        {
+          view: "users",
+          label: t("admin.actions.showUsers"),
+        },
+        {
+          view: "addUser",
+          label: t("admin.actions.addUser"),
+        },
       ],
     },
     {
       icon: faCalendarCheck,
       label: t("admin.menu.orders"),
       actions: [
-        { view: "orders", label: t("admin.actions.showUserOrders") },
-        { view: "guestorders", label: t("admin.actions.showGuestOrders") },
+        {
+          view: "orders",
+          label: t("admin.actions.showUserOrders"),
+        },
+        {
+          view: "guestorders",
+          label: t("admin.actions.showGuestOrders"),
+        },
+      ],
+    },
+    {
+      icon: faMoneyBillTransfer,
+      label: t("admin.menu.refunds"),
+      actions: [
+        {
+          view: "refundHistory",
+          label: t("admin.actions.showRefundHistory"),
+        },
       ],
     },
     {
       icon: faImages,
       label: t("admin.menu.gallery"),
       actions: [
-        { view: "gallerysettings", label: t("admin.actions.gallerySettings") },
+        {
+          view: "gallerysettings",
+          label: t("admin.actions.gallerySettings"),
+        },
       ],
     },
     {
       icon: faClipboardList,
       label: t("admin.menu.audit"),
-      actions: [{ view: "auditlogs", label: t("admin.actions.showAudit") }],
+      actions: [
+        {
+          view: "auditlogs",
+          label: t("admin.actions.showAudit"),
+        },
+      ],
     },
   ];
 
-  // maps each view key to the content rendered in the panel body
+  /**
+   * Maps navigation identifiers to administrative components.
+   */
   const views = {
     addOffer: <AddOffer onAddOffer={handleAddOffer} />,
+
     addUser: <AddUser onSubmit={handleAddUser} />,
+
     offers: <OffersTable onDeleteOffer={handleDeleteOffer} />,
+
     users: <UsersTable onDeleteUser={handleDeleteUser} />,
+
     orders: <OrdersTable onDeleteOrder={handleDeleteOrder} />,
+
     guestorders: (
       <GuestOrdersTable onDeleteGuestOrder={handleDeleteGuestOrder} />
     ),
+
+    refundHistory: <AdminRefundHistory />,
+
     gallerysettings: <GallerySettings />,
+
     auditlogs: <AuditLogsTable />,
   };
 
@@ -194,17 +320,22 @@ const AdminPanel = () => {
     <div className="admin-panel-wrapper py-4 px-2">
       <div className="text-center mb-4">
         <h2 className="fw-bold">{t("admin.panelTitle")}</h2>
+
         <p className="text-muted mb-0">{t("admin.panelDesc")}</p>
       </div>
 
+      {/* Administrative navigation */}
       <div
         className="d-flex flex-wrap justify-content-center gap-3 mb-4"
         ref={menuBarRef}
       >
-        {menus.map((menu, i) => {
-          // highlight the menu that owns the currently active view
-          const isActive = menu.actions.some((a) => a.view === activeView);
-          const isOpen = openMenu === i;
+        {menus.map((menu, menuIndex) => {
+          const isActive = menu.actions.some(
+            (action) => action.view === activeView,
+          );
+
+          const isOpen = openMenu === menuIndex;
+
           return (
             <div
               className={`dropdown${isOpen ? " show" : ""}`}
@@ -217,11 +348,17 @@ const AdminPanel = () => {
                 className={`admin-menu-button dropdown-toggle${
                   isActive ? " active" : ""
                 }`}
-                onClick={() => setOpenMenu(isOpen ? null : i)}
+                onClick={() => setOpenMenu(isOpen ? null : menuIndex)}
               >
-                <FontAwesomeIcon icon={menu.icon} className="me-2" />
+                <FontAwesomeIcon
+                  icon={menu.icon}
+                  className="me-2"
+                  aria-hidden="true"
+                />
+
                 {menu.label}
               </button>
+
               <div className={`dropdown-menu${isOpen ? " show" : ""}`}>
                 {menu.actions.map((action) => (
                   <button
@@ -241,6 +378,7 @@ const AdminPanel = () => {
         })}
       </div>
 
+      {/* Selected administrative module */}
       <div
         className="admin-panel-content mx-auto"
         style={{ maxWidth: "1400px" }}
