@@ -1,7 +1,9 @@
+
 package pl.barbershopproject.barbershop.admin.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import pl.barbershopproject.barbershop.guestorder.GuestOrder;
-import pl.barbershopproject.barbershop.order.AdminCancellationResult;
+import pl.barbershopproject.barbershop.order.AdminCancellationResult.ReservationType;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.payment.Payment;
 import pl.barbershopproject.barbershop.payment.refund.PaymentRefund;
@@ -13,15 +15,42 @@ import java.time.Instant;
 /**
  * Represents a single refund entry in the administrator's refund history.
  */
+@Schema(
+        name = "AdminRefundHistoryItem",
+        description = "A refund history record with its associated "
+                + "reservation, payment, amount, and processing status")
 public record AdminRefundHistoryItemDTO(
+
+        @Schema(description = "Local refund identifier", example = "9")
         Long refundId,
+
+        @Schema(description = "Associated payment identifier", example = "47")
         Long paymentId,
+
+        @Schema(description = "Identifier of the registered or guest reservation", example = "18")
         Long reservationId,
-        AdminCancellationResult.ReservationType reservationType,
+
+        @Schema(description = "Reservation type. Registered and guest "
+                        + "reservations use separate ID sequences",
+                example = "REGISTERED")
+        ReservationType reservationType,
+
+        @Schema(description = "Refund amount in major currency units", example = "65.00")
         BigDecimal amount,
+
+        @Schema(description = "ISO 4217 currency code", example = "PLN")
         String currency,
+
+        @Schema(description = "Current refund lifecycle status", example = "SUCCEEDED")
         RefundStatus status,
+
+        @Schema(description = "Timestamp when the refund was requested", example = "2026-11-05T14:30:00Z")
         Instant requestedAt,
+
+        @Schema(description = "Timestamp when a terminal refund outcome "
+                        + "was recorded. May be null",
+                example = "2026-11-05T14:31:00Z",
+                nullable = true)
         Instant completedAt
 ) {
 
@@ -41,9 +70,9 @@ public record AdminRefundHistoryItemDTO(
             throw new IllegalStateException("Refund payment must belong to exactly one reservation");
         }
 
-        AdminCancellationResult.ReservationType reservationType = registeredOrder != null
-                ? AdminCancellationResult.ReservationType.REGISTERED
-                : AdminCancellationResult.ReservationType.GUEST;
+        ReservationType reservationType = registeredOrder != null
+                ? ReservationType.REGISTERED
+                : ReservationType.GUEST;
 
         Long reservationId = registeredOrder != null
                 ? registeredOrder.getIdOrder()
