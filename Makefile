@@ -5,18 +5,19 @@ endif
 
 STRIPE_FORWARD_URL ?= http://localhost:8080/stripe/webhook
 
-.PHONY: help up up-nc down stop restart ps db-up backend-up frontend-up logs logs-live logs-backend logs-frontend logs-db logs-valkey \
+.PHONY: help up up-nc up-v up-v-nc down stop restart ps db-up backend-up frontend-up logs logs-live logs-backend logs-frontend logs-db logs-valkey \
         backend-run backend-test backend-build frontend-install frontend-dev frontend-build \
         act-frontend act-backend act-db act-security db-shell valkey-shell \
         stripe-listen stripe-trigger clean clean-all
-
 help:
 	@echo "Available commands:"
 	@echo ""
 	@echo "Docker:"
-	@echo "  make up                - Build and start all containers"
-	@echo "  make up-nc             - Build without Docker cache and start containers"
-	@echo "  make down              - Stop containers and remove volumes"
+	@echo "  make up                - Build and start all containers (keep volumes)"
+	@echo "  make up-nc             - Build without Docker cache and start containers (keep volumes)"
+	@echo "  make up-v              - Remove volumes, build and start all containers"
+	@echo "  make up-v-nc           - Remove volumes, build without cache and start containers"
+	@echo "  make down              - Stop containers and keep volumes"
 	@echo "  make stop              - Stop containers without removing volumes"
 	@echo "  make restart           - Restart Docker stack"
 	@echo "  make ps                - Show running containers"
@@ -57,17 +58,26 @@ help:
 	@echo "Shells:"
 	@echo "  make db-shell          - Open MySQL shell inside database container"
 	@echo "  make valkey-shell      - Open Valkey CLI inside Valkey container"
-
 up:
-	docker compose down -v && docker compose up --build
+	docker compose down
+	docker compose up --build
 
 up-nc:
+	docker compose down
+	docker compose build --no-cache
+	docker compose up
+
+up-v:
+	docker compose down -v
+	docker compose up --build
+
+up-v-nc:
 	docker compose down -v
 	docker compose build --no-cache
 	docker compose up
 
 down:
-	docker compose down -v
+	docker compose down
 
 stop:
 	docker compose down
@@ -90,7 +100,6 @@ frontend-up:
 
 logs:
 	docker compose logs -f
-
 logs-live:
 	docker compose logs -f --tail=0
 
@@ -114,7 +123,6 @@ backend-test:
 
 backend-build:
 	cd backend && ./gradlew clean build
-
 frontend-install:
 	cd frontend && pnpm install
 
@@ -135,7 +143,6 @@ act-db:
 
 act-security:
 	act push -W .github/workflows/security-audit.yaml -j audit-frontend
-
 # Listen for Stripe webhooks and forward them to the backend.
 # The --all-snapshot flag is required in newer Stripe CLI versions (v1.55+) to explicitly allow forwarding of all test events.
 stripe-listen:
@@ -147,7 +154,6 @@ stripe-trigger:
 
 db-shell:
 	docker exec -it barbershop-db mysql -u root -p
-
 valkey-shell:
 	docker exec -it barbershop-valkey valkey-cli
 
