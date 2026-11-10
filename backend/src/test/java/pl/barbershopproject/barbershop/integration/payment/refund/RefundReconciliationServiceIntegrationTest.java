@@ -1,3 +1,4 @@
+
 package pl.barbershopproject.barbershop.integration.payment.refund;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -22,6 +23,7 @@ import pl.barbershopproject.barbershop.user.UserRepository;
 import pl.barbershopproject.barbershop.utils.OrderStatus;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -33,10 +35,15 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
 
     private static final String PAYMENT_INTENT_ID = "pi_reconciliation_test";
     private static final String STRIPE_REFUND_ID = "re_reconciliation_test";
+    private static final String REFUNDS_PATH = "/v1/refunds";
+    private static final String SUCCEEDED_STATUS = "succeeded";
+    private static final Clock CLOCK = Clock.systemUTC();
 
     private static final WireMockServer stripeServer = new WireMockServer(options().dynamicPort());
 
-    static {stripeServer.start();}
+    static {
+        stripeServer.start();
+    }
 
     @DynamicPropertySource
     static void configureStripeProperties(DynamicPropertyRegistry registry) {
@@ -70,16 +77,20 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
     private UserRepository userRepository;
 
     @BeforeEach
-    void resetStripeStubs() {stripeServer.resetAll();}
+    void resetStripeStubs() {
+        stripeServer.resetAll();
+    }
 
     @AfterAll
-    static void stopStripeServer() {stripeServer.stop();}
+    static void stopStripeServer() {
+        stripeServer.stop();
+    }
 
     @Test
     void shouldRecoverSuccessfulRefundWhenStripeRefundIdIsMissing() {
         RefundTestCase refundTestCase = createReservedRefund();
 
-        stubRefundList(refundTestCase.refundId(), "succeeded");
+        stubRefundList(refundTestCase.refundId(), SUCCEEDED_STATUS);
 
         RefundResult result = refundReconciliationService
                 .reconcileRefund(refundTestCase.refundId());
@@ -117,10 +128,9 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
                         .willReturn(okJson(
                                 createStripeRefundJson(
                                         refundTestCase.refundId(),
-                                        "succeeded"))));
+                                        SUCCEEDED_STATUS))));
 
-        RefundResult result = refundReconciliationService
-                .reconcileRefund(refundTestCase.refundId());
+        RefundResult result = refundReconciliationService.reconcileRefund(refundTestCase.refundId());
 
         assertEquals(RefundStatus.SUCCEEDED, result.refundStatus());
 
@@ -135,7 +145,7 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
         RefundTestCase refundTestCase = createReservedRefund();
 
         stripeServer.stubFor(
-                get(urlPathEqualTo("/v1/refunds"))
+                get(urlPathEqualTo(REFUNDS_PATH))
                         .willReturn(okJson("""
                                 {
                                   "data": [],
@@ -164,7 +174,7 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
         RefundTestCase refundTestCase = createReservedRefund();
 
         stripeServer.stubFor(
-                get(urlPathEqualTo("/v1/refunds"))
+                get(urlPathEqualTo(REFUNDS_PATH))
                         .withQueryParam("starting_after", absent())
                         .willReturn(okJson("""
                                 {
@@ -183,7 +193,7 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
                                 """)));
 
         stripeServer.stubFor(
-                get(urlPathEqualTo("/v1/refunds"))
+                get(urlPathEqualTo(REFUNDS_PATH))
                         .withQueryParam(
                                 "starting_after",
                                 equalTo("re_unrelated")
@@ -196,14 +206,14 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
                                 """.formatted(
                                 createStripeRefundJson(
                                         refundTestCase.refundId(),
-                                        "succeeded")))));
+                                        SUCCEEDED_STATUS)))));
 
         RefundResult result = refundReconciliationService
                 .reconcileRefund(refundTestCase.refundId());
 
         assertEquals(RefundStatus.SUCCEEDED, result.refundStatus());
 
-        stripeServer.verify(2, getRequestedFor(urlPathEqualTo("/v1/refunds")));
+        stripeServer.verify(2, getRequestedFor(urlPathEqualTo(REFUNDS_PATH)));
 
         verifyNoRefundCreation();
     }
@@ -213,7 +223,7 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
         RefundTestCase refundTestCase = createReservedRefund();
 
         stripeServer.stubFor(
-                get(urlPathEqualTo("/v1/refunds"))
+                get(urlPathEqualTo(REFUNDS_PATH))
                         .willReturn(
                                 aResponse()
                                         .withStatus(500)
@@ -222,9 +232,9 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
                                                 "application/json"
                                         ).withBody("{}")));
 
-        assertThrows(IllegalStateException.class,
-                () -> refundReconciliationService.reconcileRefund(
-                        refundTestCase.refundId()));
+        Long refundId = refundTestCase.refundId();
+
+        assertThrows(IllegalStateException.class, () -> refundReconciliationService.reconcileRefund(refundId));
 
         PaymentRefund storedRefund = paymentRefundRepository
                 .findById(refundTestCase.refundId())
@@ -243,7 +253,7 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
                 refundTestCase.refundId(),
                 createStripeRefundResponse(
                         refundTestCase.refundId(),
-                        "succeeded"));
+                        SUCCEEDED_STATUS));
 
         RefundResult result = refundReconciliationService
                 .reconcileRefund(refundTestCase.refundId());
@@ -261,14 +271,16 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
                 .findFirst()
                 .orElseThrow();
 
+        LocalDateTime now = LocalDateTime.now(CLOCK);
+
         Order order = Order.builder()
                 .user(userRepository
                         .findByEmail("johndoe@example.com")
                         .orElseThrow())
                 .offer(selectedOffer)
                 .bookedOffer(BookedOffer.from(selectedOffer))
-                .orderDate(LocalDateTime.now())
-                .visitDate(LocalDateTime.now().plusDays(30))
+                .orderDate(now)
+                .visitDate(now.plusDays(30))
                 .orderStatus(OrderStatus.NOWE)
                 .build();
 
@@ -278,8 +290,8 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
                 .stripePaymentIntentId(PAYMENT_INTENT_ID)
                 .amount(new BigDecimal("80.00"))
                 .currency("PLN")
-                .createdAt(LocalDateTime.now())
-                .paidAt(LocalDateTime.now())
+                .createdAt(now)
+                .paidAt(now)
                 .build();
 
         payment.setOrder(order);
@@ -298,7 +310,7 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
 
     private void stubRefundList(Long refundId, String refundStatus) {
         stripeServer.stubFor(
-                get(urlPathEqualTo("/v1/refunds"))
+                get(urlPathEqualTo(REFUNDS_PATH))
                         .withQueryParam(
                                 "payment_intent",
                                 equalTo(PAYMENT_INTENT_ID)
@@ -352,8 +364,9 @@ class RefundReconciliationServiceIntegrationTest extends BaseIntegrationTest {
     }
 
     private void verifyNoRefundCreation() {
-        stripeServer.verify(0, postRequestedFor(urlEqualTo("/v1/refunds")));
+        stripeServer.verify(0, postRequestedFor(urlEqualTo(REFUNDS_PATH)));
     }
 
-    private record RefundTestCase(Long paymentId, Long refundId) { }
+    private record RefundTestCase(Long paymentId, Long refundId) {
+    }
 }

@@ -1,4 +1,3 @@
-
 package pl.barbershopproject.barbershop.payment.refund;
 
 import lombok.RequiredArgsConstructor;
@@ -30,13 +29,13 @@ public class RefundTransactionService {
     public RefundReservation reserveFullRefund(Long paymentId) {
         Payment payment = paymentRepository
                 .findForUpdateByIdPayment(paymentId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Payment not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
 
-        validateRefundEligibility(payment);
+        long amountInMinorUnits = validateRefundEligibility(payment);
 
         if (paymentRefundRepository.existsByPayment_IdPayment(paymentId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
                     "A refund request already exists for this payment");
         }
 
@@ -50,10 +49,6 @@ public class RefundTransactionService {
                 .build();
 
         PaymentRefund savedRefund = paymentRefundRepository.saveAndFlush(refund);
-
-        long amountInMinorUnits = payment.getAmount()
-                .movePointRight(2)
-                .longValueExact();
 
         return new RefundReservation(
                 savedRefund.getIdPaymentRefund(),
@@ -78,12 +73,12 @@ public class RefundTransactionService {
         paymentRefund.setFailureReason("Stripe refund outcome requires reconciliation");
     }
 
-
     @Transactional(readOnly = true)
     public RefundLookupTarget loadRefundForReconciliation(Long refundId) {
         PaymentRefund paymentRefund = paymentRefundRepository
                 .findById(refundId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Refund not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Refund not found"));
 
         return new RefundLookupTarget(
                 paymentRefund.getIdPaymentRefund(),
@@ -128,17 +123,18 @@ public class RefundTransactionService {
     ) {
     }
 
-
-    private void validateRefundEligibility(Payment payment) {
+    private long validateRefundEligibility(Payment payment) {
         if (payment.getPaymentMethod() != PaymentMethod.KARTA_ONLINE
                 || payment.getPaymentStatus() != PaymentStatus.OPLACONA) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
                     "Only completed online payments can be refunded");
         }
 
         if (payment.getStripePaymentIntentId() == null
                 || payment.getStripePaymentIntentId().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
                     "Stripe PaymentIntent is missing");
         }
 
@@ -146,13 +142,16 @@ public class RefundTransactionService {
         if (!"PLN".equalsIgnoreCase(payment.getCurrency())
                 || payment.getAmount() == null
                 || payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
                     "Invalid payment amount or currency");
         }
 
         try {
-            payment.getAmount().movePointRight(2).longValueExact();
-        } catch (ArithmeticException exception) {
+            return payment.getAmount()
+                    .movePointRight(2)
+                    .longValueExact();
+        } catch (ArithmeticException _) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Payment amount cannot be represented in grosze");
@@ -171,6 +170,7 @@ public class RefundTransactionService {
             String paymentIntentId,
             long amountInMinorUnits,
             String currency,
-            String idempotencyKey) {
+            String idempotencyKey
+    ) {
     }
 }

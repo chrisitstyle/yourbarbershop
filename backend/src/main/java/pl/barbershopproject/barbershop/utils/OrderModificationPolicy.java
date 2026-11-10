@@ -28,6 +28,8 @@ public class OrderModificationPolicy {
 
     private static final String ADMIN_CANCELLATION_ENDPOINT_REQUIRED_MESSAGE = "Anulowanie rezerwacji jest dostępne wyłącznie przez dedykowany endpoint administratora";
 
+    private static final String PAYMENT_NULL_MESSAGE = "Płatność zamówienia nie może być null";
+
     /**
      * Validates whether an existing reservation can be updated.
      * <p>
@@ -47,9 +49,7 @@ public class OrderModificationPolicy {
                 targetStatus,
                 "Docelowy status zamówienia nie może być null");
 
-        Objects.requireNonNull(
-                payment,
-                "Płatność zamówienia nie może być null");
+        Objects.requireNonNull(payment, PAYMENT_NULL_MESSAGE);
 
         validateModificationAllowed(currentStatus);
 
@@ -76,9 +76,7 @@ public class OrderModificationPolicy {
      */
     public void validateOfferChange(Payment payment) {
         Objects.requireNonNull(
-                payment,
-                "Płatność zamówienia nie może być null"
-        );
+                payment, PAYMENT_NULL_MESSAGE);
 
         PaymentStatus paymentStatus = payment.getPaymentStatus();
 
@@ -125,8 +123,7 @@ public class OrderModificationPolicy {
     }
 
     public void validateDeletion(Payment payment) {
-        Objects.requireNonNull(payment,
-                "Płatność zamówienia nie może być null");
+        Objects.requireNonNull(payment, PAYMENT_NULL_MESSAGE);
 
         boolean isOnSitePayment = payment.getPaymentMethod() == PaymentMethod.GOTOWKA
                 || payment.getPaymentMethod() == PaymentMethod.KARTA_NA_MIEJSCU;
@@ -146,7 +143,7 @@ public class OrderModificationPolicy {
             OrderStatus currentOrderStatus,
             Payment payment
     ) {
-        Objects.requireNonNull(payment, "Płatność zamówienia nie może być null");
+        Objects.requireNonNull(payment, PAYMENT_NULL_MESSAGE);
 
         if (currentOrderStatus != OrderStatus.NOWE) {
             throw new OrderStatusChangeNotAllowedException("Można anulować tylko aktywną rezerwację");

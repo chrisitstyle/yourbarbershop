@@ -57,7 +57,7 @@ public class ValidationExceptionHandler {
                 .getParameterAnnotation(RequestHeader.class);
 
         if (requestHeader != null) {
-            String headerName = !requestHeader.name().isBlank()
+            String headerName = requestHeader.name().isBlank()
                     ? requestHeader.name()
                     : requestHeader.value();
 
