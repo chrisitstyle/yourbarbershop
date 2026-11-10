@@ -36,11 +36,13 @@ class StripeRefundServiceIntegrationTest extends BaseIntegrationTest {
     private static final BigDecimal PAYMENT_AMOUNT = new BigDecimal("80.00");
 
     private static final WireMockServer stripeTestServer = new WireMockServer(
-                    com.github.tomakehurst.wiremock.core.WireMockConfiguration
-                            .options()
-                            .dynamicPort());
+            com.github.tomakehurst.wiremock.core.WireMockConfiguration
+                    .options()
+                    .dynamicPort());
 
-    static {stripeTestServer.start();}
+    static {
+        stripeTestServer.start();
+    }
 
     @DynamicPropertySource
     static void configureStripeProperties(DynamicPropertyRegistry registry) {
@@ -67,10 +69,14 @@ class StripeRefundServiceIntegrationTest extends BaseIntegrationTest {
     private UserRepository userRepository;
 
     @BeforeEach
-    void resetStripeStubs() {stripeTestServer.resetAll();}
+    void resetStripeStubs() {
+        stripeTestServer.resetAll();
+    }
 
     @AfterAll
-    static void stopStripeServer() {stripeTestServer.stop();}
+    static void stopStripeServer() {
+        stripeTestServer.stop();
+    }
 
     @Test
     void shouldRefundFullPaymentAndPreventDuplicateRefund() {
@@ -98,9 +104,12 @@ class StripeRefundServiceIntegrationTest extends BaseIntegrationTest {
 
         verifyRefundRequestCount(1);
 
+
+        long paymentId = payment.getIdPayment();
+
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> stripeRefundService.requestFullRefund(payment.getIdPayment()));
+                () -> stripeRefundService.requestFullRefund(paymentId));
 
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
 
@@ -141,10 +150,12 @@ class StripeRefundServiceIntegrationTest extends BaseIntegrationTest {
                                         .withHeader("Content-Type", "application/json")
                                         .withBody("{}")));
 
+        long paymentId = payment.getIdPayment();
+
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
                 () -> stripeRefundService.requestFullRefund(
-                        payment.getIdPayment()));
+                        paymentId));
 
         assertEquals(HttpStatus.BAD_GATEWAY, exception.getStatusCode());
 
@@ -158,7 +169,7 @@ class StripeRefundServiceIntegrationTest extends BaseIntegrationTest {
         ResponseStatusException repeatedRequest = assertThrows(
                 ResponseStatusException.class,
                 () -> stripeRefundService.requestFullRefund(
-                        payment.getIdPayment()));
+                        paymentId));
 
         assertEquals(HttpStatus.CONFLICT, repeatedRequest.getStatusCode());
 
@@ -180,9 +191,11 @@ class StripeRefundServiceIntegrationTest extends BaseIntegrationTest {
                                 }
                                 """)));
 
+        long paymentId = payment.getIdPayment();
+
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> stripeRefundService.requestFullRefund(payment.getIdPayment()));
+                () -> stripeRefundService.requestFullRefund(paymentId));
 
         assertEquals(HttpStatus.BAD_GATEWAY, exception.getStatusCode());
 

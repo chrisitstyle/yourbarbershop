@@ -57,8 +57,8 @@ class OfferServiceTest {
 
         verify(offerRepository, times(1)).save(argThat(saved ->
                 saved.getKind().equals(offerCreationDTO.kind())
-                        && saved.getCost().equals(offerCreationDTO.cost())
-        ));
+                        && saved.getCost().compareTo(offerCreationDTO.cost()) == 0));
+
         verify(eventPublisher, times(1)).publishEvent(any(AuditEvent.class));
     }
 

@@ -78,9 +78,7 @@ public class RefundReconciliationService {
         String paymentIntentId = refundTarget.paymentIntentId();
 
         if (paymentIntentId == null || paymentIntentId.isBlank()) {
-            throw new IllegalStateException(
-                    "PaymentIntent is missing for refund: "
-                            + refundTarget.refundId());
+            throw new IllegalStateException("PaymentIntent is missing for refund: " + refundTarget.refundId());
         }
 
         String startingAfterRefundId = null;
@@ -96,35 +94,55 @@ public class RefundReconciliationService {
 
             List<StripeRefundClient.StripeRefundResponse> refunds = refundPage.data();
 
-            for (StripeRefundClient.StripeRefundResponse stripeRefund : refunds) {
-                if (belongsToRefund(stripeRefund, refundTarget.refundId())) {
-                    if (matchingRefund != null) {
-                        throw new IllegalStateException(
-                                "Multiple Stripe refunds match local refund: "
-                                        + refundTarget.refundId());
-                    }
-
-                    matchingRefund = stripeRefund;
-                }
-            }
+            matchingRefund = findMatchingRefund(
+                    refunds,
+                    refundTarget.refundId(),
+                    matchingRefund);
 
             if (!refundPage.hasMore()) {
                 return matchingRefund;
             }
 
-            if (refunds.isEmpty()) {
-                throw new IllegalStateException("Stripe refund pagination returned an empty page");
-            }
-
-            startingAfterRefundId = refunds.getLast().id();
-
-            if (startingAfterRefundId == null
-                    || startingAfterRefundId.isBlank()) {
-                throw new IllegalStateException("Stripe refund pagination cursor is missing");
-            }
+            startingAfterRefundId = getNextRefundCursor(refunds);
         }
 
         throw new IllegalStateException("Stripe refund search exceeded the page limit");
+    }
+
+    private StripeRefundClient.StripeRefundResponse findMatchingRefund(
+            List<StripeRefundClient.StripeRefundResponse> refunds,
+            Long refundId,
+            StripeRefundClient.StripeRefundResponse matchingRefund
+    ) {
+        for (StripeRefundClient.StripeRefundResponse stripeRefund : refunds) {
+            if (!belongsToRefund(stripeRefund, refundId)) {
+                continue;
+            }
+
+            if (matchingRefund != null) {
+                throw new IllegalStateException("Multiple Stripe refunds match local refund: " + refundId);
+            }
+
+            matchingRefund = stripeRefund;
+        }
+
+        return matchingRefund;
+    }
+
+    private String getNextRefundCursor(
+            List<StripeRefundClient.StripeRefundResponse> refunds
+    ) {
+        if (refunds.isEmpty()) {
+            throw new IllegalStateException("Stripe refund pagination returned an empty page");
+        }
+
+        String cursor = refunds.getLast().id();
+
+        if (cursor == null || cursor.isBlank()) {
+            throw new IllegalStateException("Stripe refund pagination cursor is missing");
+        }
+
+        return cursor;
     }
 
     private boolean belongsToRefund(

@@ -13,7 +13,10 @@ import pl.barbershopproject.barbershop.offer.Offer;
 import pl.barbershopproject.barbershop.offer.OfferRepository;
 import pl.barbershopproject.barbershop.order.Order;
 import pl.barbershopproject.barbershop.order.OrderRepository;
-import pl.barbershopproject.barbershop.payment.*;
+import pl.barbershopproject.barbershop.payment.Payment;
+import pl.barbershopproject.barbershop.payment.PaymentMethod;
+import pl.barbershopproject.barbershop.payment.PaymentRepository;
+import pl.barbershopproject.barbershop.payment.PaymentStatus;
 import pl.barbershopproject.barbershop.payment.refund.*;
 import pl.barbershopproject.barbershop.payment.stripe.webhook.StripeWebhookController;
 import pl.barbershopproject.barbershop.user.UserRepository;
@@ -40,7 +43,9 @@ class StripeRefundWebhookIntegrationTest extends BaseIntegrationTest {
     private static final WireMockServer stripeServer =
             new WireMockServer(options().dynamicPort());
 
-    static {stripeServer.start();}
+    static {
+        stripeServer.start();
+    }
 
     @DynamicPropertySource
     static void configureStripe(DynamicPropertyRegistry registry) {
@@ -74,10 +79,14 @@ class StripeRefundWebhookIntegrationTest extends BaseIntegrationTest {
     private RefundReconciliationService refundReconciliationService;
 
     @BeforeEach
-    void resetStripeServer() {stripeServer.resetAll();}
+    void resetStripeServer() {
+        stripeServer.resetAll();
+    }
 
     @AfterAll
-    static void stopStripeServer() {stripeServer.stop();}
+    static void stopStripeServer() {
+        stripeServer.stop();
+    }
 
     @Test
     void shouldSynchronizeSuccessfulRefundFromWebhook() throws Exception {
@@ -132,8 +141,7 @@ class StripeRefundWebhookIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldKeepPaymentUnchangedWhenStripeRefundAmountDoesNotMatch()
-            throws Exception {
+    void shouldKeepPaymentUnchangedWhenStripeRefundAmountDoesNotMatch() {
 
         Payment payment = createPaidOnlinePayment();
 

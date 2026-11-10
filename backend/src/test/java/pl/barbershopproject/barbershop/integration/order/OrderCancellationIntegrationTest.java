@@ -147,8 +147,10 @@ class OrderCancellationIntegrationTest extends BaseIntegrationTest {
     void shouldRejectCancellationWhenOnlinePaymentIsPending() {
         Order order = createRegisteredOrder(PaymentMethod.KARTA_ONLINE, PaymentStatus.OCZEKUJE_NA_PLATNOSC);
 
+        long orderId = order.getIdOrder();
+
         assertThrows(OrderStatusChangeNotAllowedException.class,
-                () -> orderCancellationService.cancelRegisteredOrder(order.getIdOrder()));
+                () -> orderCancellationService.cancelRegisteredOrder(orderId));
 
         Order unchangedOrder = orderRepository
                 .findById(order.getIdOrder())
@@ -168,8 +170,9 @@ class OrderCancellationIntegrationTest extends BaseIntegrationTest {
 
         orderCancellationService.cancelRegisteredOrder(order.getIdOrder());
 
+        long orderId = order.getIdOrder();
         assertThrows(OrderStatusChangeNotAllowedException.class,
-                () -> orderCancellationService.cancelRegisteredOrder(order.getIdOrder()));
+                () -> orderCancellationService.cancelRegisteredOrder(orderId));
 
         List<PaymentRefund> refunds = getRefundsForPayment(order.getPayment().getIdPayment());
 
@@ -188,12 +191,14 @@ class OrderCancellationIntegrationTest extends BaseIntegrationTest {
                         HttpStatus.BAD_GATEWAY,
                         "Stripe is unavailable"));
 
+        long orderId = order.getIdOrder();
+
         assertThrows(ResponseStatusException.class,
                 () -> orderCancellationService.cancelRegisteredOrder(
-                        order.getIdOrder()));
+                        orderId));
 
         Order cancelledOrder = orderRepository
-                .findById(order.getIdOrder())
+                .findById(orderId)
                 .orElseThrow();
 
         List<PaymentRefund> refunds = getRefundsForPayment(order.getPayment().getIdPayment());

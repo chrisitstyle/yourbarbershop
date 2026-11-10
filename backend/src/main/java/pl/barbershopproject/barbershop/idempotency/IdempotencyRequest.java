@@ -1,13 +1,6 @@
 package pl.barbershopproject.barbershop.idempotency;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,6 +28,8 @@ import java.util.Objects;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 class IdempotencyRequest {
+
+    private static final String CLOCK_NULL_MESSAGE = "Clock nie może być null";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -103,33 +98,22 @@ class IdempotencyRequest {
             Long ownerUserId,
             Clock clock
     ) {
-        Objects.requireNonNull(
-                operation,
-                "Operacja idempotentna nie może być null"
-        );
+        Objects.requireNonNull(operation, "Operacja idempotentna nie może być null");
 
-        Objects.requireNonNull(clock, "Clock nie może być null");
+        Objects.requireNonNull(clock, CLOCK_NULL_MESSAGE);
 
         String requiredKey = requireText(
                 idempotencyKey,
-                "Idempotency-Key nie może być pusty"
-        );
+                "Idempotency-Key nie może być pusty");
 
         if (requiredKey.length() > 255) {
-            throw new IllegalArgumentException(
-                    "Idempotency-Key nie może przekraczać 255 znaków"
-            );
+            throw new IllegalArgumentException("Idempotency-Key nie może przekraczać 255 znaków");
         }
 
-        String requiredHash = requireText(
-                requestHash,
-                "Hash żądania nie może być pusty"
-        );
+        String requiredHash = requireText(requestHash, "Hash żądania nie może być pusty");
 
         if (requiredHash.length() != 64) {
-            throw new IllegalArgumentException(
-                    "Hash żądania musi mieć 64 znaki"
-            );
+            throw new IllegalArgumentException("Hash żądania musi mieć 64 znaki");
         }
 
         LocalDateTime now = LocalDateTime.now(clock);
@@ -155,7 +139,7 @@ class IdempotencyRequest {
             PaymentCheckoutRequest checkoutRequest,
             Clock clock
     ) {
-        Objects.requireNonNull(clock, "Clock nie może być null");
+        Objects.requireNonNull(clock, CLOCK_NULL_MESSAGE);
 
         if (status != IdempotencyStatus.PROCESSING) {
             throw new IllegalStateException(
@@ -163,15 +147,9 @@ class IdempotencyRequest {
             );
         }
 
-        Objects.requireNonNull(
-                resourceId,
-                "ID utworzonego zasobu nie może być null"
-        );
+        Objects.requireNonNull(resourceId, "ID utworzonego zasobu nie może być null");
 
-        Objects.requireNonNull(
-                checkoutRequest,
-                "PaymentCheckoutRequest nie może być null"
-        );
+        Objects.requireNonNull(checkoutRequest, "PaymentCheckoutRequest nie może być null");
 
         this.resourceId = resourceId;
         this.paymentId = checkoutRequest.paymentId();
@@ -191,22 +169,18 @@ class IdempotencyRequest {
      * require Stripe Checkout.</p>
      */
     void markCompleted(String checkoutUrl, Clock clock) {
-        Objects.requireNonNull(clock, "Clock nie może być null");
+        Objects.requireNonNull(clock, CLOCK_NULL_MESSAGE);
 
         if (status == IdempotencyStatus.COMPLETED) {
             if (Objects.equals(this.checkoutUrl, checkoutUrl)) {
                 return;
             }
 
-            throw new IllegalStateException(
-                    "Żądanie idempotentne zostało już zakończone z innym wynikiem"
-            );
+            throw new IllegalStateException("Żądanie idempotentne zostało już zakończone z innym wynikiem");
         }
 
         if (status != IdempotencyStatus.RESOURCE_CREATED) {
-            throw new IllegalStateException(
-                    "Nie można zakończyć żądania przed utworzeniem zasobu"
-            );
+            throw new IllegalStateException("Nie można zakończyć żądania przed utworzeniem zasobu");
         }
 
         LocalDateTime now = LocalDateTime.now(clock);
@@ -228,9 +202,7 @@ class IdempotencyRequest {
             String stripeCheckoutIdempotencyKey
     ) {
         if (status == IdempotencyStatus.PROCESSING) {
-            throw new IllegalStateException(
-                    "Dane płatności nie zostały jeszcze zapisane"
-            );
+            throw new IllegalStateException("Dane płatności nie zostały jeszcze zapisane");
         }
 
         return new PaymentCheckoutRequest(
@@ -240,8 +212,7 @@ class IdempotencyRequest {
                 stripeCheckoutIdempotencyKey,
                 amount,
                 currency,
-                productName
-        );
+                productName);
     }
 
     /**

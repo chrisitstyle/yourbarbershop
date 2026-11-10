@@ -11,6 +11,7 @@ import pl.barbershopproject.barbershop.audit.enums.ActionType;
 import pl.barbershopproject.barbershop.audit.enums.EntityType;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 /**
  * entity representing an audit log entry in MySQL
@@ -55,7 +56,7 @@ public class AuditLog {
     @PrePersist
     protected void onCreate() {
         if (timestamp == null) {
-            timestamp = OffsetDateTime.now();
+            timestamp = OffsetDateTime.now(ZoneOffset.UTC);
         }
     }
 }

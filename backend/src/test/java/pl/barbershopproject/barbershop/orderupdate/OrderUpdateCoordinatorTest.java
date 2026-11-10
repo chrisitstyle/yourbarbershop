@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.NoSuchElementException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -64,7 +64,7 @@ class OrderUpdateCoordinatorTest {
 
         LocalDateTime currentVisitDate = LocalDateTime.of(
                 2026,
-                11,
+                Month.NOVEMBER,
                 10,
                 10,
                 0);
@@ -208,19 +208,14 @@ class OrderUpdateCoordinatorTest {
                         requestedStatus,
                         payment);
 
+        LocalDateTime targetVisitDate = LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0);
         OrderStatusChangeNotAllowedException exception = assertThrows(
                 OrderStatusChangeNotAllowedException.class,
                 () -> orderUpdateCoordinator.prepareUpdate(
                         order,
                         payment,
                         2L,
-                        LocalDateTime.of(
-                                2026,
-                                11,
-                                10,
-                                12,
-                                0
-                        ),
+                        targetVisitDate,
                         requestedStatus));
 
         assertEquals("Nie można zrealizować zamówienia przed rozliczeniem płatności",
@@ -254,10 +249,9 @@ class OrderUpdateCoordinatorTest {
 
         when(offerQuery.getRequiredOffer(targetOfferId))
                 .thenThrow(
-                        new NoSuchElementException(
-                                "Oferta o ID: 2 nie istnieje"
-                        )
-                );
+                        new NoSuchElementException("Oferta o ID: 2 nie istnieje"));
+
+        LocalDateTime targetVisitDate = LocalDateTime.of(2026, Month.NOVEMBER, 10, 12, 0);
 
         NoSuchElementException exception = assertThrows(
                 NoSuchElementException.class,
@@ -265,16 +259,10 @@ class OrderUpdateCoordinatorTest {
                         order,
                         payment,
                         targetOfferId,
-                        LocalDateTime.of(
-                                2026,
-                                Month.NOVEMBER,
-                                10,
-                                12,
-                                0
-                        ), currentStatus));
+                        targetVisitDate,
+                        currentStatus));
 
-        assertEquals("Oferta o ID: 2 nie istnieje",
-                exception.getMessage());
+        assertEquals("Oferta o ID: 2 nie istnieje", exception.getMessage());
 
         verify(orderModificationPolicy)
                 .validateUpdate(
